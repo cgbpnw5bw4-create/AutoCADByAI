@@ -1,0 +1,17 @@
+name: CADModeling
+version: 0.1.0
+description: Plans BuildSpec handoff to CAD workers.
+agents:
+  - cad-modeler
+skills:
+  - build-spec-planning
+workers:
+  - FakeSolidWorksWorker
+validators:
+  - build-spec-validator
+reviewers:
+  - cad-modeling-reviewer
+schemas:
+  - CADModelSpec
+  - BuildSpec
+  - ArtifactInfo

@@ -1,0 +1,285 @@
+{
+  "registered_modules": [
+    {
+      "name": "CADModeling",
+      "version": "0.1.0",
+      "description": "Plans BuildSpec handoff to CAD workers."
+    },
+    {
+      "name": "CodeEngineering",
+      "version": "0.1.0",
+      "description": "Plans future CAD API, SDK and COM automation code work."
+    },
+    {
+      "name": "CodeReview",
+      "version": "0.1.0",
+      "description": "Reviews future automation code for safety and maintainability."
+    },
+    {
+      "name": "DrawingGeneration",
+      "version": "0.1.0",
+      "description": "Plans engineering drawing generation tasks."
+    },
+    {
+      "name": "DrawingReview",
+      "version": "0.1.0",
+      "description": "Reviews drawings, PDFs, dimensions, views and title blocks."
+    },
+    {
+      "name": "ErrorDiagnosis",
+      "version": "0.1.0",
+      "description": "Diagnoses execution failures and suggests fixes."
+    },
+    {
+      "name": "MechanicalDesign",
+      "version": "0.1.0",
+      "description": "Checks mechanical feasibility, structure and parameter assumptions."
+    },
+    {
+      "name": "RequirementUnderstanding",
+      "version": "0.1.0",
+      "description": "Converts natural language requirements into CADModelSpec."
+    }
+  ],
+  "registered_agents": [
+    {
+      "id": "cad-modeler",
+      "name": "CAD\u5EFA\u6A21\u5DE5\u7A0B\u5E08",
+      "role": "\u5EFA\u6A21\u89C4\u5212\u3001BuildSpec \u751F\u6210\u3001Worker \u8C03\u7528\u89C4\u5212",
+      "visibility": "Internal"
+    },
+    {
+      "id": "chief-engineer",
+      "name": "\u673A\u68B0\u603B\u5DE5\u7A0B\u5E08",
+      "role": "\u603B\u8C03\u5EA6\u3001\u4EFB\u52A1\u62C6\u89E3\u3001\u5185\u90E8 Agent \u534F\u4F5C\u3001\u8D28\u91CF\u88C1\u51B3",
+      "visibility": "Public"
+    },
+    {
+      "id": "drawing-engineer",
+      "name": "\u5DE5\u7A0B\u56FE\u5DE5\u7A0B\u5E08",
+      "role": "\u5DE5\u7A0B\u56FE\u751F\u6210\u89C4\u5212",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-reviewer",
+      "name": "\u51FA\u56FE\u590D\u5BA1\u5DE5\u7A0B\u5E08",
+      "role": "PDF\u3001\u5C3A\u5BF8\u3001\u89C6\u56FE\u3001\u6807\u9898\u680F\u590D\u5BA1",
+      "visibility": "Internal"
+    },
+    {
+      "id": "error-diagnosis",
+      "name": "\u5F02\u5E38\u8BCA\u65AD\u5DE5\u7A0B\u5E08",
+      "role": "\u5931\u8D25\u539F\u56E0\u5206\u6790\u548C\u4FEE\u590D\u5EFA\u8BAE",
+      "visibility": "Internal"
+    },
+    {
+      "id": "mechanical-designer",
+      "name": "\u673A\u68B0\u8BBE\u8BA1\u5E08",
+      "role": "\u7ED3\u6784\u65B9\u6848\u3001\u673A\u68B0\u5408\u7406\u6027\u3001\u53C2\u6570\u5EFA\u8BAE",
+      "visibility": "Internal"
+    }
+  ],
+  "public_agents": [
+    {
+      "id": "chief-engineer",
+      "name": "\u673A\u68B0\u603B\u5DE5\u7A0B\u5E08",
+      "role": "\u603B\u8C03\u5EA6\u3001\u4EFB\u52A1\u62C6\u89E3\u3001\u5185\u90E8 Agent \u534F\u4F5C\u3001\u8D28\u91CF\u88C1\u51B3",
+      "visibility": "Public"
+    }
+  ],
+  "internal_agents": [
+    {
+      "id": "cad-modeler",
+      "name": "CAD\u5EFA\u6A21\u5DE5\u7A0B\u5E08",
+      "role": "\u5EFA\u6A21\u89C4\u5212\u3001BuildSpec \u751F\u6210\u3001Worker \u8C03\u7528\u89C4\u5212",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-engineer",
+      "name": "\u5DE5\u7A0B\u56FE\u5DE5\u7A0B\u5E08",
+      "role": "\u5DE5\u7A0B\u56FE\u751F\u6210\u89C4\u5212",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-reviewer",
+      "name": "\u51FA\u56FE\u590D\u5BA1\u5DE5\u7A0B\u5E08",
+      "role": "PDF\u3001\u5C3A\u5BF8\u3001\u89C6\u56FE\u3001\u6807\u9898\u680F\u590D\u5BA1",
+      "visibility": "Internal"
+    },
+    {
+      "id": "error-diagnosis",
+      "name": "\u5F02\u5E38\u8BCA\u65AD\u5DE5\u7A0B\u5E08",
+      "role": "\u5931\u8D25\u539F\u56E0\u5206\u6790\u548C\u4FEE\u590D\u5EFA\u8BAE",
+      "visibility": "Internal"
+    },
+    {
+      "id": "mechanical-designer",
+      "name": "\u673A\u68B0\u8BBE\u8BA1\u5E08",
+      "role": "\u7ED3\u6784\u65B9\u6848\u3001\u673A\u68B0\u5408\u7406\u6027\u3001\u53C2\u6570\u5EFA\u8BAE",
+      "visibility": "Internal"
+    }
+  ],
+  "registered_skills": [
+    {
+      "name": "build-spec-planning",
+      "description": "Plan structured BuildSpec placeholders without CAD execution."
+    },
+    {
+      "name": "drawing-review-summary",
+      "description": "Summarize drawing review inputs into ReviewReport placeholders."
+    },
+    {
+      "name": "requirement-to-cad-model-spec",
+      "description": "Convert natural-language requirements into CADModelSpec placeholders."
+    }
+  ],
+  "registered_workers": [
+    {
+      "name": "FakeAutoCADWorker",
+      "target_system": "AutoCAD"
+    },
+    {
+      "name": "FakeSolidWorksWorker",
+      "target_system": "SolidWorks"
+    }
+  ],
+  "workflow_steps": [
+    {
+      "step_name": "initialize-platform",
+      "status": "Completed",
+      "message": "Platform initialized.",
+      "gate_decision": null,
+      "logs": [
+        "Platform initialized."
+      ]
+    },
+    {
+      "step_name": "register-modules",
+      "status": "Completed",
+      "message": "Base modules registered.",
+      "gate_decision": null,
+      "logs": [
+        "Base modules registered."
+      ]
+    },
+    {
+      "step_name": "register-agents",
+      "status": "Completed",
+      "message": "Base agents registered.",
+      "gate_decision": null,
+      "logs": [
+        "Base agents registered."
+      ]
+    },
+    {
+      "step_name": "register-skills",
+      "status": "Completed",
+      "message": "Base skills registered.",
+      "gate_decision": null,
+      "logs": [
+        "Base skills registered."
+      ]
+    },
+    {
+      "step_name": "register-workers",
+      "status": "Completed",
+      "message": "Fake CAD workers registered.",
+      "gate_decision": null,
+      "logs": [
+        "Fake CAD workers registered."
+      ]
+    },
+    {
+      "step_name": "gateway-directory",
+      "status": "Completed",
+      "message": "Gateway public agent directory checked.",
+      "gate_decision": null,
+      "logs": [
+        "Gateway public agent directory checked."
+      ]
+    },
+    {
+      "step_name": "quality-gate",
+      "status": "Passed",
+      "message": "QualityGate skeleton returned Passed.",
+      "gate_decision": {
+        "id": "gate-self-check",
+        "result": "Passed",
+        "reason": "Self-check review passed.",
+        "next_action": "Continue with platform extension.",
+        "reject_report": null
+      },
+      "logs": [
+        "QualityGate skeleton returned Passed."
+      ]
+    }
+  ],
+  "gate_decision": {
+    "id": "gate-self-check",
+    "result": "Passed",
+    "reason": "Self-check review passed.",
+    "next_action": "Continue with platform extension.",
+    "reject_report": null
+  },
+  "gateway_visible_agents": [
+    {
+      "id": "chief-engineer",
+      "display_name": "\u673A\u68B0\u603B\u5DE5\u7A0B\u5E08",
+      "role": "\u603B\u8C03\u5EA6\u3001\u4EFB\u52A1\u62C6\u89E3\u3001\u5185\u90E8 Agent \u534F\u4F5C\u3001\u8D28\u91CF\u88C1\u51B3",
+      "mention": "@\u673A\u68B0\u603B\u5DE5\u7A0B\u5E08",
+      "visibility": "Public"
+    }
+  ],
+  "audit_logs": [
+    {
+      "category": "module",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered base module manifests.",
+      "created_at": "2026-06-24T12:22:55.9773192+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered base agent placeholders.",
+      "created_at": "2026-06-24T12:22:55.9785932+00:00"
+    },
+    {
+      "category": "skill",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered base skill placeholders.",
+      "created_at": "2026-06-24T12:22:55.979024+00:00"
+    },
+    {
+      "category": "worker",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered fake CAD worker placeholders.",
+      "created_at": "2026-06-24T12:22:55.9794397+00:00"
+    },
+    {
+      "category": "platform",
+      "actor": "bootstrapper",
+      "action": "initialized",
+      "message": "Default platform skeleton initialized.",
+      "created_at": "2026-06-24T12:22:55.9797985+00:00"
+    },
+    {
+      "category": "task",
+      "actor": "self-check",
+      "action": "created",
+      "message": "Created self-check task task-da084d015e0845358ccceb4c5d15ed34.",
+      "created_at": "2026-06-24T12:22:56.1587232+00:00"
+    },
+    {
+      "category": "self-check",
+      "actor": "quality-gate",
+      "action": "passed",
+      "message": "Self-check final status: Passed.",
+      "created_at": "2026-06-24T12:22:56.1773399+00:00"
+    }
+  ],
+  "final_status": "Passed"
+}

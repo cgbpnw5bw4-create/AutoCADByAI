@@ -1,0 +1,13 @@
+name: CodeEngineering
+version: 0.1.0
+description: Plans future CAD API, SDK and COM automation code work.
+agents: []
+skills:
+  - cad-code-engineering
+workers: []
+validators:
+  - code-build-validator
+reviewers: []
+schemas:
+  - ErrorReport
+  - FinalReport

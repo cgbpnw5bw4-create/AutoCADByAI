@@ -1,0 +1,16 @@
+name: DrawingReview
+version: 0.1.0
+description: Reviews drawing PDFs, dimensions, views and title blocks.
+agents:
+  - drawing-reviewer
+skills:
+  - drawing-review-summary
+workers: []
+validators:
+  - drawing-pdf-validator
+reviewers:
+  - drawing-reviewer
+schemas:
+  - DrawingSpec
+  - ReviewReport
+  - GateDecision

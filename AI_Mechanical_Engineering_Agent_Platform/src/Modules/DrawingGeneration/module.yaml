@@ -1,0 +1,15 @@
+name: DrawingGeneration
+version: 0.1.0
+description: Plans engineering drawing generation tasks.
+agents:
+  - drawing-engineer
+skills:
+  - drawing-generation-planning
+workers:
+  - FakeSolidWorksWorker
+validators:
+  - drawing-spec-validator
+reviewers: []
+schemas:
+  - DrawingSpec
+  - ArtifactInfo

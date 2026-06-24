@@ -1,0 +1,13 @@
+name: RequirementUnderstanding
+version: 0.1.0
+description: Converts natural-language requirements into CADModelSpec.
+agents:
+  - chief-engineer
+skills:
+  - requirement-to-cad-model-spec
+workers: []
+validators:
+  - cad-model-spec-validator
+reviewers: []
+schemas:
+  - CADModelSpec

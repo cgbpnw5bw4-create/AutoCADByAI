@@ -1,0 +1,15 @@
+name: MechanicalDesign
+version: 0.1.0
+description: Checks mechanical feasibility, structure and parameter assumptions.
+agents:
+  - mechanical-designer
+skills:
+  - mechanical-design-review
+workers: []
+validators:
+  - mechanical-parameter-validator
+reviewers:
+  - mechanical-design-reviewer
+schemas:
+  - CADModelSpec
+  - ReviewReport

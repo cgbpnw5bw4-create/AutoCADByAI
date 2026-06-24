@@ -1,0 +1,14 @@
+name: CodeReview
+version: 0.1.0
+description: Reviews future automation code for safety and maintainability.
+agents: []
+skills:
+  - cad-code-review
+workers: []
+validators:
+  - code-policy-validator
+reviewers:
+  - code-reviewer
+schemas:
+  - ReviewReport
+  - GateDecision

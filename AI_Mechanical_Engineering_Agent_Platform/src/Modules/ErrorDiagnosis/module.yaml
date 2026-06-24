@@ -1,0 +1,13 @@
+name: ErrorDiagnosis
+version: 0.1.0
+description: Diagnoses execution failures and suggests fixes.
+agents:
+  - error-diagnosis
+skills:
+  - error-diagnosis
+workers: []
+validators: []
+reviewers: []
+schemas:
+  - ErrorReport
+  - RejectReport
