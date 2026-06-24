@@ -40,4 +40,13 @@ public sealed record PlatformSelfCheckReport(
     bool GatewayBlocksInternalAgents,
     bool QualityGateAfterCollaboration,
     bool AuditInternalAgentCalls,
+    bool AgentRuntimeProjectExists,
+    bool MicrosoftRuntimeDependencyIsolated,
+    string RuntimeMode,
+    bool MockRuntimeAgentCreation,
+    bool MicrosoftAgentAdapterCheck,
+    bool MicrosoftWorkflowRuntimeCheck,
+    bool RuntimeTypesDoNotLeakToContracts,
+    bool GatewayVisibilityStillValid,
+    bool QualityGateStillEnabled,
     string FinalStatus);

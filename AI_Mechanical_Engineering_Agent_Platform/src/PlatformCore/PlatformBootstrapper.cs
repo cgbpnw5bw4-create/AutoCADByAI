@@ -6,12 +6,12 @@ namespace PlatformCore;
 
 public static class PlatformBootstrapper
 {
-    public static PlatformKernel CreateDefault(string? projectRoot = null)
+    public static PlatformKernel CreateDefault(string? projectRoot = null, Func<string, IAgent>? runtimeAgentFactory = null)
     {
         var platform = new PlatformKernel();
 
         RegisterModules(platform, projectRoot);
-        RegisterAgents(platform);
+        RegisterAgents(platform, runtimeAgentFactory);
         RegisterSkills(platform);
         RegisterWorkers(platform);
 
@@ -56,8 +56,27 @@ public static class PlatformBootstrapper
         platform.AuditLog.Record("module", "bootstrapper", "registered", "Registered module manifests from yaml with fallback support.");
     }
 
-    private static void RegisterAgents(PlatformKernel platform)
+    private static void RegisterAgents(PlatformKernel platform, Func<string, IAgent>? runtimeAgentFactory)
     {
+        if (runtimeAgentFactory is not null)
+        {
+            foreach (var agentId in new[]
+                     {
+                         "chief-engineer",
+                         "mechanical-designer",
+                         "cad-modeler",
+                         "drawing-engineer",
+                         "drawing-reviewer",
+                         "error-diagnosis"
+                     })
+            {
+                platform.AgentRegistry.Register(runtimeAgentFactory(agentId));
+            }
+
+            platform.AuditLog.Record("agent", "bootstrapper", "runtime_registered", "Registered agents from runtime agent factory.");
+            return;
+        }
+
         var internalAgentRouter = new InternalAgentRouter(platform.AgentRegistry, platform.AuditLog);
         var chiefEngineerOrchestrator = new ChiefEngineerOrchestrator(
             internalAgentRouter,

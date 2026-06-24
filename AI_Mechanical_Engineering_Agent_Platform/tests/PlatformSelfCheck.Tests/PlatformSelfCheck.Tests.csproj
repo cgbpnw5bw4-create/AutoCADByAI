@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\QualityGate\QualityGate.csproj" />
     <ProjectReference Include="..\..\src\Interfaces\AgentGatewayHost\AgentGatewayHost.csproj" />
     <ProjectReference Include="..\..\src\Storage\Storage.csproj" />
+    <ProjectReference Include="..\..\src\AgentRuntime.Microsoft\AgentRuntime.Microsoft.csproj" />
   </ItemGroup>
 
 </Project>

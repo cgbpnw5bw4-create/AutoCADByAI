@@ -254,112 +254,126 @@
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered module manifests from yaml with fallback support.",
-      "created_at": "2026-06-24T14:21:55.2073552+00:00"
+      "created_at": "2026-06-24T15:25:22.7034482+00:00"
     },
     {
       "category": "agent",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered base agent placeholders.",
-      "created_at": "2026-06-24T14:21:55.2089554+00:00"
+      "created_at": "2026-06-24T15:25:22.7043581+00:00"
     },
     {
       "category": "skill",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered base skill placeholders.",
-      "created_at": "2026-06-24T14:21:55.2094292+00:00"
+      "created_at": "2026-06-24T15:25:22.7046557+00:00"
     },
     {
       "category": "worker",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered fake CAD worker placeholders.",
-      "created_at": "2026-06-24T14:21:55.2100499+00:00"
+      "created_at": "2026-06-24T15:25:22.7048944+00:00"
     },
     {
       "category": "platform",
       "actor": "bootstrapper",
       "action": "initialized",
       "message": "Default platform skeleton initialized.",
-      "created_at": "2026-06-24T14:21:55.210482+00:00"
+      "created_at": "2026-06-24T15:25:22.7050816+00:00"
     },
     {
       "category": "task",
       "actor": "self-check",
       "action": "created",
-      "message": "Created self-check task task-106efa31839a4b8194d486a549ae314d.",
-      "created_at": "2026-06-24T14:21:55.2249969+00:00"
+      "message": "Created self-check task task-52df15e7a9304965954b535f5386a6f8.",
+      "created_at": "2026-06-24T15:25:22.7142509+00:00"
     },
     {
       "category": "agent",
       "actor": "mechanical-designer",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027mechanical-designer\u0027 invoked for task task-6318e9142879450fa1bfc865dc700c81.",
-      "created_at": "2026-06-24T14:21:55.2546595+00:00"
+      "message": "Internal agent \u0027mechanical-designer\u0027 invoked for task task-69de1240a6fe4bc49fea5129a19ee5e9.",
+      "created_at": "2026-06-24T15:25:22.7333038+00:00"
     },
     {
       "category": "agent",
       "actor": "mechanical-designer",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027mechanical-designer\u0027 completed with status Completed.",
-      "created_at": "2026-06-24T14:21:55.2564863+00:00"
+      "created_at": "2026-06-24T15:25:22.7347413+00:00"
     },
     {
       "category": "agent",
       "actor": "cad-modeler",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027cad-modeler\u0027 invoked for task task-6318e9142879450fa1bfc865dc700c81.",
-      "created_at": "2026-06-24T14:21:55.2565169+00:00"
+      "message": "Internal agent \u0027cad-modeler\u0027 invoked for task task-69de1240a6fe4bc49fea5129a19ee5e9.",
+      "created_at": "2026-06-24T15:25:22.7347564+00:00"
     },
     {
       "category": "agent",
       "actor": "cad-modeler",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027cad-modeler\u0027 completed with status Completed.",
-      "created_at": "2026-06-24T14:21:55.2566618+00:00"
+      "created_at": "2026-06-24T15:25:22.7348635+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-engineer",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027drawing-engineer\u0027 invoked for task task-6318e9142879450fa1bfc865dc700c81.",
-      "created_at": "2026-06-24T14:21:55.2566643+00:00"
+      "message": "Internal agent \u0027drawing-engineer\u0027 invoked for task task-69de1240a6fe4bc49fea5129a19ee5e9.",
+      "created_at": "2026-06-24T15:25:22.7348655+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-engineer",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027drawing-engineer\u0027 completed with status Completed.",
-      "created_at": "2026-06-24T14:21:55.2567474+00:00"
+      "created_at": "2026-06-24T15:25:22.7349288+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-reviewer",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027drawing-reviewer\u0027 invoked for task task-6318e9142879450fa1bfc865dc700c81.",
-      "created_at": "2026-06-24T14:21:55.2567487+00:00"
+      "message": "Internal agent \u0027drawing-reviewer\u0027 invoked for task task-69de1240a6fe4bc49fea5129a19ee5e9.",
+      "created_at": "2026-06-24T15:25:22.73493+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-reviewer",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027drawing-reviewer\u0027 completed with status Completed.",
-      "created_at": "2026-06-24T14:21:55.2569705+00:00"
+      "created_at": "2026-06-24T15:25:22.7350955+00:00"
     },
     {
       "category": "agent",
       "actor": "chief-engineer",
       "action": "collaboration_report_created",
       "message": "Internal collaboration report created for self-check-conversation.",
-      "created_at": "2026-06-24T14:21:55.2588286+00:00"
+      "created_at": "2026-06-24T15:25:22.7365592+00:00"
+    },
+    {
+      "category": "agent-runtime",
+      "actor": "chief-engineer",
+      "action": "runtime_agent_invoked",
+      "message": "Runtime mode Mock invoked for chief-engineer.",
+      "created_at": "2026-06-24T15:25:22.7933728+00:00"
+    },
+    {
+      "category": "agent-runtime",
+      "actor": "chief-engineer",
+      "action": "runtime_agent_completed",
+      "message": "Runtime mode Mock completed with status Completed.",
+      "created_at": "2026-06-24T15:25:22.7935919+00:00"
     },
     {
       "category": "self-check",
       "actor": "quality-gate",
       "action": "passed",
       "message": "Self-check final status: Passed.",
-      "created_at": "2026-06-24T14:21:55.2633799+00:00"
+      "created_at": "2026-06-24T15:25:22.7955017+00:00"
     }
   ],
   "solution_exists": true,
@@ -431,5 +445,14 @@
   "gateway_blocks_internal_agents": true,
   "quality_gate_after_collaboration": true,
   "audit_internal_agent_calls": true,
+  "agent_runtime_project_exists": true,
+  "microsoft_runtime_dependency_isolated": true,
+  "runtime_mode": "Mock",
+  "mock_runtime_agent_creation": true,
+  "microsoft_agent_adapter_check": true,
+  "microsoft_workflow_runtime_check": true,
+  "runtime_types_do_not_leak_to_contracts": true,
+  "gateway_visibility_still_valid": true,
+  "quality_gate_still_enabled": true,
   "final_status": "Passed"
 }

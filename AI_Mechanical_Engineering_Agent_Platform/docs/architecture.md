@@ -45,7 +45,9 @@ V0.2 internal routing uses `InternalCollaborationReport` to preserve called agen
 
 This is the only project intended to reference Microsoft Agent Framework packages. It adapts Microsoft runtime concepts to the platform contracts.
 
-Current version is a placeholder adapter layer. Business modules, workers and contracts do not depend on Microsoft runtime APIs.
+V0.3 references `Microsoft.Agents.AI` only from this project and defaults to `MockRuntime`. Business modules, workers, PlatformCore and contracts do not depend on Microsoft runtime APIs.
+
+The runtime adapter exposes platform `IAgent` instances through `MicrosoftAgentAdapter`; real Microsoft runtime execution remains behind `IMicrosoftRuntimeAgentInvoker` and must return platform `AgentOutput`.
 
 ## Modules
 
