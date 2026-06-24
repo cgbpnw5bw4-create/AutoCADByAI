@@ -19,6 +19,14 @@ public static class PlatformSelfCheckRunner
         "ErrorDiagnosis"
     ];
 
+    private static readonly string[] ExpectedInternalRoute =
+    [
+        "mechanical-designer",
+        "cad-modeler",
+        "drawing-engineer",
+        "drawing-reviewer"
+    ];
+
     private static readonly string[] StandardModuleEntries =
     [
         "README.md",
@@ -100,6 +108,17 @@ public static class PlatformSelfCheckRunner
             rejectedEvaluation.RejectReport is not null;
         var rejectReportBuilderCheck = rejectedEvaluation.RejectReport?.Reasons.Contains("quality probe issue") == true;
         var storageContractsRegistered = StorageContractsExist(root);
+        var chiefEngineerOutput = await InvokeChiefEngineerForSelfCheck(platform);
+        var collaborationReport = chiefEngineerOutput.InternalCollaborationReport;
+        var internalAgentsInvoked = collaborationReport?.CalledAgents.Select(agent => agent.AgentId).ToArray() ?? Array.Empty<string>();
+        var internalRoutingEnabled = ExpectedInternalRoute.SequenceEqual(internalAgentsInvoked);
+        var collaborationReportCreated = collaborationReport is not null;
+        var gatewayBlocksInternalAgents = internalAgentsHiddenFromGateway &&
+            platform.AgentRegistry.GetInternalAgents().All(agent => !platform.PermissionManager.CanExposeToExternalGateway(agent));
+        var collaborationGateEvaluation = gatekeeper.Evaluate(AgentOutputReviewMapper.ToReviewReport("self-check-collaboration-quality-gate", chiefEngineerOutput));
+        var qualityGateAfterCollaboration = collaborationGateEvaluation.Decision.Result == GateDecisionResult.Passed;
+        var auditInternalAgentCalls = ExpectedInternalRoute.All(agentId =>
+            platform.AuditLog.GetEntries().Any(entry => entry.Action == "internal_agent_invoked" && entry.Actor == agentId));
 
         var checksPassed =
             solutionExists &&
@@ -122,6 +141,11 @@ public static class PlatformSelfCheckRunner
             gatewayQualityGateEnabled &&
             rejectReportBuilderCheck &&
             storageContractsRegistered &&
+            internalRoutingEnabled &&
+            collaborationReportCreated &&
+            gatewayBlocksInternalAgents &&
+            qualityGateAfterCollaboration &&
+            auditInternalAgentCalls &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -148,6 +172,12 @@ public static class PlatformSelfCheckRunner
             gatewayQualityGateEnabled,
             storageContractsRegistered,
             rejectReportBuilderCheck,
+            internalRoutingEnabled,
+            internalAgentsInvoked,
+            collaborationReportCreated,
+            gatewayBlocksInternalAgents,
+            qualityGateAfterCollaboration,
+            auditInternalAgentCalls,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -225,6 +255,27 @@ public static class PlatformSelfCheckRunner
         var storageRoot = Path.Combine(projectRoot, "src", "Storage");
         return File.Exists(Path.Combine(storageRoot, "Storage.csproj")) &&
                StorageContractFiles.All(file => File.Exists(Path.Combine(storageRoot, file)));
+    }
+
+    private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform)
+    {
+        var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")
+            ?? throw new InvalidOperationException("chief-engineer is not registered.");
+        var input = new AgentContracts.AgentInput(
+            "self-check",
+            "self-check",
+            "self-check-conversation",
+            "self-check",
+            "Run internal routing self-check.",
+            Array.Empty<string>(),
+            new Dictionary<string, string> { ["project_id"] = "self-check" });
+        var context = new AgentContracts.AgentContext(
+            $"task-{Guid.NewGuid():N}",
+            input,
+            new Dictionary<string, object?>(),
+            DateTimeOffset.UtcNow);
+
+        return await chiefEngineer.ExecuteAsync(context);
     }
 
     private static JsonSerializerOptions JsonOptions()

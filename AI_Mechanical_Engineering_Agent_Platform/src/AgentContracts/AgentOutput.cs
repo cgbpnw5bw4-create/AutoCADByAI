@@ -17,4 +17,6 @@ public sealed record AgentOutput(
     IReadOnlyList<ArtifactInfo> Artifacts,
     IReadOnlyList<string> Issues,
     IReadOnlyList<string> Logs,
-    string? NextRecommendedAgentId);
+    string? NextRecommendedAgentId,
+    InternalCollaborationReport? InternalCollaborationReport = null,
+    ReviewReport? ReviewReport = null);

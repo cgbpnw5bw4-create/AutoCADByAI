@@ -9,6 +9,10 @@
     <ProjectReference Include="..\QualityGate\QualityGate.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Modules\RequirementUnderstanding\agents\ChiefEngineerOrchestrator.cs" Link="Modules\RequirementUnderstanding\agents\ChiefEngineerOrchestrator.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

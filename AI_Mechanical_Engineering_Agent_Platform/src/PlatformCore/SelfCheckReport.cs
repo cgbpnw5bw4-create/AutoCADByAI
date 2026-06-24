@@ -34,4 +34,10 @@ public sealed record PlatformSelfCheckReport(
     bool GatewayQualityGateEnabled,
     bool StorageContractsRegistered,
     bool RejectReportBuilderCheck,
+    bool InternalRoutingEnabled,
+    IReadOnlyList<string> InternalAgentsInvoked,
+    bool CollaborationReportCreated,
+    bool GatewayBlocksInternalAgents,
+    bool QualityGateAfterCollaboration,
+    bool AuditInternalAgentCalls,
     string FinalStatus);

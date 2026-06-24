@@ -18,9 +18,11 @@ public sealed class AgentMessageDispatcher
 
     public async Task<GatewayMessageResponse?> DispatchAsync(string agentId, GatewayMessageRequest request)
     {
+        _platform.AuditLog.Record("gateway", agentId, "gateway_request_received", $"Gateway request received from {request.Source}.");
         var agent = _platform.AgentRegistry.GetById(agentId);
         if (agent is null || !_platform.PermissionManager.CanExposeToExternalGateway(agent))
         {
+            _platform.AuditLog.Record("gateway", agentId, "gateway_request_rejected", "Gateway rejected non-public or unknown agent.");
             return null;
         }
 
@@ -40,11 +42,12 @@ public sealed class AgentMessageDispatcher
             new Dictionary<string, object?>(),
             DateTimeOffset.UtcNow);
 
+        _platform.AuditLog.Record("agent", agent.Id, "public_agent_invoked", $"Public agent '{agent.Id}' invoked from gateway.");
         var output = await agent.ExecuteAsync(context);
-        _platform.AuditLog.Record("agent", agent.Id, "gateway-message", output.Message);
+        _platform.AuditLog.Record("agent", agent.Id, "public_agent_completed", output.Message);
         var reviewReport = AgentOutputReviewMapper.ToReviewReport($"gateway-quality-gate:{agent.Id}", output);
         var gateEvaluation = _gatekeeper.Evaluate(reviewReport);
-        _platform.AuditLog.Record("quality-gate", "AgentGatewayHost", gateEvaluation.Decision.Result.ToString(), gateEvaluation.Decision.Reason);
+        _platform.AuditLog.Record("quality-gate", "AgentGatewayHost", "quality_gate_evaluated", gateEvaluation.Decision.Reason);
 
         var responseStatus = gateEvaluation.Decision.Result switch
         {
@@ -61,7 +64,7 @@ public sealed class AgentMessageDispatcher
 
         var issues = gateEvaluation.RejectReport?.Reasons ?? output.Issues;
 
-        return new GatewayMessageResponse(
+        var response = new GatewayMessageResponse(
             agent.Id,
             agent.Name,
             responseStatus,
@@ -70,7 +73,11 @@ public sealed class AgentMessageDispatcher
             issues,
             gateEvaluation.Decision,
             gateEvaluation.RejectReport,
+            output.InternalCollaborationReport,
             output.NextRecommendedAgentId);
+
+        _platform.AuditLog.Record("gateway", agent.Id, "gateway_response_returned", $"Gateway response returned with status {response.Status}.");
+        return response;
     }
 
 }

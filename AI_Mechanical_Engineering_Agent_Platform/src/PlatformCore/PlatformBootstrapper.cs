@@ -1,5 +1,6 @@
 using AgentContracts;
 using ModuleContracts;
+using PlatformCore.Modules.RequirementUnderstanding.Agents;
 
 namespace PlatformCore;
 
@@ -57,13 +58,20 @@ public static class PlatformBootstrapper
 
     private static void RegisterAgents(PlatformKernel platform)
     {
+        var internalAgentRouter = new InternalAgentRouter(platform.AgentRegistry, platform.AuditLog);
+        var chiefEngineerOrchestrator = new ChiefEngineerOrchestrator(
+            internalAgentRouter,
+            platform.AgentRegistry,
+            platform.AuditLog);
+
         platform.AgentRegistry.Register(new PlaceholderAgent(
             "chief-engineer",
             "机械总工程师",
             new AgentRole("chief-engineer", "机械总工程师", "总调度、任务拆解、内部 Agent 协作、质量裁决"),
             "Public entry point for external gateways. Delegates to internal engineering agents.",
             AgentVisibility.Public,
-            "mechanical-designer"));
+            "mechanical-designer",
+            chiefEngineerOrchestrator));
 
         platform.AgentRegistry.Register(new PlaceholderAgent(
             "mechanical-designer",

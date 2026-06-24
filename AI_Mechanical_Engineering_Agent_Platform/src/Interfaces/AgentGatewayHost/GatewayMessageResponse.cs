@@ -11,4 +11,5 @@ public sealed record GatewayMessageResponse(
     IReadOnlyList<string> Issues,
     GateDecision GateDecision,
     RejectReport? RejectReport,
+    InternalCollaborationReport? CollaborationReport,
     string? NextRecommendedAgent);

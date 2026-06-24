@@ -17,10 +17,13 @@ External systems must not:
 Every accepted external Agent message must pass through the Gateway QualityGate chain:
 
 1. Execute the Public Agent.
-2. Convert `AgentOutput` into `ReviewReport`.
-3. Evaluate through Gatekeeper.
-4. Return the Agent output only when the GateDecision is `Passed`.
-5. Return `rejected`, `failed`, or `needs_human_approval` with gate details otherwise.
+2. Let chief-engineer route internally through InternalAgentRouter when needed.
+3. Convert `AgentOutput` and any `InternalCollaborationReport` into `ReviewReport`.
+4. Evaluate through Gatekeeper.
+5. Return the Agent output only when the GateDecision is `Passed`.
+6. Return `rejected`, `failed`, or `needs_human_approval` with gate details otherwise.
+
+V0.2 exposes only `chief-engineer` externally. `mechanical-designer`, `cad-modeler`, `drawing-engineer`, `drawing-reviewer`, and `error-diagnosis` remain Internal and must not be invoked directly through Gateway.
 
 First version exposure:
 
