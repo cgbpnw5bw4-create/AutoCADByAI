@@ -9,6 +9,7 @@ Provides platform services that should stay independent from any specific agent 
 - TaskSystem: task lifecycle and status
 - WorkflowEngine: sequential workflow execution and step result tracking
 - AgentRegistry, SkillRegistry, ModuleRegistry, WorkerRegistry: in-memory registration and lookup
+- ModuleManifestLoader: loads `module.yaml` files and records fallback usage
 - ContextManager: workflow context creation
 - PermissionManager: visibility and gateway exposure checks
 - EventBus: in-memory system events
@@ -66,6 +67,20 @@ The first version includes fake SolidWorks and AutoCAD workers only.
 ## QualityGate
 
 QualityGate owns validation, review, gate decisions, reject reports and retry policy. It consumes `ReviewReport` and returns `GateDecision`.
+
+AgentGatewayHost routes every external Agent message through the minimal QualityGate chain before returning a response.
+
+## Storage
+
+Storage contains persistence contracts only:
+
+- ITaskRepository
+- IAuditLogRepository
+- IEventStore
+- IArtifactRepository
+- IReportRepository
+
+No database implementation is attached in the platform skeleton.
 
 ## Interfaces
 

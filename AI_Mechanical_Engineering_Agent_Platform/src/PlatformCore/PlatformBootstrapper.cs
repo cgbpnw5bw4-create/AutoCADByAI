@@ -5,11 +5,11 @@ namespace PlatformCore;
 
 public static class PlatformBootstrapper
 {
-    public static PlatformKernel CreateDefault()
+    public static PlatformKernel CreateDefault(string? projectRoot = null)
     {
         var platform = new PlatformKernel();
 
-        RegisterModules(platform);
+        RegisterModules(platform, projectRoot);
         RegisterAgents(platform);
         RegisterSkills(platform);
         RegisterWorkers(platform);
@@ -20,14 +20,39 @@ public static class PlatformBootstrapper
         return platform;
     }
 
-    private static void RegisterModules(PlatformKernel platform)
+    private static void RegisterModules(PlatformKernel platform, string? projectRoot)
     {
-        foreach (var manifest in CreateModuleManifests())
+        var root = projectRoot ?? PlatformPathResolver.FindProjectRoot();
+        var modulesRoot = Path.Combine(root, "src", "Modules");
+        var loader = new ModuleManifestLoader();
+        var loadResult = loader.LoadFromModulesDirectory(modulesRoot);
+        var fallbackManifests = CreateModuleManifests();
+
+        foreach (var error in loadResult.Errors)
         {
-            platform.ModuleRegistry.Register(manifest);
+            platform.EventBus.Publish(
+                "module.manifest.load_failed",
+                error.Message,
+                new Dictionary<string, string> { ["path"] = error.Path });
+            platform.AuditLog.Record("module", "ModuleManifestLoader", "load_failed", $"{error.Path}: {error.Message}");
         }
 
-        platform.AuditLog.Record("module", "bootstrapper", "registered", "Registered base module manifests.");
+        foreach (var manifest in loadResult.Manifests)
+        {
+            platform.ModuleRegistry.Register(manifest, "yaml");
+        }
+
+        foreach (var fallback in fallbackManifests.Where(fallback => platform.ModuleRegistry.GetByName(fallback.Name) is null))
+        {
+            platform.ModuleRegistry.Register(fallback, "fallback");
+            platform.EventBus.Publish(
+                "module.manifest.fallback_used",
+                $"Fallback manifest registered for {fallback.Name}.",
+                new Dictionary<string, string> { ["module"] = fallback.Name });
+            platform.AuditLog.Record("module", "bootstrapper", "fallback_registered", $"Fallback manifest registered for {fallback.Name}.");
+        }
+
+        platform.AuditLog.Record("module", "bootstrapper", "registered", "Registered module manifests from yaml with fallback support.");
     }
 
     private static void RegisterAgents(PlatformKernel platform)

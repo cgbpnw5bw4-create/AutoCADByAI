@@ -10,6 +10,11 @@ public sealed record SkillSummary(string Name, string Description);
 
 public sealed record WorkerSummary(string Name, string TargetSystem);
 
+public sealed record ModuleStructureCheck(
+    string ModuleName,
+    bool Passed,
+    IReadOnlyList<string> MissingEntries);
+
 public sealed record PlatformSelfCheckReport(
     IReadOnlyList<ModuleSummary> RegisteredModules,
     IReadOnlyList<AgentSummary> RegisteredAgents,
@@ -21,4 +26,12 @@ public sealed record PlatformSelfCheckReport(
     GateDecision GateDecision,
     IReadOnlyList<AgentDirectoryEntry> GatewayVisibleAgents,
     IReadOnlyList<AuditLogEntry> AuditLogs,
+    bool SolutionExists,
+    IReadOnlyList<ModuleStructureCheck> ModuleStructureChecks,
+    string ModuleManifestSource,
+    IReadOnlyList<string> YamlLoadedModules,
+    IReadOnlyList<string> FallbackModules,
+    bool GatewayQualityGateEnabled,
+    bool StorageContractsRegistered,
+    bool RejectReportBuilderCheck,
     string FinalStatus);

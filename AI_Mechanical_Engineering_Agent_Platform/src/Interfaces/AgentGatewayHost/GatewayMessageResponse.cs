@@ -9,4 +9,6 @@ public sealed record GatewayMessageResponse(
     string Message,
     IReadOnlyList<ArtifactInfo> Artifacts,
     IReadOnlyList<string> Issues,
+    GateDecision GateDecision,
+    RejectReport? RejectReport,
     string? NextRecommendedAgent);

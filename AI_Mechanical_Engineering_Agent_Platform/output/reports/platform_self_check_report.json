@@ -23,7 +23,7 @@
     {
       "name": "DrawingReview",
       "version": "0.1.0",
-      "description": "Reviews drawings, PDFs, dimensions, views and title blocks."
+      "description": "Reviews drawing PDFs, dimensions, views and title blocks."
     },
     {
       "name": "ErrorDiagnosis",
@@ -38,7 +38,7 @@
     {
       "name": "RequirementUnderstanding",
       "version": "0.1.0",
-      "description": "Converts natural language requirements into CADModelSpec."
+      "description": "Converts natural-language requirements into CADModelSpec."
     }
   ],
   "registered_agents": [
@@ -199,6 +199,24 @@
       ]
     },
     {
+      "step_name": "module-manifest-loader",
+      "status": "Completed",
+      "message": "module.yaml manifests checked.",
+      "gate_decision": null,
+      "logs": [
+        "module.yaml manifests checked."
+      ]
+    },
+    {
+      "step_name": "storage-contracts",
+      "status": "Completed",
+      "message": "Storage abstraction contracts checked.",
+      "gate_decision": null,
+      "logs": [
+        "Storage abstraction contracts checked."
+      ]
+    },
+    {
       "step_name": "quality-gate",
       "status": "Passed",
       "message": "QualityGate skeleton returned Passed.",
@@ -235,51 +253,109 @@
       "category": "module",
       "actor": "bootstrapper",
       "action": "registered",
-      "message": "Registered base module manifests.",
-      "created_at": "2026-06-24T12:22:55.9773192+00:00"
+      "message": "Registered module manifests from yaml with fallback support.",
+      "created_at": "2026-06-24T13:41:47.1063048+00:00"
     },
     {
       "category": "agent",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered base agent placeholders.",
-      "created_at": "2026-06-24T12:22:55.9785932+00:00"
+      "created_at": "2026-06-24T13:41:47.1082135+00:00"
     },
     {
       "category": "skill",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered base skill placeholders.",
-      "created_at": "2026-06-24T12:22:55.979024+00:00"
+      "created_at": "2026-06-24T13:41:47.108831+00:00"
     },
     {
       "category": "worker",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered fake CAD worker placeholders.",
-      "created_at": "2026-06-24T12:22:55.9794397+00:00"
+      "created_at": "2026-06-24T13:41:47.1092662+00:00"
     },
     {
       "category": "platform",
       "actor": "bootstrapper",
       "action": "initialized",
       "message": "Default platform skeleton initialized.",
-      "created_at": "2026-06-24T12:22:55.9797985+00:00"
+      "created_at": "2026-06-24T13:41:47.1095534+00:00"
     },
     {
       "category": "task",
       "actor": "self-check",
       "action": "created",
-      "message": "Created self-check task task-da084d015e0845358ccceb4c5d15ed34.",
-      "created_at": "2026-06-24T12:22:56.1587232+00:00"
+      "message": "Created self-check task task-755128f70d884848bfb5b7c8777e8be2.",
+      "created_at": "2026-06-24T13:41:47.3327191+00:00"
     },
     {
       "category": "self-check",
       "actor": "quality-gate",
       "action": "passed",
       "message": "Self-check final status: Passed.",
-      "created_at": "2026-06-24T12:22:56.1773399+00:00"
+      "created_at": "2026-06-24T13:41:47.372339+00:00"
     }
   ],
+  "solution_exists": true,
+  "module_structure_checks": [
+    {
+      "module_name": "RequirementUnderstanding",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "MechanicalDesign",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "CADModeling",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "DrawingGeneration",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "DrawingReview",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "CodeEngineering",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "CodeReview",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "ErrorDiagnosis",
+      "passed": true,
+      "missing_entries": []
+    }
+  ],
+  "module_manifest_source": "yaml",
+  "yaml_loaded_modules": [
+    "CADModeling",
+    "CodeEngineering",
+    "CodeReview",
+    "DrawingGeneration",
+    "DrawingReview",
+    "ErrorDiagnosis",
+    "MechanicalDesign",
+    "RequirementUnderstanding"
+  ],
+  "fallback_modules": [],
+  "gateway_quality_gate_enabled": true,
+  "storage_contracts_registered": true,
+  "reject_report_builder_check": true,
   "final_status": "Passed"
 }

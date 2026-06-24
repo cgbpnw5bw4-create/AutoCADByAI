@@ -8,8 +8,8 @@ if (args.Length == 0 || !string.Equals(args[0], "self-check", StringComparison.O
 
 var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
 var outputRoot = Path.Combine(projectRoot, "output");
-var platform = PlatformBootstrapper.CreateDefault();
-var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot);
+var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, projectRoot);
 var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
 
 Console.WriteLine("AI Mechanical Engineering Agent Platform self-check");

@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\Workers\AutoCAD\AutoCADWorker.csproj" />
     <ProjectReference Include="..\AgentGatewayHost\AgentGatewayHost.csproj" />
     <ProjectReference Include="..\..\AgentRuntime.Microsoft\AgentRuntime.Microsoft.csproj" />
+    <ProjectReference Include="..\..\Storage\Storage.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -6,6 +6,7 @@
     <ProjectReference Include="..\SkillContracts\SkillContracts.csproj" />
     <ProjectReference Include="..\WorkerContracts\WorkerContracts.csproj" />
     <ProjectReference Include="..\DomainSchemas\DomainSchemas.csproj" />
+    <ProjectReference Include="..\QualityGate\QualityGate.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

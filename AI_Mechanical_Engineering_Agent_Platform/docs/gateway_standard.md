@@ -14,6 +14,14 @@ External systems must not:
 - call workers directly
 - call validators or gatekeepers directly
 
+Every accepted external Agent message must pass through the Gateway QualityGate chain:
+
+1. Execute the Public Agent.
+2. Convert `AgentOutput` into `ReviewReport`.
+3. Evaluate through Gatekeeper.
+4. Return the Agent output only when the GateDecision is `Passed`.
+5. Return `rejected`, `failed`, or `needs_human_approval` with gate details otherwise.
+
 First version exposure:
 
 ```json
