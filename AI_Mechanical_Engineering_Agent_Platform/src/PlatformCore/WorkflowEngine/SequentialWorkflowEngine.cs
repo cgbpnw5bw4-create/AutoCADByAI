@@ -31,7 +31,8 @@ public sealed class SequentialWorkflowEngine
 
     public async Task<WorkflowExecutionResult> ExecuteAsync(
         IEnumerable<WorkflowStep> steps,
-        WorkflowContext context)
+        WorkflowContext context,
+        CancellationToken cancellationToken = default)
     {
         var workflowId = context.TaskId;
         var results = new List<WorkflowStepResult>();
@@ -49,6 +50,7 @@ public sealed class SequentialWorkflowEngine
 
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var rawResult = await step.ExecuteAsync(context);
                 var decision = rawResult.GateDecision ?? PassedDecision(step);
                 var issues = ResolveIssues(rawResult);
@@ -73,7 +75,7 @@ public sealed class SequentialWorkflowEngine
                         retryCount++;
                         if (retryDelay > TimeSpan.Zero)
                         {
-                            await Task.Delay(retryDelay);
+                            await Task.Delay(retryDelay, cancellationToken);
                         }
 
                         continue;

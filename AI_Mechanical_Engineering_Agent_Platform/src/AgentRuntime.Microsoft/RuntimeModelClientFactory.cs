@@ -7,9 +7,9 @@ public sealed class RuntimeModelClientFactory
         if (!string.IsNullOrWhiteSpace(configuration.Provider) &&
             configuration.Provider.Contains("microsoft", StringComparison.OrdinalIgnoreCase))
         {
-            return new MicrosoftAgentFrameworkModelClient();
+            return new MicrosoftAgentFrameworkModelClient(configuration);
         }
 
-        return new OpenAICompatibleModelClient();
+        return new OpenAICompatibleModelClient(configuration);
     }
 }

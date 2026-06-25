@@ -3,6 +3,7 @@ using AgentRuntime.Microsoft;
 using PlatformCore;
 using System.Diagnostics;
 using System.Net;
+using System.Reflection;
 
 namespace PlatformSelfCheck.Tests;
 
@@ -120,12 +121,110 @@ public sealed class AgentRuntimeMicrosoftTests
         var configuration = CreateMicrosoftRuntimeConfiguration(timeoutSeconds: 1);
 
         var stopwatch = Stopwatch.StartNew();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+        var exception = await Assert.ThrowsAsync<RuntimeProviderException>(() =>
             client.GenerateTextAsync("system", "user", configuration));
         stopwatch.Stop();
 
+        Assert.Equal("timeout", exception.IssueType);
         Assert.True(handler.CancellationObserved);
         Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(10), $"Configured timeout should cancel quickly; elapsed {stopwatch.Elapsed}.");
+    }
+
+    [Fact]
+    public void RuntimeConfigurationReadsAndBoundsTimeoutSeconds()
+    {
+        var configured = RuntimeConfiguration.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["AI_TIMEOUT_SECONDS"] = "45"
+        });
+        var invalid = RuntimeConfiguration.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["AI_TIMEOUT_SECONDS"] = "not-a-number"
+        });
+        var belowMinimum = RuntimeConfiguration.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["AI_TIMEOUT_SECONDS"] = "0"
+        });
+        var aboveMaximum = RuntimeConfiguration.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["AI_TIMEOUT_SECONDS"] = "9999"
+        });
+
+        Assert.Equal(45, configured.TimeoutSeconds);
+        Assert.Equal(RuntimeConfiguration.DefaultTimeoutSeconds, invalid.TimeoutSeconds);
+        Assert.Equal(RuntimeConfiguration.MinTimeoutSeconds, belowMinimum.TimeoutSeconds);
+        Assert.Equal(RuntimeConfiguration.MaxTimeoutSeconds, aboveMaximum.TimeoutSeconds);
+    }
+
+    [Fact]
+    public void OpenAICompatibleModelClientUsesConfiguredTimeoutForOwnedHttpClient()
+    {
+        var configuration = CreateMicrosoftRuntimeConfiguration(timeoutSeconds: 3);
+        var client = new OpenAICompatibleModelClient(configuration);
+        var field = typeof(OpenAICompatibleModelClient).GetField("_httpClient", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var httpClient = Assert.IsType<HttpClient>(field.GetValue(client));
+
+        Assert.Equal(TimeSpan.FromSeconds(3), httpClient.Timeout);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized, "auth_error")]
+    [InlineData(HttpStatusCode.Forbidden, "auth_error")]
+    [InlineData((HttpStatusCode)429, "rate_limit")]
+    [InlineData(HttpStatusCode.InternalServerError, "provider_error")]
+    public async Task MicrosoftRuntimeAgentInvokerConvertsHttpProviderErrorsToStructuredIssues(
+        HttpStatusCode statusCode,
+        string expectedIssueType)
+    {
+        var invoker = new MicrosoftRuntimeAgentInvoker(
+            CreateMicrosoftRuntimeConfiguration(),
+            new OpenAICompatibleModelClient(new HttpClient(new StaticResponseHandler(statusCode, """{"error":"provider failure"}"""))),
+            new InMemoryAuditLog(),
+            systemPrompt: "system");
+
+        var output = await invoker.InvokeAsync(
+            RuntimeAgentManifest.Create("chief-engineer", AgentVisibility.Public),
+            CreateAgentContext());
+
+        Assert.Equal(AgentOutputStatus.Failed, output.Status);
+        Assert.Contains(output.Issues, issue => issue.Contains(expectedIssueType, StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(output.Issues, issue => issue.Contains("test-key", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(output.Issues, issue => issue.Contains("Authorization", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task MicrosoftRuntimeAgentInvokerConvertsInvalidProviderJsonToStructuredIssue()
+    {
+        var invoker = new MicrosoftRuntimeAgentInvoker(
+            CreateMicrosoftRuntimeConfiguration(),
+            new OpenAICompatibleModelClient(new HttpClient(new StaticResponseHandler(HttpStatusCode.OK, """{"unexpected":true}"""))),
+            new InMemoryAuditLog(),
+            systemPrompt: "system");
+
+        var output = await invoker.InvokeAsync(
+            RuntimeAgentManifest.Create("chief-engineer", AgentVisibility.Public),
+            CreateAgentContext());
+
+        Assert.Equal(AgentOutputStatus.Failed, output.Status);
+        Assert.Contains(output.Issues, issue => issue.Contains("invalid_provider_response", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task MicrosoftRuntimeAgentInvokerConvertsTimeoutToStructuredIssue()
+    {
+        var invoker = new MicrosoftRuntimeAgentInvoker(
+            CreateMicrosoftRuntimeConfiguration(timeoutSeconds: 1),
+            new OpenAICompatibleModelClient(new HttpClient(new ThrowingHttpMessageHandler(new TaskCanceledException("request timed out")))),
+            new InMemoryAuditLog(),
+            systemPrompt: "system");
+
+        var output = await invoker.InvokeAsync(
+            RuntimeAgentManifest.Create("chief-engineer", AgentVisibility.Public),
+            CreateAgentContext());
+
+        Assert.Equal(AgentOutputStatus.Failed, output.Status);
+        Assert.Contains(output.Issues, issue => issue.Contains("timeout", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(output.Issues, issue => issue.Contains("test-key", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -180,6 +279,15 @@ public sealed class AgentRuntimeMicrosoftTests
             Assert.True(report.RuntimeTypesDoNotLeakToContracts);
             Assert.True(report.GatewayVisibilityStillValid);
             Assert.True(report.QualityGateStillEnabled);
+            Assert.True(report.RetryDelayActuallyAwaited);
+            Assert.True(report.ExponentialBackoffDelayRespected);
+            Assert.True(report.WorkflowRetryDelayCancellationSupported);
+            Assert.True(report.RuntimeTimeoutConfigSupported);
+            Assert.True(report.InvalidTimeoutFallsBackToDefault);
+            Assert.True(report.OpenAIClientTimeoutConfigured);
+            Assert.True(report.OpenAIClientCancellationSupported);
+            Assert.True(report.ProviderErrorsAreStructured);
+            Assert.True(report.ApiKeyNotLogged);
             Assert.Equal("Passed", report.FinalStatus);
         }
         finally
@@ -262,6 +370,41 @@ public sealed class AgentRuntimeMicrosoftTests
                 Content = new StringContent("""{"choices":[{"message":{"content":"ok"}}]}""")
             };
         }
+    }
+
+    private sealed class StaticResponseHandler : HttpMessageHandler
+    {
+        private readonly HttpStatusCode _statusCode;
+        private readonly string _body;
+
+        public StaticResponseHandler(HttpStatusCode statusCode, string body)
+        {
+            _statusCode = statusCode;
+            _body = body;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(_statusCode)
+            {
+                Content = new StringContent(_body)
+            });
+    }
+
+    private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Exception _exception;
+
+        public ThrowingHttpMessageHandler(Exception exception)
+        {
+            _exception = exception;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromException<HttpResponseMessage>(_exception);
     }
 
     private sealed class ThrowingRuntimeModelClient : IRuntimeModelClient

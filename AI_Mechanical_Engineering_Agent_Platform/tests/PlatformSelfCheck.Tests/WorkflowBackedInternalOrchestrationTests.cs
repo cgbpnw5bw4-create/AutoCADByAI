@@ -186,6 +186,77 @@ public sealed class WorkflowBackedInternalOrchestrationTests
     }
 
     [Fact]
+    public async Task SequentialWorkflowEngineCancelsRetryDelay()
+    {
+        var engine = new SequentialWorkflowEngine(new FixedDelayRetryPolicy(TimeSpan.FromSeconds(5)), new InMemoryAuditLog());
+        var attempts = 0;
+        var step = new WorkflowStep(
+            "cancel-retry-delay-step",
+            _ =>
+            {
+                attempts++;
+                return Task.FromResult(new WorkflowStepResult(
+                    "cancel-retry-delay-step",
+                    "cancel-retry-delay-step",
+                    WorkflowStepStatus.Rejected,
+                    "retryable rejection",
+                    GateDecision: new GateDecision("gate-retry", GateDecisionResult.Rejected, "retryable transient issue"),
+                    Issues: new[] { "retryable transient issue" }));
+            });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            engine.ExecuteAsync(
+                new[] { step },
+                new WorkflowContext("retry-delay-cancellation-test", new Dictionary<string, object?>()),
+                cts.Token));
+        Assert.Equal(1, attempts);
+    }
+
+    [Fact]
+    public async Task SequentialWorkflowEngineDoesNotWaitRetryDelayForFailedOrHumanApproval()
+    {
+        var delay = TimeSpan.FromSeconds(5);
+        var engine = new SequentialWorkflowEngine(new FixedDelayRetryPolicy(delay), new InMemoryAuditLog());
+
+        var failedStopwatch = Stopwatch.StartNew();
+        var failed = await engine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("failed-step", _ => Task.FromResult(new WorkflowStepResult(
+                    "failed-step",
+                    "failed-step",
+                    WorkflowStepStatus.Failed,
+                    "failed",
+                    GateDecision: new GateDecision("gate-failed", GateDecisionResult.Failed, "critical issue"),
+                    Issues: new[] { "critical issue" })))
+            },
+            new WorkflowContext("failed-no-delay-test", new Dictionary<string, object?>()));
+        failedStopwatch.Stop();
+
+        var humanStopwatch = Stopwatch.StartNew();
+        var human = await engine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("human-step", _ => Task.FromResult(new WorkflowStepResult(
+                    "human-step",
+                    "human-step",
+                    WorkflowStepStatus.WaitingForHumanApproval,
+                    "needs human",
+                    GateDecision: new GateDecision("gate-human", GateDecisionResult.NeedsHumanApproval, "manual approval required"),
+                    Issues: new[] { "needs_human_approval" })))
+            },
+            new WorkflowContext("human-no-delay-test", new Dictionary<string, object?>()));
+        humanStopwatch.Stop();
+
+        Assert.Equal(WorkflowStatus.Failed, failed.Status);
+        Assert.Equal(WorkflowStatus.WaitingForHumanApproval, human.Status);
+        Assert.True(failedStopwatch.Elapsed < TimeSpan.FromSeconds(1));
+        Assert.True(humanStopwatch.Elapsed < TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task CodeEngineeringAgentsAreInternalAndBlockedByGateway()
     {
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());

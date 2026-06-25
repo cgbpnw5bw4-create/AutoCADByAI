@@ -9,6 +9,11 @@ public sealed class MicrosoftAgentFrameworkModelClient : IRuntimeModelClient
         _fallbackClient = fallbackClient ?? new OpenAICompatibleModelClient();
     }
 
+    public MicrosoftAgentFrameworkModelClient(RuntimeConfiguration configuration)
+    {
+        _fallbackClient = new OpenAICompatibleModelClient(configuration);
+    }
+
     public Task<string> GenerateTextAsync(
         string systemPrompt,
         string userMessage,

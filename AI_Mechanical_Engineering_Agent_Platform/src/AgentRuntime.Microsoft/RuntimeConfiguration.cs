@@ -13,6 +13,12 @@ public sealed record RuntimeConfiguration(
     string? FallbackReason,
     bool StrictSmokeTest)
 {
+    public const int DefaultTimeoutSeconds = 60;
+
+    public const int MinTimeoutSeconds = 1;
+
+    public const int MaxTimeoutSeconds = 600;
+
     public static RuntimeConfiguration FromEnvironment() =>
         FromEnvironment(Environment.GetEnvironmentVariables()
             .Keys
@@ -29,9 +35,7 @@ public sealed record RuntimeConfiguration(
         double? temperature = double.TryParse(Get(environment, "AI_TEMPERATURE"), out var parsedTemperature)
             ? parsedTemperature
             : null;
-        var timeoutSeconds = int.TryParse(Get(environment, "AI_TIMEOUT_SECONDS"), out var parsedTimeout)
-            ? parsedTimeout
-            : 30;
+        var timeoutSeconds = ParseTimeoutSeconds(Get(environment, "AI_TIMEOUT_SECONDS"));
         var strictSmokeTest = string.Equals(Get(environment, "AI_RUNTIME_STRICT_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
         var missingRuntimeConfiguration =
@@ -47,7 +51,7 @@ public sealed record RuntimeConfiguration(
             apiKey,
             baseUrl,
             temperature,
-            Math.Max(1, timeoutSeconds),
+            timeoutSeconds,
             missingRuntimeConfiguration,
             missingRuntimeConfiguration ? "Missing required runtime credential or provider/model environment variable." : null,
             strictSmokeTest);
@@ -60,6 +64,14 @@ public sealed record RuntimeConfiguration(
         Enum.TryParse<AgentRuntimeMode>(value, ignoreCase: true, out var mode)
             ? mode
             : AgentRuntimeMode.Mock;
+
+    public static int NormalizeTimeoutSeconds(int timeoutSeconds) =>
+        Math.Clamp(timeoutSeconds, MinTimeoutSeconds, MaxTimeoutSeconds);
+
+    private static int ParseTimeoutSeconds(string? value) =>
+        int.TryParse(value, out var parsedTimeout)
+            ? NormalizeTimeoutSeconds(parsedTimeout)
+            : DefaultTimeoutSeconds;
 
     private static string? EmptyToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;

@@ -88,6 +88,18 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
             _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_completed", "Chief engineer real runtime returned mapped AgentOutput.");
             return output;
         }
+        catch (RuntimeProviderException ex)
+        {
+            _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_failed", ex.IssueType);
+            return new AgentOutput(
+                AgentOutputStatus.Failed,
+                "Chief engineer real runtime failed before platform orchestration.",
+                Array.Empty<ArtifactInfo>(),
+                new[] { $"{ex.IssueType}: {ex.Message}" },
+                new[] { "Runtime provider failure was converted to structured AgentOutput without exposing credentials." },
+                null,
+                RuntimeMetadata: RuntimeMetadata.MockMicrosoft(_configuration.Provider, _configuration.Model, ex.IssueType));
+        }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or InvalidOperationException or JsonException or System.Net.Sockets.SocketException or System.IO.IOException)
         {
             _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_failed", ex.GetType().Name);
@@ -95,7 +107,7 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
                 AgentOutputStatus.Failed,
                 "Chief engineer real runtime failed before platform orchestration.",
                 Array.Empty<ArtifactInfo>(),
-                new[] { $"runtime_error: {ex.GetType().Name}: {ex.Message}" },
+                new[] { $"runtime_error: {ex.GetType().Name}" },
                 new[] { "Runtime failure was converted to structured AgentOutput without exposing credentials." },
                 null,
                 RuntimeMetadata: RuntimeMetadata.MockMicrosoft(_configuration.Provider, _configuration.Model, ex.GetType().Name));

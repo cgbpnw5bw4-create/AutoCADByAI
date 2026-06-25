@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
+using System.Diagnostics;
 using DomainSchemas;
 using QualityGate;
 
@@ -122,6 +123,7 @@ public static class PlatformSelfCheckRunner
             platform.AuditLog.GetEntries().Any(entry => entry.Action == "internal_agent_invoked" && entry.Actor == agentId));
         var runtimeChecks = await RunRuntimeSelfChecks(root, platform, gatewayVisibleAgents, internalAgentsHiddenFromGateway, gatewayQualityGateEnabled, qualityGateAfterCollaboration);
         var realRuntimeChecks = await RunRealRuntimeSelfChecks(root, platform);
+        var reliabilityChecks = await RunRuntimeReliabilityChecks(root);
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
@@ -178,6 +180,15 @@ public static class PlatformSelfCheckRunner
             realRuntimeChecks.QualityGateAfterRealRuntime &&
             realRuntimeChecks.GatewayResponseContainsRuntimeMetadata &&
             (!realRuntimeChecks.StrictSmokeTest || realRuntimeChecks.MicrosoftRuntimeSmokeTestPassed) &&
+            reliabilityChecks.RetryDelayActuallyAwaited &&
+            reliabilityChecks.ExponentialBackoffDelayRespected &&
+            reliabilityChecks.WorkflowRetryDelayCancellationSupported &&
+            reliabilityChecks.RuntimeTimeoutConfigSupported &&
+            reliabilityChecks.InvalidTimeoutFallsBackToDefault &&
+            reliabilityChecks.OpenAIClientTimeoutConfigured &&
+            reliabilityChecks.OpenAIClientCancellationSupported &&
+            reliabilityChecks.ProviderErrorsAreStructured &&
+            reliabilityChecks.ApiKeyNotLogged &&
             workflowQualityChecks.WorkflowQualityLoopEnabled &&
             workflowQualityChecks.WorkflowPassedScenario == "Passed" &&
             workflowQualityChecks.WorkflowRejectedRetryPassedScenario == "Passed" &&
@@ -283,6 +294,15 @@ public static class PlatformSelfCheckRunner
             realRuntimeChecks.MicrosoftRuntimeSmokeTestAttempted,
             realRuntimeChecks.MicrosoftRuntimeSmokeTestPassed,
             realRuntimeChecks.MicrosoftRuntimeSmokeTestError,
+            reliabilityChecks.RetryDelayActuallyAwaited,
+            reliabilityChecks.ExponentialBackoffDelayRespected,
+            reliabilityChecks.WorkflowRetryDelayCancellationSupported,
+            reliabilityChecks.RuntimeTimeoutConfigSupported,
+            reliabilityChecks.InvalidTimeoutFallsBackToDefault,
+            reliabilityChecks.OpenAIClientTimeoutConfigured,
+            reliabilityChecks.OpenAIClientCancellationSupported,
+            reliabilityChecks.ProviderErrorsAreStructured,
+            reliabilityChecks.ApiKeyNotLogged,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -830,6 +850,165 @@ public static class PlatformSelfCheckRunner
         }
     }
 
+    private static async Task<RuntimeReliabilitySelfCheckResult> RunRuntimeReliabilityChecks(string projectRoot)
+    {
+        var retryDelay = TimeSpan.FromMilliseconds(5);
+        var retryAuditLog = new InMemoryAuditLog();
+        var retryAttempts = 0;
+        var retryEngine = new SequentialWorkflowEngine(
+            new ExponentialBackoffRetryPolicy(maxRetries: 1, baseDelayMs: (int)retryDelay.TotalMilliseconds, maxDelayMs: 10, multiplier: 2),
+            retryAuditLog);
+        var retryStopwatch = Stopwatch.StartNew();
+        var retryResult = await retryEngine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("v08-retry-delay", _ =>
+                {
+                    retryAttempts++;
+                    var decision = retryAttempts == 1
+                        ? new GateDecision("gate-v08-retry", GateDecisionResult.Rejected, "retryable transient issue")
+                        : new GateDecision("gate-v08-pass", GateDecisionResult.Passed, "ok");
+                    return Task.FromResult(new WorkflowStepResult(
+                        "v08-retry-delay",
+                        "v08-retry-delay",
+                        retryAttempts == 1 ? WorkflowStepStatus.Rejected : WorkflowStepStatus.Passed,
+                        retryAttempts == 1 ? "retryable rejection" : "passed",
+                        GateDecision: decision,
+                        Issues: retryAttempts == 1 ? new[] { "retryable transient issue" } : Array.Empty<string>()));
+                })
+            },
+            new WorkflowContext("v08-retry-delay-check", new Dictionary<string, object?>()));
+        retryStopwatch.Stop();
+        var retryDelayActuallyAwaited =
+            retryResult.Status == WorkflowStatus.Passed &&
+            retryAttempts == 2 &&
+            retryStopwatch.Elapsed >= retryDelay &&
+            retryAuditLog.GetEntries().Any(entry =>
+                entry.Action == "workflow_step_retrying" &&
+                entry.Message.Contains("delay", StringComparison.OrdinalIgnoreCase));
+
+        IRetryPolicy backoffPolicy = new ExponentialBackoffRetryPolicy(maxRetries: 2, baseDelayMs: 1, maxDelayMs: 5, multiplier: 2);
+        var exponentialBackoffDelayRespected =
+            backoffPolicy.GetDelay(0) == TimeSpan.FromMilliseconds(1) &&
+            backoffPolicy.GetDelay(1) == TimeSpan.FromMilliseconds(2) &&
+            backoffPolicy.GetDelay(2) == TimeSpan.FromMilliseconds(4) &&
+            backoffPolicy.GetDelay(10) == TimeSpan.FromMilliseconds(5);
+
+        var cancellationSupported = false;
+        try
+        {
+            var cancellationEngine = new SequentialWorkflowEngine(
+                new ExponentialBackoffRetryPolicy(maxRetries: 1, baseDelayMs: 5_000, maxDelayMs: 5_000, multiplier: 1),
+                new InMemoryAuditLog());
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(20));
+            await cancellationEngine.ExecuteAsync(
+                new[]
+                {
+                    new WorkflowStep("v08-cancel-delay", _ => Task.FromResult(new WorkflowStepResult(
+                        "v08-cancel-delay",
+                        "v08-cancel-delay",
+                        WorkflowStepStatus.Rejected,
+                        "retryable rejection",
+                        GateDecision: new GateDecision("gate-v08-cancel", GateDecisionResult.Rejected, "retryable transient issue"),
+                        Issues: new[] { "retryable transient issue" })))
+                },
+                new WorkflowContext("v08-cancel-delay-check", new Dictionary<string, object?>()),
+                cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            cancellationSupported = true;
+        }
+
+        var runtimeTimeoutConfigSupported = false;
+        var invalidTimeoutFallsBackToDefault = false;
+        var openAIClientTimeoutConfigured = false;
+        var openAIClientCancellationSupported = false;
+        var providerErrorsAreStructured = false;
+        var apiKeyNotLogged = false;
+
+        try
+        {
+            var runtimeAssembly = LoadRuntimeAssembly(projectRoot);
+            var configType = runtimeAssembly.GetType("AgentRuntime.Microsoft.RuntimeConfiguration", throwOnError: true)!;
+            var openAIClientType = runtimeAssembly.GetType("AgentRuntime.Microsoft.OpenAICompatibleModelClient", throwOnError: true)!;
+            var providerExceptionType = runtimeAssembly.GetType("AgentRuntime.Microsoft.RuntimeProviderException", throwOnError: true)!;
+            var fromEnvironment = configType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(method => method.Name == "FromEnvironment" && method.GetParameters().Length == 1);
+
+            var timeoutConfig = InvokeRuntimeConfigurationFromEnvironment(
+                fromEnvironment,
+                new Dictionary<string, string?> { ["AI_TIMEOUT_SECONDS"] = "7" });
+            var invalidTimeoutConfig = InvokeRuntimeConfigurationFromEnvironment(
+                fromEnvironment,
+                new Dictionary<string, string?> { ["AI_TIMEOUT_SECONDS"] = "invalid" });
+            var excessiveTimeoutConfig = InvokeRuntimeConfigurationFromEnvironment(
+                fromEnvironment,
+                new Dictionary<string, string?> { ["AI_TIMEOUT_SECONDS"] = "9999" });
+
+            var defaultTimeout = GetIntConstant(configType, "DefaultTimeoutSeconds");
+            var maxTimeout = GetIntConstant(configType, "MaxTimeoutSeconds");
+            runtimeTimeoutConfigSupported =
+                GetInt(timeoutConfig, "TimeoutSeconds", 0) == 7 &&
+                GetInt(excessiveTimeoutConfig, "TimeoutSeconds", 0) == maxTimeout;
+            invalidTimeoutFallsBackToDefault = GetInt(invalidTimeoutConfig, "TimeoutSeconds", 0) == defaultTimeout;
+
+            var configuredClient = Activator.CreateInstance(openAIClientType, new[] { timeoutConfig })
+                ?? throw new InvalidOperationException("Could not create OpenAICompatibleModelClient.");
+            var httpClientField = openAIClientType.GetField("_httpClient", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?? throw new MissingFieldException(openAIClientType.FullName, "_httpClient");
+            var httpClient = httpClientField.GetValue(configuredClient) as HttpClient;
+            openAIClientTimeoutConfigured = httpClient?.Timeout == TimeSpan.FromSeconds(7);
+
+            var generateTextAsync = openAIClientType.GetMethod("GenerateTextAsync")
+                ?? throw new MissingMethodException("GenerateTextAsync was not found.");
+            var parameters = generateTextAsync.GetParameters();
+            var openAIClientSource = File.ReadAllText(Path.Combine(projectRoot, "src", "AgentRuntime.Microsoft", "OpenAICompatibleModelClient.cs"));
+            openAIClientCancellationSupported =
+                parameters.LastOrDefault()?.ParameterType == typeof(CancellationToken) &&
+                openAIClientSource.Contains("SendAsync(request, HttpCompletionOption.ResponseHeadersRead, effectiveCancellationToken)", StringComparison.Ordinal);
+
+            providerErrorsAreStructured =
+                providerExceptionType.GetProperty("IssueType") is not null &&
+                openAIClientSource.Contains("auth_error", StringComparison.Ordinal) &&
+                openAIClientSource.Contains("rate_limit", StringComparison.Ordinal) &&
+                openAIClientSource.Contains("provider_error", StringComparison.Ordinal) &&
+                openAIClientSource.Contains("timeout", StringComparison.Ordinal) &&
+                openAIClientSource.Contains("invalid_provider_response", StringComparison.Ordinal) &&
+                openAIClientSource.Contains("network_error", StringComparison.Ordinal);
+
+            var invokerSource = File.ReadAllText(Path.Combine(projectRoot, "src", "AgentRuntime.Microsoft", "MicrosoftRuntimeAgentInvoker.cs"));
+            apiKeyNotLogged =
+                !invokerSource.Contains("ApiKey", StringComparison.OrdinalIgnoreCase) &&
+                !invokerSource.Contains("Authorization", StringComparison.OrdinalIgnoreCase) &&
+                !openAIClientSource.Contains("ex.Message", StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException or MissingMethodException or MissingFieldException or InvalidOperationException or TargetInvocationException)
+        {
+            return new RuntimeReliabilitySelfCheckResult(
+                retryDelayActuallyAwaited,
+                exponentialBackoffDelayRespected,
+                cancellationSupported,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false);
+        }
+
+        return new RuntimeReliabilitySelfCheckResult(
+            retryDelayActuallyAwaited,
+            exponentialBackoffDelayRespected,
+            cancellationSupported,
+            runtimeTimeoutConfigSupported,
+            invalidTimeoutFallsBackToDefault,
+            openAIClientTimeoutConfigured,
+            openAIClientCancellationSupported,
+            providerErrorsAreStructured,
+            apiKeyNotLogged);
+    }
+
     private static bool GatewayResponseContainsRuntimeMetadata(string projectRoot)
     {
         var loaded = AppDomain.CurrentDomain.GetAssemblies()
@@ -922,6 +1101,11 @@ public static class PlatformSelfCheckRunner
     private static int GetInt(object instance, string propertyName, int fallback) =>
         instance.GetType().GetProperty(propertyName)?.GetValue(instance) is int value ? value : fallback;
 
+    private static int GetIntConstant(Type type, string fieldName) =>
+        type.GetField(fieldName, BindingFlags.Public | BindingFlags.Static)?.GetValue(null) is int value
+            ? value
+            : throw new MissingFieldException(type.FullName, fieldName);
+
     private static async Task<RuntimeSelfCheckResult> RunRuntimeSelfChecks(
         string projectRoot,
         PlatformKernel platform,
@@ -996,7 +1180,8 @@ public static class PlatformSelfCheckRunner
                         Step("runtime-step-1", "runtime step 1"),
                         Step("runtime-step-2", "runtime step 2")
                     },
-                    new WorkflowContext("runtime-self-check", new Dictionary<string, object?>())
+                    new WorkflowContext("runtime-self-check", new Dictionary<string, object?>()),
+                    CancellationToken.None
                 })!;
             var workflowResult = await workflowTask;
             microsoftWorkflowRuntimeCheck =
@@ -1116,6 +1301,17 @@ public static class PlatformSelfCheckRunner
         bool MicrosoftRuntimeSmokeTestPassed,
         string? MicrosoftRuntimeSmokeTestError,
         bool StrictSmokeTest);
+
+    private sealed record RuntimeReliabilitySelfCheckResult(
+        bool RetryDelayActuallyAwaited,
+        bool ExponentialBackoffDelayRespected,
+        bool WorkflowRetryDelayCancellationSupported,
+        bool RuntimeTimeoutConfigSupported,
+        bool InvalidTimeoutFallsBackToDefault,
+        bool OpenAIClientTimeoutConfigured,
+        bool OpenAIClientCancellationSupported,
+        bool ProviderErrorsAreStructured,
+        bool ApiKeyNotLogged);
 
     private sealed record WorkflowQualityLoopSelfCheckResult(
         bool WorkflowQualityLoopEnabled,

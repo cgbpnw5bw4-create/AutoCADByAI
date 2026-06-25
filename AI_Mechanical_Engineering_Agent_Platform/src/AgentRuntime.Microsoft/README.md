@@ -52,6 +52,19 @@ This project references `Microsoft.Agents.AI`, but provider credentials, model n
 
 `AI_AGENT_RUNTIME_MODE` defaults to `Mock`. If `AI_API_KEY`, `AI_PROVIDER` or `AI_MODEL` is missing while Microsoft mode is requested, the runtime falls back to Mock and records the fallback without logging secrets.
 
+`AI_TIMEOUT_SECONDS` controls the model request timeout. The default is 60 seconds; invalid values fall back to the default; values below 1 second or above 600 seconds are clamped. When `OpenAICompatibleModelClient` creates its own `HttpClient`, it sets `HttpClient.Timeout` from the runtime configuration. When an external `HttpClient` is injected, the caller's existing `Timeout` is not overwritten, but each request still receives a linked cancellation token derived from `AI_TIMEOUT_SECONDS`.
+
+Provider failures are converted to structured runtime issues before returning to platform code:
+
+- HTTP 401 / 403 -> `auth_error`
+- HTTP 429 -> `rate_limit`
+- HTTP 5xx and other non-success provider responses -> `provider_error`
+- request timeout -> `timeout`
+- invalid OpenAI-compatible JSON -> `invalid_provider_response`
+- transport failures -> `network_error`
+
+API keys are never written to code, appsettings, AuditLog messages, gateway responses, or runtime failure issues.
+
 The real chief engineer runtime can understand the request and produce coordination advice. That advice is not authoritative execution. The wrapped chief engineer still runs the platform `ChiefEngineerOrchestrator`, which uses `SequentialWorkflowEngine`, Internal Agent workflow steps and QualityGate.
 
 ## Components
@@ -62,6 +75,7 @@ The real chief engineer runtime can understand the request and produce coordinat
 - `MicrosoftAgentOutputMapper`: converts JSON or text model output into platform `AgentOutput` and blocks permission escalation or direct Worker calls.
 - `RuntimeConfiguration`: reads runtime mode and provider settings from environment variables.
 - `IRuntimeModelClient`: internal provider abstraction for Microsoft Agent Framework and OpenAI-compatible fallback clients.
+- `OpenAICompatibleModelClient`: performs OpenAI-compatible chat completion requests with configured timeout, cancellation support and structured provider errors.
 - `MicrosoftWorkflowRuntime`: wraps sequential workflow execution using platform workflow contracts.
 - `ToolBridge`: maps future runtime tool calls into platform `Skill` or `Worker` names and converts outputs into runtime messages.
 
@@ -79,3 +93,5 @@ Real LLM output must not:
 - expose Internal Agents through Gateway
 - skip WorkflowEngine
 - skip QualityGate
+
+Runtime failures also do not bypass QualityGate. If a real runtime call fails, the failure is returned as platform `AgentOutput` issues and the existing Gateway and workflow gate paths remain authoritative.

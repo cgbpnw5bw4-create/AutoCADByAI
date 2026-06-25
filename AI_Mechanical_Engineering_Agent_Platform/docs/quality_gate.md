@@ -24,3 +24,15 @@ Basic flow:
 3. Gatekeeper applies `GateDecisionPolicy`.
 4. If rejected, RejectReportBuilder creates `RejectReport`.
 5. WorkflowEngine continues, returns to a previous step, fails, or waits for human approval based on the decision.
+
+## Retry Delay Semantics
+
+`RetryPolicy` does more than decide whether a rejected step can retry. It also owns the retry delay through `GetDelay(retryCount)`.
+
+- `DefaultRetryPolicy` may return `TimeSpan.Zero`; this means retry immediately.
+- `ExponentialBackoffRetryPolicy` returns increasing delays based on `BaseDelayMs`, `Multiplier`, and `MaxDelayMs`.
+- `SequentialWorkflowEngine` must actually await a positive retry delay before running the next attempt.
+- Retry delay awaits must use `CancellationToken`, so a workflow can be cancelled while waiting.
+- The delay is recorded in AuditLog with the retry action.
+
+The delay applies only to retryable `Rejected` decisions. `Failed` and `NeedsHumanApproval` are terminal automatic-flow decisions and must not wait for retry delay or retry the step.

@@ -25,6 +25,7 @@ public sealed class MicrosoftWorkflowRuntime
 
     public Task<WorkflowExecutionResult> ExecuteAsync(
         IEnumerable<WorkflowStep> steps,
-        WorkflowContext context) =>
-        _workflowEngine.ExecuteAsync(steps, context);
+        WorkflowContext context,
+        CancellationToken cancellationToken = default) =>
+        _workflowEngine.ExecuteAsync(steps, context, cancellationToken);
 }

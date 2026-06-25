@@ -1,4 +1,5 @@
 using DomainSchemas;
+using System.Text.Json.Serialization;
 
 namespace PlatformCore;
 
@@ -89,4 +90,13 @@ public sealed record PlatformSelfCheckReport(
     bool MicrosoftRuntimeSmokeTestAttempted,
     bool MicrosoftRuntimeSmokeTestPassed,
     string? MicrosoftRuntimeSmokeTestError,
+    bool RetryDelayActuallyAwaited,
+    bool ExponentialBackoffDelayRespected,
+    bool WorkflowRetryDelayCancellationSupported,
+    bool RuntimeTimeoutConfigSupported,
+    bool InvalidTimeoutFallsBackToDefault,
+    [property: JsonPropertyName("openai_client_timeout_configured")] bool OpenAIClientTimeoutConfigured,
+    [property: JsonPropertyName("openai_client_cancellation_supported")] bool OpenAIClientCancellationSupported,
+    bool ProviderErrorsAreStructured,
+    bool ApiKeyNotLogged,
     string FinalStatus);
