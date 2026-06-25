@@ -1,6 +1,8 @@
 using AgentContracts;
 using ModuleContracts;
 using PlatformCore.Modules.CADModeling.Agents;
+using PlatformCore.Modules.CodeEngineering.Agents;
+using PlatformCore.Modules.CodeReview.Agents;
 using PlatformCore.Modules.DrawingGeneration.Agents;
 using PlatformCore.Modules.DrawingReview.Agents;
 using PlatformCore.Modules.ErrorDiagnosis.Agents;
@@ -72,6 +74,8 @@ public static class PlatformBootstrapper
                          "cad-modeler",
                          "drawing-engineer",
                          "drawing-reviewer",
+                         "code-engineer",
+                         "code-reviewer",
                          "error-diagnosis"
                      })
             {
@@ -86,13 +90,16 @@ public static class PlatformBootstrapper
         var chiefEngineerOrchestrator = new ChiefEngineerOrchestrator(
             internalAgentRouter,
             platform.AgentRegistry,
-            platform.AuditLog);
+            platform.AuditLog,
+            platform.WorkflowEngine);
 
         platform.AgentRegistry.Register(new ChiefEngineerAgent(chiefEngineerOrchestrator));
         platform.AgentRegistry.Register(new MechanicalDesignerAgent());
         platform.AgentRegistry.Register(new CadModelerAgent());
         platform.AgentRegistry.Register(new DrawingEngineerAgent());
         platform.AgentRegistry.Register(new DrawingReviewerAgent());
+        platform.AgentRegistry.Register(new CodeEngineerAgent());
+        platform.AgentRegistry.Register(new CodeReviewerAgent());
         platform.AgentRegistry.Register(new ErrorDiagnosisAgent());
 
         platform.AuditLog.Record("agent", "bootstrapper", "registered", "Registered module agent implementations.");

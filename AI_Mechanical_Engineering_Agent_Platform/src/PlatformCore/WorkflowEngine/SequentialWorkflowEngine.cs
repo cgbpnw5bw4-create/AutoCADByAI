@@ -5,7 +5,7 @@ namespace PlatformCore;
 
 public sealed class SequentialWorkflowEngine
 {
-    private readonly RetryPolicy _retryPolicy;
+    private readonly IRetryPolicy _retryPolicy;
     private readonly InMemoryAuditLog _auditLog;
     private readonly RejectReportBuilder _rejectReportBuilder;
 
@@ -14,12 +14,12 @@ public sealed class SequentialWorkflowEngine
     {
     }
 
-    public SequentialWorkflowEngine(RetryPolicy retryPolicy)
+    public SequentialWorkflowEngine(IRetryPolicy retryPolicy)
         : this(retryPolicy, new InMemoryAuditLog())
     {
     }
 
-    public SequentialWorkflowEngine(RetryPolicy retryPolicy, InMemoryAuditLog auditLog)
+    public SequentialWorkflowEngine(IRetryPolicy retryPolicy, InMemoryAuditLog auditLog)
     {
         _retryPolicy = retryPolicy;
         _auditLog = auditLog;
@@ -49,6 +49,7 @@ public sealed class SequentialWorkflowEngine
                 var rawResult = await step.ExecuteAsync(context);
                 var decision = rawResult.GateDecision ?? PassedDecision(step);
                 var issues = ResolveIssues(rawResult);
+                var typedIssues = issues.Select(Issue.FromText).ToArray();
 
                 switch (decision.Result)
                 {
@@ -60,11 +61,12 @@ public sealed class SequentialWorkflowEngine
                         break;
                     }
 
-                    case GateDecisionResult.Rejected when _retryPolicy.ShouldRetry(decision, retryCount, issues):
+                    case GateDecisionResult.Rejected when _retryPolicy.ShouldRetry(decision, retryCount, typedIssues):
                     {
                         var retrying = Normalize(rawResult, step, WorkflowStepStatus.Retrying, decision, retryCount, maxRetries, step.StepId ?? step.Name);
                         results.Add(retrying);
-                        _auditLog.Record("workflow", retrying.StepId, "workflow_step_retrying", $"Workflow step '{retrying.StepId}' rejected; retry {retryCount + 1} of {maxRetries} will run.");
+                        var retryDelay = _retryPolicy.GetDelay(retryCount);
+                        _auditLog.Record("workflow", retrying.StepId, "workflow_step_retrying", $"Workflow step '{retrying.StepId}' rejected; retry {retryCount + 1} of {maxRetries} will run after calculated delay {retryDelay.TotalMilliseconds:0}ms.");
                         retryCount++;
                         continue;
                     }
@@ -79,6 +81,7 @@ public sealed class SequentialWorkflowEngine
                             ReviewReport = review
                         };
                         results.Add(rejected);
+                        var failureReport = BuildFailureReport(workflowId, rejected, decision);
                         _auditLog.Record("workflow", rejected.StepId, "workflow_step_rejected", $"Workflow step '{rejected.StepId}' exceeded retry policy.");
 
                         return new WorkflowExecutionResult(
@@ -86,6 +89,7 @@ public sealed class SequentialWorkflowEngine
                             WorkflowStatus.Rejected,
                             results,
                             decision,
+                            FailureReport: failureReport,
                             AuditLogs: CurrentAuditLogs(auditStartIndex),
                             FinalMessage: rejectReport.Message);
                     }

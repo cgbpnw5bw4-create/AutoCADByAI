@@ -20,6 +20,8 @@ public sealed record RuntimeAgentManifest(
             "cad-modeler" => "CAD建模工程师",
             "drawing-engineer" => "工程图工程师",
             "drawing-reviewer" => "出图复审工程师",
+            "code-engineer" => "代码工程师",
+            "code-reviewer" => "代码复审工程师",
             "error-diagnosis" => "异常诊断工程师",
             _ => id
         };
@@ -30,6 +32,8 @@ public sealed record RuntimeAgentManifest(
             "cad-modeler" => "建模规划、BuildSpec 生成、Worker 调用规划",
             "drawing-engineer" => "工程图生成规划",
             "drawing-reviewer" => "PDF、尺寸、视图、标题栏复审",
+            "code-engineer" => "CAD API / SDK 自动化代码开发规划",
+            "code-reviewer" => "代码安全性、稳定性、可维护性审查",
             "error-diagnosis" => "失败原因分析和修复建议",
             _ => "Runtime adapter agent"
         };

@@ -17,6 +17,21 @@ public sealed record AgentOutputSnapshot(
     string? NextRecommendedAgentId,
     ReviewReport? ReviewReport);
 
+public sealed record InternalWorkflowStepSummary(
+    string StepId,
+    string StepName,
+    string AgentId,
+    string Status,
+    GateDecision? GateDecision,
+    int RetryCount,
+    int MaxRetries,
+    IReadOnlyList<string> Issues,
+    IReadOnlyList<string> Logs);
+
+public sealed record RetrySummary(
+    int TotalRetries,
+    IReadOnlyList<string> RetriedStepIds);
+
 public sealed record InternalCollaborationReport(
     string ConversationId,
     string RootAgentId,
@@ -25,4 +40,11 @@ public sealed record InternalCollaborationReport(
     IReadOnlyList<string> Issues,
     IReadOnlyList<ArtifactInfo> Artifacts,
     string Summary,
-    string FinalRecommendation);
+    string FinalRecommendation,
+    string? WorkflowId = null,
+    string WorkflowStatus = "NotStarted",
+    IReadOnlyList<InternalWorkflowStepSummary>? StepResults = null,
+    GateDecision? FinalGateDecision = null,
+    RetrySummary? RetrySummary = null,
+    FailureReport? FailureReport = null,
+    HumanApprovalRequest? HumanApprovalRequest = null);

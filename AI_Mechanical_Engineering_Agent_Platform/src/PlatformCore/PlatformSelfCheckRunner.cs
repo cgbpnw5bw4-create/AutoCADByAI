@@ -122,6 +122,7 @@ public static class PlatformSelfCheckRunner
             platform.AuditLog.GetEntries().Any(entry => entry.Action == "internal_agent_invoked" && entry.Actor == agentId));
         var runtimeChecks = await RunRuntimeSelfChecks(root, platform, gatewayVisibleAgents, internalAgentsHiddenFromGateway, gatewayQualityGateEnabled, qualityGateAfterCollaboration);
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
+        var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -137,6 +138,8 @@ public static class PlatformSelfCheckRunner
             platform.AgentRegistry.GetInternalAgents().Any(agent => agent.Id == "cad-modeler") &&
             platform.AgentRegistry.GetInternalAgents().Any(agent => agent.Id == "drawing-engineer") &&
             platform.AgentRegistry.GetInternalAgents().Any(agent => agent.Id == "drawing-reviewer") &&
+            platform.AgentRegistry.GetInternalAgents().Any(agent => agent.Id == "code-engineer") &&
+            platform.AgentRegistry.GetInternalAgents().Any(agent => agent.Id == "code-reviewer") &&
             platform.AgentRegistry.GetInternalAgents().Any(agent => agent.Id == "error-diagnosis") &&
             platform.WorkerRegistry.GetAll().Any(worker => worker.Name == "FakeSolidWorksWorker") &&
             platform.WorkerRegistry.GetAll().Any(worker => worker.Name == "FakeAutoCADWorker") &&
@@ -170,6 +173,20 @@ public static class PlatformSelfCheckRunner
             workflowQualityChecks.HumanApprovalRequestGenerated &&
             moduleAgentsRegistered &&
             placeholderAgentIsFallbackOnly &&
+            internalWorkflowChecks.ChiefEngineerInternalOrchestrationUsesWorkflowEngine &&
+            internalWorkflowChecks.InternalAgentWorkflowStepsCreated &&
+            internalWorkflowChecks.QualityGateAfterEachInternalStep &&
+            internalWorkflowChecks.InternalWorkflowPassedScenario == "Passed" &&
+            internalWorkflowChecks.InternalWorkflowRetryThenPassedScenario == "Passed" &&
+            internalWorkflowChecks.InternalWorkflowMaxRetriesExceededScenario == "Passed" &&
+            internalWorkflowChecks.InternalWorkflowFailedScenario == "Passed" &&
+            internalWorkflowChecks.InternalWorkflowHumanApprovalScenario == "Passed" &&
+            internalWorkflowChecks.RetryPolicyInterfaceEnabled &&
+            internalWorkflowChecks.ExponentialBackoffPolicyAvailable &&
+            internalWorkflowChecks.CodeEngineerAgentRegistered &&
+            internalWorkflowChecks.CodeReviewerAgentRegistered &&
+            internalWorkflowChecks.CodeAgentsAreInternal &&
+            internalWorkflowChecks.GatewayBlocksCodeAgents &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -221,6 +238,20 @@ public static class PlatformSelfCheckRunner
             workflowQualityChecks.HumanApprovalRequestGenerated,
             moduleAgentsRegistered,
             placeholderAgentIsFallbackOnly,
+            internalWorkflowChecks.ChiefEngineerInternalOrchestrationUsesWorkflowEngine,
+            internalWorkflowChecks.InternalAgentWorkflowStepsCreated,
+            internalWorkflowChecks.QualityGateAfterEachInternalStep,
+            internalWorkflowChecks.InternalWorkflowPassedScenario,
+            internalWorkflowChecks.InternalWorkflowRetryThenPassedScenario,
+            internalWorkflowChecks.InternalWorkflowMaxRetriesExceededScenario,
+            internalWorkflowChecks.InternalWorkflowFailedScenario,
+            internalWorkflowChecks.InternalWorkflowHumanApprovalScenario,
+            internalWorkflowChecks.RetryPolicyInterfaceEnabled,
+            internalWorkflowChecks.ExponentialBackoffPolicyAvailable,
+            internalWorkflowChecks.CodeEngineerAgentRegistered,
+            internalWorkflowChecks.CodeReviewerAgentRegistered,
+            internalWorkflowChecks.CodeAgentsAreInternal,
+            internalWorkflowChecks.GatewayBlocksCodeAgents,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -300,18 +331,24 @@ public static class PlatformSelfCheckRunner
                StorageContractFiles.All(file => File.Exists(Path.Combine(storageRoot, file)));
     }
 
-    private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform)
+    private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform, string? testScenario = null)
     {
         var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")
             ?? throw new InvalidOperationException("chief-engineer is not registered.");
+        var inputContext = new Dictionary<string, string> { ["project_id"] = "self-check" };
+        if (testScenario is not null)
+        {
+            inputContext["test_scenario"] = testScenario;
+        }
+
         var input = new AgentContracts.AgentInput(
             "self-check",
             "self-check",
-            "self-check-conversation",
+            testScenario is null ? "self-check-conversation" : $"self-check-{testScenario}",
             "self-check",
             "Run internal routing self-check.",
             Array.Empty<string>(),
-            new Dictionary<string, string> { ["project_id"] = "self-check" });
+            inputContext);
         var context = new AgentContracts.AgentContext(
             $"task-{Guid.NewGuid():N}",
             input,
@@ -319,6 +356,112 @@ public static class PlatformSelfCheckRunner
             DateTimeOffset.UtcNow);
 
         return await chiefEngineer.ExecuteAsync(context);
+    }
+
+    private static async Task<WorkflowBackedInternalSelfCheckResult> RunWorkflowBackedInternalOrchestrationChecks(
+        string projectRoot,
+        PlatformKernel platform,
+        AgentContracts.AgentOutput chiefEngineerOutput,
+        InternalCollaborationReport? collaborationReport,
+        IReadOnlyList<AgentDirectoryEntry> gatewayVisibleAgents)
+    {
+        var chiefEngineerInternalOrchestrationUsesWorkflowEngine =
+            collaborationReport?.WorkflowId is not null &&
+            string.Equals(collaborationReport.WorkflowStatus, WorkflowStatus.Passed.ToString(), StringComparison.OrdinalIgnoreCase) &&
+            platform.AuditLog.GetEntries().Any(entry => entry.Action == "workflow_started") &&
+            chiefEngineerOutput.Logs.Any(log => log.Contains("WorkflowEngine", StringComparison.OrdinalIgnoreCase));
+        var internalAgentWorkflowStepsCreated =
+            collaborationReport?.StepResults?.Count == ExpectedInternalRoute.Length &&
+            ExpectedInternalRoute.All(agentId =>
+                collaborationReport.StepResults.Any(step => string.Equals(step.AgentId, agentId, StringComparison.OrdinalIgnoreCase)));
+        var qualityGateAfterEachInternalStep =
+            collaborationReport?.StepResults?.All(step => step.GateDecision is not null) == true &&
+            platform.AuditLog.GetEntries().Count(entry => entry.Action == "quality_gate_after_internal_step") >= ExpectedInternalRoute.Length;
+
+        var passedScenario = collaborationReport?.WorkflowStatus == WorkflowStatus.Passed.ToString()
+            ? "Passed"
+            : "Failed";
+        var retryOutput = await InvokeChiefEngineerForSelfCheck(PlatformBootstrapper.CreateDefault(projectRoot), "mechanical_retry_then_passed");
+        var retryReport = retryOutput.InternalCollaborationReport;
+        var retryScenario =
+            retryReport?.WorkflowStatus == WorkflowStatus.Passed.ToString() &&
+            retryReport.RetrySummary?.TotalRetries > 0 &&
+            retryReport.StepResults?.Any(step => step.Status == WorkflowStepStatus.Retrying.ToString()) == true
+                ? "Passed"
+                : "Failed";
+
+        var maxRetryOutput = await InvokeChiefEngineerForSelfCheck(PlatformBootstrapper.CreateDefault(projectRoot), "cad_max_retries_exceeded");
+        var maxRetryReport = maxRetryOutput.InternalCollaborationReport;
+        var maxRetriesScenario =
+            maxRetryReport?.WorkflowStatus == WorkflowStatus.Rejected.ToString() &&
+            maxRetryReport.FailureReport is not null &&
+            maxRetryReport.StepResults?.Any(step => step.AgentId == "cad-modeler" && step.Status == WorkflowStepStatus.Rejected.ToString()) == true
+                ? "Passed"
+                : "Failed";
+
+        var failedOutput = await InvokeChiefEngineerForSelfCheck(PlatformBootstrapper.CreateDefault(projectRoot), "drawing_engineer_failed");
+        var failedReport = failedOutput.InternalCollaborationReport;
+        var failedScenario =
+            failedReport?.WorkflowStatus == WorkflowStatus.Failed.ToString() &&
+            failedReport.FailureReport?.FailedStepId == "internal-agent:drawing-engineer"
+                ? "Passed"
+                : "Failed";
+
+        var humanOutput = await InvokeChiefEngineerForSelfCheck(PlatformBootstrapper.CreateDefault(projectRoot), "drawing_reviewer_needs_human_approval");
+        var humanReport = humanOutput.InternalCollaborationReport;
+        var humanScenario =
+            humanReport?.WorkflowStatus == WorkflowStatus.WaitingForHumanApproval.ToString() &&
+            humanReport.HumanApprovalRequest?.StepId == "internal-agent:drawing-reviewer"
+                ? "Passed"
+                : "Failed";
+
+        IRetryPolicy retryPolicy = new DefaultRetryPolicy();
+        var retryPolicyInterfaceEnabled =
+            retryPolicy.MaxRetries == 2 &&
+            retryPolicy.ShouldRetry(
+                new GateDecision("gate-interface", GateDecisionResult.Rejected, "retryable"),
+                0,
+                new[] { Issue.FromText("retryable issue") }) &&
+            !retryPolicy.ShouldRetry(
+                new GateDecision("gate-interface-failed", GateDecisionResult.Failed, "failed"),
+                0,
+                new[] { Issue.FromText("retryable issue") });
+
+        IRetryPolicy backoffPolicy = new ExponentialBackoffRetryPolicy(baseDelayMs: 100, maxDelayMs: 1000, multiplier: 2);
+        var exponentialBackoffPolicyAvailable =
+            backoffPolicy.GetDelay(0) == TimeSpan.FromMilliseconds(100) &&
+            backoffPolicy.GetDelay(1) == TimeSpan.FromMilliseconds(200) &&
+            backoffPolicy.GetDelay(10) == TimeSpan.FromMilliseconds(1000);
+
+        var codeEngineerAgent = platform.AgentRegistry.GetById("code-engineer");
+        var codeReviewerAgent = platform.AgentRegistry.GetById("code-reviewer");
+        var codeEngineerAgentRegistered = codeEngineerAgent is not null;
+        var codeReviewerAgentRegistered = codeReviewerAgent is not null;
+        var codeAgentsAreInternal =
+            codeEngineerAgent?.Visibility == AgentContracts.AgentVisibility.Internal &&
+            codeReviewerAgent?.Visibility == AgentContracts.AgentVisibility.Internal;
+        var gatewayBlocksCodeAgents =
+            gatewayVisibleAgents.All(agent => agent.Id != "code-engineer" && agent.Id != "code-reviewer") &&
+            codeEngineerAgent is not null &&
+            codeReviewerAgent is not null &&
+            !platform.PermissionManager.CanExposeToExternalGateway(codeEngineerAgent) &&
+            !platform.PermissionManager.CanExposeToExternalGateway(codeReviewerAgent);
+
+        return new WorkflowBackedInternalSelfCheckResult(
+            chiefEngineerInternalOrchestrationUsesWorkflowEngine,
+            internalAgentWorkflowStepsCreated,
+            qualityGateAfterEachInternalStep,
+            passedScenario,
+            retryScenario,
+            maxRetriesScenario,
+            failedScenario,
+            humanScenario,
+            retryPolicyInterfaceEnabled,
+            exponentialBackoffPolicyAvailable,
+            codeEngineerAgentRegistered,
+            codeReviewerAgentRegistered,
+            codeAgentsAreInternal,
+            gatewayBlocksCodeAgents);
     }
 
     private static async Task<WorkflowQualityLoopSelfCheckResult> RunWorkflowQualityLoopChecks()
@@ -481,6 +624,8 @@ public static class PlatformSelfCheckRunner
             ["cad-modeler"] = "CadModelerAgent",
             ["drawing-engineer"] = "DrawingEngineerAgent",
             ["drawing-reviewer"] = "DrawingReviewerAgent",
+            ["code-engineer"] = "CodeEngineerAgent",
+            ["code-reviewer"] = "CodeReviewerAgent",
             ["error-diagnosis"] = "ErrorDiagnosisAgent"
         };
 
@@ -530,6 +675,8 @@ public static class PlatformSelfCheckRunner
                 "cad-modeler",
                 "drawing-engineer",
                 "drawing-reviewer",
+                "code-engineer",
+                "code-reviewer",
                 "error-diagnosis"
             };
             var agents = expectedAgentIds
@@ -671,6 +818,22 @@ public static class PlatformSelfCheckRunner
         bool RetryPolicyEnabled,
         bool FailureReportGenerated,
         bool HumanApprovalRequestGenerated);
+
+    private sealed record WorkflowBackedInternalSelfCheckResult(
+        bool ChiefEngineerInternalOrchestrationUsesWorkflowEngine,
+        bool InternalAgentWorkflowStepsCreated,
+        bool QualityGateAfterEachInternalStep,
+        string InternalWorkflowPassedScenario,
+        string InternalWorkflowRetryThenPassedScenario,
+        string InternalWorkflowMaxRetriesExceededScenario,
+        string InternalWorkflowFailedScenario,
+        string InternalWorkflowHumanApprovalScenario,
+        bool RetryPolicyInterfaceEnabled,
+        bool ExponentialBackoffPolicyAvailable,
+        bool CodeEngineerAgentRegistered,
+        bool CodeReviewerAgentRegistered,
+        bool CodeAgentsAreInternal,
+        bool GatewayBlocksCodeAgents);
 
     private static JsonSerializerOptions JsonOptions()
     {

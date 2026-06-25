@@ -13,6 +13,8 @@ public sealed class AgentRuntimeMicrosoftTests
         "cad-modeler",
         "drawing-engineer",
         "drawing-reviewer",
+        "code-engineer",
+        "code-reviewer",
         "error-diagnosis"
     ];
 
@@ -73,7 +75,7 @@ public sealed class AgentRuntimeMicrosoftTests
 
         var agents = ExpectedAgentIds.Select(factory.CreateMockAgent).ToArray();
 
-        Assert.Equal(6, agents.Length);
+        Assert.Equal(8, agents.Length);
         Assert.Equal("chief-engineer", Assert.Single(agents, agent => agent.Visibility == AgentVisibility.Public).Id);
         Assert.All(agents.Where(agent => agent.Id != "chief-engineer"), agent => Assert.Equal(AgentVisibility.Internal, agent.Visibility));
     }
@@ -85,7 +87,7 @@ public sealed class AgentRuntimeMicrosoftTests
 
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot(), factory.CreateMockAgent);
 
-        Assert.Equal(6, platform.AgentRegistry.GetAll().Count);
+        Assert.Equal(8, platform.AgentRegistry.GetAll().Count);
         Assert.Equal("chief-engineer", Assert.Single(platform.AgentRegistry.GetPublicAgents()).Id);
         Assert.DoesNotContain(platform.AgentRegistry.GetPublicAgents(), agent => agent.Id == "mechanical-designer");
     }
