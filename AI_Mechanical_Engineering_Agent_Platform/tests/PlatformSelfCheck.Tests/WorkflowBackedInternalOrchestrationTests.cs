@@ -3,6 +3,7 @@ using AgentGatewayHost;
 using DomainSchemas;
 using PlatformCore;
 using QualityGate;
+using System.Diagnostics;
 
 namespace PlatformSelfCheck.Tests;
 
@@ -151,6 +152,40 @@ public sealed class WorkflowBackedInternalOrchestrationTests
     }
 
     [Fact]
+    public async Task SequentialWorkflowEngineAwaitsRetryDelayBeforeNextAttempt()
+    {
+        var delay = TimeSpan.FromMilliseconds(75);
+        var engine = new SequentialWorkflowEngine(new FixedDelayRetryPolicy(delay), new InMemoryAuditLog());
+        var attempts = 0;
+        var step = new WorkflowStep(
+            "delayed-retry-step",
+            _ =>
+            {
+                attempts++;
+                var decision = attempts == 1
+                    ? new GateDecision("gate-retry", GateDecisionResult.Rejected, "retryable transient issue")
+                    : new GateDecision("gate-pass", GateDecisionResult.Passed, "ok");
+
+                return Task.FromResult(new WorkflowStepResult(
+                    "delayed-retry-step",
+                    "delayed-retry-step",
+                    attempts == 1 ? WorkflowStepStatus.Rejected : WorkflowStepStatus.Passed,
+                    attempts == 1 ? "transient rejection" : "passed",
+                    GateDecision: decision,
+                    Issues: attempts == 1 ? new[] { "retryable transient issue" } : Array.Empty<string>()));
+            });
+
+        var stopwatch = Stopwatch.StartNew();
+        var result = await engine.ExecuteAsync(new[] { step }, new WorkflowContext("retry-delay-test", new Dictionary<string, object?>()));
+        stopwatch.Stop();
+
+        Assert.Equal(WorkflowStatus.Passed, result.Status);
+        Assert.Equal(2, attempts);
+        Assert.Contains(result.Steps, stepResult => stepResult.Status == WorkflowStepStatus.Retrying);
+        Assert.True(stopwatch.Elapsed >= delay, $"Expected retry delay of at least {delay.TotalMilliseconds}ms, got {stopwatch.Elapsed.TotalMilliseconds}ms.");
+    }
+
+    [Fact]
     public async Task CodeEngineeringAgentsAreInternalAndBlockedByGateway()
     {
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
@@ -171,23 +206,33 @@ public sealed class WorkflowBackedInternalOrchestrationTests
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
         var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_v06", Guid.NewGuid().ToString("N"));
 
-        var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot());
+        try
+        {
+            var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot());
 
-        Assert.True(report.ChiefEngineerInternalOrchestrationUsesWorkflowEngine);
-        Assert.True(report.InternalAgentWorkflowStepsCreated);
-        Assert.True(report.QualityGateAfterEachInternalStep);
-        Assert.Equal("Passed", report.InternalWorkflowPassedScenario);
-        Assert.Equal("Passed", report.InternalWorkflowRetryThenPassedScenario);
-        Assert.Equal("Passed", report.InternalWorkflowMaxRetriesExceededScenario);
-        Assert.Equal("Passed", report.InternalWorkflowFailedScenario);
-        Assert.Equal("Passed", report.InternalWorkflowHumanApprovalScenario);
-        Assert.True(report.RetryPolicyInterfaceEnabled);
-        Assert.True(report.ExponentialBackoffPolicyAvailable);
-        Assert.True(report.CodeEngineerAgentRegistered);
-        Assert.True(report.CodeReviewerAgentRegistered);
-        Assert.True(report.CodeAgentsAreInternal);
-        Assert.True(report.GatewayBlocksCodeAgents);
-        Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.ChiefEngineerInternalOrchestrationUsesWorkflowEngine);
+            Assert.True(report.InternalAgentWorkflowStepsCreated);
+            Assert.True(report.QualityGateAfterEachInternalStep);
+            Assert.Equal("Passed", report.InternalWorkflowPassedScenario);
+            Assert.Equal("Passed", report.InternalWorkflowRetryThenPassedScenario);
+            Assert.Equal("Passed", report.InternalWorkflowMaxRetriesExceededScenario);
+            Assert.Equal("Passed", report.InternalWorkflowFailedScenario);
+            Assert.Equal("Passed", report.InternalWorkflowHumanApprovalScenario);
+            Assert.True(report.RetryPolicyInterfaceEnabled);
+            Assert.True(report.ExponentialBackoffPolicyAvailable);
+            Assert.True(report.CodeEngineerAgentRegistered);
+            Assert.True(report.CodeReviewerAgentRegistered);
+            Assert.True(report.CodeAgentsAreInternal);
+            Assert.True(report.GatewayBlocksCodeAgents);
+            Assert.Equal("Passed", report.FinalStatus);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
     }
 
     private static AgentContext CreateAgentContext(string? testScenario = null)
@@ -238,5 +283,18 @@ public sealed class WorkflowBackedInternalOrchestrationTests
         }
 
         throw new DirectoryNotFoundException("Could not locate project root.");
+    }
+
+    private sealed class FixedDelayRetryPolicy : DefaultRetryPolicy
+    {
+        private readonly TimeSpan _delay;
+
+        public FixedDelayRetryPolicy(TimeSpan delay)
+            : base(maxRetries: 1)
+        {
+            _delay = delay;
+        }
+
+        public override TimeSpan GetDelay(int retryCount) => _delay;
     }
 }

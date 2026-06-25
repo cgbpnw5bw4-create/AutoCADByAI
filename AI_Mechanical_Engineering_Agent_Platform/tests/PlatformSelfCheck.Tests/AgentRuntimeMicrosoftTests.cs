@@ -1,6 +1,8 @@
 using AgentContracts;
 using AgentRuntime.Microsoft;
 using PlatformCore;
+using System.Diagnostics;
+using System.Net;
 
 namespace PlatformSelfCheck.Tests;
 
@@ -111,6 +113,43 @@ public sealed class AgentRuntimeMicrosoftTests
     }
 
     [Fact]
+    public async Task OpenAICompatibleModelClientRespectsConfiguredTimeout()
+    {
+        var handler = new DelayingHttpMessageHandler();
+        var client = new OpenAICompatibleModelClient(new HttpClient(handler));
+        var configuration = CreateMicrosoftRuntimeConfiguration(timeoutSeconds: 1);
+
+        var stopwatch = Stopwatch.StartNew();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            client.GenerateTextAsync("system", "user", configuration));
+        stopwatch.Stop();
+
+        Assert.True(handler.CancellationObserved);
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(10), $"Configured timeout should cancel quickly; elapsed {stopwatch.Elapsed}.");
+    }
+
+    [Fact]
+    public async Task MicrosoftRuntimeAgentInvokerConvertsIOExceptionToStructuredFailure()
+    {
+        var auditLog = new InMemoryAuditLog();
+        var invoker = new MicrosoftRuntimeAgentInvoker(
+            CreateMicrosoftRuntimeConfiguration(),
+            new ThrowingRuntimeModelClient(new System.IO.IOException("network stream closed")),
+            auditLog,
+            systemPrompt: "system");
+
+        var output = await invoker.InvokeAsync(
+            RuntimeAgentManifest.Create("chief-engineer", AgentVisibility.Public),
+            CreateAgentContext());
+
+        Assert.Equal(AgentOutputStatus.Failed, output.Status);
+        Assert.Contains(output.Issues, issue => issue.Contains("IOException", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(auditLog.GetEntries(), entry =>
+            entry.Action == "real_runtime_failed" &&
+            entry.Message.Contains("IOException", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void ToolBridgeMapsToolCallsWithoutCallingWorkers()
     {
         var bridge = new ToolBridge(new SkillRegistry(), new WorkerRegistry());
@@ -128,18 +167,28 @@ public sealed class AgentRuntimeMicrosoftTests
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
         var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_runtime", Guid.NewGuid().ToString("N"));
 
-        var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot());
+        try
+        {
+            var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot());
 
-        Assert.True(report.AgentRuntimeProjectExists);
-        Assert.True(report.MicrosoftRuntimeDependencyIsolated);
-        Assert.Equal("Mock", report.RuntimeMode);
-        Assert.True(report.MockRuntimeAgentCreation);
-        Assert.True(report.MicrosoftAgentAdapterCheck);
-        Assert.True(report.MicrosoftWorkflowRuntimeCheck);
-        Assert.True(report.RuntimeTypesDoNotLeakToContracts);
-        Assert.True(report.GatewayVisibilityStillValid);
-        Assert.True(report.QualityGateStillEnabled);
-        Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.AgentRuntimeProjectExists);
+            Assert.True(report.MicrosoftRuntimeDependencyIsolated);
+            Assert.Equal("Mock", report.RuntimeMode);
+            Assert.True(report.MockRuntimeAgentCreation);
+            Assert.True(report.MicrosoftAgentAdapterCheck);
+            Assert.True(report.MicrosoftWorkflowRuntimeCheck);
+            Assert.True(report.RuntimeTypesDoNotLeakToContracts);
+            Assert.True(report.GatewayVisibilityStillValid);
+            Assert.True(report.QualityGateStillEnabled);
+            Assert.Equal("Passed", report.FinalStatus);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
     }
 
     private static AgentContext CreateAgentContext()
@@ -160,6 +209,20 @@ public sealed class AgentRuntimeMicrosoftTests
             DateTimeOffset.UtcNow);
     }
 
+    private static RuntimeConfiguration CreateMicrosoftRuntimeConfiguration(int timeoutSeconds = 30) =>
+        new(
+            AgentRuntimeMode.Microsoft,
+            AgentRuntimeMode.Microsoft,
+            "openai-compatible",
+            "demo-model",
+            "test-key",
+            "http://runtime.test",
+            null,
+            timeoutSeconds,
+            false,
+            null,
+            false);
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -174,5 +237,47 @@ public sealed class AgentRuntimeMicrosoftTests
         }
 
         throw new DirectoryNotFoundException("Could not locate project root.");
+    }
+
+    private sealed class DelayingHttpMessageHandler : HttpMessageHandler
+    {
+        public bool CancellationObserved { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                CancellationObserved = true;
+                throw;
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"choices":[{"message":{"content":"ok"}}]}""")
+            };
+        }
+    }
+
+    private sealed class ThrowingRuntimeModelClient : IRuntimeModelClient
+    {
+        private readonly Exception _exception;
+
+        public ThrowingRuntimeModelClient(Exception exception)
+        {
+            _exception = exception;
+        }
+
+        public Task<string> GenerateTextAsync(
+            string systemPrompt,
+            string userMessage,
+            RuntimeConfiguration configuration,
+            CancellationToken cancellationToken = default) =>
+            Task.FromException<string>(_exception);
     }
 }

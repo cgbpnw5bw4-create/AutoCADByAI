@@ -149,22 +149,32 @@ public sealed class RealRuntimeIntegrationTests
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
         var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_v07", Guid.NewGuid().ToString("N"));
 
-        var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot());
+        try
+        {
+            var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot());
 
-        Assert.True(report.RealRuntimeInvokerImplemented);
-        Assert.True(report.RuntimeConfigEnvSupported);
-        Assert.True(report.RuntimeModeDefaultIsMock);
-        Assert.True(report.RuntimeFallbackWhenMissingKey);
-        Assert.True(report.ChiefEngineerRealRuntimeOnly);
-        Assert.True(report.InternalAgentsRemainMock);
-        Assert.True(report.MicrosoftAgentOutputMapperEnabled);
-        Assert.True(report.InvalidModelOutputFallbackEnabled);
-        Assert.True(report.ModelCannotEscalatePermissions);
-        Assert.True(report.ModelCannotCallWorkerDirectly);
-        Assert.True(report.ChiefEngineerRuntimeThenWorkflowEngine);
-        Assert.True(report.QualityGateAfterRealRuntime);
-        Assert.True(report.GatewayResponseContainsRuntimeMetadata);
-        Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.RealRuntimeInvokerImplemented);
+            Assert.True(report.RuntimeConfigEnvSupported);
+            Assert.True(report.RuntimeModeDefaultIsMock);
+            Assert.True(report.RuntimeFallbackWhenMissingKey);
+            Assert.True(report.ChiefEngineerRealRuntimeOnly);
+            Assert.True(report.InternalAgentsRemainMock);
+            Assert.True(report.MicrosoftAgentOutputMapperEnabled);
+            Assert.True(report.InvalidModelOutputFallbackEnabled);
+            Assert.True(report.ModelCannotEscalatePermissions);
+            Assert.True(report.ModelCannotCallWorkerDirectly);
+            Assert.True(report.ChiefEngineerRuntimeThenWorkflowEngine);
+            Assert.True(report.QualityGateAfterRealRuntime);
+            Assert.True(report.GatewayResponseContainsRuntimeMetadata);
+            Assert.Equal("Passed", report.FinalStatus);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
     }
 
     private static AgentContext CreateAgentContext()

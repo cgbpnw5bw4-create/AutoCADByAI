@@ -6,7 +6,7 @@ public sealed class PlatformKernel
     {
         TaskStore = new TaskStore();
         AuditLog = new InMemoryAuditLog();
-        WorkflowEngine = new SequentialWorkflowEngine(new QualityGate.RetryPolicy(), AuditLog);
+        WorkflowEngine = new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), AuditLog);
         AgentRegistry = new AgentRegistry();
         SkillRegistry = new SkillRegistry();
         ModuleRegistry = new ModuleRegistry();

@@ -88,7 +88,7 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
             _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_completed", "Chief engineer real runtime returned mapped AgentOutput.");
             return output;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or InvalidOperationException or JsonException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or InvalidOperationException or JsonException or System.Net.Sockets.SocketException or System.IO.IOException)
         {
             _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_failed", ex.GetType().Name);
             return new AgentOutput(

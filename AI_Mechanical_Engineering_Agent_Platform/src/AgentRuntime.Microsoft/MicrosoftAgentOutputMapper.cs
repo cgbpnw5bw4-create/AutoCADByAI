@@ -6,6 +6,16 @@ namespace AgentRuntime.Microsoft;
 
 public sealed class MicrosoftAgentOutputMapper
 {
+    private const string MessagePropertyName = "message";
+    private const string StatusPropertyName = "status";
+    private const string NextRecommendedAgentIdPropertyName = "next_recommended_agent_id";
+    private const string RecommendedInternalAgentsPropertyName = "recommended_internal_agents";
+    private const string ToolsPropertyName = "tools";
+    private const string TaskSummaryPropertyName = "task_summary";
+    private const string RisksPropertyName = "risks";
+    private const string VisibilityPropertyName = "visibility";
+    private const string ExposeInternalAgentsPropertyName = "expose_internal_agents";
+
     private readonly HashSet<string> _internalAgentIds;
 
     public MicrosoftAgentOutputMapper(IEnumerable<string> internalAgentIds)
@@ -21,21 +31,21 @@ public sealed class MicrosoftAgentOutputMapper
             var root = document.RootElement;
             var issues = new List<string>();
             var logs = new List<string> { "Microsoft runtime model output parsed as JSON." };
-            var message = GetString(root, "message") ?? modelOutput;
-            var status = ParseStatus(GetString(root, "status"));
-            var nextRecommendedAgentId = ValidateNextAgent(GetString(root, "next_recommended_agent_id"), issues);
+            var message = GetString(root, MessagePropertyName) ?? modelOutput;
+            var status = ParseStatus(GetString(root, StatusPropertyName));
+            var nextRecommendedAgentId = ValidateNextAgent(GetString(root, NextRecommendedAgentIdPropertyName), issues);
 
             if (HasPermissionEscalation(root))
             {
                 issues.Add("Model attempted permission escalation or Agent visibility change; request ignored.");
             }
 
-            foreach (var agentId in GetStringArray(root, "recommended_internal_agents"))
+            foreach (var agentId in GetStringArray(root, RecommendedInternalAgentsPropertyName))
             {
                 ValidateRecommendedAgent(agentId, issues);
             }
 
-            foreach (var tool in GetStringArray(root, "tools"))
+            foreach (var tool in GetStringArray(root, ToolsPropertyName))
             {
                 if (IsWorkerReference(tool))
                 {
@@ -43,13 +53,13 @@ public sealed class MicrosoftAgentOutputMapper
                 }
             }
 
-            var taskSummary = GetString(root, "task_summary");
+            var taskSummary = GetString(root, TaskSummaryPropertyName);
             if (!string.IsNullOrWhiteSpace(taskSummary))
             {
                 logs.Add($"Task summary: {taskSummary}");
             }
 
-            foreach (var risk in GetStringArray(root, "risks"))
+            foreach (var risk in GetStringArray(root, RisksPropertyName))
             {
                 logs.Add($"Risk: {risk}");
             }
@@ -113,8 +123,8 @@ public sealed class MicrosoftAgentOutputMapper
     }
 
     private static bool HasPermissionEscalation(JsonElement root) =>
-        string.Equals(GetString(root, "visibility"), "Public", StringComparison.OrdinalIgnoreCase) ||
-        (root.TryGetProperty("expose_internal_agents", out var expose) &&
+        string.Equals(GetString(root, VisibilityPropertyName), "Public", StringComparison.OrdinalIgnoreCase) ||
+        (root.TryGetProperty(ExposeInternalAgentsPropertyName, out var expose) &&
          expose.ValueKind == JsonValueKind.True);
 
     private static bool IsWorkerReference(string value) =>

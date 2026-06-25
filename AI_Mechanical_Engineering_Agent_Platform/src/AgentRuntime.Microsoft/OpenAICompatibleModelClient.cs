@@ -24,6 +24,10 @@ public sealed class OpenAICompatibleModelClient : IRuntimeModelClient
             throw new InvalidOperationException("Runtime credential is not configured.");
         }
 
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, configuration.TimeoutSeconds)));
+        var effectiveCancellationToken = timeoutCts.Token;
+
         var endpoint = ResolveEndpoint(configuration);
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", configuration.ApiKey);
@@ -40,11 +44,11 @@ public sealed class OpenAICompatibleModelClient : IRuntimeModelClient
         };
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.SendAsync(request, effectiveCancellationToken);
         response.EnsureSuccessStatusCode();
 
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        await using var stream = await response.Content.ReadAsStreamAsync(effectiveCancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: effectiveCancellationToken);
         var choices = document.RootElement.GetProperty("choices");
         if (choices.GetArrayLength() == 0)
         {

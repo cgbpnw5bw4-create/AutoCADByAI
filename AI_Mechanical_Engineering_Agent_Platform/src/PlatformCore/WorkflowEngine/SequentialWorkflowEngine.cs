@@ -10,9 +10,12 @@ public sealed class SequentialWorkflowEngine
     private readonly RejectReportBuilder _rejectReportBuilder;
 
     public SequentialWorkflowEngine()
-        : this(new RetryPolicy(), new InMemoryAuditLog())
+        : this(CreateDefaultRetryPolicy(), new InMemoryAuditLog())
     {
     }
+
+    public static IRetryPolicy CreateDefaultRetryPolicy() =>
+        new ExponentialBackoffRetryPolicy(maxRetries: 2, baseDelayMs: 500, maxDelayMs: 3_000);
 
     public SequentialWorkflowEngine(IRetryPolicy retryPolicy)
         : this(retryPolicy, new InMemoryAuditLog())
@@ -68,6 +71,11 @@ public sealed class SequentialWorkflowEngine
                         var retryDelay = _retryPolicy.GetDelay(retryCount);
                         _auditLog.Record("workflow", retrying.StepId, "workflow_step_retrying", $"Workflow step '{retrying.StepId}' rejected; retry {retryCount + 1} of {maxRetries} will run after calculated delay {retryDelay.TotalMilliseconds:0}ms.");
                         retryCount++;
+                        if (retryDelay > TimeSpan.Zero)
+                        {
+                            await Task.Delay(retryDelay);
+                        }
+
                         continue;
                     }
 

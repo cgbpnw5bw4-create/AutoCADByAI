@@ -28,7 +28,7 @@ public sealed class ChiefEngineerOrchestrator
         _router = router;
         _agentRegistry = agentRegistry;
         _auditLog = auditLog;
-        _workflowEngine = workflowEngine ?? new SequentialWorkflowEngine(new QualityGate.DefaultRetryPolicy(), auditLog);
+        _workflowEngine = workflowEngine ?? new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), auditLog);
     }
 
     public async Task<AgentOutput> ExecuteAsync(AgentContext context, string rootAgentId, string rootAgentName)

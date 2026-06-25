@@ -16,8 +16,13 @@ public static class RuntimePlatformFactory
         RuntimeConfiguration configuration,
         IRuntimeModelClient? modelClient = null)
     {
-        var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")
-            ?? throw new InvalidOperationException("chief-engineer is not registered.");
+        var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer");
+        if (chiefEngineer is null)
+        {
+            platform.AuditLog.Record("agent-runtime", "RuntimePlatformFactory", "chief_engineer_missing", "chief-engineer is not registered.");
+            throw new InvalidOperationException("chief-engineer is not registered.");
+        }
+
         var factory = new AgentFactory(platform.AuditLog);
         var runtimeAwareChief = factory.CreateRuntimeAwareAgent(
             chiefEngineer,
