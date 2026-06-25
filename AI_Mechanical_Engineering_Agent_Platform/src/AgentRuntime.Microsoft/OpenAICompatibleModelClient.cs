@@ -9,6 +9,8 @@ public sealed class OpenAICompatibleModelClient : IRuntimeModelClient
 {
     private readonly HttpClient _httpClient;
 
+    internal TimeSpan ConfiguredTimeout => _httpClient.Timeout;
+
     public OpenAICompatibleModelClient(HttpClient? httpClient = null)
     {
         _httpClient = httpClient ?? CreateOwnedHttpClient(TimeSpan.FromSeconds(RuntimeConfiguration.DefaultTimeoutSeconds));

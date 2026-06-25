@@ -161,10 +161,10 @@ public sealed class AgentRuntimeMicrosoftTests
     {
         var configuration = CreateMicrosoftRuntimeConfiguration(timeoutSeconds: 3);
         var client = new OpenAICompatibleModelClient(configuration);
-        var field = typeof(OpenAICompatibleModelClient).GetField("_httpClient", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var httpClient = Assert.IsType<HttpClient>(field.GetValue(client));
+        var property = typeof(OpenAICompatibleModelClient).GetProperty("ConfiguredTimeout", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var configuredTimeout = Assert.IsType<TimeSpan>(property.GetValue(client));
 
-        Assert.Equal(TimeSpan.FromSeconds(3), httpClient.Timeout);
+        Assert.Equal(TimeSpan.FromSeconds(3), configuredTimeout);
     }
 
     [Theory]
@@ -289,6 +289,28 @@ public sealed class AgentRuntimeMicrosoftTests
             Assert.True(report.ProviderErrorsAreStructured);
             Assert.True(report.ApiKeyNotLogged);
             Assert.Equal("Passed", report.FinalStatus);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SelfCheckRunnerPropagatesCancellationToWorkflowEngine()
+    {
+        var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
+        var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_cancelled", Guid.NewGuid().ToString("N"));
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        try
+        {
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                PlatformSelfCheckRunner.RunAsync(platform, outputRoot, FindProjectRoot(), cts.Token));
         }
         finally
         {

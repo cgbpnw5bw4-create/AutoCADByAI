@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
 using System.Diagnostics;
+using System.Net;
 using DomainSchemas;
 using QualityGate;
 
@@ -51,7 +52,11 @@ public static class PlatformSelfCheckRunner
         "IReportRepository.cs"
     ];
 
-    public static async Task<PlatformSelfCheckReport> RunAsync(PlatformKernel platform, string outputRoot, string? projectRoot = null)
+    public static async Task<PlatformSelfCheckReport> RunAsync(
+        PlatformKernel platform,
+        string outputRoot,
+        string? projectRoot = null,
+        CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(Path.Combine(outputRoot, "reports"));
         var root = projectRoot ?? PlatformPathResolver.FindProjectRoot();
@@ -82,7 +87,8 @@ public static class PlatformSelfCheckRunner
                 Step("storage-contracts", "Storage abstraction contracts checked."),
                 Step("quality-gate", "QualityGate skeleton returned Passed.", gateDecision)
             },
-            platform.ContextManager.CreateWorkflowContext(task.Id));
+            platform.ContextManager.CreateWorkflowContext(task.Id),
+            cancellationToken);
 
         var solutionExists = File.Exists(Path.Combine(root, "AI_Mechanical_Engineering_Agent_Platform.sln"));
         var moduleStructureChecks = CheckModuleStructures(root);
@@ -123,7 +129,7 @@ public static class PlatformSelfCheckRunner
             platform.AuditLog.GetEntries().Any(entry => entry.Action == "internal_agent_invoked" && entry.Actor == agentId));
         var runtimeChecks = await RunRuntimeSelfChecks(root, platform, gatewayVisibleAgents, internalAgentsHiddenFromGateway, gatewayQualityGateEnabled, qualityGateAfterCollaboration);
         var realRuntimeChecks = await RunRealRuntimeSelfChecks(root, platform);
-        var reliabilityChecks = await RunRuntimeReliabilityChecks(root);
+        var reliabilityChecks = await RunRuntimeReliabilityChecks(root, cancellationToken);
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
@@ -850,7 +856,9 @@ public static class PlatformSelfCheckRunner
         }
     }
 
-    private static async Task<RuntimeReliabilitySelfCheckResult> RunRuntimeReliabilityChecks(string projectRoot)
+    private static async Task<RuntimeReliabilitySelfCheckResult> RunRuntimeReliabilityChecks(
+        string projectRoot,
+        CancellationToken cancellationToken)
     {
         var retryDelay = TimeSpan.FromMilliseconds(5);
         var retryAuditLog = new InMemoryAuditLog();
@@ -877,7 +885,8 @@ public static class PlatformSelfCheckRunner
                         Issues: retryAttempts == 1 ? new[] { "retryable transient issue" } : Array.Empty<string>()));
                 })
             },
-            new WorkflowContext("v08-retry-delay-check", new Dictionary<string, object?>()));
+            new WorkflowContext("v08-retry-delay-check", new Dictionary<string, object?>()),
+            cancellationToken);
         retryStopwatch.Stop();
         var retryDelayActuallyAwaited =
             retryResult.Status == WorkflowStatus.Passed &&
@@ -900,7 +909,8 @@ public static class PlatformSelfCheckRunner
             var cancellationEngine = new SequentialWorkflowEngine(
                 new ExponentialBackoffRetryPolicy(maxRetries: 1, baseDelayMs: 5_000, maxDelayMs: 5_000, multiplier: 1),
                 new InMemoryAuditLog());
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(20));
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromMilliseconds(20));
             await cancellationEngine.ExecuteAsync(
                 new[]
                 {
@@ -945,20 +955,26 @@ public static class PlatformSelfCheckRunner
             var excessiveTimeoutConfig = InvokeRuntimeConfigurationFromEnvironment(
                 fromEnvironment,
                 new Dictionary<string, string?> { ["AI_TIMEOUT_SECONDS"] = "9999" });
+            var belowMinTimeoutConfig = InvokeRuntimeConfigurationFromEnvironment(
+                fromEnvironment,
+                new Dictionary<string, string?> { ["AI_TIMEOUT_SECONDS"] = "-5" });
 
             var defaultTimeout = GetIntConstant(configType, "DefaultTimeoutSeconds");
+            var minTimeout = GetIntConstant(configType, "MinTimeoutSeconds");
             var maxTimeout = GetIntConstant(configType, "MaxTimeoutSeconds");
             runtimeTimeoutConfigSupported =
                 GetInt(timeoutConfig, "TimeoutSeconds", 0) == 7 &&
+                GetInt(belowMinTimeoutConfig, "TimeoutSeconds", 0) == minTimeout &&
                 GetInt(excessiveTimeoutConfig, "TimeoutSeconds", 0) == maxTimeout;
             invalidTimeoutFallsBackToDefault = GetInt(invalidTimeoutConfig, "TimeoutSeconds", 0) == defaultTimeout;
 
             var configuredClient = Activator.CreateInstance(openAIClientType, new[] { timeoutConfig })
                 ?? throw new InvalidOperationException("Could not create OpenAICompatibleModelClient.");
-            var httpClientField = openAIClientType.GetField("_httpClient", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?? throw new MissingFieldException(openAIClientType.FullName, "_httpClient");
-            var httpClient = httpClientField.GetValue(configuredClient) as HttpClient;
-            openAIClientTimeoutConfigured = httpClient?.Timeout == TimeSpan.FromSeconds(7);
+            var configuredTimeoutProperty = openAIClientType.GetProperty("ConfiguredTimeout", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?? throw new MissingMemberException(openAIClientType.FullName, "ConfiguredTimeout");
+            openAIClientTimeoutConfigured =
+                configuredTimeoutProperty.GetValue(configuredClient) is TimeSpan configuredTimeout &&
+                configuredTimeout == TimeSpan.FromSeconds(7);
 
             var generateTextAsync = openAIClientType.GetMethod("GenerateTextAsync")
                 ?? throw new MissingMethodException("GenerateTextAsync was not found.");
@@ -977,13 +993,12 @@ public static class PlatformSelfCheckRunner
                 openAIClientSource.Contains("invalid_provider_response", StringComparison.Ordinal) &&
                 openAIClientSource.Contains("network_error", StringComparison.Ordinal);
 
-            var invokerSource = File.ReadAllText(Path.Combine(projectRoot, "src", "AgentRuntime.Microsoft", "MicrosoftRuntimeAgentInvoker.cs"));
-            apiKeyNotLogged =
-                !invokerSource.Contains("ApiKey", StringComparison.OrdinalIgnoreCase) &&
-                !invokerSource.Contains("Authorization", StringComparison.OrdinalIgnoreCase) &&
-                !openAIClientSource.Contains("ex.Message", StringComparison.OrdinalIgnoreCase);
+            apiKeyNotLogged = await RuntimeFailureOutputDoesNotLeakCredentialsAsync(
+                runtimeAssembly,
+                openAIClientType,
+                fromEnvironment);
         }
-        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException or MissingMethodException or MissingFieldException or InvalidOperationException or TargetInvocationException)
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException or MissingMemberException or InvalidOperationException or TargetInvocationException)
         {
             return new RuntimeReliabilitySelfCheckResult(
                 retryDelayActuallyAwaited,
@@ -1007,6 +1022,89 @@ public static class PlatformSelfCheckRunner
             openAIClientCancellationSupported,
             providerErrorsAreStructured,
             apiKeyNotLogged);
+    }
+
+    private static async Task<bool> RuntimeFailureOutputDoesNotLeakCredentialsAsync(
+        Assembly runtimeAssembly,
+        Type openAIClientType,
+        MethodInfo fromEnvironment)
+    {
+        const string secret = "self-check-secret-api-key";
+        const string authorizationHeaderName = "Authorization";
+
+        var configuration = InvokeRuntimeConfigurationFromEnvironment(
+            fromEnvironment,
+            new Dictionary<string, string?>
+            {
+                ["AI_AGENT_RUNTIME_MODE"] = "Microsoft",
+                ["AI_PROVIDER"] = "openai-compatible",
+                ["AI_MODEL"] = "self-check-model",
+                ["AI_API_KEY"] = secret,
+                ["AI_BASE_URL"] = "http://runtime-self-check.test",
+                ["AI_TIMEOUT_SECONDS"] = "7"
+            });
+        var openAIClientConstructor = openAIClientType.GetConstructor(new[] { typeof(HttpClient) })
+            ?? throw new MissingMethodException(openAIClientType.FullName, ".ctor(HttpClient)");
+        var openAIClient = openAIClientConstructor.Invoke(new object?[]
+        {
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.Unauthorized, """{"error":"auth failed"}"""))
+        });
+        var invokerType = runtimeAssembly.GetType("AgentRuntime.Microsoft.MicrosoftRuntimeAgentInvoker", throwOnError: true)!;
+        var manifestType = runtimeAssembly.GetType("AgentRuntime.Microsoft.RuntimeAgentManifest", throwOnError: true)!;
+        var manifest = manifestType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(method => method.Name == "Create" && method.GetParameters().Length == 2)
+            .Invoke(null, new object?[] { "chief-engineer", null })
+            ?? throw new InvalidOperationException("Could not create runtime agent manifest.");
+        var auditLog = new InMemoryAuditLog();
+        var invoker = Activator.CreateInstance(invokerType, new object?[]
+            {
+                configuration,
+                openAIClient,
+                auditLog,
+                new[] { "mechanical-designer" },
+                "system"
+            })
+            ?? throw new InvalidOperationException("Could not create MicrosoftRuntimeAgentInvoker.");
+        var invokeAsync = invokerType.GetMethod("InvokeAsync")
+            ?? throw new MissingMethodException("MicrosoftRuntimeAgentInvoker.InvokeAsync was not found.");
+        var task = (Task<AgentContracts.AgentOutput>)invokeAsync.Invoke(
+            invoker,
+            new object?[] { manifest, CreateRuntimeCheckAgentContext(), CancellationToken.None })!;
+        var output = await task;
+        var inspectedText = string.Join(
+            "\n",
+            new[]
+            {
+                output.Message,
+                string.Join("\n", output.Issues),
+                string.Join("\n", output.Logs),
+                output.RuntimeMetadata?.RuntimeFallbackReason ?? string.Empty,
+                string.Join("\n", auditLog.GetEntries().Select(entry => $"{entry.Action}: {entry.Message}"))
+            });
+
+        return output.Status == AgentContracts.AgentOutputStatus.Failed &&
+               !inspectedText.Contains(secret, StringComparison.OrdinalIgnoreCase) &&
+               !inspectedText.Contains(authorizationHeaderName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class StaticResponseHandler : HttpMessageHandler
+    {
+        private readonly HttpStatusCode _statusCode;
+        private readonly string _body;
+
+        public StaticResponseHandler(HttpStatusCode statusCode, string body)
+        {
+            _statusCode = statusCode;
+            _body = body;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(_statusCode)
+            {
+                Content = new StringContent(_body)
+            });
     }
 
     private static bool GatewayResponseContainsRuntimeMetadata(string projectRoot)
