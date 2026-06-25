@@ -5,7 +5,8 @@ public sealed class PlatformKernel
     public PlatformKernel()
     {
         TaskStore = new TaskStore();
-        WorkflowEngine = new SequentialWorkflowEngine();
+        AuditLog = new InMemoryAuditLog();
+        WorkflowEngine = new SequentialWorkflowEngine(new QualityGate.RetryPolicy(), AuditLog);
         AgentRegistry = new AgentRegistry();
         SkillRegistry = new SkillRegistry();
         ModuleRegistry = new ModuleRegistry();
@@ -13,7 +14,6 @@ public sealed class PlatformKernel
         ContextManager = new ContextManager();
         PermissionManager = new PermissionManager();
         EventBus = new InMemoryEventBus();
-        AuditLog = new InMemoryAuditLog();
     }
 
     public TaskStore TaskStore { get; }

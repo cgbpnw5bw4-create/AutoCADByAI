@@ -121,6 +121,9 @@ public static class PlatformSelfCheckRunner
         var auditInternalAgentCalls = ExpectedInternalRoute.All(agentId =>
             platform.AuditLog.GetEntries().Any(entry => entry.Action == "internal_agent_invoked" && entry.Actor == agentId));
         var runtimeChecks = await RunRuntimeSelfChecks(root, platform, gatewayVisibleAgents, internalAgentsHiddenFromGateway, gatewayQualityGateEnabled, qualityGateAfterCollaboration);
+        var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
+        var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
+        var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
         var checksPassed =
             solutionExists &&
@@ -157,6 +160,16 @@ public static class PlatformSelfCheckRunner
             runtimeChecks.RuntimeTypesDoNotLeakToContracts &&
             runtimeChecks.GatewayVisibilityStillValid &&
             runtimeChecks.QualityGateStillEnabled &&
+            workflowQualityChecks.WorkflowQualityLoopEnabled &&
+            workflowQualityChecks.WorkflowPassedScenario == "Passed" &&
+            workflowQualityChecks.WorkflowRejectedRetryPassedScenario == "Passed" &&
+            workflowQualityChecks.WorkflowRejectedMaxRetriesScenario == "Passed" &&
+            workflowQualityChecks.WorkflowHumanApprovalScenario == "Passed" &&
+            workflowQualityChecks.RetryPolicyEnabled &&
+            workflowQualityChecks.FailureReportGenerated &&
+            workflowQualityChecks.HumanApprovalRequestGenerated &&
+            moduleAgentsRegistered &&
+            placeholderAgentIsFallbackOnly &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -198,6 +211,16 @@ public static class PlatformSelfCheckRunner
             runtimeChecks.RuntimeTypesDoNotLeakToContracts,
             runtimeChecks.GatewayVisibilityStillValid,
             runtimeChecks.QualityGateStillEnabled,
+            workflowQualityChecks.WorkflowQualityLoopEnabled,
+            workflowQualityChecks.WorkflowPassedScenario,
+            workflowQualityChecks.WorkflowRejectedRetryPassedScenario,
+            workflowQualityChecks.WorkflowRejectedMaxRetriesScenario,
+            workflowQualityChecks.WorkflowHumanApprovalScenario,
+            workflowQualityChecks.RetryPolicyEnabled,
+            workflowQualityChecks.FailureReportGenerated,
+            workflowQualityChecks.HumanApprovalRequestGenerated,
+            moduleAgentsRegistered,
+            placeholderAgentIsFallbackOnly,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -296,6 +319,173 @@ public static class PlatformSelfCheckRunner
             DateTimeOffset.UtcNow);
 
         return await chiefEngineer.ExecuteAsync(context);
+    }
+
+    private static async Task<WorkflowQualityLoopSelfCheckResult> RunWorkflowQualityLoopChecks()
+    {
+        var retryPolicy = new RetryPolicy();
+        var retryPolicyEnabled =
+            retryPolicy.MaxRetries == 2 &&
+            retryPolicy.ShouldRetry(new GateDecision("gate-retry", GateDecisionResult.Rejected, "retryable"), 0, Array.Empty<string>()) &&
+            !retryPolicy.ShouldRetry(new GateDecision("gate-failed", GateDecisionResult.Failed, "fatal"), 0, Array.Empty<string>()) &&
+            !retryPolicy.ShouldRetry(new GateDecision("gate-human", GateDecisionResult.NeedsHumanApproval, "human"), 0, Array.Empty<string>()) &&
+            !retryPolicy.ShouldRetry(new GateDecision("gate-critical", GateDecisionResult.Rejected, "critical"), 0, new[] { "critical issue" });
+
+        var passed = await new SequentialWorkflowEngine(new RetryPolicy()).ExecuteAsync(
+            new[]
+            {
+                WorkflowScenarioStep("passed-1", GateDecisionResult.Passed),
+                WorkflowScenarioStep("passed-2", GateDecisionResult.Passed)
+            },
+            new WorkflowContext("workflow-quality-loop-passed", new Dictionary<string, object?>()));
+
+        var retryAttempts = 0;
+        var retryPassed = await new SequentialWorkflowEngine(new RetryPolicy(maxRetries: 2)).ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("retry-step", _ =>
+                {
+                    retryAttempts++;
+                    return Task.FromResult(retryAttempts == 1
+                        ? WorkflowScenarioResult("retry-step", GateDecisionResult.Rejected, ["retryable planning issue"])
+                        : WorkflowScenarioResult("retry-step", GateDecisionResult.Passed));
+                }),
+                WorkflowScenarioStep("retry-next-step", GateDecisionResult.Passed)
+            },
+            new WorkflowContext("workflow-quality-loop-retry-passed", new Dictionary<string, object?>()));
+
+        var rejectedAttempts = 0;
+        var rejectedMaxRetries = await new SequentialWorkflowEngine(new RetryPolicy(maxRetries: 1)).ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("rejected-max-retries", _ =>
+                {
+                    rejectedAttempts++;
+                    return Task.FromResult(WorkflowScenarioResult("rejected-max-retries", GateDecisionResult.Rejected, ["persistent quality issue"]));
+                }),
+                WorkflowScenarioStep("should-not-run-after-reject", GateDecisionResult.Passed)
+            },
+            new WorkflowContext("workflow-quality-loop-max-retries", new Dictionary<string, object?>()));
+
+        var downstreamHumanApprovalStepExecuted = false;
+        var humanApproval = await new SequentialWorkflowEngine(new RetryPolicy()).ExecuteAsync(
+            new[]
+            {
+                WorkflowScenarioStep("human-approval", GateDecisionResult.NeedsHumanApproval, ["manual approval required"]),
+                new WorkflowStep("should-not-run-after-human", _ =>
+                {
+                    downstreamHumanApprovalStepExecuted = true;
+                    return Task.FromResult(WorkflowScenarioResult("should-not-run-after-human", GateDecisionResult.Passed));
+                })
+            },
+            new WorkflowContext("workflow-quality-loop-human", new Dictionary<string, object?>()));
+
+        var failed = await new SequentialWorkflowEngine(new RetryPolicy()).ExecuteAsync(
+            new[]
+            {
+                WorkflowScenarioStep("failed-step", GateDecisionResult.Failed, ["fatal workflow issue"]),
+                WorkflowScenarioStep("should-not-run-after-failed", GateDecisionResult.Passed)
+            },
+            new WorkflowContext("workflow-quality-loop-failed", new Dictionary<string, object?>()));
+
+        var workflowPassedScenario =
+            passed.Status == WorkflowStatus.Passed &&
+            passed.Steps.Count == 2 &&
+            passed.Steps.All(step => step.Status == WorkflowStepStatus.Passed)
+                ? "Passed"
+                : "Failed";
+        var workflowRejectedRetryPassedScenario =
+            retryPassed.Status == WorkflowStatus.Passed &&
+            retryAttempts == 2 &&
+            retryPassed.Steps.Any(step => step.Status == WorkflowStepStatus.Retrying) &&
+            retryPassed.AuditLogs.Any(log => log.Action == "workflow_step_retrying")
+                ? "Passed"
+                : "Failed";
+        var workflowRejectedMaxRetriesScenario =
+            rejectedMaxRetries.Status == WorkflowStatus.Rejected &&
+            rejectedAttempts == 2 &&
+            rejectedMaxRetries.Steps.LastOrDefault()?.RejectReport is not null &&
+            rejectedMaxRetries.Steps.All(step => step.StepId != "should-not-run-after-reject")
+                ? "Passed"
+                : "Failed";
+        var workflowHumanApprovalScenario =
+            humanApproval.Status == WorkflowStatus.WaitingForHumanApproval &&
+            humanApproval.HumanApprovalRequest is not null &&
+            !downstreamHumanApprovalStepExecuted
+                ? "Passed"
+                : "Failed";
+        var failureReportGenerated =
+            failed.Status == WorkflowStatus.Failed &&
+            failed.FailureReport is not null &&
+            failed.Steps.All(step => step.StepId != "should-not-run-after-failed");
+        var humanApprovalRequestGenerated = humanApproval.HumanApprovalRequest is not null;
+        var workflowQualityLoopEnabled =
+            workflowPassedScenario == "Passed" &&
+            workflowRejectedRetryPassedScenario == "Passed" &&
+            workflowRejectedMaxRetriesScenario == "Passed" &&
+            workflowHumanApprovalScenario == "Passed" &&
+            failureReportGenerated &&
+            humanApprovalRequestGenerated;
+
+        return new WorkflowQualityLoopSelfCheckResult(
+            workflowQualityLoopEnabled,
+            workflowPassedScenario,
+            workflowRejectedRetryPassedScenario,
+            workflowRejectedMaxRetriesScenario,
+            workflowHumanApprovalScenario,
+            retryPolicyEnabled,
+            failureReportGenerated,
+            humanApprovalRequestGenerated);
+    }
+
+    private static WorkflowStep WorkflowScenarioStep(
+        string stepId,
+        GateDecisionResult result,
+        IReadOnlyList<string>? issues = null) =>
+        new(stepId, _ => Task.FromResult(WorkflowScenarioResult(stepId, result, issues)));
+
+    private static WorkflowStepResult WorkflowScenarioResult(
+        string stepId,
+        GateDecisionResult result,
+        IReadOnlyList<string>? issues = null)
+    {
+        var decision = new GateDecision(
+            $"gate-{stepId}-{Guid.NewGuid():N}",
+            result,
+            $"{result} decision for workflow quality loop self-check.");
+        var status = result switch
+        {
+            GateDecisionResult.Passed => WorkflowStepStatus.Passed,
+            GateDecisionResult.Rejected => WorkflowStepStatus.Rejected,
+            GateDecisionResult.Failed => WorkflowStepStatus.Failed,
+            GateDecisionResult.NeedsHumanApproval => WorkflowStepStatus.WaitingForHumanApproval,
+            _ => WorkflowStepStatus.Running
+        };
+
+        return new WorkflowStepResult(
+            stepId,
+            stepId,
+            status,
+            $"Workflow quality loop step {stepId} returned {result}.",
+            GateDecision: decision,
+            Issues: issues ?? Array.Empty<string>(),
+            Logs: new[] { $"workflow-quality-loop:{stepId}" });
+    }
+
+    private static bool ModuleAgentsRegistered(PlatformKernel platform)
+    {
+        var expectedTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["chief-engineer"] = "ChiefEngineerAgent",
+            ["mechanical-designer"] = "MechanicalDesignerAgent",
+            ["cad-modeler"] = "CadModelerAgent",
+            ["drawing-engineer"] = "DrawingEngineerAgent",
+            ["drawing-reviewer"] = "DrawingReviewerAgent",
+            ["error-diagnosis"] = "ErrorDiagnosisAgent"
+        };
+
+        return expectedTypes.All(expected =>
+            platform.AgentRegistry.GetById(expected.Key)?.GetType().Name == expected.Value);
     }
 
     private static async Task<RuntimeSelfCheckResult> RunRuntimeSelfChecks(
@@ -471,6 +661,16 @@ public static class PlatformSelfCheckRunner
         bool RuntimeTypesDoNotLeakToContracts,
         bool GatewayVisibilityStillValid,
         bool QualityGateStillEnabled);
+
+    private sealed record WorkflowQualityLoopSelfCheckResult(
+        bool WorkflowQualityLoopEnabled,
+        string WorkflowPassedScenario,
+        string WorkflowRejectedRetryPassedScenario,
+        string WorkflowRejectedMaxRetriesScenario,
+        string WorkflowHumanApprovalScenario,
+        bool RetryPolicyEnabled,
+        bool FailureReportGenerated,
+        bool HumanApprovalRequestGenerated);
 
     private static JsonSerializerOptions JsonOptions()
     {

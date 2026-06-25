@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Modules\RequirementUnderstanding\agents\ChiefEngineerOrchestrator.cs" Link="Modules\RequirementUnderstanding\agents\ChiefEngineerOrchestrator.cs" />
+    <Compile Include="..\Modules\**\agents\*.cs" Link="Modules\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <PropertyGroup>

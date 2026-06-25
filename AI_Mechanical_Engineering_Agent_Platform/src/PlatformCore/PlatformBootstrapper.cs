@@ -1,5 +1,10 @@
 using AgentContracts;
 using ModuleContracts;
+using PlatformCore.Modules.CADModeling.Agents;
+using PlatformCore.Modules.DrawingGeneration.Agents;
+using PlatformCore.Modules.DrawingReview.Agents;
+using PlatformCore.Modules.ErrorDiagnosis.Agents;
+using PlatformCore.Modules.MechanicalDesign.Agents;
 using PlatformCore.Modules.RequirementUnderstanding.Agents;
 
 namespace PlatformCore;
@@ -83,54 +88,14 @@ public static class PlatformBootstrapper
             platform.AgentRegistry,
             platform.AuditLog);
 
-        platform.AgentRegistry.Register(new PlaceholderAgent(
-            "chief-engineer",
-            "机械总工程师",
-            new AgentRole("chief-engineer", "机械总工程师", "总调度、任务拆解、内部 Agent 协作、质量裁决"),
-            "Public entry point for external gateways. Delegates to internal engineering agents.",
-            AgentVisibility.Public,
-            "mechanical-designer",
-            chiefEngineerOrchestrator));
+        platform.AgentRegistry.Register(new ChiefEngineerAgent(chiefEngineerOrchestrator));
+        platform.AgentRegistry.Register(new MechanicalDesignerAgent());
+        platform.AgentRegistry.Register(new CadModelerAgent());
+        platform.AgentRegistry.Register(new DrawingEngineerAgent());
+        platform.AgentRegistry.Register(new DrawingReviewerAgent());
+        platform.AgentRegistry.Register(new ErrorDiagnosisAgent());
 
-        platform.AgentRegistry.Register(new PlaceholderAgent(
-            "mechanical-designer",
-            "机械设计师",
-            new AgentRole("mechanical-designer", "机械设计师", "结构方案、机械合理性、参数建议"),
-            "Internal mechanical design planner.",
-            AgentVisibility.Internal,
-            "cad-modeler"));
-
-        platform.AgentRegistry.Register(new PlaceholderAgent(
-            "cad-modeler",
-            "CAD建模工程师",
-            new AgentRole("cad-modeler", "CAD建模工程师", "建模规划、BuildSpec 生成、Worker 调用规划"),
-            "Internal CAD modeling planner. Does not call CAD software directly.",
-            AgentVisibility.Internal,
-            "drawing-engineer"));
-
-        platform.AgentRegistry.Register(new PlaceholderAgent(
-            "drawing-engineer",
-            "工程图工程师",
-            new AgentRole("drawing-engineer", "工程图工程师", "工程图生成规划"),
-            "Internal drawing generation planner.",
-            AgentVisibility.Internal,
-            "drawing-reviewer"));
-
-        platform.AgentRegistry.Register(new PlaceholderAgent(
-            "drawing-reviewer",
-            "出图复审工程师",
-            new AgentRole("drawing-reviewer", "出图复审工程师", "PDF、尺寸、视图、标题栏复审"),
-            "Internal drawing reviewer.",
-            AgentVisibility.Internal));
-
-        platform.AgentRegistry.Register(new PlaceholderAgent(
-            "error-diagnosis",
-            "异常诊断工程师",
-            new AgentRole("error-diagnosis", "异常诊断工程师", "失败原因分析和修复建议"),
-            "Internal failure analysis agent.",
-            AgentVisibility.Internal));
-
-        platform.AuditLog.Record("agent", "bootstrapper", "registered", "Registered base agent placeholders.");
+        platform.AuditLog.Record("agent", "bootstrapper", "registered", "Registered module agent implementations.");
     }
 
     private static void RegisterSkills(PlatformKernel platform)
