@@ -19,4 +19,5 @@ public sealed record AgentOutput(
     IReadOnlyList<string> Logs,
     string? NextRecommendedAgentId,
     InternalCollaborationReport? InternalCollaborationReport = null,
-    ReviewReport? ReviewReport = null);
+    ReviewReport? ReviewReport = null,
+    RuntimeMetadata? RuntimeMetadata = null);

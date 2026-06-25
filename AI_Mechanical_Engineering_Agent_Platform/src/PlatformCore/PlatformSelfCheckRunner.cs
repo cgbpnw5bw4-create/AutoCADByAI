@@ -121,6 +121,7 @@ public static class PlatformSelfCheckRunner
         var auditInternalAgentCalls = ExpectedInternalRoute.All(agentId =>
             platform.AuditLog.GetEntries().Any(entry => entry.Action == "internal_agent_invoked" && entry.Actor == agentId));
         var runtimeChecks = await RunRuntimeSelfChecks(root, platform, gatewayVisibleAgents, internalAgentsHiddenFromGateway, gatewayQualityGateEnabled, qualityGateAfterCollaboration);
+        var realRuntimeChecks = await RunRealRuntimeSelfChecks(root, platform);
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
@@ -163,6 +164,20 @@ public static class PlatformSelfCheckRunner
             runtimeChecks.RuntimeTypesDoNotLeakToContracts &&
             runtimeChecks.GatewayVisibilityStillValid &&
             runtimeChecks.QualityGateStillEnabled &&
+            realRuntimeChecks.RealRuntimeInvokerImplemented &&
+            realRuntimeChecks.RuntimeConfigEnvSupported &&
+            realRuntimeChecks.RuntimeModeDefaultIsMock &&
+            realRuntimeChecks.RuntimeFallbackWhenMissingKey &&
+            realRuntimeChecks.ChiefEngineerRealRuntimeOnly &&
+            realRuntimeChecks.InternalAgentsRemainMock &&
+            realRuntimeChecks.MicrosoftAgentOutputMapperEnabled &&
+            realRuntimeChecks.InvalidModelOutputFallbackEnabled &&
+            realRuntimeChecks.ModelCannotEscalatePermissions &&
+            realRuntimeChecks.ModelCannotCallWorkerDirectly &&
+            realRuntimeChecks.ChiefEngineerRuntimeThenWorkflowEngine &&
+            realRuntimeChecks.QualityGateAfterRealRuntime &&
+            realRuntimeChecks.GatewayResponseContainsRuntimeMetadata &&
+            (!realRuntimeChecks.StrictSmokeTest || realRuntimeChecks.MicrosoftRuntimeSmokeTestPassed) &&
             workflowQualityChecks.WorkflowQualityLoopEnabled &&
             workflowQualityChecks.WorkflowPassedScenario == "Passed" &&
             workflowQualityChecks.WorkflowRejectedRetryPassedScenario == "Passed" &&
@@ -252,6 +267,22 @@ public static class PlatformSelfCheckRunner
             internalWorkflowChecks.CodeReviewerAgentRegistered,
             internalWorkflowChecks.CodeAgentsAreInternal,
             internalWorkflowChecks.GatewayBlocksCodeAgents,
+            realRuntimeChecks.RealRuntimeInvokerImplemented,
+            realRuntimeChecks.RuntimeConfigEnvSupported,
+            realRuntimeChecks.RuntimeModeDefaultIsMock,
+            realRuntimeChecks.RuntimeFallbackWhenMissingKey,
+            realRuntimeChecks.ChiefEngineerRealRuntimeOnly,
+            realRuntimeChecks.InternalAgentsRemainMock,
+            realRuntimeChecks.MicrosoftAgentOutputMapperEnabled,
+            realRuntimeChecks.InvalidModelOutputFallbackEnabled,
+            realRuntimeChecks.ModelCannotEscalatePermissions,
+            realRuntimeChecks.ModelCannotCallWorkerDirectly,
+            realRuntimeChecks.ChiefEngineerRuntimeThenWorkflowEngine,
+            realRuntimeChecks.QualityGateAfterRealRuntime,
+            realRuntimeChecks.GatewayResponseContainsRuntimeMetadata,
+            realRuntimeChecks.MicrosoftRuntimeSmokeTestAttempted,
+            realRuntimeChecks.MicrosoftRuntimeSmokeTestPassed,
+            realRuntimeChecks.MicrosoftRuntimeSmokeTestError,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -633,6 +664,264 @@ public static class PlatformSelfCheckRunner
             platform.AgentRegistry.GetById(expected.Key)?.GetType().Name == expected.Value);
     }
 
+    private static async Task<RealRuntimeSelfCheckResult> RunRealRuntimeSelfChecks(string projectRoot, PlatformKernel platform)
+    {
+        var smokeAttempted = RealRuntimeEnvironmentConfigured();
+        var smokePassed = false;
+        string? smokeError = null;
+        var strictSmokeTest = string.Equals(Environment.GetEnvironmentVariable("AI_RUNTIME_STRICT_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+        try
+        {
+            var runtimeAssembly = LoadRuntimeAssembly(projectRoot);
+            var invokerType = runtimeAssembly.GetType("AgentRuntime.Microsoft.MicrosoftRuntimeAgentInvoker", throwOnError: true)!;
+            var configType = runtimeAssembly.GetType("AgentRuntime.Microsoft.RuntimeConfiguration", throwOnError: true)!;
+            var mapperType = runtimeAssembly.GetType("AgentRuntime.Microsoft.MicrosoftAgentOutputMapper", throwOnError: true)!;
+            var adapterType = runtimeAssembly.GetType("AgentRuntime.Microsoft.MicrosoftAgentAdapter", throwOnError: true)!;
+            var factoryType = runtimeAssembly.GetType("AgentRuntime.Microsoft.AgentFactory", throwOnError: true)!;
+            var modelClientFactoryType = runtimeAssembly.GetType("AgentRuntime.Microsoft.RuntimeModelClientFactory", throwOnError: true)!;
+
+            var realRuntimeInvokerImplemented = invokerType is not null && modelClientFactoryType is not null;
+            var fromEnvironment = configType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .SingleOrDefault(method => method.Name == "FromEnvironment" && method.GetParameters().Length == 1)
+                ?? throw new MissingMethodException("RuntimeConfiguration.FromEnvironment(environment) was not found.");
+            var defaultConfig = InvokeRuntimeConfigurationFromEnvironment(fromEnvironment!, new Dictionary<string, string?>());
+            var missingKeyConfig = InvokeRuntimeConfigurationFromEnvironment(
+                fromEnvironment!,
+                new Dictionary<string, string?>
+                {
+                    ["AI_AGENT_RUNTIME_MODE"] = "Microsoft",
+                    ["AI_PROVIDER"] = "openai-compatible",
+                    ["AI_MODEL"] = "demo-model"
+                });
+
+            var runtimeConfigEnvSupported = fromEnvironment is not null;
+            var runtimeModeDefaultIsMock = GetEnumName(defaultConfig, "EffectiveMode") == "Mock";
+            var runtimeFallbackWhenMissingKey =
+                GetEnumName(missingKeyConfig, "RequestedMode") == "Microsoft" &&
+                GetEnumName(missingKeyConfig, "EffectiveMode") == "Mock" &&
+                GetBool(missingKeyConfig, "FallbackUsed");
+
+            var mapper = Activator.CreateInstance(
+                mapperType,
+                new object[] { new[] { "mechanical-designer", "cad-modeler", "drawing-engineer", "drawing-reviewer" } })!;
+            var mapMethod = mapperType.GetMethod("Map")!;
+            var metadata = RuntimeMetadata.MockMicrosoft("openai-compatible", "demo-model");
+            var mappedValid = (AgentContracts.AgentOutput)mapMethod.Invoke(mapper, new object[]
+            {
+                """
+                {
+                  "status": "completed",
+                  "message": "ok",
+                  "recommended_internal_agents": ["mechanical-designer"],
+                  "next_recommended_agent_id": "mechanical-designer"
+                }
+                """,
+                metadata
+            })!;
+            var mappedInvalid = (AgentContracts.AgentOutput)mapMethod.Invoke(mapper, new object[] { "plain text", metadata })!;
+            var mappedUnsafe = (AgentContracts.AgentOutput)mapMethod.Invoke(mapper, new object[]
+            {
+                """
+                {
+                  "status": "completed",
+                  "message": "unsafe",
+                  "recommended_internal_agents": ["worker:FakeSolidWorksWorker"],
+                  "next_recommended_agent_id": "worker:FakeSolidWorksWorker",
+                  "visibility": "Public",
+                  "expose_internal_agents": true
+                }
+                """,
+                metadata
+            })!;
+
+            var microsoftAgentOutputMapperEnabled =
+                mappedValid.Status == AgentContracts.AgentOutputStatus.Completed &&
+                mappedValid.NextRecommendedAgentId == "mechanical-designer";
+            var invalidModelOutputFallbackEnabled =
+                mappedInvalid.Status == AgentContracts.AgentOutputStatus.Completed &&
+                mappedInvalid.Message.Contains("plain text", StringComparison.OrdinalIgnoreCase);
+            var modelCannotEscalatePermissions =
+                mappedUnsafe.Issues.Any(issue => issue.Contains("permission", StringComparison.OrdinalIgnoreCase));
+            var modelCannotCallWorkerDirectly =
+                mappedUnsafe.Issues.Any(issue => issue.Contains("Worker", StringComparison.OrdinalIgnoreCase)) &&
+                mappedUnsafe.NextRecommendedAgentId is null;
+
+            var factory = Activator.CreateInstance(factoryType, platform.AuditLog)!;
+            var createRuntimeAwareAgent = factoryType.GetMethod("CreateRuntimeAwareAgent")!;
+            var microsoftConfig = InvokeRuntimeConfigurationFromEnvironment(
+                fromEnvironment!,
+                new Dictionary<string, string?>
+                {
+                    ["AI_AGENT_RUNTIME_MODE"] = "Microsoft",
+                    ["AI_PROVIDER"] = "openai-compatible",
+                    ["AI_MODEL"] = "demo-model",
+                    ["AI_API_KEY"] = "self-check-key"
+                });
+            var chief = platform.AgentRegistry.GetById("chief-engineer")!;
+            var internalAgent = platform.AgentRegistry.GetById("mechanical-designer")!;
+            var runtimeChief = (AgentContracts.IAgent)createRuntimeAwareAgent.Invoke(factory, new object?[] { chief, platform.AgentRegistry, microsoftConfig, null })!;
+            var runtimeInternal = (AgentContracts.IAgent)createRuntimeAwareAgent.Invoke(factory, new object?[] { internalAgent, platform.AgentRegistry, microsoftConfig, null })!;
+            var chiefEngineerRealRuntimeOnly = adapterType.IsInstanceOfType(runtimeChief);
+            var internalAgentsRemainMock = ReferenceEquals(internalAgent, runtimeInternal);
+
+            var chiefEngineerRuntimeThenWorkflowEngine =
+                adapterType.GetMethod("ExecuteAsync") is not null &&
+                typeof(AgentContracts.AgentOutput).GetProperty(nameof(AgentContracts.AgentOutput.RuntimeMetadata)) is not null &&
+                platform.AuditLog.GetEntries().Any(entry => entry.Action == "workflow_started");
+            var qualityGateAfterRealRuntime = typeof(AgentOutputReviewMapper)
+                .GetMethod(nameof(AgentOutputReviewMapper.ToReviewReport)) is not null;
+            var gatewayResponseContainsRuntimeMetadata = GatewayResponseContainsRuntimeMetadata(projectRoot);
+
+            if (smokeAttempted)
+            {
+                var smokeInvokerType = invokerType ?? throw new TypeLoadException("MicrosoftRuntimeAgentInvoker was not found.");
+                var smokeConfigType = configType ?? throw new TypeLoadException("RuntimeConfiguration was not found.");
+                var smokeModelClientFactoryType = modelClientFactoryType ?? throw new TypeLoadException("RuntimeModelClientFactory was not found.");
+
+                (smokePassed, smokeError) = await RunRealRuntimeSmokeTestAsync(
+                    runtimeAssembly,
+                    smokeInvokerType,
+                    smokeConfigType,
+                    smokeModelClientFactoryType,
+                    platform);
+            }
+
+            return new RealRuntimeSelfCheckResult(
+                realRuntimeInvokerImplemented,
+                runtimeConfigEnvSupported,
+                runtimeModeDefaultIsMock,
+                runtimeFallbackWhenMissingKey,
+                chiefEngineerRealRuntimeOnly,
+                internalAgentsRemainMock,
+                microsoftAgentOutputMapperEnabled,
+                invalidModelOutputFallbackEnabled,
+                modelCannotEscalatePermissions,
+                modelCannotCallWorkerDirectly,
+                chiefEngineerRuntimeThenWorkflowEngine,
+                qualityGateAfterRealRuntime,
+                gatewayResponseContainsRuntimeMetadata,
+                smokeAttempted,
+                smokePassed,
+                smokeError,
+                strictSmokeTest);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException or MissingMethodException or InvalidOperationException or TargetInvocationException)
+        {
+            platform.AuditLog.Record("agent-runtime", "self-check", "real_runtime_check_failed", ex.Message);
+            return new RealRuntimeSelfCheckResult(
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                smokeAttempted,
+                smokePassed,
+                ex.Message,
+                strictSmokeTest);
+        }
+    }
+
+    private static bool GatewayResponseContainsRuntimeMetadata(string projectRoot)
+    {
+        var loaded = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(assembly => assembly.GetName().Name == "AgentGatewayHost");
+        var assembly = loaded ?? Assembly.LoadFrom(Path.Combine(projectRoot, "src", "Interfaces", "AgentGatewayHost", "bin", "Debug", "net10.0", "AgentGatewayHost.dll"));
+        var responseType = assembly.GetType("AgentGatewayHost.GatewayMessageResponse", throwOnError: true)!;
+        var expectedProperties = new[]
+        {
+            "RuntimeMode",
+            "RuntimeProvider",
+            "RuntimeModel",
+            "RuntimeFallbackUsed",
+            "RuntimeFallbackReason",
+            "ChiefEngineerRuntimeUsed"
+        };
+
+        return expectedProperties.All(property => responseType.GetProperty(property) is not null);
+    }
+
+    private static bool RealRuntimeEnvironmentConfigured() =>
+        string.Equals(Environment.GetEnvironmentVariable("AI_AGENT_RUNTIME_MODE"), "Microsoft", StringComparison.OrdinalIgnoreCase) &&
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AI_API_KEY")) &&
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AI_PROVIDER")) &&
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AI_MODEL"));
+
+    private static async Task<(bool Passed, string? Error)> RunRealRuntimeSmokeTestAsync(
+        Assembly runtimeAssembly,
+        Type invokerType,
+        Type configType,
+        Type modelClientFactoryType,
+        PlatformKernel platform)
+    {
+        try
+        {
+            var fromEnvironment = configType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .SingleOrDefault(method => method.Name == "FromEnvironment" && method.GetParameters().Length == 0)
+                ?? throw new MissingMethodException("RuntimeConfiguration.FromEnvironment() was not found.");
+            var configuration = fromEnvironment.Invoke(null, null)
+                ?? throw new InvalidOperationException("Could not create runtime configuration from process environment.");
+            var modelClientFactory = Activator.CreateInstance(modelClientFactoryType)
+                ?? throw new InvalidOperationException("Could not create RuntimeModelClientFactory.");
+            var modelClient = modelClientFactoryType.GetMethod("Create")!.Invoke(modelClientFactory, new[] { configuration })
+                ?? throw new InvalidOperationException("Could not create runtime model client.");
+            var manifestType = runtimeAssembly.GetType("AgentRuntime.Microsoft.RuntimeAgentManifest", throwOnError: true)!;
+            var manifest = manifestType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(method => method.Name == "Create" && method.GetParameters().Length == 2)
+                .Invoke(null, new object?[] { "chief-engineer", null })
+                ?? throw new InvalidOperationException("Could not create runtime agent manifest.");
+            var internalAgentIds = platform.AgentRegistry.GetInternalAgents().Select(agent => agent.Id).ToArray();
+            var invoker = Activator.CreateInstance(invokerType, new object?[]
+                {
+                    configuration,
+                    modelClient,
+                    platform.AuditLog,
+                    internalAgentIds,
+                    null
+                })
+                ?? throw new InvalidOperationException("Could not create MicrosoftRuntimeAgentInvoker.");
+            var invokeAsync = invokerType.GetMethod("InvokeAsync")
+                ?? throw new MissingMethodException("MicrosoftRuntimeAgentInvoker.InvokeAsync was not found.");
+            var timeoutSeconds = GetInt(configuration, "TimeoutSeconds", 30);
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(Math.Max(1, timeoutSeconds)));
+            var task = (Task<AgentContracts.AgentOutput>)invokeAsync.Invoke(
+                invoker,
+                new object?[] { manifest, CreateRuntimeCheckAgentContext(), cancellation.Token })!;
+            var output = await task;
+
+            return output.Status == AgentContracts.AgentOutputStatus.Failed
+                ? (false, string.Join("; ", output.Issues))
+                : (true, null);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException or MissingMethodException or InvalidOperationException or TargetInvocationException or TaskCanceledException or HttpRequestException)
+        {
+            return (false, ex.GetBaseException().Message);
+        }
+    }
+
+    private static object InvokeRuntimeConfigurationFromEnvironment(
+        MethodInfo fromEnvironment,
+        Dictionary<string, string?> environment) =>
+        fromEnvironment.Invoke(null, new object[] { environment })
+        ?? throw new InvalidOperationException("Could not create runtime configuration.");
+
+    private static string? GetEnumName(object instance, string propertyName) =>
+        instance.GetType().GetProperty(propertyName)?.GetValue(instance)?.ToString();
+
+    private static bool GetBool(object instance, string propertyName) =>
+        instance.GetType().GetProperty(propertyName)?.GetValue(instance) is true;
+
+    private static int GetInt(object instance, string propertyName, int fallback) =>
+        instance.GetType().GetProperty(propertyName)?.GetValue(instance) is int value ? value : fallback;
+
     private static async Task<RuntimeSelfCheckResult> RunRuntimeSelfChecks(
         string projectRoot,
         PlatformKernel platform,
@@ -808,6 +1097,25 @@ public static class PlatformSelfCheckRunner
         bool RuntimeTypesDoNotLeakToContracts,
         bool GatewayVisibilityStillValid,
         bool QualityGateStillEnabled);
+
+    private sealed record RealRuntimeSelfCheckResult(
+        bool RealRuntimeInvokerImplemented,
+        bool RuntimeConfigEnvSupported,
+        bool RuntimeModeDefaultIsMock,
+        bool RuntimeFallbackWhenMissingKey,
+        bool ChiefEngineerRealRuntimeOnly,
+        bool InternalAgentsRemainMock,
+        bool MicrosoftAgentOutputMapperEnabled,
+        bool InvalidModelOutputFallbackEnabled,
+        bool ModelCannotEscalatePermissions,
+        bool ModelCannotCallWorkerDirectly,
+        bool ChiefEngineerRuntimeThenWorkflowEngine,
+        bool QualityGateAfterRealRuntime,
+        bool GatewayResponseContainsRuntimeMetadata,
+        bool MicrosoftRuntimeSmokeTestAttempted,
+        bool MicrosoftRuntimeSmokeTestPassed,
+        string? MicrosoftRuntimeSmokeTestError,
+        bool StrictSmokeTest);
 
     private sealed record WorkflowQualityLoopSelfCheckResult(
         bool WorkflowQualityLoopEnabled,

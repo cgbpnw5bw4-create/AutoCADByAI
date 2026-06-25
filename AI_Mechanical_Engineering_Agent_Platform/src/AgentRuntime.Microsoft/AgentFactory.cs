@@ -34,4 +34,41 @@ public sealed class AgentFactory
             AgentRuntimeMode.Microsoft,
             _auditLog,
             invoker);
+
+    public IAgent CreateRuntimeAwareAgent(
+        IAgent platformAgent,
+        AgentRegistry agentRegistry,
+        RuntimeConfiguration configuration,
+        IRuntimeModelClient? modelClient = null)
+    {
+        if (!string.Equals(platformAgent.Id, "chief-engineer", StringComparison.OrdinalIgnoreCase))
+        {
+            return platformAgent;
+        }
+
+        if (configuration.EffectiveMode != AgentRuntimeMode.Microsoft)
+        {
+            if (configuration.FallbackUsed)
+            {
+                _auditLog.Record("agent-runtime", platformAgent.Id, "runtime_fallback_to_mock", configuration.FallbackReason ?? "Runtime fallback used.");
+            }
+
+            return platformAgent;
+        }
+
+        var internalAgentIds = agentRegistry.GetInternalAgents().Select(agent => agent.Id).ToArray();
+        var client = modelClient ?? new RuntimeModelClientFactory().Create(configuration);
+        var invoker = new MicrosoftRuntimeAgentInvoker(
+            configuration,
+            client,
+            _auditLog,
+            internalAgentIds);
+
+        return new MicrosoftAgentAdapter(
+            platformAgent,
+            RuntimeAgentManifest.Create(platformAgent.Id, platformAgent.Visibility),
+            AgentRuntimeMode.Microsoft,
+            _auditLog,
+            invoker);
+    }
 }

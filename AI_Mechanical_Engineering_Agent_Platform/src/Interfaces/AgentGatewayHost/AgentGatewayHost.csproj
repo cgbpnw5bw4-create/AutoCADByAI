@@ -5,6 +5,7 @@
     <ProjectReference Include="..\..\PlatformCore\PlatformCore.csproj" />
     <ProjectReference Include="..\..\DomainSchemas\DomainSchemas.csproj" />
     <ProjectReference Include="..\..\QualityGate\QualityGate.csproj" />
+    <ProjectReference Include="..\..\AgentRuntime.Microsoft\AgentRuntime.Microsoft.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

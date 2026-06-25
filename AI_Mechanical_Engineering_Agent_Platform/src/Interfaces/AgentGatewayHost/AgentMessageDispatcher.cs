@@ -63,6 +63,7 @@ public sealed class AgentMessageDispatcher
             : gateEvaluation.RejectReport?.Message ?? gateEvaluation.Decision.Reason;
 
         var issues = gateEvaluation.RejectReport?.Reasons ?? output.Issues;
+        var runtimeMetadata = output.RuntimeMetadata;
 
         var response = new GatewayMessageResponse(
             agent.Id,
@@ -74,7 +75,13 @@ public sealed class AgentMessageDispatcher
             gateEvaluation.Decision,
             gateEvaluation.RejectReport,
             output.InternalCollaborationReport,
-            output.NextRecommendedAgentId);
+            output.NextRecommendedAgentId,
+            runtimeMetadata?.RuntimeMode ?? "Mock",
+            runtimeMetadata?.RuntimeProvider,
+            runtimeMetadata?.RuntimeModel,
+            runtimeMetadata?.RuntimeFallbackUsed ?? false,
+            runtimeMetadata?.RuntimeFallbackReason,
+            runtimeMetadata?.ChiefEngineerRuntimeUsed ?? false);
 
         _platform.AuditLog.Record("gateway", agent.Id, "gateway_response_returned", $"Gateway response returned with status {response.Status}.");
         return response;

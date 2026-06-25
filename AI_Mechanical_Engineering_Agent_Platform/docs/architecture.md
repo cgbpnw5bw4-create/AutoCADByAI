@@ -45,9 +45,11 @@ V0.2 internal routing uses `InternalCollaborationReport` to preserve called agen
 
 This is the only project intended to reference Microsoft Agent Framework packages. It adapts Microsoft runtime concepts to the platform contracts.
 
-V0.3 references `Microsoft.Agents.AI` only from this project and defaults to `MockRuntime`. Business modules, workers, PlatformCore and contracts do not depend on Microsoft runtime APIs.
+V0.7 references `Microsoft.Agents.AI` only from this project and defaults to `MockRuntime`. Business modules, workers, PlatformCore and contracts do not depend on Microsoft runtime APIs.
 
 The runtime adapter exposes platform `IAgent` instances through `MicrosoftAgentAdapter`; real Microsoft runtime execution remains behind `IMicrosoftRuntimeAgentInvoker` and must return platform `AgentOutput`.
+
+Only `chief-engineer` can be wrapped with real runtime. The LLM output is advisory: it can summarize the task and recommend Internal Agents, but the platform still routes through `ChiefEngineerOrchestrator`, `SequentialWorkflowEngine`, Internal Agent workflow steps and QualityGate. Internal Agents remain Module/Mock agents in V0.7.
 
 ## Modules
 
@@ -75,6 +77,8 @@ The first version includes fake SolidWorks and AutoCAD workers only.
 QualityGate owns validation, review, gate decisions, reject reports and retry policy. It consumes `ReviewReport` and returns `GateDecision`.
 
 AgentGatewayHost routes every external Agent message through the minimal QualityGate chain before returning a response.
+
+V0.7 Gateway responses include runtime metadata such as mode, provider, model and fallback state. This metadata does not change Agent visibility or permissions.
 
 ## Storage
 

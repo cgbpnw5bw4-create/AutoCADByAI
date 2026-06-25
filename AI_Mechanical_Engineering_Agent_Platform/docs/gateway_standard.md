@@ -17,13 +17,13 @@ External systems must not:
 Every accepted external Agent message must pass through the Gateway QualityGate chain:
 
 1. Execute the Public Agent.
-2. Let chief-engineer route internally through InternalAgentRouter when needed.
+2. Let chief-engineer route internally through WorkflowEngine-backed Internal Agent steps when needed.
 3. Convert `AgentOutput` and any `InternalCollaborationReport` into `ReviewReport`.
 4. Evaluate through Gatekeeper.
 5. Return the Agent output only when the GateDecision is `Passed`.
 6. Return `rejected`, `failed`, or `needs_human_approval` with gate details otherwise.
 
-V0.2 exposes only `chief-engineer` externally. `mechanical-designer`, `cad-modeler`, `drawing-engineer`, `drawing-reviewer`, and `error-diagnosis` remain Internal and must not be invoked directly through Gateway.
+V0.7 exposes only `chief-engineer` externally. `mechanical-designer`, `cad-modeler`, `drawing-engineer`, `drawing-reviewer`, `code-engineer`, `code-reviewer`, and `error-diagnosis` remain Internal and must not be invoked directly through Gateway.
 
 First version exposure:
 
@@ -39,4 +39,15 @@ First version exposure:
 ]
 ```
 
-The chief engineer agent can internally coordinate mechanical-designer, cad-modeler, drawing-engineer, drawing-reviewer and error-diagnosis agents through AgentRegistry.
+The chief engineer agent can use real runtime for task understanding when configured, but runtime output is advisory only. It cannot expose Internal Agents, call Workers, modify files, or bypass QualityGate.
+
+Gateway responses include runtime metadata:
+
+- `runtime_mode`
+- `runtime_provider`
+- `runtime_model`
+- `runtime_fallback_used`
+- `runtime_fallback_reason`
+- `chief_engineer_runtime_used`
+
+This metadata is informational and never grants new permissions.

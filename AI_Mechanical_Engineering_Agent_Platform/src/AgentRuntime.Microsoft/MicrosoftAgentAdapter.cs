@@ -32,6 +32,16 @@ public sealed class MicrosoftAgentAdapter : IAgent
     {
     }
 
+    public MicrosoftAgentAdapter(
+        IAgent platformAgent,
+        RuntimeAgentManifest manifest,
+        AgentRuntimeMode runtimeMode,
+        InMemoryAuditLog? auditLog,
+        IMicrosoftRuntimeAgentInvoker? microsoftInvoker)
+        : this(manifest, runtimeMode, auditLog, microsoftInvoker, platformAgent)
+    {
+    }
+
     private MicrosoftAgentAdapter(
         RuntimeAgentManifest manifest,
         AgentRuntimeMode runtimeMode,
@@ -64,6 +74,7 @@ public sealed class MicrosoftAgentAdapter : IAgent
 
         var output = _runtimeMode switch
         {
+            AgentRuntimeMode.Microsoft when _platformAgent is not null && _microsoftInvoker is not null && string.Equals(Id, "chief-engineer", StringComparison.OrdinalIgnoreCase) => await ExecuteChiefEngineerRuntimeThenWorkflowAsync(context),
             AgentRuntimeMode.Mock => await ExecuteMockAsync(context),
             AgentRuntimeMode.Microsoft when _microsoftInvoker is not null => await _microsoftInvoker.InvokeAsync(_manifest, context),
             AgentRuntimeMode.Microsoft => MicrosoftRuntimeFallbackOutput(),
@@ -88,6 +99,33 @@ public sealed class MicrosoftAgentAdapter : IAgent
             Array.Empty<string>(),
             new[] { "MockRuntime returned deterministic AgentOutput without model or CAD calls." },
             Id == "chief-engineer" ? "mechanical-designer" : null));
+    }
+
+    private async Task<AgentOutput> ExecuteChiefEngineerRuntimeThenWorkflowAsync(AgentContext context)
+    {
+        var runtimeOutput = await _microsoftInvoker!.InvokeAsync(_manifest, context);
+        var workflowOutput = await _platformAgent!.ExecuteAsync(context);
+        var metadata = runtimeOutput.RuntimeMetadata ?? new RuntimeMetadata(
+            "Microsoft",
+            _manifest.Id,
+            null,
+            true,
+            "Runtime output did not include metadata.",
+            true);
+        var runtimeIssuesForFinal = runtimeOutput.Status == AgentOutputStatus.Failed && metadata.RuntimeFallbackUsed
+            ? Array.Empty<string>()
+            : runtimeOutput.Issues;
+
+        return new AgentOutput(
+            workflowOutput.Status,
+            $"{runtimeOutput.Message}\n\n{workflowOutput.Message}",
+            workflowOutput.Artifacts,
+            workflowOutput.Issues.Concat(runtimeIssuesForFinal).ToArray(),
+            runtimeOutput.Logs.Concat(workflowOutput.Logs).Concat(new[] { "Chief engineer runtime advisory was followed by SequentialWorkflowEngine orchestration." }).ToArray(),
+            runtimeOutput.NextRecommendedAgentId ?? workflowOutput.NextRecommendedAgentId,
+            workflowOutput.InternalCollaborationReport,
+            workflowOutput.ReviewReport,
+            metadata);
     }
 
     private AgentOutput MicrosoftRuntimeFallbackOutput() =>

@@ -1,0 +1,23 @@
+namespace AgentRuntime.Microsoft;
+
+public sealed class MicrosoftAgentFrameworkModelClient : IRuntimeModelClient
+{
+    private readonly OpenAICompatibleModelClient _fallbackClient;
+
+    public MicrosoftAgentFrameworkModelClient(OpenAICompatibleModelClient? fallbackClient = null)
+    {
+        _fallbackClient = fallbackClient ?? new OpenAICompatibleModelClient();
+    }
+
+    public Task<string> GenerateTextAsync(
+        string systemPrompt,
+        string userMessage,
+        RuntimeConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        // V0.7 keeps the Microsoft Agent Framework dependency isolated in this project.
+        // The provider call is intentionally delegated to the OpenAI-compatible path until
+        // the concrete Agent Framework provider API is pinned for this platform.
+        return _fallbackClient.GenerateTextAsync(systemPrompt, userMessage, configuration, cancellationToken);
+    }
+}

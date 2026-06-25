@@ -1,3 +1,4 @@
+using AgentRuntime.Microsoft;
 using PlatformCore;
 
 if (args.Length == 0 || !string.Equals(args[0], "self-check", StringComparison.OrdinalIgnoreCase))
@@ -8,7 +9,7 @@ if (args.Length == 0 || !string.Equals(args[0], "self-check", StringComparison.O
 
 var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
 var outputRoot = Path.Combine(projectRoot, "output");
-var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+var platform = RuntimePlatformFactory.CreateDefault(projectRoot);
 var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, projectRoot);
 var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
 

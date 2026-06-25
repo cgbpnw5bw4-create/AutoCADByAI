@@ -22,27 +22,46 @@ The current default runtime mode is `Mock`.
 
 Mock runtime is used for self-check and local platform validation when no real model provider, endpoint, or API key is configured.
 
-It can create the six platform agents:
+It can create the platform agents:
 
 - `chief-engineer` as `Public`
 - `mechanical-designer` as `Internal`
 - `cad-modeler` as `Internal`
 - `drawing-engineer` as `Internal`
 - `drawing-reviewer` as `Internal`
+- `code-engineer` as `Internal`
+- `code-reviewer` as `Internal`
 - `error-diagnosis` as `Internal`
 
 Mock runtime returns deterministic `AgentOutput` and does not call any external model or CAD system.
 
 ### MicrosoftRuntime
 
-Microsoft runtime is reserved for future real Microsoft Agent Framework execution.
+V0.7 enables real runtime only for `chief-engineer`.
 
-This project references `Microsoft.Agents.AI`, but V0.3 does not hard-code provider credentials, model names, API keys, or CAD tool calls. If a real Microsoft runtime invoker is not configured, the adapter returns a clear fallback `AgentOutput` instead of leaking framework-specific types.
+This project references `Microsoft.Agents.AI`, but provider credentials, model names and endpoints are read only from environment variables:
+
+- `AI_AGENT_RUNTIME_MODE`
+- `AI_PROVIDER`
+- `AI_MODEL`
+- `AI_API_KEY`
+- `AI_BASE_URL`
+- `AI_TEMPERATURE`
+- `AI_TIMEOUT_SECONDS`
+- `AI_RUNTIME_STRICT_SMOKE_TEST`
+
+`AI_AGENT_RUNTIME_MODE` defaults to `Mock`. If `AI_API_KEY`, `AI_PROVIDER` or `AI_MODEL` is missing while Microsoft mode is requested, the runtime falls back to Mock and records the fallback without logging secrets.
+
+The real chief engineer runtime can understand the request and produce coordination advice. That advice is not authoritative execution. The wrapped chief engineer still runs the platform `ChiefEngineerOrchestrator`, which uses `SequentialWorkflowEngine`, Internal Agent workflow steps and QualityGate.
 
 ## Components
 
 - `MicrosoftAgentAdapter`: wraps runtime-backed behavior as platform `IAgent`.
-- `AgentFactory`: creates mock or Microsoft runtime agents from runtime manifests.
+- `AgentFactory`: creates mock agents and can wrap only `chief-engineer` with Microsoft runtime.
+- `MicrosoftRuntimeAgentInvoker`: invokes the runtime model and maps output to platform `AgentOutput`.
+- `MicrosoftAgentOutputMapper`: converts JSON or text model output into platform `AgentOutput` and blocks permission escalation or direct Worker calls.
+- `RuntimeConfiguration`: reads runtime mode and provider settings from environment variables.
+- `IRuntimeModelClient`: internal provider abstraction for Microsoft Agent Framework and OpenAI-compatible fallback clients.
 - `MicrosoftWorkflowRuntime`: wraps sequential workflow execution using platform workflow contracts.
 - `ToolBridge`: maps future runtime tool calls into platform `Skill` or `Worker` names and converts outputs into runtime messages.
 
@@ -50,4 +69,13 @@ This project references `Microsoft.Agents.AI`, but V0.3 does not hard-code provi
 
 Agents must not directly call CAD Workers. CAD execution must continue to go through platform `WorkerContracts`, module boundaries, and `QualityGate`.
 
-`ToolBridge` is only a mapping layer in V0.3. It does not execute SolidWorks, AutoCAD, COM, SDK, API, or MCP calls.
+`ToolBridge` is only a mapping layer. It does not execute SolidWorks, AutoCAD, COM, SDK, API, or MCP calls.
+
+Real LLM output must not:
+
+- call Workers directly
+- modify files
+- change Agent visibility
+- expose Internal Agents through Gateway
+- skip WorkflowEngine
+- skip QualityGate

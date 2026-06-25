@@ -12,4 +12,10 @@ public sealed record GatewayMessageResponse(
     GateDecision GateDecision,
     RejectReport? RejectReport,
     InternalCollaborationReport? CollaborationReport,
-    string? NextRecommendedAgent);
+    string? NextRecommendedAgent,
+    string RuntimeMode = "Mock",
+    string? RuntimeProvider = null,
+    string? RuntimeModel = null,
+    bool RuntimeFallbackUsed = false,
+    string? RuntimeFallbackReason = null,
+    bool ChiefEngineerRuntimeUsed = false);
