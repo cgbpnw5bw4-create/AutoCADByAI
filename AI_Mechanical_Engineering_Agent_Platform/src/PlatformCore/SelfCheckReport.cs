@@ -99,4 +99,10 @@ public sealed record PlatformSelfCheckReport(
     [property: JsonPropertyName("openai_client_cancellation_supported")] bool OpenAIClientCancellationSupported,
     bool ProviderErrorsAreStructured,
     bool ApiKeyNotLogged,
+    bool MarkdownChineseStandardExists,
+    int MarkdownFilesScanned,
+    bool MarkdownChineseValidatorEnabled,
+    bool MarkdownChineseCheckPassed,
+    bool MarkdownLanguageReportGenerated,
+    bool MarkdownEnglishExceptionsSupported,
     string FinalStatus);

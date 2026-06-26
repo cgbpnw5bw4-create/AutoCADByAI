@@ -1,10 +1,10 @@
 # CodeEngineering Module
 
-Plans future CAD API, SDK and COM automation code.
+本模块负责规划未来 CAD API、SDK 和 COM 自动化代码开发。
 
-Boundaries:
+边界：
 
-- Agents plan code tasks and integration strategy.
-- Skills generate structured implementation plans.
-- Workers may later execute build, test or automation tools.
-- Generated code must go through CodeReview before use in CAD workflows.
+- Agent 规划代码任务和集成策略。
+- Skill 生成结构化实现计划。
+- Worker 未来可以执行构建、测试或自动化工具。
+- 生成代码必须先通过 `CodeReview`，再进入 CAD workflow。

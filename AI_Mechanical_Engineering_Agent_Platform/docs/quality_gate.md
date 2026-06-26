@@ -1,38 +1,38 @@
-# Quality Gate
+# 质量门禁
 
-QualityGate separates review from execution.
+`QualityGate` 用于把执行与复审分开。它不负责调用 CAD，也不负责生成模型，而是负责判断结果是否可以继续进入下一步。
 
-Core components:
+核心组件：
 
-- Validator: deterministic checks that produce or support `ReviewReport`
-- Reviewer: review logic that produces `ReviewReport`
-- Gatekeeper: consumes `ReviewReport` and returns `GateDecision`
-- RejectReportBuilder: converts rejected reviews into `RejectReport`
-- RetryPolicy: defines retry and escalation behavior
+- Validator：确定性校验，生成或辅助生成 `ReviewReport`。
+- Reviewer：复审逻辑，生成 `ReviewReport`。
+- Gatekeeper：读取 `ReviewReport` 并生成 `GateDecision`。
+- `RejectReportBuilder`：把 rejected review 转换为 `RejectReport`。
+- `RetryPolicy`：定义重试、退避和升级行为。
 
-GateDecision results:
+`GateDecision` 结果：
 
-- Passed
-- Rejected
-- Failed
-- NeedsHumanApproval
+- `Passed`
+- `Rejected`
+- `Failed`
+- `NeedsHumanApproval`
 
-Basic flow:
+基础流程：
 
-1. Worker or Skill output is reviewed.
-2. Validator or Reviewer creates `ReviewReport`.
-3. Gatekeeper applies `GateDecisionPolicy`.
-4. If rejected, RejectReportBuilder creates `RejectReport`.
-5. WorkflowEngine continues, returns to a previous step, fails, or waits for human approval based on the decision.
+1. Worker 或 Skill 输出被复审。
+2. Validator 或 Reviewer 创建 `ReviewReport`。
+3. Gatekeeper 应用 `GateDecisionPolicy`。
+4. 如果被打回，`RejectReportBuilder` 创建 `RejectReport`。
+5. `WorkflowEngine` 根据裁决继续、重试、失败或等待人工审批。
 
-## Retry Delay Semantics
+## Retry 延迟语义
 
-`RetryPolicy` does more than decide whether a rejected step can retry. It also owns the retry delay through `GetDelay(retryCount)`.
+`RetryPolicy` 不只决定是否可以重试，还通过 `GetDelay(retryCount)` 决定每次重试前的等待时间。
 
-- `DefaultRetryPolicy` may return `TimeSpan.Zero`; this means retry immediately.
-- `ExponentialBackoffRetryPolicy` returns increasing delays based on `BaseDelayMs`, `Multiplier`, and `MaxDelayMs`.
-- `SequentialWorkflowEngine` must actually await a positive retry delay before running the next attempt.
-- Retry delay awaits must use `CancellationToken`, so a workflow can be cancelled while waiting.
-- The delay is recorded in AuditLog with the retry action.
+- `DefaultRetryPolicy` 可以返回 `TimeSpan.Zero`，表示立即重试。
+- `ExponentialBackoffRetryPolicy` 根据 `BaseDelayMs`、`Multiplier` 和 `MaxDelayMs` 计算递增延迟。
+- `SequentialWorkflowEngine` 遇到正数延迟时必须实际 `await Task.Delay(...)`。
+- retry delay 必须支持 `CancellationToken`，以便工作流在等待期间可取消。
+- retry delay 必须写入 AuditLog。
 
-The delay applies only to retryable `Rejected` decisions. `Failed` and `NeedsHumanApproval` are terminal automatic-flow decisions and must not wait for retry delay or retry the step.
+延迟只适用于可重试的 `Rejected` step。`Failed` 和 `NeedsHumanApproval` 是自动流程的终止状态，不能等待 retry delay，也不能自动重试。

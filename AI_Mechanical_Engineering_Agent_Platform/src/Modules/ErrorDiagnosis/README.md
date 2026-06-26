@@ -1,10 +1,10 @@
 # ErrorDiagnosis Module
 
-Analyzes failures, identifies likely causes and proposes repair paths.
+本模块负责分析失败、定位可能原因并提出修复路径。
 
-Boundaries:
+边界：
 
-- Agents classify failure source and suggest next actions.
-- Skills normalize logs and error reports.
-- Workers may later run diagnostic tools.
-- Output should be structured as `ErrorReport` and remediation notes.
+- Agent 分类失败来源并建议下一步动作。
+- Skill 归一化日志和错误报告。
+- Worker 未来可以运行诊断工具。
+- 输出应结构化为 `ErrorReport` 和修复建议。

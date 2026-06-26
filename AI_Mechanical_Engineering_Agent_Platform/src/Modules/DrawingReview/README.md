@@ -1,10 +1,10 @@
 # DrawingReview Module
 
-Reviews drawings, PDFs, dimensions, required views and title block completeness.
+本模块负责复审工程图、PDF、尺寸、必要视图和标题栏完整性。
 
-Boundaries:
+边界：
 
-- Agents coordinate drawing review.
-- Validators perform deterministic checks where possible.
-- Reviewers produce `ReviewReport`.
-- Gatekeeper consumes the report and decides pass, reject, fail or human approval.
+- Agent 协调工程图复审。
+- Validator 在可能时执行确定性检查。
+- Reviewer 生成 `ReviewReport`。
+- Gatekeeper 根据报告裁决通过、打回、失败或人工审批。

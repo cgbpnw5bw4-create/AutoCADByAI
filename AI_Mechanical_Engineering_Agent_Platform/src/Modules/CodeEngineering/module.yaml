@@ -1,6 +1,6 @@
 name: CodeEngineering
 version: 0.1.0
-description: Plans future CAD API, SDK and COM automation code work.
+description: 规划未来 CAD API、SDK 和 COM 自动化代码开发。
 agents: []
 skills:
   - cad-code-engineering

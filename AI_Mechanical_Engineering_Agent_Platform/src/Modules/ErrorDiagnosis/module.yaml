@@ -1,6 +1,6 @@
 name: ErrorDiagnosis
 version: 0.1.0
-description: Diagnoses execution failures and suggests fixes.
+description: 诊断执行失败并提出修复建议。
 agents:
   - error-diagnosis
 skills:

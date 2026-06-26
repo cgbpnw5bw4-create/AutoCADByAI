@@ -1,6 +1,6 @@
 name: RequirementUnderstanding
 version: 0.1.0
-description: Converts natural-language requirements into CADModelSpec.
+description: 将自然语言需求转换为 CADModelSpec。
 agents:
   - chief-engineer
 skills:

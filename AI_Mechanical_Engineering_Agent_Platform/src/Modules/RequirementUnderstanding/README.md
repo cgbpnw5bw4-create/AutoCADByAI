@@ -1,10 +1,10 @@
 # RequirementUnderstanding Module
 
-Converts natural-language mechanical requirements into structured `CADModelSpec`.
+本模块负责把自然语言机械需求转换为结构化 `CADModelSpec`。
 
-Boundaries:
+边界：
 
-- Agents decide how to interpret and clarify requirements.
-- Skills perform structured extraction and normalization.
-- Validators check that the resulting spec is complete enough for downstream design.
-- Workers are not expected in the first version.
+- Agent 判断需求含义、缺失信息和澄清方向。
+- Skill 执行结构化抽取和归一化。
+- Validator 检查生成的 spec 是否足够进入后续设计。
+- 当前版本不需要 Worker。

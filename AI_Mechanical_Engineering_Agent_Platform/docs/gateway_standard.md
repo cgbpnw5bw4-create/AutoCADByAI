@@ -1,31 +1,26 @@
-# Gateway Standard
+# 网关标准
 
-AgentGatewayHost is the external access boundary for OpenClaw and other entry points.
+`AgentGatewayHost` 是外部入口访问平台 Agent 的边界。OpenClaw、飞书、企业微信、Slack、Web 前端或其他入口只能通过 HTTP API 访问平台，不允许直接读取项目目录、调用 Internal Agent、调用 Worker、调用 Validator 或绕过 Gatekeeper。
 
-External systems can use:
+当前允许的外部接口：
 
 - `GET /agents`
 - `POST /agents/{agentId}/message`
 
-External systems must not:
+每个被接受的外部 Agent 消息都必须经过 Gateway 质量门禁链路：
 
-- read project folders to discover agents
-- call internal agents directly
-- call workers directly
-- call validators or gatekeepers directly
+1. 检查目标 Agent 是否存在。
+2. 检查目标 Agent 是否为 `Public`。
+3. 执行公开 Agent。
+4. 必要时由 `chief-engineer` 通过 `WorkflowEngine` 调度 Internal Agent workflow steps。
+5. 将 `AgentOutput` 和 `InternalCollaborationReport` 转换为 `ReviewReport`。
+6. 通过 Gatekeeper 生成 `GateDecision`。
+7. 只有 `GateDecision = Passed` 时才返回正常 Agent 输出。
+8. 其他结果必须返回 `rejected`、`failed` 或 `needs_human_approval`，并附带门禁信息。
 
-Every accepted external Agent message must pass through the Gateway QualityGate chain:
+V0.7 及后续版本仍然只对外暴露 `chief-engineer`。`mechanical-designer`、`cad-modeler`、`drawing-engineer`、`drawing-reviewer`、`code-engineer`、`code-reviewer` 和 `error-diagnosis` 均为 `Internal`，不得通过 Gateway 直接调用。
 
-1. Execute the Public Agent.
-2. Let chief-engineer route internally through WorkflowEngine-backed Internal Agent steps when needed.
-3. Convert `AgentOutput` and any `InternalCollaborationReport` into `ReviewReport`.
-4. Evaluate through Gatekeeper.
-5. Return the Agent output only when the GateDecision is `Passed`.
-6. Return `rejected`, `failed`, or `needs_human_approval` with gate details otherwise.
-
-V0.7 exposes only `chief-engineer` externally. `mechanical-designer`, `cad-modeler`, `drawing-engineer`, `drawing-reviewer`, `code-engineer`, `code-reviewer`, and `error-diagnosis` remain Internal and must not be invoked directly through Gateway.
-
-First version exposure:
+外部可见 Agent 示例：
 
 ```json
 [
@@ -39,9 +34,9 @@ First version exposure:
 ]
 ```
 
-The chief engineer agent can use real runtime for task understanding when configured, but runtime output is advisory only. It cannot expose Internal Agents, call Workers, modify files, or bypass QualityGate.
+`chief-engineer` 可以在配置允许时使用真实 Runtime 做任务理解，但 Runtime 输出只能作为建议。模型不能暴露 Internal Agent、不能调用 Worker、不能修改文件，也不能绕过 `WorkflowEngine` 或 `QualityGate`。
 
-Gateway responses include runtime metadata:
+Gateway 响应可以包含 Runtime 元数据：
 
 - `runtime_mode`
 - `runtime_provider`
@@ -50,4 +45,4 @@ Gateway responses include runtime metadata:
 - `runtime_fallback_reason`
 - `chief_engineer_runtime_used`
 
-This metadata is informational and never grants new permissions.
+这些字段仅用于审计和排障，不会带来新的权限。

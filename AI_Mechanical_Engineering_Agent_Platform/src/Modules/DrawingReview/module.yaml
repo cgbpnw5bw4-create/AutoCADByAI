@@ -1,6 +1,6 @@
 name: DrawingReview
 version: 0.1.0
-description: Reviews drawing PDFs, dimensions, views and title blocks.
+description: 复审工程图 PDF、尺寸、视图和标题栏。
 agents:
   - drawing-reviewer
 skills:

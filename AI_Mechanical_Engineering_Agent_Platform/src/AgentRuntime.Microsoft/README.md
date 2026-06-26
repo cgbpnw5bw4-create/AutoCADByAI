@@ -1,8 +1,8 @@
 # AgentRuntime.Microsoft
 
-`AgentRuntime.Microsoft` is the only project allowed to reference Microsoft Agent Framework packages.
+`AgentRuntime.Microsoft` 是本项目唯一允许引用 Microsoft Agent Framework 相关包的项目。
 
-The rest of the platform keeps using the platform-owned contracts:
+平台其他部分继续只使用自有契约：
 
 - `IAgent`
 - `AgentContext`
@@ -12,34 +12,34 @@ The rest of the platform keeps using the platform-owned contracts:
 - `ISkill`
 - `IWorker`
 
-No Microsoft Agent Framework type should appear in `AgentContracts`, `PlatformCore`, `ModuleContracts`, `SkillContracts`, `WorkerContracts`, `DomainSchemas`, `QualityGate`, or CAD Worker projects.
+`AgentContracts`、`PlatformCore`、`ModuleContracts`、`SkillContracts`、`WorkerContracts`、`DomainSchemas`、`QualityGate` 和 CAD Worker 项目不得暴露 Microsoft Agent Framework 类型。
 
-## Runtime Modes
+## Runtime 模式
 
-The current default runtime mode is `Mock`.
+当前默认 Runtime 模式是 `Mock`。
 
 ### MockRuntime
 
-Mock runtime is used for self-check and local platform validation when no real model provider, endpoint, or API key is configured.
+当没有配置真实模型 Provider、endpoint 或 API Key 时，self-check 和本地平台验证使用 Mock Runtime。
 
-It can create the platform agents:
+Mock Runtime 可以创建以下平台 Agent：
 
-- `chief-engineer` as `Public`
-- `mechanical-designer` as `Internal`
-- `cad-modeler` as `Internal`
-- `drawing-engineer` as `Internal`
-- `drawing-reviewer` as `Internal`
-- `code-engineer` as `Internal`
-- `code-reviewer` as `Internal`
-- `error-diagnosis` as `Internal`
+- `chief-engineer`，可见性为 `Public`。
+- `mechanical-designer`，可见性为 `Internal`。
+- `cad-modeler`，可见性为 `Internal`。
+- `drawing-engineer`，可见性为 `Internal`。
+- `drawing-reviewer`，可见性为 `Internal`。
+- `code-engineer`，可见性为 `Internal`。
+- `code-reviewer`，可见性为 `Internal`。
+- `error-diagnosis`，可见性为 `Internal`。
 
-Mock runtime returns deterministic `AgentOutput` and does not call any external model or CAD system.
+Mock Runtime 返回确定性的 `AgentOutput`，不调用外部模型，也不调用 CAD 系统。
 
 ### MicrosoftRuntime
 
-V0.7 enables real runtime only for `chief-engineer`.
+V0.7 及后续版本只允许 `chief-engineer` 使用真实 Runtime。
 
-This project references `Microsoft.Agents.AI`, but provider credentials, model names and endpoints are read only from environment variables:
+本项目引用 `Microsoft.Agents.AI`，但 Provider 凭据、模型名称和 endpoint 只能从环境变量读取：
 
 - `AI_AGENT_RUNTIME_MODE`
 - `AI_PROVIDER`
@@ -50,48 +50,50 @@ This project references `Microsoft.Agents.AI`, but provider credentials, model n
 - `AI_TIMEOUT_SECONDS`
 - `AI_RUNTIME_STRICT_SMOKE_TEST`
 
-`AI_AGENT_RUNTIME_MODE` defaults to `Mock`. If `AI_API_KEY`, `AI_PROVIDER` or `AI_MODEL` is missing while Microsoft mode is requested, the runtime falls back to Mock and records the fallback without logging secrets.
+`AI_AGENT_RUNTIME_MODE` 默认是 `Mock`。如果请求 Microsoft 模式但缺少 `AI_API_KEY`、`AI_PROVIDER` 或 `AI_MODEL`，Runtime 会自动 fallback 到 Mock，并记录 fallback 原因，但不会记录密钥。
 
-`AI_TIMEOUT_SECONDS` controls the model request timeout. The default is 60 seconds; invalid values fall back to the default; values below 1 second or above 600 seconds are clamped. When `OpenAICompatibleModelClient` creates its own `HttpClient`, it sets `HttpClient.Timeout` from the runtime configuration. When an external `HttpClient` is injected, the caller's existing `Timeout` is not overwritten, but each request still receives a linked cancellation token derived from `AI_TIMEOUT_SECONDS`.
+`AI_TIMEOUT_SECONDS` 控制模型请求超时。默认值为 60 秒；非法值回退到默认值；小于 1 秒或大于 600 秒的值会被限制到边界范围。
 
-Provider failures are converted to structured runtime issues before returning to platform code:
+当 `OpenAICompatibleModelClient` 自己创建 `HttpClient` 时，会把 `HttpClient.Timeout` 设置为 Runtime 配置值。当外部注入 `HttpClient` 时，不覆盖调用方已有 Timeout，但每次请求仍会使用由 `AI_TIMEOUT_SECONDS` 派生的 linked cancellation token。
 
-- HTTP 401 / 403 -> `auth_error`
-- HTTP 429 -> `rate_limit`
-- HTTP 5xx and other non-success provider responses -> `provider_error`
-- request timeout -> `timeout`
-- invalid OpenAI-compatible JSON -> `invalid_provider_response`
-- transport failures -> `network_error`
+Provider 错误会转换为结构化 Runtime issue：
 
-API keys are never written to code, appsettings, AuditLog messages, gateway responses, or runtime failure issues.
+- HTTP 401 / 403 转换为 `auth_error`。
+- HTTP 429 转换为 `rate_limit`。
+- HTTP 5xx 和其他非成功 Provider 响应转换为 `provider_error`。
+- 请求超时转换为 `timeout`。
+- OpenAI-compatible JSON 格式不合法转换为 `invalid_provider_response`。
+- 传输层异常转换为 `network_error`。
 
-The real chief engineer runtime can understand the request and produce coordination advice. That advice is not authoritative execution. The wrapped chief engineer still runs the platform `ChiefEngineerOrchestrator`, which uses `SequentialWorkflowEngine`, Internal Agent workflow steps and QualityGate.
+API Key 不得写入代码、`appsettings.json`、AuditLog、Gateway 响应或 Runtime failure issue。
 
-## Components
+真实 `chief-engineer` Runtime 只负责理解请求并给出协作建议。该建议不是权威执行指令。包装后的 `chief-engineer` 仍会运行平台 `ChiefEngineerOrchestrator`，并通过 `SequentialWorkflowEngine`、Internal Agent workflow steps 和 `QualityGate` 完成内部协作。
 
-- `MicrosoftAgentAdapter`: wraps runtime-backed behavior as platform `IAgent`.
-- `AgentFactory`: creates mock agents and can wrap only `chief-engineer` with Microsoft runtime.
-- `MicrosoftRuntimeAgentInvoker`: invokes the runtime model and maps output to platform `AgentOutput`.
-- `MicrosoftAgentOutputMapper`: converts JSON or text model output into platform `AgentOutput` and blocks permission escalation or direct Worker calls.
-- `RuntimeConfiguration`: reads runtime mode and provider settings from environment variables.
-- `IRuntimeModelClient`: internal provider abstraction for Microsoft Agent Framework and OpenAI-compatible fallback clients.
-- `OpenAICompatibleModelClient`: performs OpenAI-compatible chat completion requests with configured timeout, cancellation support and structured provider errors.
-- `MicrosoftWorkflowRuntime`: wraps sequential workflow execution using platform workflow contracts.
-- `ToolBridge`: maps future runtime tool calls into platform `Skill` or `Worker` names and converts outputs into runtime messages.
+## 组件
 
-## Boundaries
+- `MicrosoftAgentAdapter`：把 Runtime 行为包装为平台 `IAgent`。
+- `AgentFactory`：创建 Mock Agent，并且只允许包装 `chief-engineer` 为 Microsoft Runtime Agent。
+- `MicrosoftRuntimeAgentInvoker`：调用 Runtime 模型，并把输出映射为平台 `AgentOutput`。
+- `MicrosoftAgentOutputMapper`：把 JSON 或纯文本模型输出转换为平台 `AgentOutput`，并阻止权限提升或直接 Worker 调用。
+- `RuntimeConfiguration`：从环境变量读取 Runtime 模式和 Provider 配置。
+- `IRuntimeModelClient`：Runtime 内部 Provider 抽象，用于 Microsoft Agent Framework 和 OpenAI-compatible fallback。
+- `OpenAICompatibleModelClient`：执行 OpenAI-compatible chat completion 请求，并提供 timeout、cancellation 和结构化 Provider 错误。
+- `MicrosoftWorkflowRuntime`：使用平台 workflow contract 包装顺序工作流执行。
+- `ToolBridge`：把未来 Runtime tool call 映射为平台 Skill 或 Worker 名称，并转换输出消息。
 
-Agents must not directly call CAD Workers. CAD execution must continue to go through platform `WorkerContracts`, module boundaries, and `QualityGate`.
+## 边界
 
-`ToolBridge` is only a mapping layer. It does not execute SolidWorks, AutoCAD, COM, SDK, API, or MCP calls.
+Agent 不得直接调用 CAD Worker。CAD 执行必须继续经过平台 `WorkerContracts`、Module 边界和 `QualityGate`。
 
-Real LLM output must not:
+`ToolBridge` 只是映射层，不执行 SolidWorks、AutoCAD、COM、SDK、API 或 MCP 调用。
 
-- call Workers directly
-- modify files
-- change Agent visibility
-- expose Internal Agents through Gateway
-- skip WorkflowEngine
-- skip QualityGate
+真实 LLM 输出不得：
 
-Runtime failures also do not bypass QualityGate. If a real runtime call fails, the failure is returned as platform `AgentOutput` issues and the existing Gateway and workflow gate paths remain authoritative.
+- 直接调用 Worker。
+- 修改文件。
+- 改变 Agent 可见性。
+- 通过 Gateway 暴露 Internal Agent。
+- 跳过 `WorkflowEngine`。
+- 跳过 `QualityGate`。
+
+Runtime 失败也不能绕过 `QualityGate`。如果真实 Runtime 调用失败，失败会以平台 `AgentOutput` issue 返回，并继续由 Gateway 和工作流门禁处理。

@@ -1,103 +1,100 @@
-# Architecture
+# 架构说明
 
-AI_Mechanical_Engineering_Agent_Platform is organized as a long-term hostable multi-agent platform for mechanical engineering automation.
+`AI_Mechanical_Engineering_Agent_Platform` 是面向机械工程自动化的长期可托管多 Agent 平台。当前重点是平台边界、运行时隔离、内部协作、质量门禁和可审计性，不接真实 CAD 软件。
 
 ## PlatformCore
 
-Provides platform services that should stay independent from any specific agent runtime or CAD tool:
+`PlatformCore` 提供与具体 Agent Runtime 和 CAD 工具无关的平台能力：
 
-- TaskSystem: task lifecycle and status
-- WorkflowEngine: sequential workflow execution and step result tracking
-- AgentRegistry, SkillRegistry, ModuleRegistry, WorkerRegistry: in-memory registration and lookup
-- ModuleManifestLoader: loads `module.yaml` files and records fallback usage
-- InternalAgentRouter: invokes Internal Agents through AgentRegistry and records audit logs
-- ContextManager: workflow context creation
-- PermissionManager: visibility and gateway exposure checks
-- EventBus: in-memory system events
-- AuditLog: task, agent, skill, worker and gate audit entries
+- `TaskSystem`：任务生命周期和状态。
+- `WorkflowEngine`：顺序工作流、步骤结果、Retry、FailureReport、HumanApprovalRequest。
+- `AgentRegistry`、`SkillRegistry`、`ModuleRegistry`、`WorkerRegistry`：内存注册与查找。
+- `ModuleManifestLoader`：读取 `module.yaml`，并记录 fallback 来源。
+- `InternalAgentRouter`：只允许平台内部调用 Internal Agent，并记录审计日志。
+- `ContextManager`：创建工作流上下文。
+- `PermissionManager`：处理 Agent 可见性和 Gateway 暴露规则。
+- `EventBus`：记录系统事件。
+- `AuditLog`：记录任务、Agent、Skill、Worker 和 Gate 的执行日志。
 
 ## Contracts
 
-`AgentContracts`, `ModuleContracts`, `SkillContracts` and `WorkerContracts` define stable platform boundaries.
+`AgentContracts`、`ModuleContracts`、`SkillContracts` 和 `WorkerContracts` 定义平台稳定边界。
 
-Agents decide and coordinate. Skills transform and assist. Workers execute external systems. Modules package complete capability areas rather than loose scripts.
+Agent 负责判断、协调和结构化输出。Skill 负责结构化转换和辅助能力。Worker 负责外部系统执行。Module 是完整能力板块，不是散乱脚本目录。
 
 ## DomainSchemas
 
-Contains shared structured data for mechanical and CAD work:
+`DomainSchemas` 存放机械和 CAD 任务之间传递的标准结构：
 
-- CADModelSpec
-- BuildSpec
-- DrawingSpec
-- ReviewReport
-- RejectReport
-- GateDecision
-- ArtifactInfo
-- ErrorReport
-- FinalReport
-- InternalCollaborationReport
+- `CADModelSpec`
+- `BuildSpec`
+- `DrawingSpec`
+- `ReviewReport`
+- `RejectReport`
+- `GateDecision`
+- `ArtifactInfo`
+- `ErrorReport`
+- `FinalReport`
+- `InternalCollaborationReport`
+- `FailureReport`
+- `HumanApprovalRequest`
+- `MarkdownLanguageReport`
 
-Core task state must move through these schemas, not only through natural-language messages.
-
-V0.2 internal routing uses `InternalCollaborationReport` to preserve called agents, output snapshots, issues, artifacts, summary and recommendation.
+核心任务状态必须通过这些 Schema 传递，不能只依赖自然语言。
 
 ## AgentRuntime.Microsoft
 
-This is the only project intended to reference Microsoft Agent Framework packages. It adapts Microsoft runtime concepts to the platform contracts.
+`AgentRuntime.Microsoft` 是唯一允许引用 Microsoft Agent Framework 相关包的项目。当前引用 `Microsoft.Agents.AI`，并默认使用 `MockRuntime`。
 
-V0.7 references `Microsoft.Agents.AI` only from this project and defaults to `MockRuntime`. Business modules, workers, PlatformCore and contracts do not depend on Microsoft runtime APIs.
+业务模块、Worker、`PlatformCore` 和 Contracts 不依赖 Microsoft Runtime API。真实 Runtime 只允许包装 `chief-engineer`，并且必须把模型输出转换为平台自己的 `AgentOutput`。
 
-The runtime adapter exposes platform `IAgent` instances through `MicrosoftAgentAdapter`; real Microsoft runtime execution remains behind `IMicrosoftRuntimeAgentInvoker` and must return platform `AgentOutput`.
-
-Only `chief-engineer` can be wrapped with real runtime. The LLM output is advisory: it can summarize the task and recommend Internal Agents, but the platform still routes through `ChiefEngineerOrchestrator`, `SequentialWorkflowEngine`, Internal Agent workflow steps and QualityGate. Internal Agents remain Module/Mock agents in V0.7.
+模型输出只提供任务理解和协作建议。最终内部调度仍由 `ChiefEngineerOrchestrator`、`SequentialWorkflowEngine`、Internal Agent workflow steps 和 `QualityGate` 控制。Internal Agents 在当前阶段继续使用 Module Agent 或 Mock Agent。
 
 ## Modules
 
-Each module is a complete capability board containing agents, skills, workers, validators, reviewers, schemas and tests.
+每个 Module 都是完整能力板块，包含 agents、skills、workers、validators、reviewers、schemas 和 tests。
 
-Current modules:
+当前模块：
 
-- RequirementUnderstanding
-- MechanicalDesign
-- CADModeling
-- DrawingGeneration
-- DrawingReview
-- CodeEngineering
-- CodeReview
-- ErrorDiagnosis
+- `RequirementUnderstanding`
+- `MechanicalDesign`
+- `CADModeling`
+- `DrawingGeneration`
+- `DrawingReview`
+- `CodeEngineering`
+- `CodeReview`
+- `ErrorDiagnosis`
+
+Module 元数据优先从 `module.yaml` 加载。只有在 YAML 加载失败时才允许使用 fallback manifest，并必须写入审计。
 
 ## Workers
 
-Workers are the future execution layer for SolidWorks, AutoCAD and other industrial software APIs, SDKs, COM servers or MCP bridges.
+Worker 是未来调用 SolidWorks、AutoCAD、API、SDK、COM 或 MCP 工业软件桥接的执行层。当前只注册 Fake Worker：
 
-The first version includes fake SolidWorks and AutoCAD workers only.
+- `FakeSolidWorksWorker`
+- `FakeAutoCADWorker`
+
+Agent 不允许直接调用 CAD API、COM 对象或外部进程。Agent 只能生成结构化计划并通过平台边界交给 Worker。
 
 ## QualityGate
 
-QualityGate owns validation, review, gate decisions, reject reports and retry policy. It consumes `ReviewReport` and returns `GateDecision`.
+`QualityGate` 负责校验、复审、打回、失败报告和人工审批挂起。它包含：
 
-AgentGatewayHost routes every external Agent message through the minimal QualityGate chain before returning a response.
+- Validator
+- Reviewer
+- Gatekeeper
+- `GateDecisionPolicy`
+- `RejectReportBuilder`
+- `RetryPolicy`
 
-V0.7 Gateway responses include runtime metadata such as mode, provider, model and fallback state. This metadata does not change Agent visibility or permissions.
-
-## Storage
-
-Storage contains persistence contracts only:
-
-- ITaskRepository
-- IAuditLogRepository
-- IEventStore
-- IArtifactRepository
-- IReportRepository
-
-No database implementation is attached in the platform skeleton.
+`WorkflowEngine` 根据 `GateDecision` 做流程控制：`Passed` 进入下一步，`Rejected` 按策略重试或停止，`Failed` 生成 FailureReport，`NeedsHumanApproval` 生成 HumanApprovalRequest 并暂停。
 
 ## Interfaces
 
-Interfaces host external entry points:
+`Interfaces` 是平台入口层：
 
-- CliHost: local self-check and maintenance commands
-- ApiHost: reserved for future platform APIs
-- AgentGatewayHost: HTTP gateway for OpenClaw, Feishu, WeCom, Slack or web frontends
+- `CliHost`：运行 self-check。
+- `ApiHost`：预留 API Host。
+- `AgentGatewayHost`：对外暴露 Public Agent Directory 和 Agent Message Endpoint。
 
-External systems must use AgentGatewayHost instead of reading project folders or calling workers directly.
+Gateway 只暴露 Public Agent，当前只有 `chief-engineer`。Runtime、Internal Agent、Worker 和 QualityGate 的边界不会因为外部入口变化而改变。

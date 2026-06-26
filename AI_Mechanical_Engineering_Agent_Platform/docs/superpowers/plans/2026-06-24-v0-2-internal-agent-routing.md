@@ -1,60 +1,21 @@
-# V0.2 Internal Agent Routing Implementation Plan
+# V0.2 Internal Agent Routing 实施计划归档
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+本文是 V0.2 的历史实施计划归档。
 
-**Goal:** Let the public chief-engineer Agent internally route work through Internal Agents while Gateway still exposes only chief-engineer.
+## 目标
 
-**Architecture:** Keep Gateway as the external boundary. Add `InternalAgentRouter` for platform-internal calls, `ChiefEngineerOrchestrator` for the fixed V0.2 collaboration route, and `InternalCollaborationReport` as the structured handoff into QualityGate.
+让公开的 `chief-engineer` 可以在平台内部调度 Internal Agents，同时 Gateway 仍然只暴露 `chief-engineer`。
 
-**Tech Stack:** C#/.NET 10, ASP.NET Core minimal API, xUnit.
+## 架构约束
 
----
+- Gateway 是唯一外部访问边界。
+- `InternalAgentRouter` 只服务平台内部调用。
+- `ChiefEngineerOrchestrator` 负责固定的内部协作链路。
+- `InternalCollaborationReport` 是协作结果进入 `QualityGate` 的结构化载体。
 
-### Task 1: Red Tests For Internal Routing
+## 已完成任务
 
-**Files:**
-- Create: `tests/PlatformSelfCheck.Tests/InternalAgentRoutingTests.cs`
-
-- [x] Test InternalAgentRouter sequentially invokes internal agents.
-- [x] Test chief-engineer creates InternalCollaborationReport.
-- [x] Test Gateway response includes collaboration report and QualityGate result.
-- [x] Test Gateway still blocks direct internal agent calls.
-- [x] Test self-check report includes V0.2 routing fields.
-
-### Task 2: Collaboration Schema And Router
-
-**Files:**
-- Create: `src/DomainSchemas/InternalCollaborationReport.cs`
-- Create: `src/PlatformCore/AgentRegistry/InternalAgentRouter.cs`
-- Modify: `src/AgentContracts/AgentOutput.cs`
-
-- [x] Add called-agent and agent-output snapshots.
-- [x] Add optional collaboration report and review report to AgentOutput.
-- [x] Add audited internal agent invocation.
-
-### Task 3: Chief Engineer Orchestration
-
-**Files:**
-- Create: `src/Modules/RequirementUnderstanding/agents/ChiefEngineerOrchestrator.cs`
-- Modify: `src/PlatformCore/AgentRegistry/PlaceholderAgent.cs`
-- Modify: `src/PlatformCore/PlatformBootstrapper.cs`
-- Modify: `src/PlatformCore/PlatformCore.csproj`
-
-- [x] Route chief-engineer through mechanical-designer, cad-modeler, drawing-engineer and drawing-reviewer.
-- [x] Keep Internal Agents simulated and structured.
-- [x] Avoid Worker calls and real CAD integration.
-
-### Task 4: Gateway, QualityGate And Self-Check
-
-**Files:**
-- Modify: `src/Interfaces/AgentGatewayHost/AgentMessageDispatcher.cs`
-- Modify: `src/Interfaces/AgentGatewayHost/GatewayMessageResponse.cs`
-- Modify: `src/PlatformCore/AgentOutputReviewMapper.cs`
-- Modify: `src/PlatformCore/PlatformSelfCheckRunner.cs`
-- Modify: `src/PlatformCore/SelfCheckReport.cs`
-
-- [x] Return collaboration report from Gateway chief-engineer calls.
-- [x] Evaluate collaboration output through QualityGate.
-- [x] Add required AuditLog actions.
-- [x] Add self-check V0.2 fields.
-- [x] Verify build, tests, self-check and live Gateway behavior.
+1. 新增 Internal Routing 测试，覆盖顺序调用、协作报告、Gateway response、Gateway 阻断 Internal Agent、self-check 字段。
+2. 新增 `InternalCollaborationReport` 和 `InternalAgentRouter`，并扩展 `AgentOutput`。
+3. 创建 `ChiefEngineerOrchestrator`，让 `chief-engineer` 调度 `mechanical-designer`、`cad-modeler`、`drawing-engineer` 和 `drawing-reviewer`。
+4. 更新 Gateway、`AgentOutputReviewMapper`、self-check 和审计日志，确保协作结果通过 `QualityGate`。

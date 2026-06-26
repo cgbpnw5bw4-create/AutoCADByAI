@@ -1,6 +1,6 @@
 name: DrawingGeneration
 version: 0.1.0
-description: Plans engineering drawing generation tasks.
+description: 规划工程图生成任务。
 agents:
   - drawing-engineer
 skills:

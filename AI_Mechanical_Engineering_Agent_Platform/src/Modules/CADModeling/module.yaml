@@ -1,6 +1,6 @@
 name: CADModeling
 version: 0.1.0
-description: Plans BuildSpec handoff to CAD workers.
+description: 规划 BuildSpec 到 CAD Worker 的交接。
 agents:
   - cad-modeler
 skills:

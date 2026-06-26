@@ -130,6 +130,17 @@ public static class PlatformSelfCheckRunner
         var runtimeChecks = await RunRuntimeSelfChecks(root, platform, gatewayVisibleAgents, internalAgentsHiddenFromGateway, gatewayQualityGateEnabled, qualityGateAfterCollaboration);
         var realRuntimeChecks = await RunRealRuntimeSelfChecks(root, platform);
         var reliabilityChecks = await RunRuntimeReliabilityChecks(root, cancellationToken);
+        var markdownValidator = new MarkdownChineseValidator();
+        var markdownLanguageReport = markdownValidator.Validate(root);
+        var markdownLanguageReportPath = Path.Combine(outputRoot, "reports", "markdown_language_report.json");
+        File.WriteAllText(markdownLanguageReportPath, JsonSerializer.Serialize(markdownLanguageReport, JsonOptions()));
+        var markdownChineseStandardExists = File.Exists(Path.Combine(root, "docs", "markdown_standard.md"));
+        var markdownChineseValidatorEnabled = typeof(MarkdownChineseValidator).GetMethod(nameof(MarkdownChineseValidator.Validate)) is not null;
+        var markdownChineseCheckPassed =
+            markdownLanguageReport.FinalStatus == "Passed" ||
+            markdownLanguageReport.FinalStatus == "Warning";
+        var markdownLanguageReportGenerated = File.Exists(markdownLanguageReportPath);
+        var markdownEnglishExceptionsSupported = markdownValidator.SupportsEnglishExceptions();
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
@@ -195,6 +206,12 @@ public static class PlatformSelfCheckRunner
             reliabilityChecks.OpenAIClientCancellationSupported &&
             reliabilityChecks.ProviderErrorsAreStructured &&
             reliabilityChecks.ApiKeyNotLogged &&
+            markdownChineseStandardExists &&
+            markdownLanguageReport.ScannedFiles > 0 &&
+            markdownChineseValidatorEnabled &&
+            markdownChineseCheckPassed &&
+            markdownLanguageReportGenerated &&
+            markdownEnglishExceptionsSupported &&
             workflowQualityChecks.WorkflowQualityLoopEnabled &&
             workflowQualityChecks.WorkflowPassedScenario == "Passed" &&
             workflowQualityChecks.WorkflowRejectedRetryPassedScenario == "Passed" &&
@@ -309,6 +326,12 @@ public static class PlatformSelfCheckRunner
             reliabilityChecks.OpenAIClientCancellationSupported,
             reliabilityChecks.ProviderErrorsAreStructured,
             reliabilityChecks.ApiKeyNotLogged,
+            markdownChineseStandardExists,
+            markdownLanguageReport.ScannedFiles,
+            markdownChineseValidatorEnabled,
+            markdownChineseCheckPassed,
+            markdownLanguageReportGenerated,
+            markdownEnglishExceptionsSupported,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");

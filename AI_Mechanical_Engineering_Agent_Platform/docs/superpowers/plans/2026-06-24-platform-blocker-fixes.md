@@ -1,59 +1,23 @@
-# Platform Blocker Fixes Implementation Plan
+# 平台 Blocker 修复计划归档
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+本文是平台骨架 Blocker 修复的历史实施计划归档。
 
-**Goal:** Fix platform skeleton blockers before the next AI mechanical engineering agent phase.
+## 目标
 
-**Architecture:** Keep the work at platform boundary level only. Load Module manifests from `module.yaml`, keep fallback manifests for resilience, route Gateway messages through QualityGate, and add storage contracts without connecting real CAD, OpenClaw, LLMs, or databases.
+在进入下一阶段前修复基础平台 Blocker，包括 solution、Module 标准目录、`module.yaml` 加载、Gateway QualityGate、Storage 契约和 self-check 验证。
 
-**Tech Stack:** C#/.NET 10, ASP.NET Core minimal API, xUnit.
+## 架构约束
 
----
+- 只处理平台边界问题。
+- 不接真实 CAD、OpenClaw、LLM 或数据库。
+- Module manifest 优先来自 `module.yaml`。
+- Gateway 消息必须经过 `QualityGate`。
 
-### Task 1: Solution And Module Structure
+## 已完成任务
 
-**Files:**
-- Create: `AI_Mechanical_Engineering_Agent_Platform.sln`
-- Create: `src/Modules/*/{agents,skills,workers,validators,reviewers,schemas,tests}/.gitkeep`
-- Test: `tests/PlatformSelfCheck.Tests/PlatformBlockerTests.cs`
-
-- [x] Create `.sln` solution file.
-- [x] Add all existing `.csproj` files to the solution.
-- [x] Add `.gitkeep` files to all standard module subdirectories.
-- [x] Test that every Module has the standard structure.
-
-### Task 2: Module Manifest Loading
-
-**Files:**
-- Create: `src/PlatformCore/ModuleRegistry/ModuleManifestLoader.cs`
-- Modify: `src/PlatformCore/ModuleRegistry/ModuleRegistry.cs`
-- Modify: `src/PlatformCore/PlatformBootstrapper.cs`
-
-- [x] Load `module.yaml` files from `src/Modules`.
-- [x] Register module source as `yaml` or `fallback`.
-- [x] Record YAML load errors through EventBus and AuditLog.
-- [x] Keep fallback manifests for missing or failed YAML manifests.
-
-### Task 3: Gateway QualityGate
-
-**Files:**
-- Modify: `src/Interfaces/AgentGatewayHost/AgentMessageDispatcher.cs`
-- Modify: `src/Interfaces/AgentGatewayHost/GatewayMessageResponse.cs`
-- Create: `src/PlatformCore/AgentOutputReviewMapper.cs`
-
-- [x] Keep Gateway limited to Public agents.
-- [x] Convert AgentOutput to ReviewReport.
-- [x] Evaluate with DefaultGatekeeper.
-- [x] Return GateDecision and RejectReport when rejected.
-
-### Task 4: Storage And Self-Check
-
-**Files:**
-- Create: `src/Storage/*.cs`
-- Modify: `src/PlatformCore/SelfCheckReport.cs`
-- Modify: `src/PlatformCore/PlatformSelfCheckRunner.cs`
-
-- [x] Add storage abstraction interfaces.
-- [x] Add self-check fields for solution, modules, manifest loading, QualityGate, Storage and RejectReport.
-- [x] Fail self-check if any P0 platform check fails.
-- [x] Verify `.sln` build, xUnit tests and CLI self-check.
+1. 创建 `.sln`，并把现有 `.csproj` 加入 solution。
+2. 补齐 8 个 Module 的标准目录和 `.gitkeep`。
+3. 新增 `ModuleManifestLoader`，优先读取 `module.yaml`，失败时使用 fallback 并记录审计。
+4. 更新 Gateway 派发流程，把 `AgentOutput` 转为 `ReviewReport` 并由 Gatekeeper 裁决。
+5. 新增 Storage 抽象接口。
+6. 更新 self-check，验证 solution、Module 结构、manifest 来源、Gateway 可见性、Storage、RejectReport 和 QualityGate。

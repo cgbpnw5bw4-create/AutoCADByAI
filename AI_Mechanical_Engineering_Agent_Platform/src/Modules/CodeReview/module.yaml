@@ -1,6 +1,6 @@
 name: CodeReview
 version: 0.1.0
-description: Reviews future automation code for safety and maintainability.
+description: 复审未来自动化代码的安全性和可维护性。
 agents: []
 skills:
   - cad-code-review

@@ -1,17 +1,17 @@
-# Module Standard
+# Module 标准
 
-A Module is a complete capability board. It is not a script folder.
+Module 是完整能力板块，不是脚本文件夹。
 
-Each module should contain:
+每个 Module 应包含：
 
-- `README.md`: responsibility, boundaries and current maturity
-- `module.yaml`: name, version, capabilities and registered components
-- `agents/`: role implementations or adapters owned by this module
-- `skills/`: structured transformations and helper capabilities
-- `workers/`: execution adapters only when the module owns an external execution surface
-- `validators/`: deterministic checks
-- `reviewers/`: review logic that produces `ReviewReport`
-- `schemas/`: module-specific schema extensions
-- `tests/`: module-level behavior and contract tests
+- `README.md`：说明职责、边界和当前成熟度。
+- `module.yaml`：描述名称、版本、能力和注册组件。
+- `agents/`：模块拥有的 Agent 实现或适配器。
+- `skills/`：结构化转换和辅助能力。
+- `workers/`：仅在模块拥有外部执行面时放置执行适配。
+- `validators/`：确定性校验。
+- `reviewers/`：生成 `ReviewReport` 的复审逻辑。
+- `schemas/`：模块专用 Schema 扩展。
+- `tests/`：模块级行为和契约测试。
 
-Module code should communicate through platform contracts and DomainSchemas. Avoid hidden natural-language-only handoffs for core task data.
+模块之间应通过平台 Contracts 和 `DomainSchemas` 通信。核心任务数据不得只靠自然语言传递。

@@ -1,61 +1,26 @@
-# V0.3 Microsoft Runtime Adapter Implementation Plan
+# V0.3 Microsoft Runtime Adapter 实施计划归档
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+本文是 V0.3 的历史实施计划归档，保留用于追踪架构决策。
 
-**Goal:** Add the minimal Microsoft Agent Framework adapter boundary without letting Microsoft runtime APIs become platform contracts.
+## 目标
 
-**Architecture:** Keep `AgentRuntime.Microsoft` as the only project with the Microsoft Agent Framework package reference. Use MockRuntime by default for self-check and local execution. Keep PlatformCore, contracts, schemas, QualityGate and Workers free of Microsoft Agent Framework compile-time dependencies.
+在不污染平台契约的前提下，增加最小 Microsoft Agent Framework 适配边界。
 
-**Tech Stack:** C#/.NET 10, Microsoft.Agents.AI 1.11.0, xUnit.
+## 架构约束
 
----
+- `AgentRuntime.Microsoft` 是唯一允许引用 Microsoft Agent Framework 包的项目。
+- 默认使用 `MockRuntime`。
+- `PlatformCore`、Contracts、Schemas、`QualityGate` 和 Workers 不允许引用 Microsoft Runtime 类型。
 
-### Task 1: Runtime Adapter Tests
+## 技术栈
 
-**Files:**
-- Create: `tests/PlatformSelfCheck.Tests/AgentRuntimeMicrosoftTests.cs`
-- Modify: `tests/PlatformSelfCheck.Tests/PlatformSelfCheck.Tests.csproj`
+- C# / .NET 10
+- `Microsoft.Agents.AI`
+- xUnit
 
-- [x] Test package reference isolation.
-- [x] Test contracts do not expose Microsoft Agent Framework types.
-- [x] Test MicrosoftAgentAdapter implements `IAgent`.
-- [x] Test MockRuntime creates six platform agents.
-- [x] Test mock sequential workflow.
-- [x] Test self-check V0.3 fields.
+## 已完成任务
 
-### Task 2: Runtime Types
-
-**Files:**
-- Create: `src/AgentRuntime.Microsoft/AgentRuntimeMode.cs`
-- Create: `src/AgentRuntime.Microsoft/RuntimeAgentManifest.cs`
-- Create: `src/AgentRuntime.Microsoft/MockAgentRuntime.cs`
-- Create: `src/AgentRuntime.Microsoft/IMicrosoftRuntimeAgentInvoker.cs`
-- Modify: `src/AgentRuntime.Microsoft/MicrosoftAgentAdapter.cs`
-- Modify: `src/AgentRuntime.Microsoft/AgentFactory.cs`
-
-- [x] Add `Mock` and `Microsoft` runtime modes.
-- [x] Keep Microsoft mode behind an invoker interface that returns platform `AgentOutput`.
-- [x] Return deterministic mock `AgentOutput` without model or CAD calls.
-
-### Task 3: Workflow And Tools
-
-**Files:**
-- Modify: `src/AgentRuntime.Microsoft/MicrosoftWorkflowRuntime.cs`
-- Modify: `src/AgentRuntime.Microsoft/ToolBridge.cs`
-
-- [x] Run platform sequential workflow steps in MockRuntime.
-- [x] Add tool-call mapping skeletons for Skill and Worker names.
-- [x] Convert Skill/Worker outputs into runtime messages without executing CAD tools in V0.3.
-
-### Task 4: Platform Switch And Self-Check
-
-**Files:**
-- Modify: `src/PlatformCore/PlatformBootstrapper.cs`
-- Modify: `src/PlatformCore/SelfCheckReport.cs`
-- Modify: `src/PlatformCore/PlatformSelfCheckRunner.cs`
-- Modify: `src/AgentRuntime.Microsoft/README.md`
-
-- [x] Add optional runtime agent factory registration to PlatformBootstrapper.
-- [x] Use reflection in self-check to avoid PlatformCore referencing AgentRuntime.Microsoft.
-- [x] Verify runtime package isolation and MockRuntime behavior.
-- [x] Document boundaries and future MicrosoftRuntime connection points.
+1. 增加 Runtime Adapter 测试，验证包引用隔离、契约不暴露 Microsoft 类型、`MicrosoftAgentAdapter` 实现 `IAgent`、MockRuntime 创建平台 Agent、Mock workflow 可运行、self-check 包含 V0.3 字段。
+2. 增加 `AgentRuntimeMode`、`RuntimeAgentManifest`、`MockAgentRuntime`、`IMicrosoftRuntimeAgentInvoker`，并更新 `MicrosoftAgentAdapter` 和 `AgentFactory`。
+3. 更新 `MicrosoftWorkflowRuntime` 和 `ToolBridge`，保留 tool-call 到 Skill / Worker 名称的映射骨架，但不执行真实 CAD。
+4. 更新 `PlatformBootstrapper`、`SelfCheckReport`、`PlatformSelfCheckRunner` 和 Runtime README，确保 self-check 使用反射验证隔离。

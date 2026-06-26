@@ -1,6 +1,6 @@
 name: MechanicalDesign
 version: 0.1.0
-description: Checks mechanical feasibility, structure and parameter assumptions.
+description: 检查机械可行性、结构和参数假设。
 agents:
   - mechanical-designer
 skills:
