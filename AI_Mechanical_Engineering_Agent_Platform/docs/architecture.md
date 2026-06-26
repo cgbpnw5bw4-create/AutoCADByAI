@@ -76,6 +76,8 @@ Worker 是未来调用 SolidWorks、AutoCAD、API、SDK、COM 或 MCP 工业软�
 
 Agent 不允许直接调用 CAD API、COM 对象或外部进程。Agent 只能生成结构化计划并通过平台边界交给 Worker。
 
+V0.9-B 中，`CADModeling` 模块新增 SolidWorks dry-run skeleton。`SolidWorksBuildPlan` 是从 `CADModelSpec` 到 `SolidWorksWorkerRequest` 的中间层，`FakeSolidWorksWorker` 只生成文本形式的模拟产物和 `build_report.json`。`allow_real_cad_execution` 是未来真实 CAD 执行的安全开关，默认必须为 `false`。当前不得直接复用外部 Python COM 脚本绕过平台，也不得让 Agent、Gateway 或 LLM 直接调用 SolidWorks Worker。
+
 ## QualityGate
 
 `QualityGate` 负责校验、复审、打回、失败报告和人工审批挂起。它包含：

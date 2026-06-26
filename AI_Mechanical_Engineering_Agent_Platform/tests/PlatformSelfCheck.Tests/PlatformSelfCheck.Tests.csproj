@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\Interfaces\AgentGatewayHost\AgentGatewayHost.csproj" />
     <ProjectReference Include="..\..\src\Storage\Storage.csproj" />
     <ProjectReference Include="..\..\src\AgentRuntime.Microsoft\AgentRuntime.Microsoft.csproj" />
+    <ProjectReference Include="..\..\src\Workers\SolidWorks\SolidWorksWorker.csproj" />
   </ItemGroup>
 
 </Project>

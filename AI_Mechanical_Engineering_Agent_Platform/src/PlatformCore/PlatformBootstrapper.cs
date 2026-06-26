@@ -1,6 +1,7 @@
 using AgentContracts;
 using ModuleContracts;
 using PlatformCore.Modules.CADModeling.Agents;
+using PlatformCore.Modules.CADModeling.Skills;
 using PlatformCore.Modules.CodeEngineering.Agents;
 using PlatformCore.Modules.CodeReview.Agents;
 using PlatformCore.Modules.DrawingGeneration.Agents;
@@ -114,6 +115,8 @@ public static class PlatformBootstrapper
         platform.SkillRegistry.Register(new PlaceholderSkill(
             "build-spec-planning",
             "Plan structured BuildSpec placeholders without CAD execution."));
+
+        platform.SkillRegistry.Register(new SolidWorksBuildPlanSkill());
 
         platform.SkillRegistry.Register(new PlaceholderSkill(
             "drawing-review-summary",

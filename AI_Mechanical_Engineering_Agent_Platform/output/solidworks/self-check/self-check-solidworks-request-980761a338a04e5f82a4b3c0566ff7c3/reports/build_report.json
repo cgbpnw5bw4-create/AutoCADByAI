@@ -1,0 +1,17 @@
+{
+  "request_id": "self-check-solidworks-request-980761a338a04e5f82a4b3c0566ff7c3",
+  "plan_id": "solidworks-build-plan-self-check-solidworks-build-plan",
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "allow_real_cad_execution": false,
+  "real_cad_executed": false,
+  "operations": [
+    "CreateSketch",
+    "ExtrudeBoss",
+    "CreateSketch",
+    "CutExtrude",
+    "SavePart",
+    "ExportStep"
+  ],
+  "generated_at": "2026-06-26T02:09:30.9358548+00:00"
+}

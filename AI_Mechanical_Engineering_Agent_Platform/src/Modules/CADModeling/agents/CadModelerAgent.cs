@@ -31,6 +31,23 @@ public sealed class CadModelerAgent : IAgent
                 "drawing-engineer"));
         }
 
+        if (IsSolidWorksPlanningRequest(context))
+        {
+            return Task.FromResult(new AgentOutput(
+                AgentOutputStatus.Completed,
+                "SolidWorks modeling intent detected. Recommended next action is to generate a SolidWorksBuildPlan through SolidWorksBuildPlanSkill.",
+                Array.Empty<ArtifactInfo>(),
+                Array.Empty<string>(),
+                new[]
+                {
+                    "CadModelerAgent only proposes the SolidWorksBuildPlan handoff.",
+                    "CadModelerAgent does not directly call SolidWorksWorker.",
+                    "CadModelerAgent does not directly call FakeSolidWorksWorker.",
+                    "No SolidWorks, COM, SldWorks.Application or Worker call was executed."
+                },
+                "drawing-engineer"));
+        }
+
         return Task.FromResult(new AgentOutput(
             AgentOutputStatus.Completed,
             "CAD modeling plan completed: BuildSpec placeholder is ready for future worker handoff.",
@@ -47,4 +64,11 @@ public sealed class CadModelerAgent : IAgent
     private static bool IsScenario(AgentContext context, string scenario) =>
         context.Input.Context.TryGetValue("test_scenario", out var value) &&
         string.Equals(value, scenario, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsSolidWorksPlanningRequest(AgentContext context)
+    {
+        var message = context.Input.Message;
+        var keywords = new[] { "SolidWorks", "solidworks", "SW", "板件", "plate", "建模" };
+        return keywords.Any(keyword => message.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+    }
 }

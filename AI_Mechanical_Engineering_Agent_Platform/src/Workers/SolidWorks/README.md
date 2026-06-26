@@ -1,27 +1,31 @@
-# SolidWorks Worker
+# SolidWorks Worker 说明
 
-本目录是未来 SolidWorks 执行层的 dry-run skeleton。当前只保留接口和假实现，不连接真实 SolidWorks，不调用 COM，不启动进程，也不写真实 CAD 文件。
+本目录是 V0.9-B 的 SolidWorks 执行层骨架，也就是当前的 dry-run skeleton。当前只提供 `ISolidWorksWorker` 合同和 `FakeSolidWorksWorker`，用于验证平台边界、dry-run 流程和 self-check，不连接真实 SolidWorks。
 
-当前范围：
+当前明确禁止：
 
-- 提供 `ISolidWorksWorker`。
-- 提供 `FakeSolidWorksWorker`。
-- 保持 dry-run skeleton，用于平台注册、self-check 和边界验证。
-- 不接真实 SolidWorks API、SDK、COM 或 MCP。
+- 不启动 SolidWorks。
+- 不调用 COM。
+- 不调用 `SldWorks.Application`。
+- 不生成真实 `.SLDPRT`、`.SLDDRW`、STEP 或 PDF 文件。
+- 不得复制外部 `solidworks-automation-skill/scripts` 源码。
+- 不把 Python COM 脚本直接塞进 Worker。
 
-未来职责：
+`FakeSolidWorksWorker` 只生成模拟产物：
 
-- SolidWorks 建模。
-- 工程图生成。
-- STEP / PDF 导出。
-- 读取模型元数据。
+- `output/solidworks/artifacts/fake_plate_basic_4holes.SLDPRT.txt`
+- `output/solidworks/artifacts/fake_plate_basic_4holes.STEP.txt`
+- `output/solidworks/reports/build_report.json`
+- `output/solidworks/logs/fake_solidworks_worker.log`
 
 架构边界：
 
-- Skill 只生成 `SolidWorksBuildPlan` 或其他结构化计划。
-- Worker 才能执行 SolidWorks 操作。
-- Validator 负责环境与输出校验。
+- Agent 只能提出计划和协作建议，不能直接调用 Worker。
+- Gateway 不能直接调用 Worker。
+- Skill 只生成 `SolidWorksBuildPlan`。
+- Worker 才是未来执行 SolidWorks 操作的边界。
+- Validator 负责校验构建计划、执行模式和输出产物。
 - Reviewer 负责工程合理性复审。
 - `QualityGate` 负责最终裁决。
-- 不得使用“一个 Python 脚本直接控制 SolidWorks”的方式绕过平台。
-- 不得复制外部 `solidworks-automation-skill/scripts` 源码到本项目。
+
+真实 `RealSolidWorksWorker` 计划在 V1.0 才实现。即使进入 V1.0，真实执行也必须显式设置 `allow_real_cad_execution=true`，并继续经过平台调度、审计日志和 `QualityGate`。

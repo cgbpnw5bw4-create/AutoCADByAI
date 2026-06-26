@@ -11,6 +11,9 @@
 
   <ItemGroup>
     <Compile Include="..\Modules\**\agents\*.cs" Link="Modules\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Modules\**\skills\*.cs" Link="Modules\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Modules\**\validators\*.cs" Link="Modules\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Modules\**\reviewers\*.cs" Link="Modules\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <PropertyGroup>

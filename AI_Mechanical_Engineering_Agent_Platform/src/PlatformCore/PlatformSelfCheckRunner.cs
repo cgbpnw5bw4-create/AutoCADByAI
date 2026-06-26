@@ -4,6 +4,10 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Net;
 using DomainSchemas;
+using PlatformCore.Modules.CADModeling.Agents;
+using PlatformCore.Modules.CADModeling.Reviewers;
+using PlatformCore.Modules.CADModeling.Skills;
+using PlatformCore.Modules.CADModeling.Validators;
 using QualityGate;
 
 namespace PlatformCore;
@@ -143,6 +147,7 @@ public static class PlatformSelfCheckRunner
         var markdownEnglishExceptionsSupported = markdownValidator.SupportsEnglishExceptions();
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
+        var solidWorksSkeletonChecks = await RunSolidWorksSkeletonChecks(root, platform, outputRoot, cancellationToken);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -236,6 +241,20 @@ public static class PlatformSelfCheckRunner
             internalWorkflowChecks.CodeReviewerAgentRegistered &&
             internalWorkflowChecks.CodeAgentsAreInternal &&
             internalWorkflowChecks.GatewayBlocksCodeAgents &&
+            solidWorksSkeletonChecks.SolidWorksModuleSkeletonEnabled &&
+            solidWorksSkeletonChecks.SolidWorksBuildPlanSkillRegistered &&
+            solidWorksSkeletonChecks.SolidWorksBuildPlanGenerated &&
+            solidWorksSkeletonChecks.SolidWorksWorkerContractExists &&
+            solidWorksSkeletonChecks.FakeSolidWorksWorkerRegistered &&
+            solidWorksSkeletonChecks.FakeSolidWorksWorkerDryRunPassed &&
+            solidWorksSkeletonChecks.SolidWorksBuildPlanValidatorPassed &&
+            solidWorksSkeletonChecks.SolidWorksArtifactValidatorPassed &&
+            solidWorksSkeletonChecks.SolidWorksBuildPlanReviewerPassed &&
+            solidWorksSkeletonChecks.SolidWorksQualityGatePassed &&
+            solidWorksSkeletonChecks.SolidWorksFakeArtifactsGenerated &&
+            solidWorksSkeletonChecks.SolidWorksRealCadNotExecuted &&
+            solidWorksSkeletonChecks.SolidWorksAgentDoesNotCallWorkerDirectly &&
+            solidWorksSkeletonChecks.GatewayDoesNotCallSolidWorksWorker &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -332,6 +351,20 @@ public static class PlatformSelfCheckRunner
             markdownChineseCheckPassed,
             markdownLanguageReportGenerated,
             markdownEnglishExceptionsSupported,
+            solidWorksSkeletonChecks.SolidWorksModuleSkeletonEnabled,
+            solidWorksSkeletonChecks.SolidWorksBuildPlanSkillRegistered,
+            solidWorksSkeletonChecks.SolidWorksBuildPlanGenerated,
+            solidWorksSkeletonChecks.SolidWorksWorkerContractExists,
+            solidWorksSkeletonChecks.FakeSolidWorksWorkerRegistered,
+            solidWorksSkeletonChecks.FakeSolidWorksWorkerDryRunPassed,
+            solidWorksSkeletonChecks.SolidWorksBuildPlanValidatorPassed,
+            solidWorksSkeletonChecks.SolidWorksArtifactValidatorPassed,
+            solidWorksSkeletonChecks.SolidWorksBuildPlanReviewerPassed,
+            solidWorksSkeletonChecks.SolidWorksQualityGatePassed,
+            solidWorksSkeletonChecks.SolidWorksFakeArtifactsGenerated,
+            solidWorksSkeletonChecks.SolidWorksRealCadNotExecuted,
+            solidWorksSkeletonChecks.SolidWorksAgentDoesNotCallWorkerDirectly,
+            solidWorksSkeletonChecks.GatewayDoesNotCallSolidWorksWorker,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -436,6 +469,186 @@ public static class PlatformSelfCheckRunner
             DateTimeOffset.UtcNow);
 
         return await chiefEngineer.ExecuteAsync(context);
+    }
+
+    private static async Task<SolidWorksSkeletonSelfCheckResult> RunSolidWorksSkeletonChecks(
+        string projectRoot,
+        PlatformKernel platform,
+        string outputRoot,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var cadModule = platform.ModuleRegistry.GetByName("CADModeling");
+            var cadModuleYamlPath = Path.Combine(projectRoot, "src", "Modules", "CADModeling", "module.yaml");
+            var cadModuleYaml = File.Exists(cadModuleYamlPath) ? File.ReadAllText(cadModuleYamlPath) : string.Empty;
+            var solidWorksModuleSkeletonEnabled =
+                cadModule is not null &&
+                cadModule.Skills.Contains("solidworks-build-plan-skill") &&
+                cadModule.Workers.Contains("FakeSolidWorksWorker") &&
+                cadModule.Validators.Contains("solidworks-build-plan-validator") &&
+                cadModule.Validators.Contains("solidworks-artifact-validator") &&
+                cadModule.Reviewers.Contains("solidworks-build-plan-reviewer") &&
+                cadModuleYaml.Contains("SolidWorksBuildPlan", StringComparison.OrdinalIgnoreCase) &&
+                cadModuleYaml.Contains("SolidWorksWorkerRequest", StringComparison.OrdinalIgnoreCase) &&
+                cadModuleYaml.Contains("SolidWorksWorkerResult", StringComparison.OrdinalIgnoreCase) &&
+                cadModuleYaml.Contains("SolidWorksArtifact", StringComparison.OrdinalIgnoreCase);
+
+            var skill = platform.SkillRegistry.GetByName("solidworks-build-plan-skill") as SolidWorksBuildPlanSkill
+                ?? new SolidWorksBuildPlanSkill();
+            var solidWorksBuildPlanSkillRegistered = platform.SkillRegistry.GetByName("solidworks-build-plan-skill") is not null;
+            var skillOutput = await skill.ExecuteAsync(new SkillContracts.SkillInput(
+                "self-check-solidworks-build-plan",
+                nameof(CADModelSpec),
+                new CADModelSpec(
+                    "cad-model-spec-plate-basic-4holes",
+                    "Part",
+                    "plate_basic_4holes",
+                    "160 x 80 x 12 mm plate with four through holes.",
+                    new Dictionary<string, string>
+                    {
+                        ["length_mm"] = "160",
+                        ["width_mm"] = "80",
+                        ["thickness_mm"] = "12",
+                        ["hole_diameter_mm"] = "10",
+                        ["hole_count"] = "4"
+                    },
+                    Array.Empty<string>(),
+                    new[] { "dry-run only" }),
+                new Dictionary<string, string>()));
+            var plan = skillOutput.Result as SolidWorksBuildPlan;
+            var solidWorksBuildPlanGenerated =
+                skillOutput.Status == SkillContracts.SkillOutputStatus.Completed &&
+                plan is not null &&
+                string.Equals(plan.TargetCadSystem, "SolidWorks", StringComparison.OrdinalIgnoreCase) &&
+                plan.Operations.Count >= 6 &&
+                plan.ExpectedArtifacts.Count >= 3;
+
+            var workerContractPath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "ISolidWorksWorker.cs");
+            var workerContractText = File.Exists(workerContractPath) ? File.ReadAllText(workerContractPath) : string.Empty;
+            var solidWorksWorkerContractExists =
+                workerContractText.Contains("SolidWorksWorkerRequest", StringComparison.Ordinal) &&
+                workerContractText.Contains("CancellationToken", StringComparison.Ordinal);
+            var fakeSolidWorksWorkerRegistered = platform.WorkerRegistry.GetAll().Any(worker => worker.Name == "FakeSolidWorksWorker");
+
+            SolidWorksWorkerResult? workerResult = null;
+            if (plan is not null)
+            {
+                var worker = CreateFakeSolidWorksWorker(projectRoot);
+                var workerMethod = worker.GetType().GetMethods()
+                    .Single(method =>
+                        method.Name == "ExecuteAsync" &&
+                        method.GetParameters().Length == 2 &&
+                        method.GetParameters()[0].ParameterType.Name == nameof(SolidWorksWorkerRequest));
+                var requestId = $"self-check-solidworks-request-{Guid.NewGuid():N}";
+                var request = new SolidWorksWorkerRequest(
+                    requestId,
+                    plan,
+                    Path.Combine(projectRoot, "output", "solidworks", "self-check", requestId),
+                    DryRun: true,
+                    AllowRealCadExecution: false);
+                var task = (Task<SolidWorksWorkerResult>)workerMethod.Invoke(worker, new object?[] { request, cancellationToken })!;
+                workerResult = await task;
+            }
+
+            var fakeSolidWorksWorkerDryRunPassed =
+                workerResult is not null &&
+                workerResult.Status == "Completed" &&
+                workerResult.ExecutionMode == "Fake" &&
+                !workerResult.RealCadExecuted;
+            var buildPlanValidation = plan is not null
+                ? new SolidWorksBuildPlanValidator().Validate(plan)
+                : new ReviewReport("solidworks-build-plan-validation-missing", "solidworks-build-plan-validator", false, 0, new[] { "plan missing" }, false, true);
+            var artifactValidation = workerResult is not null
+                ? new SolidWorksArtifactValidator().Validate(workerResult)
+                : new ReviewReport("solidworks-artifact-validation-missing", "solidworks-artifact-validator", false, 0, new[] { "worker result missing" }, false, true);
+            var buildPlanReview = plan is not null
+                ? new SolidWorksBuildPlanReviewer().Review(plan)
+                : new ReviewReport("solidworks-build-plan-review-missing", "solidworks-build-plan-reviewer", false, 0, new[] { "plan missing" }, false, true);
+            var gateEvaluation = new DefaultGatekeeper(new GateDecisionPolicy(), new RejectReportBuilder()).Evaluate(buildPlanReview);
+            var solidWorksFakeArtifactsGenerated =
+                workerResult?.GeneratedArtifacts.Count >= 3 &&
+                workerResult.GeneratedArtifacts.All(artifact => artifact.Exists && File.Exists(artifact.FilePath) && new FileInfo(artifact.FilePath).Length > 0);
+            var solidWorksRealCadNotExecuted =
+                workerResult is not null &&
+                workerResult.ExecutionMode == "Fake" &&
+                !workerResult.RealCadExecuted &&
+                workerResult.Logs.Any(log => log.Contains("No SolidWorks process", StringComparison.OrdinalIgnoreCase)) &&
+                workerResult.Logs.Any(log => log.Contains("No COM call", StringComparison.OrdinalIgnoreCase));
+            var cadModelerOutput = await new CadModelerAgent().ExecuteAsync(CreateCadModelerSelfCheckContext());
+            var solidWorksAgentDoesNotCallWorkerDirectly =
+                cadModelerOutput.Message.Contains("SolidWorksBuildPlan", StringComparison.OrdinalIgnoreCase) &&
+                cadModelerOutput.Artifacts.Count == 0 &&
+                cadModelerOutput.Logs.Any(log => log.Contains("does not directly call SolidWorksWorker", StringComparison.OrdinalIgnoreCase)) &&
+                cadModelerOutput.Logs.Any(log => log.Contains("does not directly call FakeSolidWorksWorker", StringComparison.OrdinalIgnoreCase));
+            var gatewayDoesNotCallSolidWorksWorker =
+                platform.AgentRegistry.GetById("FakeSolidWorksWorker") is null &&
+                platform.AgentRegistry.GetById("solidworks-worker") is null &&
+                platform.AgentRegistry.GetPublicAgents().All(agent => agent.Id == "chief-engineer");
+
+            return new SolidWorksSkeletonSelfCheckResult(
+                solidWorksModuleSkeletonEnabled,
+                solidWorksBuildPlanSkillRegistered,
+                solidWorksBuildPlanGenerated,
+                solidWorksWorkerContractExists,
+                fakeSolidWorksWorkerRegistered,
+                fakeSolidWorksWorkerDryRunPassed,
+                buildPlanValidation.IsPassed,
+                artifactValidation.IsPassed,
+                buildPlanReview.IsPassed,
+                gateEvaluation.Decision.Result == GateDecisionResult.Passed,
+                solidWorksFakeArtifactsGenerated == true,
+                solidWorksRealCadNotExecuted,
+                solidWorksAgentDoesNotCallWorkerDirectly,
+                gatewayDoesNotCallSolidWorksWorker);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
+        {
+            platform.AuditLog.Record("solidworks", "self-check", "solidworks_skeleton_check_failed", ex.GetBaseException().Message);
+            return new SolidWorksSkeletonSelfCheckResult(
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false);
+        }
+    }
+
+    private static object CreateFakeSolidWorksWorker(string projectRoot)
+    {
+        var assembly = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(candidate => candidate.GetName().Name == "SolidWorksWorker")
+            ?? Assembly.LoadFrom(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "bin", "Debug", "net10.0", "SolidWorksWorker.dll"));
+        var workerType = assembly.GetType("SolidWorksWorker.FakeSolidWorksWorker", throwOnError: true)!;
+        return Activator.CreateInstance(workerType)
+            ?? throw new InvalidOperationException("Could not create FakeSolidWorksWorker.");
+    }
+
+    private static AgentContracts.AgentContext CreateCadModelerSelfCheckContext()
+    {
+        var input = new AgentContracts.AgentInput(
+            "self-check",
+            "solidworks-self-check",
+            "solidworks-self-check-conversation",
+            "self-check",
+            "Create a SolidWorks plate modeling plan.",
+            Array.Empty<string>(),
+            new Dictionary<string, string>());
+
+        return new AgentContracts.AgentContext(
+            $"task-{Guid.NewGuid():N}",
+            input,
+            new Dictionary<string, object?>(),
+            DateTimeOffset.UtcNow);
     }
 
     private static async Task<WorkflowBackedInternalSelfCheckResult> RunWorkflowBackedInternalOrchestrationChecks(
@@ -1459,6 +1672,22 @@ public static class PlatformSelfCheckRunner
         bool CodeReviewerAgentRegistered,
         bool CodeAgentsAreInternal,
         bool GatewayBlocksCodeAgents);
+
+    private sealed record SolidWorksSkeletonSelfCheckResult(
+        bool SolidWorksModuleSkeletonEnabled,
+        bool SolidWorksBuildPlanSkillRegistered,
+        bool SolidWorksBuildPlanGenerated,
+        bool SolidWorksWorkerContractExists,
+        bool FakeSolidWorksWorkerRegistered,
+        bool FakeSolidWorksWorkerDryRunPassed,
+        bool SolidWorksBuildPlanValidatorPassed,
+        bool SolidWorksArtifactValidatorPassed,
+        bool SolidWorksBuildPlanReviewerPassed,
+        bool SolidWorksQualityGatePassed,
+        bool SolidWorksFakeArtifactsGenerated,
+        bool SolidWorksRealCadNotExecuted,
+        bool SolidWorksAgentDoesNotCallWorkerDirectly,
+        bool GatewayDoesNotCallSolidWorksWorker);
 
     private static JsonSerializerOptions JsonOptions()
     {

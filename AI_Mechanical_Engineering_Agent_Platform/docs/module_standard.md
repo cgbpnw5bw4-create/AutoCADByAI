@@ -15,3 +15,9 @@ Module 是完整能力板块，不是脚本文件夹。
 - `tests/`：模块级行为和契约测试。
 
 模块之间应通过平台 Contracts 和 `DomainSchemas` 通信。核心任务数据不得只靠自然语言传递。
+
+## SolidWorks Module 骨架要求
+
+SolidWorks 能力当前放在 `CADModeling` 模块中，属于 dry-run skeleton。模块内的 Skill 只生成 `SolidWorksBuildPlan`，Worker 才能接收 `SolidWorksWorkerRequest` 并执行 dry-run。Validator 负责检查 BuildPlan、执行模式和输出产物，Reviewer 负责工程合理性复审，`QualityGate` 负责最终裁决。
+
+当前不得把外部 Python COM 脚本直接放进模块并绕过平台，也不得复制 `solidworks-automation-skill/scripts` 源码。任何真实 SolidWorks 执行能力都必须作为后续独立 Worker 接入，并继续遵守 Agent、Skill、Worker、Validator、Reviewer 的边界。

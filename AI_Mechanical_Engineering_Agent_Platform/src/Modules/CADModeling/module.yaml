@@ -1,17 +1,30 @@
 name: CADModeling
 version: 0.1.0
-description: 规划 BuildSpec 到 CAD Worker 的交接。
+description: 规划 BuildSpec 与 SolidWorksBuildPlan 到 CAD Worker 的受控交接，当前仅支持 dry-run skeleton。
+capabilities:
+  - cad_modeling
+  - solidworks_build_plan_generation
+  - solidworks_dry_run_worker
+  - solidworks_artifact_validation
 agents:
   - cad-modeler
 skills:
   - build-spec-planning
+  - solidworks-build-plan-skill
 workers:
   - FakeSolidWorksWorker
 validators:
   - build-spec-validator
+  - solidworks-build-plan-validator
+  - solidworks-artifact-validator
 reviewers:
   - cad-modeling-reviewer
+  - solidworks-build-plan-reviewer
 schemas:
   - CADModelSpec
   - BuildSpec
   - ArtifactInfo
+  - SolidWorksBuildPlan
+  - SolidWorksWorkerRequest
+  - SolidWorksWorkerResult
+  - SolidWorksArtifact
