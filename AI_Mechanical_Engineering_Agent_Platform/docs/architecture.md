@@ -78,6 +78,10 @@ Agent 不允许直接调用 CAD API、COM 对象或外部进程。Agent 只能�
 
 V0.9-B 中，`CADModeling` 模块新增 SolidWorks dry-run skeleton。`SolidWorksBuildPlan` 是从 `CADModelSpec` 到 `SolidWorksWorkerRequest` 的中间层，`FakeSolidWorksWorker` 只生成文本形式的模拟产物和 `build_report.json`。`allow_real_cad_execution` 是未来真实 CAD 执行的安全开关，默认必须为 `false`。当前不得直接复用外部 Python COM 脚本绕过平台，也不得让 Agent、Gateway 或 LLM 直接调用 SolidWorks Worker。
 
+V1.0-A 中，SolidWorks 能力新增真实执行前安全边界：`SolidWorksRuntimeOptions`、`SolidWorksPreflightReport`、`SolidWorksEnvironmentValidator`、`SolidWorksSessionManager` 和 `RealSolidWorksWorker` skeleton。默认 self-check 不连接 SolidWorks，不调用 COM，也不要求 CI 或开发机安装 SolidWorks。真实连接 smoke test 只有在 `SW_ENABLE_REAL_EXECUTION=true` 且 `SW_REAL_SMOKE_TEST=true` 时才允许尝试；严格失败模式需要额外设置 `SW_STRICT_REAL_SMOKE_TEST=true`。
+
+真实 CAD Worker 的权限由三层共同约束：请求中的 `AllowRealCadExecution`、请求中的 `DryRun`、以及环境变量 `SW_ENABLE_REAL_EXECUTION`。三者不同时满足时，只能进入 `RealPreflightOnly`，不得连接 COM。V1.0-A 不实现 `RealBuild`，也不生成真实 `.SLDPRT`、`.STEP` 或工程图。
+
 ## QualityGate
 
 `QualityGate` 负责校验、复审、打回、失败报告和人工审批挂起。它包含：

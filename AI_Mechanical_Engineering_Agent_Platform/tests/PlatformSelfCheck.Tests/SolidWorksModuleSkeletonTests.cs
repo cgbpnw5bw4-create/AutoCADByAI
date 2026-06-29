@@ -313,6 +313,183 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public async Task SolidWorksEnvironmentValidatorGeneratesSkippedPreflightWithoutComWhenRealExecutionDisabled()
+    {
+        var outputRoot = Path.Combine(Path.GetTempPath(), "solidworks_preflight_test", Guid.NewGuid().ToString("N"));
+        var request = new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            await CreatePlanAsync(),
+            outputRoot);
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_OUTPUT_DIRECTORY"] = outputRoot,
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+        });
+        var validator = new SolidWorksEnvironmentValidator();
+
+        var report = validator.ValidateEnvironment(request, options);
+
+        Assert.Equal("Skipped", report.FinalStatus);
+        Assert.False(report.RealExecutionEnabled);
+        Assert.False(report.SolidWorksApplicationConnectable);
+        Assert.True(report.OutputDirectoryWritable);
+        Assert.Contains(report.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task RealSolidWorksWorkerRejectsWhenRequestOrEnvironmentSafetySwitchesAreMissing()
+    {
+        var disabledOptions = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+        });
+        var enabledOptions = disabledOptions with { EnableRealExecution = true };
+        var sessionManager = new CountingSolidWorksSessionManager();
+        var workerWithDisabledEnvironment = new RealSolidWorksWorker(sessionManager, disabledOptions);
+        var workerWithEnabledEnvironment = new RealSolidWorksWorker(sessionManager, enabledOptions);
+        var defaultRequest = new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            await CreatePlanAsync(),
+            Path.Combine(Path.GetTempPath(), "solidworks_real_worker_reject_default", Guid.NewGuid().ToString("N")));
+
+        var defaultResult = await workerWithDisabledEnvironment.ExecuteAsync(defaultRequest, CancellationToken.None);
+        var missingRequestFlagResult = await workerWithEnabledEnvironment.ExecuteAsync(
+            defaultRequest with { DryRun = false, AllowRealCadExecution = false },
+            CancellationToken.None);
+        var missingEnvironmentFlagResult = await workerWithDisabledEnvironment.ExecuteAsync(
+            defaultRequest with { DryRun = false, AllowRealCadExecution = true },
+            CancellationToken.None);
+
+        Assert.Equal("Rejected", defaultResult.Status);
+        Assert.Equal("RealPreflightOnly", defaultResult.ExecutionMode);
+        Assert.False(defaultResult.RealCadExecuted);
+        Assert.False(defaultResult.RealCadConnected);
+        Assert.Contains(defaultResult.Issues, issue => issue.Contains("dry_run_mode_enabled", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(defaultResult.Issues, issue => issue.Contains("real_cad_execution_not_enabled", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(defaultResult.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(missingRequestFlagResult.Issues, issue => issue.Contains("real_cad_execution_not_enabled", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(missingEnvironmentFlagResult.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(0, sessionManager.ConnectAttempts);
+    }
+
+    [Fact]
+    public async Task RealSolidWorksWorkerOnlyEntersConnectionPathWhenAllSafetySwitchesAreEnabled()
+    {
+        var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "true",
+            ["SW_VISIBLE"] = "false",
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+        });
+        var worker = new RealSolidWorksWorker(sessionManager, options);
+        var request = new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            await CreatePlanAsync(),
+            Path.Combine(Path.GetTempPath(), "solidworks_real_worker_connection", Guid.NewGuid().ToString("N")),
+            DryRun: false,
+            AllowRealCadExecution: true);
+
+        var result = await worker.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.Equal(1, sessionManager.ConnectAttempts);
+        Assert.Equal("Completed", result.Status);
+        Assert.Equal("RealConnectionSmokeTest", result.ExecutionMode);
+        Assert.True(result.RealCadConnected);
+        Assert.False(result.RealCadExecuted);
+        Assert.NotEqual("RealBuild", result.ExecutionMode);
+        Assert.False(worker.SupportsRealBuild);
+    }
+
+    [Fact]
+    public async Task SolidWorksSessionManagerReleasesCreatedApplicationWhenConnectionTimesOut()
+    {
+        var comActivator = new TrackingSolidWorksComActivator
+        {
+            SetVisibleAction = (_, _, cancellationToken) =>
+            {
+                cancellationToken.WaitHandle.WaitOne();
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        };
+        var manager = new SolidWorksSessionManager(comActivator);
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "true",
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "1"
+        });
+
+        var result = await manager.ConnectAsync(options, CancellationToken.None);
+
+        Assert.False(result.Connected);
+        Assert.Contains(result.Issues, issue => issue.Contains("timeout", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(1, comActivator.CreatedApplications);
+        Assert.Equal(1, comActivator.ReleasedApplications);
+    }
+
+    [Fact]
+    public async Task SolidWorksSessionManagerSerializesConcurrentConnections()
+    {
+        var comActivator = new TrackingSolidWorksComActivator
+        {
+            SetVisibleAction = (_, _, cancellationToken) =>
+            {
+                Thread.Sleep(75);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        };
+        var manager = new SolidWorksSessionManager(comActivator);
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "true",
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+        });
+
+        var first = manager.ConnectAsync(options, CancellationToken.None);
+        var second = manager.ConnectAsync(options, CancellationToken.None);
+        var results = await Task.WhenAll(first, second);
+        await manager.DisconnectAsync(CancellationToken.None);
+
+        Assert.All(results, result => Assert.True(result.Connected));
+        Assert.Equal(2, comActivator.CreatedApplications);
+        Assert.True(comActivator.MaxConcurrentApplications <= 1);
+        Assert.Equal(2, comActivator.ReleasedApplications);
+    }
+
+    [Fact]
+    public void SolidWorksRuntimeOptionsDefaultOutputDirectoryIsAbsolute()
+    {
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
+
+        Assert.True(Path.IsPathFullyQualified(options.OutputDirectory));
+        Assert.EndsWith(Path.Combine("output", "solidworks", "real"), options.OutputDirectory, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GatewayAndAgentRegistryDoNotExposeRealSolidWorksWorker()
+    {
+        var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
+        var dispatcher = new AgentMessageDispatcher(platform);
+
+        var response = await dispatcher.DispatchAsync(
+            "RealSolidWorksWorker",
+            new GatewayMessageRequest(
+                "test",
+                "channel",
+                "conversation",
+                "user",
+                "Try to directly call RealSolidWorksWorker",
+                Array.Empty<string>(),
+                new Dictionary<string, string>()));
+
+        Assert.Null(response);
+        Assert.Null(platform.AgentRegistry.GetById("RealSolidWorksWorker"));
+        Assert.DoesNotContain(platform.AgentRegistry.GetPublicAgents(), agent => agent.Id.Contains("solidworks", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task SelfCheckReportContainsSolidWorksSkeletonFields()
     {
         var root = FindProjectRoot();
@@ -338,6 +515,19 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksAgentDoesNotCallWorkerDirectly);
             Assert.True(report.GatewayDoesNotCallSolidWorksWorker);
             Assert.Null(report.SolidWorksSelfCheckError);
+            Assert.True(report.SolidWorksRealWorkerSkeletonExists);
+            Assert.True(report.SolidWorksEnvironmentValidatorExists);
+            Assert.True(report.SolidWorksPreflightReportGenerated);
+            Assert.True(report.SolidWorksSessionManagerExists);
+            Assert.True(report.SolidWorksRealExecutionDefaultDisabled);
+            Assert.True(report.SolidWorksRealExecutionRequiresRequestFlag);
+            Assert.True(report.SolidWorksRealExecutionRequiresEnvFlag);
+            Assert.True(report.SolidWorksComNotCalledInDefaultSelfCheck);
+            Assert.False(report.SolidWorksRealConnectionSmokeTestAttempted);
+            Assert.False(report.SolidWorksRealConnectionSmokeTestPassed);
+            Assert.Null(report.SolidWorksRealConnectionSmokeTestError);
+            Assert.True(report.SolidWorksRealBuildNotImplemented);
+            Assert.True(report.SolidWorksRealCadNotExecutedByDefault);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }
@@ -394,6 +584,79 @@ public sealed class SolidWorksModuleSkeletonTests
             input,
             new Dictionary<string, object?>(),
             DateTimeOffset.UtcNow);
+    }
+
+    private sealed class CountingSolidWorksSessionManager : ISolidWorksSessionManager
+    {
+        private readonly bool _connectsSuccessfully;
+
+        public CountingSolidWorksSessionManager(bool connectsSuccessfully = false)
+        {
+            _connectsSuccessfully = connectsSuccessfully;
+        }
+
+        public int ConnectAttempts { get; private set; }
+
+        public Task<SolidWorksSessionConnectionResult> ConnectAsync(
+            SolidWorksRuntimeOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ConnectAttempts++;
+
+            return Task.FromResult(new SolidWorksSessionConnectionResult(
+                _connectsSuccessfully,
+                _connectsSuccessfully ? "TestVersion" : null,
+                _connectsSuccessfully ? Array.Empty<string>() : new[] { "solidworks_connection_failed" },
+                new[] { "fake session manager used by tests" }));
+        }
+
+        public Task DisconnectAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class TrackingSolidWorksComActivator : ISolidWorksComActivator
+    {
+        private int _activeApplications;
+
+        public Action<object, bool, CancellationToken>? SetVisibleAction { get; init; }
+
+        public int CreatedApplications { get; private set; }
+
+        public int ReleasedApplications { get; private set; }
+
+        public int MaxConcurrentApplications { get; private set; }
+
+        public object CreateApplication(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CreatedApplications++;
+            var active = Interlocked.Increment(ref _activeApplications);
+            MaxConcurrentApplications = Math.Max(MaxConcurrentApplications, active);
+            return new object();
+        }
+
+        public void SetVisible(object application, bool visible, CancellationToken cancellationToken)
+        {
+            if (SetVisibleAction is not null)
+            {
+                SetVisibleAction(application, visible, cancellationToken);
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        public string? ReadVersion(object application, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return "TestVersion";
+        }
+
+        public void Release(object application)
+        {
+            ReleasedApplications++;
+            Interlocked.Decrement(ref _activeApplications);
+        }
     }
 
     private static string FindProjectRoot()

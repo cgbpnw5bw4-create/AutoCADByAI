@@ -90,7 +90,9 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
             },
             issues,
             ExecutionMode: "Fake",
-            RealCadExecuted: false);
+            RealCadExecuted: false,
+            RealCadConnected: false,
+            PreflightReport: null);
     }
 
     public Task<WorkerOutput> ExecuteAsync(WorkerInput input) =>

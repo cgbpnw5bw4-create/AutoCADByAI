@@ -6,6 +6,8 @@ capabilities:
   - solidworks_build_plan_generation
   - solidworks_dry_run_worker
   - solidworks_artifact_validation
+  - solidworks_real_preflight
+  - solidworks_connection_smoke_test
 agents:
   - cad-modeler
 skills:
@@ -13,10 +15,12 @@ skills:
   - solidworks-build-plan-skill
 workers:
   - FakeSolidWorksWorker
+  - RealSolidWorksWorker
 validators:
   - build-spec-validator
   - solidworks-build-plan-validator
   - solidworks-artifact-validator
+  - solidworks-environment-validator
 reviewers:
   - cad-modeling-reviewer
   - solidworks-build-plan-reviewer
@@ -28,3 +32,5 @@ schemas:
   - SolidWorksWorkerRequest
   - SolidWorksWorkerResult
   - SolidWorksArtifact
+  - SolidWorksRuntimeOptions
+  - SolidWorksPreflightReport
