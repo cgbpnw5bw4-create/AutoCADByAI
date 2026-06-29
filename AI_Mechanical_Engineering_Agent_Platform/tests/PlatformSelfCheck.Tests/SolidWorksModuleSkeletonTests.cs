@@ -9,6 +9,7 @@ using PlatformCore.Modules.CADModeling.Validators;
 using QualityGate;
 using SkillContracts;
 using SolidWorksWorker;
+using WorkerContracts;
 
 namespace PlatformSelfCheck.Tests;
 
@@ -96,6 +97,20 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public void PlatformBootstrapperRegistersRealFakeSolidWorksWorker()
+    {
+        var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
+
+        var worker = Assert.Single(platform.WorkerRegistry.GetAll(), registered => registered.Name == nameof(FakeSolidWorksWorker));
+
+        Assert.IsType<FakeSolidWorksWorker>(worker);
+        Assert.Contains(platform.AuditLog.GetEntries(), entry =>
+            entry.Category == "worker" &&
+            entry.Action == "registered" &&
+            entry.Message.Contains("SolidWorks dry-run worker", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task SolidWorksArtifactValidatorAndReviewerPassDryRunResultThroughQualityGate()
     {
         var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", $"quality-test-{Guid.NewGuid():N}");
@@ -117,6 +132,150 @@ public sealed class SolidWorksModuleSkeletonTests
             if (Directory.Exists(outputRoot))
             {
                 Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SolidWorksArtifactValidatorRejectsArtifactsOutsideConfiguredOutputRoot()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_artifact_path_test", Guid.NewGuid().ToString("N"));
+        var allowedRoot = Path.Combine(root, "output", "solidworks");
+        var otherRoot = Path.Combine(root, "other", "output", "solidworks");
+        try
+        {
+            Directory.CreateDirectory(otherRoot);
+            var outsideArtifactPath = Path.Combine(otherRoot, "fake_plate_basic_4holes.SLDPRT.txt");
+            await File.WriteAllTextAsync(outsideArtifactPath, "outside configured root");
+            var result = new SolidWorksWorkerResult(
+                $"request-{Guid.NewGuid():N}",
+                "Completed",
+                new[]
+                {
+                    new SolidWorksArtifact(
+                        "outside-artifact",
+                        "Part",
+                        outsideArtifactPath,
+                        ".SLDPRT",
+                        true,
+                        new FileInfo(outsideArtifactPath).Length,
+                        "Outside configured output root."),
+                    new SolidWorksArtifact(
+                        "build-report",
+                        "BuildReport",
+                        outsideArtifactPath.Replace(".SLDPRT.txt", "build_report.json"),
+                        ".json",
+                        true,
+                        1,
+                        "Fake build report marker.")
+                },
+                Array.Empty<string>(),
+                Array.Empty<string>());
+            await File.WriteAllTextAsync(result.GeneratedArtifacts[1].FilePath, "{}");
+
+            var report = new SolidWorksArtifactValidator(allowedRoot).Validate(result);
+
+            Assert.False(report.IsPassed);
+            Assert.Contains(report.Issues, issue => issue.Contains("configured output/solidworks", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task FakeSolidWorksWorkerWorkerInputOverloadPropagatesCancellationToken()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", $"cancel-test-{Guid.NewGuid():N}");
+        var request = new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            await CreatePlanAsync(),
+            outputRoot);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        IWorker worker = new FakeSolidWorksWorker();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            worker.ExecuteAsync(
+                new WorkerInput(
+                    "cancel-test",
+                    "solidworks-dry-run",
+                    request,
+                    new Dictionary<string, string>()),
+                cancellation.Token));
+    }
+
+    [Fact]
+    public async Task PlaceholderWorkerDefaultOverloadHonorsPreCanceledToken()
+    {
+        IWorker worker = new PlaceholderWorker("FakeSolidWorksWorker", "SolidWorks");
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            worker.ExecuteAsync(
+                new WorkerInput(
+                    "placeholder-cancel-test",
+                    "solidworks-dry-run",
+                    new Dictionary<string, string>(),
+                    new Dictionary<string, string>()),
+                cancellation.Token));
+    }
+
+    [Fact]
+    public async Task SolidWorksBuildPlanValidatorDoesNotTreatNonCriticalTextAsFatal()
+    {
+        var plan = await CreatePlanAsync();
+        var validator = new SolidWorksBuildPlanValidator();
+
+        var nonCritical = validator.Validate(plan with
+        {
+            Operations = new[]
+            {
+                new SolidWorksOperation(
+                    "non-critical-operation",
+                    "This operation name contains non-critical text.",
+                    "Top Plane",
+                    new Dictionary<string, string>(),
+                    Array.Empty<string>(),
+                    "Should be rejected without marking the issue fatal.")
+            }
+        });
+        var nonRetryable = validator.Validate(new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            plan,
+            Path.Combine("output", "solidworks", "validator-test"),
+            DryRun: true,
+            AllowRealCadExecution: true));
+
+        Assert.False(nonCritical.IsPassed);
+        Assert.False(nonCritical.HasFatalError);
+        Assert.False(nonRetryable.IsPassed);
+        Assert.True(nonRetryable.HasFatalError);
+    }
+
+    [Fact]
+    public void PlatformPathResolverThrowsWhenProjectRootCannotBeLocated()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "platform_path_resolver_test", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            var exception = Assert.Throws<DirectoryNotFoundException>(() =>
+                PlatformPathResolver.FindProjectRoot(root));
+
+            Assert.Contains("Could not locate project root", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
             }
         }
     }
@@ -178,6 +337,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksRealCadNotExecuted);
             Assert.True(report.SolidWorksAgentDoesNotCallWorkerDirectly);
             Assert.True(report.GatewayDoesNotCallSolidWorksWorker);
+            Assert.Null(report.SolidWorksSelfCheckError);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }

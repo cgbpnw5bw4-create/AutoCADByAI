@@ -119,4 +119,5 @@ public sealed record PlatformSelfCheckReport(
     [property: JsonPropertyName("solidworks_real_cad_not_executed")] bool SolidWorksRealCadNotExecuted,
     [property: JsonPropertyName("solidworks_agent_does_not_call_worker_directly")] bool SolidWorksAgentDoesNotCallWorkerDirectly,
     [property: JsonPropertyName("gateway_does_not_call_solidworks_worker")] bool GatewayDoesNotCallSolidWorksWorker,
+    [property: JsonPropertyName("solidworks_self_check_error")] string? SolidWorksSelfCheckError,
     string FinalStatus);

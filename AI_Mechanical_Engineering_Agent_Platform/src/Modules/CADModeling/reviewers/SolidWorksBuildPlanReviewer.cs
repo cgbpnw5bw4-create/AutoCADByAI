@@ -16,23 +16,25 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
             return Report(issues);
         }
 
-        var dimensions = ExtractDimensions(plan);
-        if (dimensions.LengthMm <= 0 || dimensions.WidthMm <= 0 || dimensions.ThicknessMm <= 0)
+        var dimensions = ExtractDimensions(plan, issues);
+        if (dimensions.LengthMm is <= 0 || dimensions.WidthMm is <= 0 || dimensions.ThicknessMm is <= 0)
         {
             issues.Add("plate length, width and thickness must be positive.");
         }
 
-        if (dimensions.HoleDiameterMm <= 0)
+        if (dimensions.HoleDiameterMm is <= 0)
         {
             issues.Add("hole diameter must be positive.");
         }
 
-        if (dimensions.HoleCount != 4)
+        if (dimensions.HoleCount is not 4)
         {
             issues.Add("plate_basic_4holes must contain four holes.");
         }
 
         if (dimensions.HoleDiameterMm > 0 &&
+            dimensions.LengthMm > 0 &&
+            dimensions.WidthMm > 0 &&
             (dimensions.HoleDiameterMm >= dimensions.LengthMm / 2 || dimensions.HoleDiameterMm >= dimensions.WidthMm / 2))
         {
             issues.Add("hole diameter is too large for the simplified plate boundary rule.");
@@ -53,7 +55,9 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
         return Report(issues);
     }
 
-    private static (double LengthMm, double WidthMm, double ThicknessMm, double HoleDiameterMm, int HoleCount) ExtractDimensions(SolidWorksBuildPlan plan)
+    private static (double? LengthMm, double? WidthMm, double? ThicknessMm, double? HoleDiameterMm, int? HoleCount) ExtractDimensions(
+        SolidWorksBuildPlan plan,
+        List<string> issues)
     {
         var sketch = plan.Operations.FirstOrDefault(operation =>
             operation.OperationType.Equals("CreateSketch", StringComparison.OrdinalIgnoreCase) &&
@@ -64,26 +68,48 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
             operation.OperationType.Equals("CutExtrude", StringComparison.OrdinalIgnoreCase));
 
         return (
-            ParseDouble(sketch, "length_mm"),
-            ParseDouble(sketch, "width_mm"),
-            ParseDouble(extrude, "depth_mm"),
-            ParseDouble(cut, "hole_diameter_mm"),
-            ParseInt(cut, "hole_count"));
+            ParseDouble(sketch, "length_mm", issues),
+            ParseDouble(sketch, "width_mm", issues),
+            ParseDouble(extrude, "depth_mm", issues),
+            ParseDouble(cut, "hole_diameter_mm", issues),
+            ParseInt(cut, "hole_count", issues));
     }
 
-    private static double ParseDouble(SolidWorksOperation? operation, string key) =>
-        operation is not null &&
-        operation.Parameters.TryGetValue(key, out var value) &&
-        double.TryParse(value, out var parsed)
-            ? parsed
-            : 0;
+    private static double? ParseDouble(SolidWorksOperation? operation, string key, List<string> issues)
+    {
+        if (operation is null)
+        {
+            issues.Add($"operation containing {key} was not found.");
+            return null;
+        }
 
-    private static int ParseInt(SolidWorksOperation? operation, string key) =>
-        operation is not null &&
-        operation.Parameters.TryGetValue(key, out var value) &&
-        int.TryParse(value, out var parsed)
-            ? parsed
-            : 0;
+        if (!operation.Parameters.TryGetValue(key, out var value) ||
+            !double.TryParse(value, out var parsed))
+        {
+            issues.Add($"parameter {key} is missing or invalid.");
+            return null;
+        }
+
+        return parsed;
+    }
+
+    private static int? ParseInt(SolidWorksOperation? operation, string key, List<string> issues)
+    {
+        if (operation is null)
+        {
+            issues.Add($"operation containing {key} was not found.");
+            return null;
+        }
+
+        if (!operation.Parameters.TryGetValue(key, out var value) ||
+            !int.TryParse(value, out var parsed))
+        {
+            issues.Add($"parameter {key} is missing or invalid.");
+            return null;
+        }
+
+        return parsed;
+    }
 
     private static ReviewReport Report(IReadOnlyList<string> issues) =>
         new(

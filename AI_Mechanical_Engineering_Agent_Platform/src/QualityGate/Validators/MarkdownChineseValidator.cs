@@ -49,21 +49,47 @@ public sealed class MarkdownChineseValidator
                 "Failed");
         }
 
-        var files = Directory
-            .EnumerateFiles(rootDirectory, "*.md", SearchOption.AllDirectories)
-            .Where(file => !ShouldSkip(file, rootDirectory))
-            .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
         var failedFiles = new List<string>();
         var warnings = new List<string>();
         var issues = new List<string>();
         var englishHeavySections = new List<string>();
+        string[] files;
+
+        try
+        {
+            files = Directory
+                .EnumerateFiles(rootDirectory, "*.md", SearchOption.AllDirectories)
+                .Where(file => !ShouldSkip(file, rootDirectory))
+                .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new MarkdownLanguageReport(
+                0,
+                0,
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                new[] { $"Markdown 文件扫描失败：{ex.Message}" },
+                Array.Empty<string>(),
+                "Failed");
+        }
 
         foreach (var file in files)
         {
             var relativePath = Path.GetRelativePath(rootDirectory, file).Replace('\\', '/');
-            var markdown = File.ReadAllText(file);
+            string markdown;
+            try
+            {
+                markdown = File.ReadAllText(file);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                failedFiles.Add(relativePath);
+                issues.Add($"{relativePath} Markdown 文件读取失败：{ex.Message}");
+                continue;
+            }
+
             if (IsExempt(markdown, relativePath))
             {
                 continue;

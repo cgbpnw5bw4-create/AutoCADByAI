@@ -5,6 +5,15 @@ namespace PlatformCore.Modules.CADModeling.Validators;
 
 public sealed class SolidWorksArtifactValidator : IValidator
 {
+    private readonly string? _configuredOutputRoot;
+
+    public SolidWorksArtifactValidator(string? configuredOutputRoot = null)
+    {
+        _configuredOutputRoot = string.IsNullOrWhiteSpace(configuredOutputRoot)
+            ? null
+            : NormalizeDirectory(configuredOutputRoot);
+    }
+
     public string Name => "solidworks-artifact-validator";
 
     public ReviewReport Validate(object payload)
@@ -47,8 +56,14 @@ public sealed class SolidWorksArtifactValidator : IValidator
                 issues.Add($"fake artifact is empty: {artifact.FilePath}.");
             }
 
-            if (fullPath.IndexOf($"{Path.DirectorySeparatorChar}output{Path.DirectorySeparatorChar}solidworks{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) < 0 &&
-                fullPath.IndexOf($"{Path.AltDirectorySeparatorChar}output{Path.AltDirectorySeparatorChar}solidworks{Path.AltDirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) < 0)
+            if (_configuredOutputRoot is not null)
+            {
+                if (!IsUnderRoot(fullPath, _configuredOutputRoot))
+                {
+                    issues.Add($"fake artifact path must be under configured output/solidworks root: {artifact.FilePath}.");
+                }
+            }
+            else if (!IsUnderOutputSolidWorksSegment(fullPath))
             {
                 issues.Add($"fake artifact path must be under output/solidworks: {artifact.FilePath}.");
             }
@@ -78,4 +93,32 @@ public sealed class SolidWorksArtifactValidator : IValidator
             HasFatalError: issues.Any(issue =>
                 issue.Contains("real_cad_executed", StringComparison.OrdinalIgnoreCase) ||
                 issue.Contains("execution_mode", StringComparison.OrdinalIgnoreCase)));
+
+    private static bool IsUnderOutputSolidWorksSegment(string fullPath)
+    {
+        var directory = new FileInfo(fullPath).Directory;
+        while (directory is not null)
+        {
+            if (directory.Name.Equals("solidworks", StringComparison.OrdinalIgnoreCase) &&
+                directory.Parent?.Name.Equals("output", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return false;
+    }
+
+    private static bool IsUnderRoot(string fullPath, string root)
+    {
+        var normalizedPath = Path.GetFullPath(fullPath);
+        return normalizedPath.Equals(root.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase) ||
+               normalizedPath.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeDirectory(string directory) =>
+        Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+        Path.DirectorySeparatorChar;
 }

@@ -14,6 +14,8 @@ namespace PlatformCore;
 
 public static class PlatformSelfCheckRunner
 {
+    private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
+
     private static readonly string[] ExpectedModules =
     [
         "RequirementUnderstanding",
@@ -137,13 +139,15 @@ public static class PlatformSelfCheckRunner
         var markdownValidator = new MarkdownChineseValidator();
         var markdownLanguageReport = markdownValidator.Validate(root);
         var markdownLanguageReportPath = Path.Combine(outputRoot, "reports", "markdown_language_report.json");
-        File.WriteAllText(markdownLanguageReportPath, JsonSerializer.Serialize(markdownLanguageReport, JsonOptions()));
+        var markdownLanguageReportGenerated = TryWriteJsonReport(
+            markdownLanguageReportPath,
+            markdownLanguageReport,
+            platform.AuditLog);
         var markdownChineseStandardExists = File.Exists(Path.Combine(root, "docs", "markdown_standard.md"));
         var markdownChineseValidatorEnabled = typeof(MarkdownChineseValidator).GetMethod(nameof(MarkdownChineseValidator.Validate)) is not null;
         var markdownChineseCheckPassed =
             markdownLanguageReport.FinalStatus == "Passed" ||
             markdownLanguageReport.FinalStatus == "Warning";
-        var markdownLanguageReportGenerated = File.Exists(markdownLanguageReportPath);
         var markdownEnglishExceptionsSupported = markdownValidator.SupportsEnglishExceptions();
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
@@ -255,6 +259,7 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealCadNotExecuted &&
             solidWorksSkeletonChecks.SolidWorksAgentDoesNotCallWorkerDirectly &&
             solidWorksSkeletonChecks.GatewayDoesNotCallSolidWorksWorker &&
+            solidWorksSkeletonChecks.SelfCheckInfrastructureError is null &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -365,6 +370,7 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealCadNotExecuted,
             solidWorksSkeletonChecks.SolidWorksAgentDoesNotCallWorkerDirectly,
             solidWorksSkeletonChecks.GatewayDoesNotCallSolidWorksWorker,
+            solidWorksSkeletonChecks.SelfCheckInfrastructureError,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -372,6 +378,26 @@ public static class PlatformSelfCheckRunner
         await JsonSerializer.SerializeAsync(stream, report, JsonOptions());
 
         return report;
+    }
+
+    private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(reportPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllText(reportPath, JsonSerializer.Serialize(report, JsonOptions()));
+            return File.Exists(reportPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            auditLog.Record("self-check", "report-writer", "report_write_failed", $"{reportPath}: {ex.Message}");
+            return false;
+        }
     }
 
     private static WorkflowStep Step(string name, string message, GateDecision? decision = null) =>
@@ -529,13 +555,19 @@ public static class PlatformSelfCheckRunner
             var solidWorksWorkerContractExists =
                 workerContractText.Contains("SolidWorksWorkerRequest", StringComparison.Ordinal) &&
                 workerContractText.Contains("CancellationToken", StringComparison.Ordinal);
-            var fakeSolidWorksWorkerRegistered = platform.WorkerRegistry.GetAll().Any(worker => worker.Name == "FakeSolidWorksWorker");
+            var registeredFakeSolidWorksWorker = platform.WorkerRegistry.GetAll()
+                .SingleOrDefault(worker => worker.Name == "FakeSolidWorksWorker");
+            var fakeSolidWorksWorkerRegistered =
+                registeredFakeSolidWorksWorker?.GetType().FullName == FakeSolidWorksWorkerFullName &&
+                registeredFakeSolidWorksWorker.GetType().GetMethods().Any(method =>
+                    method.Name == "ExecuteAsync" &&
+                    method.GetParameters().Length == 2 &&
+                    method.GetParameters()[0].ParameterType.Name == nameof(SolidWorksWorkerRequest));
 
             SolidWorksWorkerResult? workerResult = null;
-            if (plan is not null)
+            if (plan is not null && fakeSolidWorksWorkerRegistered && registeredFakeSolidWorksWorker is not null)
             {
-                var worker = CreateFakeSolidWorksWorker(projectRoot);
-                var workerMethod = worker.GetType().GetMethods()
+                var workerMethod = registeredFakeSolidWorksWorker.GetType().GetMethods()
                     .Single(method =>
                         method.Name == "ExecuteAsync" &&
                         method.GetParameters().Length == 2 &&
@@ -547,7 +579,7 @@ public static class PlatformSelfCheckRunner
                     Path.Combine(projectRoot, "output", "solidworks", "self-check", requestId),
                     DryRun: true,
                     AllowRealCadExecution: false);
-                var task = (Task<SolidWorksWorkerResult>)workerMethod.Invoke(worker, new object?[] { request, cancellationToken })!;
+                var task = (Task<SolidWorksWorkerResult>)workerMethod.Invoke(registeredFakeSolidWorksWorker, new object?[] { request, cancellationToken })!;
                 workerResult = await task;
             }
 
@@ -600,11 +632,13 @@ public static class PlatformSelfCheckRunner
                 solidWorksFakeArtifactsGenerated == true,
                 solidWorksRealCadNotExecuted,
                 solidWorksAgentDoesNotCallWorkerDirectly,
-                gatewayDoesNotCallSolidWorksWorker);
+                gatewayDoesNotCallSolidWorksWorker,
+                null);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
         {
-            platform.AuditLog.Record("solidworks", "self-check", "solidworks_skeleton_check_failed", ex.GetBaseException().Message);
+            var error = ex.GetBaseException().Message;
+            platform.AuditLog.Record("solidworks", "self-check", "solidworks_skeleton_check_failed", error);
             return new SolidWorksSkeletonSelfCheckResult(
                 false,
                 false,
@@ -619,18 +653,9 @@ public static class PlatformSelfCheckRunner
                 false,
                 false,
                 false,
-                false);
+                false,
+                error);
         }
-    }
-
-    private static object CreateFakeSolidWorksWorker(string projectRoot)
-    {
-        var assembly = AppDomain.CurrentDomain.GetAssemblies()
-            .FirstOrDefault(candidate => candidate.GetName().Name == "SolidWorksWorker")
-            ?? Assembly.LoadFrom(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "bin", "Debug", "net10.0", "SolidWorksWorker.dll"));
-        var workerType = assembly.GetType("SolidWorksWorker.FakeSolidWorksWorker", throwOnError: true)!;
-        return Activator.CreateInstance(workerType)
-            ?? throw new InvalidOperationException("Could not create FakeSolidWorksWorker.");
     }
 
     private static AgentContracts.AgentContext CreateCadModelerSelfCheckContext()
@@ -1687,7 +1712,8 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksFakeArtifactsGenerated,
         bool SolidWorksRealCadNotExecuted,
         bool SolidWorksAgentDoesNotCallWorkerDirectly,
-        bool GatewayDoesNotCallSolidWorksWorker);
+        bool GatewayDoesNotCallSolidWorksWorker,
+        string? SelfCheckInfrastructureError);
 
     private static JsonSerializerOptions JsonOptions()
     {

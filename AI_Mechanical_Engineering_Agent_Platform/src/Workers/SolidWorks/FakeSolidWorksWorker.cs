@@ -93,8 +93,13 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
             RealCadExecuted: false);
     }
 
-    public async Task<WorkerOutput> ExecuteAsync(WorkerInput input)
+    public Task<WorkerOutput> ExecuteAsync(WorkerInput input) =>
+        ExecuteAsync(input, CancellationToken.None);
+
+    public async Task<WorkerOutput> ExecuteAsync(WorkerInput input, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (input.Payload is not SolidWorksWorkerRequest request)
         {
             return new WorkerOutput(
@@ -104,7 +109,7 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
                 new[] { "payload must be SolidWorksWorkerRequest." });
         }
 
-        var result = await ExecuteAsync(request, CancellationToken.None);
+        var result = await ExecuteAsync(request, cancellationToken);
         var workerArtifacts = result.GeneratedArtifacts
             .Select(artifact => new ArtifactInfo(
                 artifact.ArtifactId,

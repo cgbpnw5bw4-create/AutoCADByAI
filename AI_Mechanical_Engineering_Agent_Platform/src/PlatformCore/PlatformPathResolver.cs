@@ -16,6 +16,8 @@ public static class PlatformPathResolver
             directory = directory.Parent;
         }
 
-        return Directory.GetCurrentDirectory();
+        var start = startDirectory ?? AppContext.BaseDirectory;
+        throw new DirectoryNotFoundException(
+            $"Could not locate project root from '{start}'. Ensure the working directory is within the AI_Mechanical_Engineering_Agent_Platform tree.");
     }
 }

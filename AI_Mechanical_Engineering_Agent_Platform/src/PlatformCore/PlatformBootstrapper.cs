@@ -9,6 +9,8 @@ using PlatformCore.Modules.DrawingReview.Agents;
 using PlatformCore.Modules.ErrorDiagnosis.Agents;
 using PlatformCore.Modules.MechanicalDesign.Agents;
 using PlatformCore.Modules.RequirementUnderstanding.Agents;
+using System.Reflection;
+using WorkerContracts;
 
 namespace PlatformCore;
 
@@ -21,7 +23,7 @@ public static class PlatformBootstrapper
         RegisterModules(platform, projectRoot);
         RegisterAgents(platform, runtimeAgentFactory);
         RegisterSkills(platform);
-        RegisterWorkers(platform);
+        RegisterWorkers(platform, projectRoot);
 
         platform.EventBus.Publish("platform.initialized", "Default platform skeleton initialized.");
         platform.AuditLog.Record("platform", "bootstrapper", "initialized", "Default platform skeleton initialized.");
@@ -125,12 +127,107 @@ public static class PlatformBootstrapper
         platform.AuditLog.Record("skill", "bootstrapper", "registered", "Registered base skill placeholders.");
     }
 
-    private static void RegisterWorkers(PlatformKernel platform)
+    private static void RegisterWorkers(PlatformKernel platform, string? projectRoot)
     {
-        platform.WorkerRegistry.Register(new PlaceholderWorker("FakeSolidWorksWorker", "SolidWorks"));
+        var root = projectRoot ?? PlatformPathResolver.FindProjectRoot();
+        var solidWorksWorker = TryCreateWorker(
+            root,
+            "SolidWorksWorker",
+            "SolidWorksWorker.FakeSolidWorksWorker");
+
+        if (solidWorksWorker is not null)
+        {
+            platform.WorkerRegistry.Register(solidWorksWorker);
+        }
+        else
+        {
+            platform.WorkerRegistry.Register(new PlaceholderWorker("FakeSolidWorksWorker", "SolidWorks"));
+            platform.AuditLog.Record(
+                "worker",
+                "bootstrapper",
+                "fallback_registered",
+                "FakeSolidWorksWorker could not be loaded; registered PlaceholderWorker fallback.");
+        }
+
         platform.WorkerRegistry.Register(new PlaceholderWorker("FakeAutoCADWorker", "AutoCAD"));
 
-        platform.AuditLog.Record("worker", "bootstrapper", "registered", "Registered fake CAD worker placeholders.");
+        var message = solidWorksWorker is not null
+            ? "Registered SolidWorks dry-run worker and AutoCAD placeholder worker."
+            : "Registered PlaceholderWorker fallback for SolidWorks and AutoCAD placeholder worker.";
+        platform.AuditLog.Record("worker", "bootstrapper", "registered", message);
+    }
+
+    private static IWorker? TryCreateWorker(string projectRoot, string assemblyName, string typeName)
+    {
+        foreach (var assembly in CandidateAssemblies(projectRoot, assemblyName))
+        {
+            var workerType = assembly.GetType(typeName, throwOnError: false);
+            if (workerType is null)
+            {
+                continue;
+            }
+
+            if (Activator.CreateInstance(workerType) is IWorker worker)
+            {
+                return worker;
+            }
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<Assembly> CandidateAssemblies(string projectRoot, string assemblyName)
+    {
+        var loaded = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(assembly => assembly.GetName().Name == assemblyName);
+        if (loaded is not null)
+        {
+            yield return loaded;
+        }
+
+        foreach (var path in CandidateAssemblyPaths(projectRoot, assemblyName))
+        {
+            Assembly assembly;
+            try
+            {
+                assembly = Assembly.LoadFrom(path);
+            }
+            catch (Exception ex) when (ex is IOException or FileLoadException or FileNotFoundException or BadImageFormatException)
+            {
+                continue;
+            }
+
+            yield return assembly;
+        }
+    }
+
+    private static IEnumerable<string> CandidateAssemblyPaths(string projectRoot, string assemblyName)
+    {
+        var fileName = $"{assemblyName}.dll";
+        var baseDirectoryPath = Path.Combine(AppContext.BaseDirectory, fileName);
+        if (File.Exists(baseDirectoryPath))
+        {
+            yield return baseDirectoryPath;
+        }
+
+        var workerRoot = Path.Combine(projectRoot, "src", "Workers");
+        if (!Directory.Exists(workerRoot))
+        {
+            yield break;
+        }
+
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true
+        };
+        foreach (var path in Directory
+                     .EnumerateFiles(workerRoot, fileName, options)
+                     .Where(path => path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Contains("bin", StringComparer.OrdinalIgnoreCase))
+                     .OrderByDescending(File.GetLastWriteTimeUtc))
+        {
+            yield return path;
+        }
     }
 
     private static IReadOnlyList<ModuleManifest> CreateModuleManifests() =>

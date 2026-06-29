@@ -111,7 +111,12 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
     }
 
     private static bool IsNonRetryable(string issue) =>
-        issue.Contains("allow_real_cad_execution", StringComparison.OrdinalIgnoreCase) ||
-        issue.Contains("non_retryable", StringComparison.OrdinalIgnoreCase) ||
-        issue.Contains("critical", StringComparison.OrdinalIgnoreCase);
+        issue.StartsWith("allow_real_cad_execution ", StringComparison.OrdinalIgnoreCase) ||
+        HasIssueMarker(issue, "non_retryable") ||
+        HasIssueMarker(issue, "critical");
+
+    private static bool HasIssueMarker(string issue, string marker) =>
+        issue.Equals(marker, StringComparison.OrdinalIgnoreCase) ||
+        issue.StartsWith($"{marker}:", StringComparison.OrdinalIgnoreCase) ||
+        issue.StartsWith($"[{marker}]", StringComparison.OrdinalIgnoreCase);
 }
