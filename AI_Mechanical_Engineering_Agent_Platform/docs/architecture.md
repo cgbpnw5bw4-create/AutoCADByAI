@@ -82,6 +82,10 @@ V1.0-A 中，SolidWorks 能力新增真实执行前安全边界：`SolidWorksRun
 
 真实 CAD Worker 的权限由三层共同约束：请求中的 `AllowRealCadExecution`、请求中的 `DryRun`、以及环境变量 `SW_ENABLE_REAL_EXECUTION`。三者不同时满足时，只能进入 `RealPreflightOnly`，不得连接 COM。V1.0-A 不实现 `RealBuild`，也不生成真实 `.SLDPRT`、`.STEP` 或工程图。
 
+V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPlateBasic4Holes`。该场景只接受 `BuildPlan.PartType = plate_basic_4holes`，用于生成 160 x 80 x 12 mm 板件、四个直径 10 mm 通孔，并输出真实 `.SLDPRT`、`.STEP` 和 `build_report.json`。默认 self-check 不调用该能力；只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_BUILD_SMOKE_TEST=true` 时才允许尝试真实建模，严格失败模式还需要 `SW_STRICT_REAL_BUILD_TEST=true`。
+
+真实构建链路必须保持为 `SolidWorksBuildPlan` → `SolidWorksWorkerRequest` → `RealSolidWorksWorker` → `SolidWorksArtifactValidator` → `SolidWorksBuildPlanReviewer` → `QualityGate`。它不改变 Agent 可见性，也不允许 Gateway、LLM 或 Agent 直接持有 COM 对象或直接调用 Worker。
+
 ## QualityGate
 
 `QualityGate` 负责校验、复审、打回、失败报告和人工审批挂起。它包含：

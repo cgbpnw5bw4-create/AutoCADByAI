@@ -24,7 +24,8 @@ public sealed record SolidWorksWorkerRequest(
     SolidWorksBuildPlan BuildPlan,
     string OutputDirectory,
     bool DryRun = true,
-    bool AllowRealCadExecution = false);
+    bool AllowRealCadExecution = false,
+    bool ConnectionSmokeTestOnly = false);
 
 public sealed record SolidWorksWorkerResult(
     string RequestId,

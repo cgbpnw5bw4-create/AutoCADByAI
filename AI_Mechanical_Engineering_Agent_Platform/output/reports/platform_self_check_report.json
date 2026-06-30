@@ -180,7 +180,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-initialize-platform-d4ed631d67d444f3b773e2d7a74b10fe",
+        "id": "gate-initialize-platform-8d37d184109847da91a623c4717c945d",
         "result": "Passed",
         "reason": "Workflow step \u0027initialize-platform\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -203,7 +203,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-register-modules-379f89d057ef443baa05a30edb546705",
+        "id": "gate-register-modules-9390b22a85474a899a94c80ead0fbefa",
         "result": "Passed",
         "reason": "Workflow step \u0027register-modules\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -226,7 +226,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-register-agents-ad5704f8911c4df18f8fb26670549b8e",
+        "id": "gate-register-agents-88805cfe921646e0abab6fcf2aa1ef94",
         "result": "Passed",
         "reason": "Workflow step \u0027register-agents\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -249,7 +249,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-register-skills-c92c2386753d4702a3e81e0789c94a76",
+        "id": "gate-register-skills-ac450105ec584f29b5aea4952e337361",
         "result": "Passed",
         "reason": "Workflow step \u0027register-skills\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -272,7 +272,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-register-workers-6db296d0f4914a7cbaf96bed6d704692",
+        "id": "gate-register-workers-6e9e40c5c4a942f79efdc9effa5b258c",
         "result": "Passed",
         "reason": "Workflow step \u0027register-workers\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -295,7 +295,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-gateway-directory-9fdb261327b14373a38a2539f4c7c280",
+        "id": "gate-gateway-directory-6d9fecebd8dd44ad8b6fcdbf70e18903",
         "result": "Passed",
         "reason": "Workflow step \u0027gateway-directory\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -318,7 +318,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-module-manifest-loader-50b7700eca3244d4ad096365ed42a4d6",
+        "id": "gate-module-manifest-loader-baac1acac4db4816ab21f5e090ed0a29",
         "result": "Passed",
         "reason": "Workflow step \u0027module-manifest-loader\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -341,7 +341,7 @@
       "agent_output": null,
       "review_report": null,
       "gate_decision": {
-        "id": "gate-storage-contracts-c980b143096d408780363487bf8ec2c6",
+        "id": "gate-storage-contracts-3b0ec4e754ec44e790a4d3e90ebcba63",
         "result": "Passed",
         "reason": "Workflow step \u0027storage-contracts\u0027 did not request rejection, failure or human approval.",
         "next_action": null,
@@ -402,273 +402,273 @@
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered module manifests from yaml with fallback support.",
-      "created_at": "2026-06-29T07:16:47.282022+00:00"
+      "created_at": "2026-06-30T02:22:44.3525131+00:00"
     },
     {
       "category": "agent",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered module agent implementations.",
-      "created_at": "2026-06-29T07:16:47.2836145+00:00"
+      "created_at": "2026-06-30T02:22:44.3536394+00:00"
     },
     {
       "category": "skill",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered base skill placeholders.",
-      "created_at": "2026-06-29T07:16:47.283922+00:00"
+      "created_at": "2026-06-30T02:22:44.3539513+00:00"
     },
     {
       "category": "worker",
       "actor": "bootstrapper",
       "action": "registered",
       "message": "Registered SolidWorks dry-run worker and AutoCAD placeholder worker.",
-      "created_at": "2026-06-29T07:16:47.396253+00:00"
+      "created_at": "2026-06-30T02:22:44.5746688+00:00"
     },
     {
       "category": "platform",
       "actor": "bootstrapper",
       "action": "initialized",
       "message": "Default platform skeleton initialized.",
-      "created_at": "2026-06-29T07:16:47.3964043+00:00"
+      "created_at": "2026-06-30T02:22:44.5748562+00:00"
     },
     {
       "category": "task",
       "actor": "self-check",
       "action": "created",
-      "message": "Created self-check task task-874f1d202a434496ad54c13118df8a15.",
-      "created_at": "2026-06-29T07:16:47.5578304+00:00"
+      "message": "Created self-check task task-7202fb1dec274c0f82047b0918c0059e.",
+      "created_at": "2026-06-30T02:22:44.5907388+00:00"
     },
     {
       "category": "workflow",
-      "actor": "task-874f1d202a434496ad54c13118df8a15",
+      "actor": "task-7202fb1dec274c0f82047b0918c0059e",
       "action": "workflow_started",
-      "message": "Workflow task-874f1d202a434496ad54c13118df8a15 started.",
-      "created_at": "2026-06-29T07:16:47.562983+00:00"
+      "message": "Workflow task-7202fb1dec274c0f82047b0918c0059e started.",
+      "created_at": "2026-06-30T02:22:44.5971106+00:00"
     },
     {
       "category": "workflow",
       "actor": "initialize-platform",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027initialize-platform\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5651751+00:00"
+      "created_at": "2026-06-30T02:22:44.5991349+00:00"
     },
     {
       "category": "workflow",
       "actor": "register-modules",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027register-modules\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652013+00:00"
+      "created_at": "2026-06-30T02:22:44.5991502+00:00"
     },
     {
       "category": "workflow",
       "actor": "register-agents",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027register-agents\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652048+00:00"
+      "created_at": "2026-06-30T02:22:44.5991533+00:00"
     },
     {
       "category": "workflow",
       "actor": "register-skills",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027register-skills\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.565206+00:00"
+      "created_at": "2026-06-30T02:22:44.5991548+00:00"
     },
     {
       "category": "workflow",
       "actor": "register-workers",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027register-workers\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652072+00:00"
+      "created_at": "2026-06-30T02:22:44.5991563+00:00"
     },
     {
       "category": "workflow",
       "actor": "gateway-directory",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027gateway-directory\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652085+00:00"
+      "created_at": "2026-06-30T02:22:44.5991585+00:00"
     },
     {
       "category": "workflow",
       "actor": "module-manifest-loader",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027module-manifest-loader\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652185+00:00"
+      "created_at": "2026-06-30T02:22:44.599176+00:00"
     },
     {
       "category": "workflow",
       "actor": "storage-contracts",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027storage-contracts\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652198+00:00"
+      "created_at": "2026-06-30T02:22:44.5991776+00:00"
     },
     {
       "category": "workflow",
       "actor": "quality-gate",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027quality-gate\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5652748+00:00"
+      "created_at": "2026-06-30T02:22:44.5992486+00:00"
     },
     {
       "category": "workflow",
-      "actor": "task-874f1d202a434496ad54c13118df8a15",
+      "actor": "task-7202fb1dec274c0f82047b0918c0059e",
       "action": "workflow_passed",
-      "message": "Workflow task-874f1d202a434496ad54c13118df8a15 passed.",
-      "created_at": "2026-06-29T07:16:47.5653358+00:00"
+      "message": "Workflow task-7202fb1dec274c0f82047b0918c0059e passed.",
+      "created_at": "2026-06-30T02:22:44.5993115+00:00"
     },
     {
       "category": "workflow",
-      "actor": "internal-collaboration-task-49c12341a7f843268ebbe3cba74e2ab5",
+      "actor": "internal-collaboration-task-3fca43f3062c4873b85a25c0d6d5280a",
       "action": "workflow_started",
-      "message": "Workflow internal-collaboration-task-49c12341a7f843268ebbe3cba74e2ab5 started.",
-      "created_at": "2026-06-29T07:16:47.5817477+00:00"
+      "message": "Workflow internal-collaboration-task-3fca43f3062c4873b85a25c0d6d5280a started.",
+      "created_at": "2026-06-30T02:22:44.6183033+00:00"
     },
     {
       "category": "agent",
       "actor": "mechanical-designer",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027mechanical-designer\u0027 invoked for task task-49c12341a7f843268ebbe3cba74e2ab5.",
-      "created_at": "2026-06-29T07:16:47.5849384+00:00"
+      "message": "Internal agent \u0027mechanical-designer\u0027 invoked for task task-3fca43f3062c4873b85a25c0d6d5280a.",
+      "created_at": "2026-06-30T02:22:44.6224641+00:00"
     },
     {
       "category": "agent",
       "actor": "mechanical-designer",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027mechanical-designer\u0027 completed with status Completed.",
-      "created_at": "2026-06-29T07:16:47.5860975+00:00"
+      "created_at": "2026-06-30T02:22:44.6241257+00:00"
     },
     {
       "category": "quality-gate",
       "actor": "mechanical-designer",
       "action": "quality_gate_after_internal_step",
       "message": "QualityGate evaluated internal agent step \u0027mechanical-designer\u0027 with decision Passed.",
-      "created_at": "2026-06-29T07:16:47.587168+00:00"
+      "created_at": "2026-06-30T02:22:44.625371+00:00"
     },
     {
       "category": "workflow",
       "actor": "internal-agent:mechanical-designer",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027internal-agent:mechanical-designer\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5872408+00:00"
+      "created_at": "2026-06-30T02:22:44.6254565+00:00"
     },
     {
       "category": "agent",
       "actor": "cad-modeler",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027cad-modeler\u0027 invoked for task task-49c12341a7f843268ebbe3cba74e2ab5.",
-      "created_at": "2026-06-29T07:16:47.5872505+00:00"
+      "message": "Internal agent \u0027cad-modeler\u0027 invoked for task task-3fca43f3062c4873b85a25c0d6d5280a.",
+      "created_at": "2026-06-30T02:22:44.6254695+00:00"
     },
     {
       "category": "agent",
       "actor": "cad-modeler",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027cad-modeler\u0027 completed with status Completed.",
-      "created_at": "2026-06-29T07:16:47.5876981+00:00"
+      "created_at": "2026-06-30T02:22:44.6260753+00:00"
     },
     {
       "category": "quality-gate",
       "actor": "cad-modeler",
       "action": "quality_gate_after_internal_step",
       "message": "QualityGate evaluated internal agent step \u0027cad-modeler\u0027 with decision Passed.",
-      "created_at": "2026-06-29T07:16:47.5877167+00:00"
+      "created_at": "2026-06-30T02:22:44.626097+00:00"
     },
     {
       "category": "workflow",
       "actor": "internal-agent:cad-modeler",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027internal-agent:cad-modeler\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5877197+00:00"
+      "created_at": "2026-06-30T02:22:44.6261015+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-engineer",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027drawing-engineer\u0027 invoked for task task-49c12341a7f843268ebbe3cba74e2ab5.",
-      "created_at": "2026-06-29T07:16:47.5877262+00:00"
+      "message": "Internal agent \u0027drawing-engineer\u0027 invoked for task task-3fca43f3062c4873b85a25c0d6d5280a.",
+      "created_at": "2026-06-30T02:22:44.6261126+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-engineer",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027drawing-engineer\u0027 completed with status Completed.",
-      "created_at": "2026-06-29T07:16:47.5878989+00:00"
+      "created_at": "2026-06-30T02:22:44.6264228+00:00"
     },
     {
       "category": "quality-gate",
       "actor": "drawing-engineer",
       "action": "quality_gate_after_internal_step",
       "message": "QualityGate evaluated internal agent step \u0027drawing-engineer\u0027 with decision Passed.",
-      "created_at": "2026-06-29T07:16:47.5879053+00:00"
+      "created_at": "2026-06-30T02:22:44.6264442+00:00"
     },
     {
       "category": "workflow",
       "actor": "internal-agent:drawing-engineer",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027internal-agent:drawing-engineer\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5879069+00:00"
+      "created_at": "2026-06-30T02:22:44.626448+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-reviewer",
       "action": "internal_agent_invoked",
-      "message": "Internal agent \u0027drawing-reviewer\u0027 invoked for task task-49c12341a7f843268ebbe3cba74e2ab5.",
-      "created_at": "2026-06-29T07:16:47.5879114+00:00"
+      "message": "Internal agent \u0027drawing-reviewer\u0027 invoked for task task-3fca43f3062c4873b85a25c0d6d5280a.",
+      "created_at": "2026-06-30T02:22:44.6264564+00:00"
     },
     {
       "category": "agent",
       "actor": "drawing-reviewer",
       "action": "internal_agent_completed",
       "message": "Internal agent \u0027drawing-reviewer\u0027 completed with status Completed.",
-      "created_at": "2026-06-29T07:16:47.5882181+00:00"
+      "created_at": "2026-06-30T02:22:44.6271034+00:00"
     },
     {
       "category": "quality-gate",
       "actor": "drawing-reviewer",
       "action": "quality_gate_after_internal_step",
       "message": "QualityGate evaluated internal agent step \u0027drawing-reviewer\u0027 with decision Passed.",
-      "created_at": "2026-06-29T07:16:47.5882263+00:00"
+      "created_at": "2026-06-30T02:22:44.6271186+00:00"
     },
     {
       "category": "workflow",
       "actor": "internal-agent:drawing-reviewer",
       "action": "workflow_step_passed",
       "message": "Workflow step \u0027internal-agent:drawing-reviewer\u0027 passed.",
-      "created_at": "2026-06-29T07:16:47.5882303+00:00"
+      "created_at": "2026-06-30T02:22:44.6271257+00:00"
     },
     {
       "category": "workflow",
-      "actor": "internal-collaboration-task-49c12341a7f843268ebbe3cba74e2ab5",
+      "actor": "internal-collaboration-task-3fca43f3062c4873b85a25c0d6d5280a",
       "action": "workflow_passed",
-      "message": "Workflow internal-collaboration-task-49c12341a7f843268ebbe3cba74e2ab5 passed.",
-      "created_at": "2026-06-29T07:16:47.5882445+00:00"
+      "message": "Workflow internal-collaboration-task-3fca43f3062c4873b85a25c0d6d5280a passed.",
+      "created_at": "2026-06-30T02:22:44.6271504+00:00"
     },
     {
       "category": "agent",
       "actor": "chief-engineer",
       "action": "collaboration_report_created",
       "message": "Internal workflow-backed collaboration report created for self-check-conversation.",
-      "created_at": "2026-06-29T07:16:47.5916963+00:00"
+      "created_at": "2026-06-30T02:22:44.6309661+00:00"
     },
     {
       "category": "agent-runtime",
       "actor": "chief-engineer",
       "action": "runtime_agent_invoked",
       "message": "Runtime mode Mock invoked for chief-engineer.",
-      "created_at": "2026-06-29T07:16:47.7309482+00:00"
+      "created_at": "2026-06-30T02:22:44.8263082+00:00"
     },
     {
       "category": "agent-runtime",
       "actor": "chief-engineer",
       "action": "runtime_agent_completed",
       "message": "Runtime mode Mock completed with status Completed.",
-      "created_at": "2026-06-29T07:16:47.7311384+00:00"
+      "created_at": "2026-06-30T02:22:44.8265362+00:00"
     },
     {
       "category": "self-check",
       "actor": "quality-gate",
       "action": "passed",
       "message": "Self-check final status: Passed.",
-      "created_at": "2026-06-29T07:16:50.1933037+00:00"
+      "created_at": "2026-06-30T02:22:47.2739962+00:00"
     }
   ],
   "solution_exists": true,
@@ -830,7 +830,21 @@
   "solidworks_real_connection_smoke_test_attempted": false,
   "solidworks_real_connection_smoke_test_passed": false,
   "solidworks_real_connection_smoke_test_error": null,
-  "solidworks_real_build_not_implemented": true,
+  "solidworks_generic_real_build_not_implemented": true,
   "solidworks_real_cad_not_executed_by_default": true,
+  "solidworks_real_plate_build_implemented": true,
+  "solidworks_real_build_requires_env_flag": true,
+  "solidworks_real_build_requires_request_flag": true,
+  "solidworks_real_build_requires_dry_run_false": true,
+  "solidworks_real_build_default_disabled": true,
+  "solidworks_real_build_smoke_test_attempted": false,
+  "solidworks_real_build_smoke_test_passed": false,
+  "solidworks_real_build_smoke_test_error": null,
+  "solidworks_real_build_artifacts_validated": false,
+  "solidworks_real_build_report_generated": false,
+  "solidworks_real_build_outputs_sldprt": false,
+  "solidworks_real_build_outputs_step": false,
+  "solidworks_real_build_outputs_json_report": false,
+  "solidworks_real_build_not_called_in_default_self_check": true,
   "final_status": "Passed"
 }

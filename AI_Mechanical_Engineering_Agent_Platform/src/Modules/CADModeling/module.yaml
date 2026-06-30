@@ -8,6 +8,7 @@ capabilities:
   - solidworks_artifact_validation
   - solidworks_real_preflight
   - solidworks_connection_smoke_test
+  - solidworks_real_plate_basic_4holes_build
 agents:
   - cad-modeler
 skills:

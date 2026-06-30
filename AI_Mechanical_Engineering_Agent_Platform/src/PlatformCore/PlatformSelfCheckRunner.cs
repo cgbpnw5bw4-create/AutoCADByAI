@@ -271,8 +271,17 @@ public static class PlatformSelfCheckRunner
             (!solidWorksSkeletonChecks.SolidWorksStrictRealSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestPassed) &&
-            solidWorksSkeletonChecks.SolidWorksRealBuildNotImplemented &&
+            solidWorksSkeletonChecks.SolidWorksGenericRealBuildNotImplemented &&
             solidWorksSkeletonChecks.SolidWorksRealCadNotExecutedByDefault &&
+            solidWorksSkeletonChecks.SolidWorksRealPlateBuildImplemented &&
+            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresEnvFlag &&
+            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresRequestFlag &&
+            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresDryRunFalse &&
+            solidWorksSkeletonChecks.SolidWorksRealBuildDefaultDisabled &&
+            (!solidWorksSkeletonChecks.SolidWorksStrictRealBuildSmokeTest ||
+             !solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestPassed) &&
+            solidWorksSkeletonChecks.SolidWorksRealBuildNotCalledInDefaultSelfCheck &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -395,8 +404,22 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestAttempted,
             solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestPassed,
             solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestError,
-            solidWorksSkeletonChecks.SolidWorksRealBuildNotImplemented,
+            solidWorksSkeletonChecks.SolidWorksGenericRealBuildNotImplemented,
             solidWorksSkeletonChecks.SolidWorksRealCadNotExecutedByDefault,
+            solidWorksSkeletonChecks.SolidWorksRealPlateBuildImplemented,
+            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresEnvFlag,
+            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresRequestFlag,
+            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresDryRunFalse,
+            solidWorksSkeletonChecks.SolidWorksRealBuildDefaultDisabled,
+            solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted,
+            solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestPassed,
+            solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestError,
+            solidWorksSkeletonChecks.SolidWorksRealBuildArtifactsValidated,
+            solidWorksSkeletonChecks.SolidWorksRealBuildReportGenerated,
+            solidWorksSkeletonChecks.SolidWorksRealBuildOutputsSldprt,
+            solidWorksSkeletonChecks.SolidWorksRealBuildOutputsStep,
+            solidWorksSkeletonChecks.SolidWorksRealBuildOutputsJsonReport,
+            solidWorksSkeletonChecks.SolidWorksRealBuildNotCalledInDefaultSelfCheck,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -674,7 +697,7 @@ public static class PlatformSelfCheckRunner
                 !preflightReport.SolidWorksApplicationConnectable;
             var solidWorksRealWorkerSkeletonExists =
                 realSolidWorksWorkerType is not null &&
-                realSolidWorksWorkerType.GetProperty("SupportsRealBuild") is not null;
+                realSolidWorksWorkerType.GetProperty("SupportsGenericRealBuild") is not null;
             var solidWorksSessionManagerExists =
                 solidWorksSessionManagerType is not null &&
                 solidWorksSessionManagerType.GetMethod("ConnectAsync") is not null &&
@@ -683,12 +706,27 @@ public static class PlatformSelfCheckRunner
             var solidWorksRealExecutionRequiresRequestFlag = false;
             var solidWorksRealExecutionRequiresEnvFlag = false;
             var solidWorksComNotCalledInDefaultSelfCheck = false;
-            var solidWorksRealBuildNotImplemented = false;
+            var solidWorksGenericRealBuildNotImplemented = false;
             var solidWorksRealCadNotExecutedByDefault = false;
             var solidWorksRealConnectionSmokeTestAttempted = RealSolidWorksSmokeTestRequested();
             var solidWorksRealConnectionSmokeTestPassed = false;
             string? solidWorksRealConnectionSmokeTestError = null;
             var solidWorksStrictRealSmokeTest = StrictRealSolidWorksSmokeTestRequested();
+            var solidWorksRealPlateBuildImplemented = false;
+            var solidWorksRealBuildRequiresEnvFlag = false;
+            var solidWorksRealBuildRequiresRequestFlag = false;
+            var solidWorksRealBuildRequiresDryRunFalse = false;
+            var solidWorksRealBuildDefaultDisabled = !RealSolidWorksBuildSmokeTestRequested();
+            var solidWorksRealBuildSmokeTestAttempted = RealSolidWorksBuildSmokeTestRequested();
+            var solidWorksRealBuildSmokeTestPassed = false;
+            string? solidWorksRealBuildSmokeTestError = null;
+            var solidWorksStrictRealBuildSmokeTest = StrictRealSolidWorksBuildTestRequested();
+            var solidWorksRealBuildArtifactsValidated = false;
+            var solidWorksRealBuildReportGenerated = false;
+            var solidWorksRealBuildOutputsSldprt = false;
+            var solidWorksRealBuildOutputsStep = false;
+            var solidWorksRealBuildOutputsJsonReport = false;
+            var solidWorksRealBuildNotCalledInDefaultSelfCheck = !solidWorksRealBuildSmokeTestAttempted;
 
             if (realSolidWorksWorkerType is not null && plan is not null)
             {
@@ -704,6 +742,13 @@ public static class PlatformSelfCheckRunner
                     OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-env-flag"),
                     AllowRealCadExecution = true
                 };
+                var dryRunFlagProbe = requestFlagProbe with
+                {
+                    RequestId = $"self-check-solidworks-dry-run-flag-{Guid.NewGuid():N}",
+                    OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-dry-run-flag"),
+                    DryRun = true,
+                    AllowRealCadExecution = true
+                };
                 var requestFlagResult = await InvokeRealSolidWorksWorkerAsync(
                     realSolidWorksWorkerType,
                     defaultRuntimeOptions with { EnableRealExecution = true },
@@ -713,6 +758,11 @@ public static class PlatformSelfCheckRunner
                     realSolidWorksWorkerType,
                     defaultRuntimeOptions,
                     envFlagProbe,
+                    cancellationToken);
+                var dryRunFlagResult = await InvokeRealSolidWorksWorkerAsync(
+                    realSolidWorksWorkerType,
+                    defaultRuntimeOptions with { EnableRealExecution = true },
+                    dryRunFlagProbe,
                     cancellationToken);
 
                 solidWorksRealExecutionRequiresRequestFlag =
@@ -730,13 +780,26 @@ public static class PlatformSelfCheckRunner
                 solidWorksComNotCalledInDefaultSelfCheck =
                     envFlagResult.Logs.Any(log => log.Contains("COM connection was not attempted", StringComparison.OrdinalIgnoreCase)) &&
                     !envFlagResult.RealCadConnected;
-                solidWorksRealBuildNotImplemented =
-                    realSolidWorksWorkerType.GetProperty("SupportsRealBuild")?.GetValue(
+                solidWorksGenericRealBuildNotImplemented =
+                    realSolidWorksWorkerType.GetProperty("SupportsGenericRealBuild")?.GetValue(
                         Activator.CreateInstance(realSolidWorksWorkerType)) is false;
+                solidWorksRealPlateBuildImplemented =
+                    realSolidWorksWorkerType.GetProperty("SupportsPlateBasicFourHolesBuild")?.GetValue(
+                        Activator.CreateInstance(realSolidWorksWorkerType)) is true;
                 solidWorksRealCadNotExecutedByDefault =
                     workerResult?.RealCadExecuted == false &&
                     envFlagResult.RealCadExecuted == false &&
-                    envFlagResult.RealCadConnected == false;
+                    envFlagResult.RealCadConnected == false &&
+                    dryRunFlagResult.RealCadExecuted == false &&
+                    dryRunFlagResult.RealCadConnected == false;
+                solidWorksRealBuildRequiresRequestFlag = solidWorksRealExecutionRequiresRequestFlag;
+                solidWorksRealBuildRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
+                solidWorksRealBuildRequiresDryRunFalse =
+                    dryRunFlagResult.Status == "Rejected" &&
+                    dryRunFlagResult.ExecutionMode == "RealPreflightOnly" &&
+                    dryRunFlagResult.Issues.Any(issue => issue.Contains("dry_run_mode_enabled", StringComparison.OrdinalIgnoreCase)) &&
+                    !dryRunFlagResult.RealCadConnected &&
+                    !dryRunFlagResult.RealCadExecuted;
 
                 if (solidWorksRealConnectionSmokeTestAttempted)
                 {
@@ -745,7 +808,8 @@ public static class PlatformSelfCheckRunner
                         RequestId = $"self-check-solidworks-real-smoke-{Guid.NewGuid():N}",
                         OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-smoke"),
                         DryRun = false,
-                        AllowRealCadExecution = true
+                        AllowRealCadExecution = true,
+                        ConnectionSmokeTestOnly = true
                     };
 
                     try
@@ -767,6 +831,60 @@ public static class PlatformSelfCheckRunner
                     catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException)
                     {
                         solidWorksRealConnectionSmokeTestError = ex.GetBaseException().Message;
+                    }
+                }
+
+                if (solidWorksRealBuildSmokeTestAttempted)
+                {
+                    var buildRequest = envFlagProbe with
+                    {
+                        RequestId = $"self-check-solidworks-real-build-{Guid.NewGuid():N}",
+                        OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "real"),
+                        DryRun = false,
+                        AllowRealCadExecution = true,
+                        ConnectionSmokeTestOnly = false
+                    };
+
+                    try
+                    {
+                        var buildResult = await InvokeRealSolidWorksWorkerAsync(
+                            realSolidWorksWorkerType,
+                            SolidWorksRuntimeOptions.FromEnvironment(),
+                            buildRequest,
+                            cancellationToken);
+                        solidWorksRealBuildOutputsSldprt = buildResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".SLDPRT", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealBuildOutputsStep = buildResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealBuildOutputsJsonReport = buildResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealBuildReportGenerated = solidWorksRealBuildOutputsJsonReport;
+                        solidWorksRealBuildArtifactsValidated =
+                            new SolidWorksArtifactValidator(Path.Combine(projectRoot, "output", "solidworks"))
+                                .Validate(buildResult)
+                                .IsPassed;
+                        solidWorksRealBuildSmokeTestPassed =
+                            buildResult.Status == "Completed" &&
+                            buildResult.ExecutionMode == "RealBuildPlateBasic4Holes" &&
+                            buildResult.RealCadConnected &&
+                            buildResult.RealCadExecuted &&
+                            solidWorksRealBuildOutputsSldprt &&
+                            solidWorksRealBuildOutputsStep &&
+                            solidWorksRealBuildOutputsJsonReport &&
+                            solidWorksRealBuildArtifactsValidated;
+                        solidWorksRealBuildSmokeTestError = solidWorksRealBuildSmokeTestPassed
+                            ? null
+                            : string.Join("; ", buildResult.Issues);
+                    }
+                    catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException)
+                    {
+                        solidWorksRealBuildSmokeTestError = ex.GetBaseException().Message;
                     }
                 }
             }
@@ -799,43 +917,73 @@ public static class PlatformSelfCheckRunner
                 solidWorksRealConnectionSmokeTestPassed,
                 solidWorksRealConnectionSmokeTestError,
                 solidWorksStrictRealSmokeTest,
-                solidWorksRealBuildNotImplemented,
-                solidWorksRealCadNotExecutedByDefault);
+                solidWorksGenericRealBuildNotImplemented,
+                solidWorksRealCadNotExecutedByDefault,
+                solidWorksRealPlateBuildImplemented,
+                solidWorksRealBuildRequiresEnvFlag,
+                solidWorksRealBuildRequiresRequestFlag,
+                solidWorksRealBuildRequiresDryRunFalse,
+                solidWorksRealBuildDefaultDisabled,
+                solidWorksRealBuildSmokeTestAttempted,
+                solidWorksRealBuildSmokeTestPassed,
+                solidWorksRealBuildSmokeTestError,
+                solidWorksStrictRealBuildSmokeTest,
+                solidWorksRealBuildArtifactsValidated,
+                solidWorksRealBuildReportGenerated,
+                solidWorksRealBuildOutputsSldprt,
+                solidWorksRealBuildOutputsStep,
+                solidWorksRealBuildOutputsJsonReport,
+                solidWorksRealBuildNotCalledInDefaultSelfCheck);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
         {
             var error = ex.GetBaseException().Message;
             platform.AuditLog.Record("solidworks", "self-check", "solidworks_skeleton_check_failed", error);
             return new SolidWorksSkeletonSelfCheckResult(
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                error,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                null,
-                false,
-                false,
-                false);
+                SolidWorksModuleSkeletonEnabled: false,
+                SolidWorksBuildPlanSkillRegistered: false,
+                SolidWorksBuildPlanGenerated: false,
+                SolidWorksWorkerContractExists: false,
+                FakeSolidWorksWorkerRegistered: false,
+                FakeSolidWorksWorkerDryRunPassed: false,
+                SolidWorksBuildPlanValidatorPassed: false,
+                SolidWorksArtifactValidatorPassed: false,
+                SolidWorksBuildPlanReviewerPassed: false,
+                SolidWorksQualityGatePassed: false,
+                SolidWorksFakeArtifactsGenerated: false,
+                SolidWorksRealCadNotExecuted: false,
+                SolidWorksAgentDoesNotCallWorkerDirectly: false,
+                GatewayDoesNotCallSolidWorksWorker: false,
+                SelfCheckInfrastructureError: error,
+                SolidWorksRealWorkerSkeletonExists: false,
+                SolidWorksEnvironmentValidatorExists: false,
+                SolidWorksPreflightReportGenerated: false,
+                SolidWorksSessionManagerExists: false,
+                SolidWorksRealExecutionDefaultDisabled: false,
+                SolidWorksRealExecutionRequiresRequestFlag: false,
+                SolidWorksRealExecutionRequiresEnvFlag: false,
+                SolidWorksComNotCalledInDefaultSelfCheck: false,
+                SolidWorksRealConnectionSmokeTestAttempted: false,
+                SolidWorksRealConnectionSmokeTestPassed: false,
+                SolidWorksRealConnectionSmokeTestError: null,
+                SolidWorksStrictRealSmokeTest: false,
+                SolidWorksGenericRealBuildNotImplemented: false,
+                SolidWorksRealCadNotExecutedByDefault: false,
+                SolidWorksRealPlateBuildImplemented: false,
+                SolidWorksRealBuildRequiresEnvFlag: false,
+                SolidWorksRealBuildRequiresRequestFlag: false,
+                SolidWorksRealBuildRequiresDryRunFalse: false,
+                SolidWorksRealBuildDefaultDisabled: false,
+                SolidWorksRealBuildSmokeTestAttempted: false,
+                SolidWorksRealBuildSmokeTestPassed: false,
+                SolidWorksRealBuildSmokeTestError: null,
+                SolidWorksStrictRealBuildSmokeTest: false,
+                SolidWorksRealBuildArtifactsValidated: false,
+                SolidWorksRealBuildReportGenerated: false,
+                SolidWorksRealBuildOutputsSldprt: false,
+                SolidWorksRealBuildOutputsStep: false,
+                SolidWorksRealBuildOutputsJsonReport: false,
+                SolidWorksRealBuildNotCalledInDefaultSelfCheck: false);
         }
     }
 
@@ -862,6 +1010,13 @@ public static class PlatformSelfCheckRunner
 
     private static bool StrictRealSolidWorksSmokeTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static bool RealSolidWorksBuildSmokeTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static bool StrictRealSolidWorksBuildTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static AgentContracts.AgentContext CreateCadModelerSelfCheckContext()
     {
@@ -1931,8 +2086,23 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksRealConnectionSmokeTestPassed,
         string? SolidWorksRealConnectionSmokeTestError,
         bool SolidWorksStrictRealSmokeTest,
-        bool SolidWorksRealBuildNotImplemented,
-        bool SolidWorksRealCadNotExecutedByDefault);
+        bool SolidWorksGenericRealBuildNotImplemented,
+        bool SolidWorksRealCadNotExecutedByDefault,
+        bool SolidWorksRealPlateBuildImplemented,
+        bool SolidWorksRealBuildRequiresEnvFlag,
+        bool SolidWorksRealBuildRequiresRequestFlag,
+        bool SolidWorksRealBuildRequiresDryRunFalse,
+        bool SolidWorksRealBuildDefaultDisabled,
+        bool SolidWorksRealBuildSmokeTestAttempted,
+        bool SolidWorksRealBuildSmokeTestPassed,
+        string? SolidWorksRealBuildSmokeTestError,
+        bool SolidWorksStrictRealBuildSmokeTest,
+        bool SolidWorksRealBuildArtifactsValidated,
+        bool SolidWorksRealBuildReportGenerated,
+        bool SolidWorksRealBuildOutputsSldprt,
+        bool SolidWorksRealBuildOutputsStep,
+        bool SolidWorksRealBuildOutputsJsonReport,
+        bool SolidWorksRealBuildNotCalledInDefaultSelfCheck);
 
     private static JsonSerializerOptions JsonOptions()
     {

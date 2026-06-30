@@ -390,7 +390,8 @@ public sealed class SolidWorksModuleSkeletonTests
             await CreatePlanAsync(),
             Path.Combine(Path.GetTempPath(), "solidworks_real_worker_connection", Guid.NewGuid().ToString("N")),
             DryRun: false,
-            AllowRealCadExecution: true);
+            AllowRealCadExecution: true,
+            ConnectionSmokeTestOnly: true);
 
         var result = await worker.ExecuteAsync(request, CancellationToken.None);
 
@@ -400,7 +401,255 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.True(result.RealCadConnected);
         Assert.False(result.RealCadExecuted);
         Assert.NotEqual("RealBuild", result.ExecutionMode);
-        Assert.False(worker.SupportsRealBuild);
+        Assert.False(worker.SupportsGenericRealBuild);
+        Assert.Equal(0, sessionManager.ExecuteWithApplicationAttempts);
+    }
+
+    [Fact]
+    public async Task RealSolidWorksWorkerBuildsPlateBasicFourHolesWhenAllSafetySwitchesAreEnabled()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"plate-basic-test-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(outputRoot);
+            var templatePath = Path.Combine(outputRoot, "plate_template.prtdot");
+            await File.WriteAllTextAsync(templatePath, "test template marker");
+            var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
+            var builder = new TestSolidWorksPlateBuilder();
+            var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+            {
+                ["SW_ENABLE_REAL_EXECUTION"] = "true",
+                ["SW_VISIBLE"] = "false",
+                ["SW_TEMPLATE_PART_PATH"] = templatePath,
+                ["SW_OUTPUT_DIRECTORY"] = outputRoot,
+                ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+            });
+            var worker = new RealSolidWorksWorker(sessionManager, options, builder);
+            var request = new SolidWorksWorkerRequest(
+                $"request-{Guid.NewGuid():N}",
+                await CreatePlanAsync(),
+                outputRoot,
+                DryRun: false,
+                AllowRealCadExecution: true);
+
+            var result = await worker.ExecuteAsync(request, CancellationToken.None);
+
+            Assert.Equal(1, sessionManager.ConnectAttempts);
+            Assert.Equal(1, sessionManager.ExecuteWithApplicationAttempts);
+            Assert.Equal(1, builder.BuildAttempts);
+            Assert.Equal("Completed", result.Status);
+            Assert.Equal("RealBuildPlateBasic4Holes", result.ExecutionMode);
+            Assert.True(result.RealCadConnected);
+            Assert.True(result.RealCadExecuted);
+            Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith(".SLDPRT", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase));
+            Assert.All(result.GeneratedArtifacts, artifact => Assert.True(File.Exists(artifact.FilePath)));
+            var reportPath = result.GeneratedArtifacts.Single(artifact => artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase)).FilePath;
+            using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(reportPath));
+            Assert.Equal("RealBuildPlateBasic4Holes", document.RootElement.GetProperty("execution_mode").GetString());
+            Assert.True(document.RootElement.GetProperty("real_cad_executed").GetBoolean());
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task RealSolidWorksWorkerDisconnectTimeoutDoesNotHideBuildResult()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"disconnect-timeout-test-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(outputRoot);
+            var templatePath = Path.Combine(outputRoot, "plate_template.prtdot");
+            await File.WriteAllTextAsync(templatePath, "test template marker");
+            var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true)
+            {
+                WaitForDisconnectCancellation = true
+            };
+            var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+            {
+                ["SW_ENABLE_REAL_EXECUTION"] = "true",
+                ["SW_VISIBLE"] = "false",
+                ["SW_TEMPLATE_PART_PATH"] = templatePath,
+                ["SW_OUTPUT_DIRECTORY"] = outputRoot,
+                ["SW_CONNECT_TIMEOUT_SECONDS"] = "1"
+            });
+            var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder());
+            var request = new SolidWorksWorkerRequest(
+                $"request-{Guid.NewGuid():N}",
+                await CreatePlanAsync(),
+                outputRoot,
+                DryRun: false,
+                AllowRealCadExecution: true);
+
+            var result = await worker.ExecuteAsync(request, CancellationToken.None);
+
+            Assert.Equal("Completed", result.Status);
+            Assert.Equal(1, sessionManager.DisconnectAttempts);
+            Assert.True(sessionManager.DisconnectTokenCanBeCanceled);
+            Assert.Contains(result.Logs, log => log.Contains("solidworks_disconnect_timeout", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task RealSolidWorksWorkerRejectsUnsupportedRealBuildPlanBeforeConnecting()
+    {
+        var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
+        var builder = new TestSolidWorksPlateBuilder();
+        var worker = new RealSolidWorksWorker(
+            sessionManager,
+            SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+            {
+                ["SW_ENABLE_REAL_EXECUTION"] = "true",
+                ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+            }),
+            builder);
+        var unsupportedPlan = await CreatePlanAsync();
+        var request = new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            unsupportedPlan with { PartType = "unsupported_part" },
+            Path.Combine(Path.GetTempPath(), "solidworks_real_worker_unsupported", Guid.NewGuid().ToString("N")),
+            DryRun: false,
+            AllowRealCadExecution: true);
+
+        var result = await worker.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.Equal("Rejected", result.Status);
+        Assert.Equal("RealPreflightOnly", result.ExecutionMode);
+        Assert.Contains(result.Issues, issue => issue.Contains("unsupported_real_build_plan", StringComparison.OrdinalIgnoreCase));
+        Assert.False(result.RealCadExecuted);
+        Assert.False(result.RealCadConnected);
+        Assert.Equal(0, sessionManager.ConnectAttempts);
+        Assert.Equal(0, builder.BuildAttempts);
+    }
+
+    [Fact]
+    public async Task SolidWorksArtifactValidatorAcceptsControlledRealPlateArtifacts()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"validator-real-test-{Guid.NewGuid():N}");
+        try
+        {
+            var result = await new TestSolidWorksPlateBuilder().BuildPlateBasicFourHolesAsync(
+                new object(),
+                new SolidWorksWorkerRequest(
+                    $"request-{Guid.NewGuid():N}",
+                    await CreatePlanAsync(),
+                    outputRoot,
+                    DryRun: false,
+                    AllowRealCadExecution: true),
+                SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+                {
+                    ["SW_ENABLE_REAL_EXECUTION"] = "true",
+                    ["SW_OUTPUT_DIRECTORY"] = outputRoot
+                }),
+                "TestVersion",
+                CancellationToken.None);
+
+            var workerResult = new SolidWorksWorkerResult(
+                $"request-{Guid.NewGuid():N}",
+                "Completed",
+                result.GeneratedArtifacts,
+                result.Logs,
+                result.Issues,
+                "RealBuildPlateBasic4Holes",
+                RealCadExecuted: true,
+                RealCadConnected: true);
+
+            var report = new SolidWorksArtifactValidator(Path.Combine(FindProjectRoot(), "output", "solidworks")).Validate(workerResult);
+
+            Assert.True(report.IsPassed);
+            Assert.Empty(report.Issues);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SolidWorksArtifactValidatorRejectsRealArtifactsOutsideConfiguredOutputRoot()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_real_artifact_path_test", Guid.NewGuid().ToString("N"));
+        var allowedRoot = Path.Combine(root, "output", "solidworks");
+        var outsideOutputDirectory = Path.Combine(root, "other", "output", "solidworks", "real", "plate_basic_4holes");
+
+        try
+        {
+            Directory.CreateDirectory(outsideOutputDirectory);
+            var partPath = Path.Combine(outsideOutputDirectory, "plate_basic_4holes.SLDPRT");
+            var stepPath = Path.Combine(outsideOutputDirectory, "plate_basic_4holes.STEP");
+            var reportPath = Path.Combine(outsideOutputDirectory, "build_report.json");
+            await File.WriteAllTextAsync(partPath, "outside configured real part");
+            await File.WriteAllTextAsync(stepPath, "outside configured step");
+            await File.WriteAllTextAsync(
+                reportPath,
+                "{\"real_cad_executed\":true,\"execution_mode\":\"RealBuildPlateBasic4Holes\"}");
+
+            var workerResult = new SolidWorksWorkerResult(
+                $"request-{Guid.NewGuid():N}",
+                "Completed",
+                new[]
+                {
+                    SolidWorksPlateBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", "Outside configured real part."),
+                    SolidWorksPlateBuildOutput.Artifact("real-step", "Step", stepPath, ".STEP", "Outside configured STEP."),
+                    SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Outside configured report.")
+                },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "RealBuildPlateBasic4Holes",
+                RealCadExecuted: true,
+                RealCadConnected: true);
+
+            var report = new SolidWorksArtifactValidator(allowedRoot).Validate(workerResult);
+
+            Assert.False(report.IsPassed);
+            Assert.Contains(report.Issues, issue => issue.Contains("output/solidworks/real", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SolidWorksBuildPlanReviewerRejectsUnsafePlateHoleDiameter()
+    {
+        var plan = await CreatePlanAsync();
+        var cut = plan.Operations.Single(operation => operation.OperationType == "CutExtrude");
+        var invalidCut = cut with
+        {
+            Parameters = new Dictionary<string, string>(cut.Parameters)
+            {
+                ["hole_diameter_mm"] = "80"
+            }
+        };
+
+        var report = new SolidWorksBuildPlanReviewer().Review(plan with
+        {
+            Operations = plan.Operations.Select(operation => operation.OperationId == cut.OperationId ? invalidCut : operation).ToArray()
+        });
+
+        Assert.False(report.IsPassed);
+        Assert.Contains(report.Issues, issue => issue.Contains("hole diameter", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -456,6 +705,52 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.Equal(2, comActivator.CreatedApplications);
         Assert.True(comActivator.MaxConcurrentApplications <= 1);
         Assert.Equal(2, comActivator.ReleasedApplications);
+    }
+
+    [Fact]
+    public void SolidWorksSessionConnectionResultDoesNotExposeRawComApplication()
+    {
+        Assert.Null(typeof(SolidWorksSessionConnectionResult).GetProperty("Application"));
+    }
+
+    [Fact]
+    public async Task SolidWorksPlateBuildOutputAddsUniqueSuffixWhenTargetAlreadyExists()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_output_collision_test", Guid.NewGuid().ToString("N"));
+        var target = Path.Combine(root, "plate_basic_4holes");
+
+        try
+        {
+            Directory.CreateDirectory(target);
+            await File.WriteAllTextAsync(Path.Combine(target, "existing.txt"), "existing output marker");
+            var request = new SolidWorksWorkerRequest(
+                $"request-{Guid.NewGuid():N}",
+                await CreatePlanAsync(),
+                root,
+                DryRun: false,
+                AllowRealCadExecution: true);
+            var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+            {
+                ["SW_OUTPUT_DIRECTORY"] = root
+            });
+
+            var outputDirectories = Enumerable.Range(0, 8)
+                .Select(_ => SolidWorksPlateBuildOutput.ResolveOutputDirectory(request, options))
+                .ToArray();
+
+            Assert.Equal(outputDirectories.Length, outputDirectories.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            Assert.All(outputDirectories, directory =>
+                Assert.Matches(
+                    "^plate_basic_4holes_[0-9]{8}_[0-9]{6}_[0-9]{3}_[0-9a-f]{32}$",
+                    Path.GetFileName(directory)));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -526,8 +821,22 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.False(report.SolidWorksRealConnectionSmokeTestAttempted);
             Assert.False(report.SolidWorksRealConnectionSmokeTestPassed);
             Assert.Null(report.SolidWorksRealConnectionSmokeTestError);
-            Assert.True(report.SolidWorksRealBuildNotImplemented);
+            Assert.True(report.SolidWorksGenericRealBuildNotImplemented);
             Assert.True(report.SolidWorksRealCadNotExecutedByDefault);
+            Assert.True(report.SolidWorksRealPlateBuildImplemented);
+            Assert.True(report.SolidWorksRealBuildRequiresEnvFlag);
+            Assert.True(report.SolidWorksRealBuildRequiresRequestFlag);
+            Assert.True(report.SolidWorksRealBuildRequiresDryRunFalse);
+            Assert.True(report.SolidWorksRealBuildDefaultDisabled);
+            Assert.False(report.SolidWorksRealBuildSmokeTestAttempted);
+            Assert.False(report.SolidWorksRealBuildSmokeTestPassed);
+            Assert.Null(report.SolidWorksRealBuildSmokeTestError);
+            Assert.False(report.SolidWorksRealBuildArtifactsValidated);
+            Assert.False(report.SolidWorksRealBuildReportGenerated);
+            Assert.False(report.SolidWorksRealBuildOutputsSldprt);
+            Assert.False(report.SolidWorksRealBuildOutputsStep);
+            Assert.False(report.SolidWorksRealBuildOutputsJsonReport);
+            Assert.True(report.SolidWorksRealBuildNotCalledInDefaultSelfCheck);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }
@@ -597,6 +906,16 @@ public sealed class SolidWorksModuleSkeletonTests
 
         public int ConnectAttempts { get; private set; }
 
+        public int ExecuteWithApplicationAttempts { get; private set; }
+
+        public int DisconnectAttempts { get; private set; }
+
+        public bool WaitForDisconnectCancellation { get; init; }
+
+        public bool DisconnectTokenCanBeCanceled { get; private set; }
+
+        public bool DisconnectCancellationObserved { get; private set; }
+
         public Task<SolidWorksSessionConnectionResult> ConnectAsync(
             SolidWorksRuntimeOptions options,
             CancellationToken cancellationToken = default)
@@ -611,7 +930,89 @@ public sealed class SolidWorksModuleSkeletonTests
                 new[] { "fake session manager used by tests" }));
         }
 
-        public Task DisconnectAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public async Task<T> ExecuteWithApplicationAsync<T>(
+            Func<object, CancellationToken, Task<T>> action,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ExecuteWithApplicationAttempts++;
+
+            if (!_connectsSuccessfully)
+            {
+                throw new InvalidOperationException("solidworks_application_missing: active SolidWorks COM session is not connected.");
+            }
+
+            return await action(new object(), cancellationToken);
+        }
+
+        public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+        {
+            DisconnectAttempts++;
+            DisconnectTokenCanBeCanceled = cancellationToken.CanBeCanceled;
+
+            if (!WaitForDisconnectCancellation)
+            {
+                return;
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMinutes(5), cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                DisconnectCancellationObserved = true;
+                throw;
+            }
+        }
+    }
+
+    private sealed class TestSolidWorksPlateBuilder : ISolidWorksPlateBuilder
+    {
+        public int BuildAttempts { get; private set; }
+
+        public async Task<SolidWorksPlateBuildResult> BuildPlateBasicFourHolesAsync(
+            object application,
+            SolidWorksWorkerRequest request,
+            SolidWorksRuntimeOptions options,
+            string? solidWorksVersion,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            BuildAttempts++;
+
+            var outputDirectory = SolidWorksPlateBuildOutput.ResolveOutputDirectory(request, options);
+            Directory.CreateDirectory(outputDirectory);
+            var partPath = Path.Combine(outputDirectory, "plate_basic_4holes.SLDPRT");
+            var stepPath = Path.Combine(outputDirectory, "plate_basic_4holes.STEP");
+            var reportPath = Path.Combine(outputDirectory, "build_report.json");
+
+            await File.WriteAllTextAsync(partPath, "fake real SolidWorks part bytes for tests", cancellationToken);
+            await File.WriteAllTextAsync(stepPath, "fake real STEP bytes for tests", cancellationToken);
+            await SolidWorksPlateBuildReportWriter.WriteAsync(
+                reportPath,
+                request,
+                "RealBuildPlateBasic4Holes",
+                realCadExecuted: true,
+                realCadConnected: true,
+                solidWorksVersion,
+                outputDirectory,
+                new[] { partPath, stepPath },
+                new[] { "Create part", "Save SLDPRT", "Export STEP" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "Passed",
+                cancellationToken);
+
+            return SolidWorksPlateBuildResult.Completed(
+                new[]
+                {
+                    SolidWorksPlateBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", "真实 SolidWorks 零件文件。"),
+                    SolidWorksPlateBuildOutput.Artifact("real-step", "Step", stepPath, ".STEP", "真实 STEP 导出文件。"),
+                    SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "真实构建报告。")
+                },
+                new[] { "test plate builder generated controlled artifacts" });
+        }
     }
 
     private sealed class TrackingSolidWorksComActivator : ISolidWorksComActivator

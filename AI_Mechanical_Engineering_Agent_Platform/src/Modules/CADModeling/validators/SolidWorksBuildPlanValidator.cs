@@ -40,14 +40,16 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
                 break;
             case SolidWorksWorkerRequest request:
                 plan = request.BuildPlan;
-                if (!request.DryRun)
+                if (!request.DryRun &&
+                    !request.AllowRealCadExecution)
                 {
-                    issues.Add("dry_run must remain true for V0.9-B SolidWorks skeleton.");
+                    issues.Add("allow_real_cad_execution must be true when dry_run=false.");
                 }
 
-                if (request.AllowRealCadExecution)
+                if (request.DryRun &&
+                    request.AllowRealCadExecution)
                 {
-                    issues.Add("allow_real_cad_execution must remain false for V0.9-B SolidWorks skeleton.");
+                    issues.Add("allow_real_cad_execution must remain false while dry_run=true.");
                 }
 
                 break;

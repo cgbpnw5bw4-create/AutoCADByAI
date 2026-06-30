@@ -33,11 +33,18 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
         }
 
         if (dimensions.HoleDiameterMm > 0 &&
-            dimensions.LengthMm > 0 &&
             dimensions.WidthMm > 0 &&
-            (dimensions.HoleDiameterMm >= dimensions.LengthMm / 2 || dimensions.HoleDiameterMm >= dimensions.WidthMm / 2))
+            dimensions.HoleDiameterMm > dimensions.WidthMm / 2)
         {
             issues.Add("hole diameter is too large for the simplified plate boundary rule.");
+        }
+
+        if (dimensions.LengthMm > 0 &&
+            dimensions.WidthMm > 0 &&
+            dimensions.HoleDiameterMm > 0 &&
+            !FourHolePatternFitsInsidePlate(plan, dimensions))
+        {
+            issues.Add("four-hole pattern may exceed the simplified plate boundary.");
         }
 
         if (!plan.ExpectedArtifacts.Any(artifact => string.Equals(artifact.ExpectedExtension, ".SLDPRT", StringComparison.OrdinalIgnoreCase)) ||
@@ -49,7 +56,7 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
 
         if (plan.RiskNotes.Any(note => note.Contains("real CAD execution enabled", StringComparison.OrdinalIgnoreCase)))
         {
-            issues.Add("real CAD execution risk is not allowed in V0.9-B dry-run skeleton.");
+            issues.Add("real CAD execution risk must be controlled by an explicit worker request, not by BuildPlan text.");
         }
 
         return Report(issues);
@@ -73,6 +80,29 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
             ParseDouble(extrude, "depth_mm", issues),
             ParseDouble(cut, "hole_diameter_mm", issues),
             ParseInt(cut, "hole_count", issues));
+    }
+
+    private static bool FourHolePatternFitsInsidePlate(
+        SolidWorksBuildPlan plan,
+        (double? LengthMm, double? WidthMm, double? ThicknessMm, double? HoleDiameterMm, int? HoleCount) dimensions)
+    {
+        var holeSketch = plan.Operations.FirstOrDefault(operation =>
+            operation.OperationType.Equals("CreateSketch", StringComparison.OrdinalIgnoreCase) &&
+            operation.Parameters.ContainsKey("margin_x_mm") &&
+            operation.Parameters.ContainsKey("margin_y_mm"));
+        if (holeSketch is null)
+        {
+            return false;
+        }
+
+        var marginX = ParseDoubleOrDefault(holeSketch, "margin_x_mm", 0);
+        var marginY = ParseDoubleOrDefault(holeSketch, "margin_y_mm", 0);
+        var radius = dimensions.HoleDiameterMm.GetValueOrDefault() / 2;
+
+        return marginX > radius &&
+               marginY > radius &&
+               marginX < dimensions.LengthMm.GetValueOrDefault() / 2 &&
+               marginY < dimensions.WidthMm.GetValueOrDefault() / 2;
     }
 
     private static double? ParseDouble(SolidWorksOperation? operation, string key, List<string> issues)
@@ -110,6 +140,12 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
 
         return parsed;
     }
+
+    private static double ParseDoubleOrDefault(SolidWorksOperation operation, string key, double fallback) =>
+        operation.Parameters.TryGetValue(key, out var value) &&
+        double.TryParse(value, out var parsed)
+            ? parsed
+            : fallback;
 
     private static ReviewReport Report(IReadOnlyList<string> issues) =>
         new(

@@ -38,9 +38,24 @@ V1.0-A 的 `RealSolidWorksWorker` 只建立真实执行前边界，不做真实�
 - 请求级：`SolidWorksWorkerRequest.AllowRealCadExecution = true`。
 - 请求级：`SolidWorksWorkerRequest.DryRun = false`。
 - 环境级：`SW_ENABLE_REAL_EXECUTION=true`。
+- 环境级：`SW_TEMPLATE_PART_PATH` 指向有效的 SolidWorks 零件模板。
 
 默认情况下 `SW_ENABLE_REAL_EXECUTION=false`、`SW_VISIBLE=false`、`SW_CONNECT_TIMEOUT_SECONDS=30`。任何一个条件不满足时，Worker 必须返回结构化 issue，并保持 `RealCadExecuted = false`。
 
 V1.0-A 只允许 `RealPreflightOnly` 和 `RealConnectionSmokeTest`，不允许 `RealBuild`。即使连接 smoke test 成功，也只能说明 `RealCadConnected = true`，不能说明执行过建模、保存或导出命令。
 
 真实 CAD Worker 仍必须经过 Workflow、Validator、Reviewer、AuditLog 和 `QualityGate`，不得被 Agent、Gateway 或 LLM 直接调用。
+
+## V1.0-B 受控真实构建
+
+V1.0-B 只开放一个最小真实构建模式：`RealBuildPlateBasic4Holes`。它不是通用 `RealBuild`，也不是自然语言到任意模型的执行器。Worker 只能处理 `BuildPlan.PartType = plate_basic_4holes`，输出真实 `.SLDPRT`、`.STEP` 和 `build_report.json`。
+
+真实构建仍必须同时满足：
+
+- 请求级：`SolidWorksWorkerRequest.AllowRealCadExecution = true`。
+- 请求级：`SolidWorksWorkerRequest.DryRun = false`。
+- 环境级：`SW_ENABLE_REAL_EXECUTION=true`。
+
+self-check 默认不执行真实构建。只有设置 `SW_REAL_BUILD_SMOKE_TEST=true` 时才允许尝试；只有再设置 `SW_STRICT_REAL_BUILD_TEST=true` 时，真实构建失败才会影响 `final_status`。未开启这些开关时，平台必须继续使用 dry-run 和 mock 路径。
+
+`ConnectionSmokeTestOnly` 仅用于连接 smoke test，不能被当作建模完成。只有 `RealBuildPlateBasic4Holes` 成功保存和导出产物后，`RealCadExecuted` 才能为 `true`。

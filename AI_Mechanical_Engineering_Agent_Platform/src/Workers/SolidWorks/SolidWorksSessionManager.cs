@@ -10,6 +10,10 @@ public interface ISolidWorksSessionManager
         SolidWorksRuntimeOptions options,
         CancellationToken cancellationToken = default);
 
+    Task<T> ExecuteWithApplicationAsync<T>(
+        Func<object, CancellationToken, Task<T>> action,
+        CancellationToken cancellationToken = default);
+
     Task DisconnectAsync(CancellationToken cancellationToken = default);
 }
 
@@ -30,11 +34,12 @@ public interface ISolidWorksComActivator
     void Release(object application);
 }
 
-public sealed class SolidWorksSessionManager : ISolidWorksSessionManager
+public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDisposable
 {
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private readonly ISolidWorksComActivator _comActivator;
     private object? _application;
+    private bool _disposed;
 
     public SolidWorksSessionManager()
         : this(new LateBoundSolidWorksComActivator())
@@ -50,6 +55,7 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager
         SolidWorksRuntimeOptions options,
         CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
 
         if (!OperatingSystem.IsWindows())
@@ -91,19 +97,61 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager
         }
     }
 
-    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+    public async Task<T> ExecuteWithApplicationAsync<T>(
+        Func<object, CancellationToken, Task<T>> action,
+        CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(action);
         cancellationToken.ThrowIfCancellationRequested();
 
         await _connectionLock.WaitAsync(cancellationToken);
         try
         {
-            ReleaseCurrentApplication();
+            if (_application is null)
+            {
+                throw new InvalidOperationException("solidworks_application_missing: active SolidWorks COM session is not connected.");
+            }
+
+            return await action(_application, cancellationToken);
         }
         finally
         {
             _connectionLock.Release();
         }
+    }
+
+    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await _connectionLock.WaitAsync(cancellationToken);
+        try
+        {
+            await Task.Run(ReleaseCurrentApplication, cancellationToken);
+        }
+        finally
+        {
+            _connectionLock.Release();
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        ReleaseCurrentApplication();
+        _connectionLock.Dispose();
+        _disposed = true;
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     private void ReleaseCurrentApplication()
@@ -140,7 +188,7 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager
                 Connected: true,
                 version,
                 Array.Empty<string>(),
-                new[] { "SolidWorks COM session connected for smoke test only. No CAD build command was executed." });
+                new[] { "SolidWorks COM session connected. CAD build execution is still controlled by RealSolidWorksWorker." });
         }
         finally
         {
