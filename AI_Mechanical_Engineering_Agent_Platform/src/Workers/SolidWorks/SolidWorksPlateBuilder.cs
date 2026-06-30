@@ -35,6 +35,55 @@ public sealed record SolidWorksPlateBuildResult(
         new("Failed", generatedArtifacts ?? Array.Empty<SolidWorksArtifact>(), logs, issues, RealCadExecuted: false);
 }
 
+public sealed class SolidWorksPlateBuildDiagnostics
+{
+    public List<string> OperationsExecuted { get; } = [];
+
+    public List<string> Issues { get; } = [];
+
+    public List<string> Warnings { get; } = [];
+
+    public bool SldprtSaveAttempted { get; set; }
+
+    public bool SldprtSaveSuccess { get; set; }
+
+    public List<string> SldprtSaveErrors { get; } = [];
+
+    public List<string> SldprtSaveWarnings { get; } = [];
+
+    public string? SldprtPath { get; set; }
+
+    public long SldprtSizeBytes { get; set; }
+
+    public bool StepExportAttempted { get; set; }
+
+    public bool StepExportSuccess { get; set; }
+
+    public List<string> StepExportErrors { get; } = [];
+
+    public List<string> StepExportWarnings { get; } = [];
+
+    public string? StepPath { get; set; }
+
+    public long StepSizeBytes { get; set; }
+
+    public string? ActiveDocTitleBeforeStepExport { get; set; }
+
+    public string? ActiveDocTitleAfterActivate { get; set; }
+
+    public bool PlaneSelectionAttempted { get; set; }
+
+    public bool PlaneSelectionSuccess { get; set; }
+
+    public string? SelectedPlaneName { get; set; }
+
+    public string? SelectedPlaneStrategy { get; set; }
+
+    public List<string> PlaneSelectionErrors { get; } = [];
+
+    public List<SolidWorksReferencePlaneInfo> AvailableReferencePlanes { get; } = [];
+}
+
 public static class SolidWorksPlateBuildOutput
 {
     public const string ExecutionMode = "RealBuildPlateBasic4Holes";
@@ -45,10 +94,18 @@ public static class SolidWorksPlateBuildOutput
             ? options.OutputDirectory
             : request.OutputDirectory;
         var fullRoot = Path.GetFullPath(requestedRoot);
-        var directoryName = Path.GetFileName(fullRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        var normalized = fullRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var directoryName = Path.GetFileName(normalized);
+
+        if (IsUnderPlateBasicRoot(normalized) &&
+            !directoryName.Equals("plate_basic_4holes", StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
         var target = directoryName.Equals("plate_basic_4holes", StringComparison.OrdinalIgnoreCase)
-            ? fullRoot
-            : Path.Combine(fullRoot, "plate_basic_4holes");
+            ? Path.Combine(normalized, TimestampSegment())
+            : Path.Combine(normalized, "plate_basic_4holes", TimestampSegment());
 
         if (!Directory.Exists(target) || Directory.GetFileSystemEntries(target).Length == 0)
         {
@@ -57,8 +114,11 @@ public static class SolidWorksPlateBuildOutput
 
         return Path.Combine(
             Path.GetDirectoryName(target) ?? fullRoot,
-            $"plate_basic_4holes_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}");
+            $"plate_basic_4holes_{TimestampSegment()}");
     }
+
+    public static string ResolveBuildReportPath(SolidWorksWorkerRequest request, SolidWorksRuntimeOptions options) =>
+        Path.Combine(ResolveOutputDirectory(request, options), "build_report.json");
 
     public static SolidWorksArtifact Artifact(
         string artifactId,
@@ -78,6 +138,28 @@ public static class SolidWorksPlateBuildOutput
             File.Exists(fullPath) ? info.Length : 0,
             description);
     }
+
+    private static bool IsUnderPlateBasicRoot(string path)
+    {
+        var directory = new DirectoryInfo(path);
+        while (directory is not null)
+        {
+            if (directory.Name.Equals("plate_basic_4holes", StringComparison.OrdinalIgnoreCase) &&
+                directory.Parent?.Name.Equals("real", StringComparison.OrdinalIgnoreCase) == true &&
+                directory.Parent.Parent?.Name.Equals("solidworks", StringComparison.OrdinalIgnoreCase) == true &&
+                directory.Parent.Parent.Parent?.Name.Equals("output", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return false;
+    }
+
+    private static string TimestampSegment() =>
+        $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}";
 }
 
 public static class SolidWorksPlateBuildReportWriter
@@ -97,6 +179,38 @@ public static class SolidWorksPlateBuildReportWriter
         string finalStatus,
         CancellationToken cancellationToken)
     {
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        diagnostics.OperationsExecuted.AddRange(operationsExecuted);
+        diagnostics.Issues.AddRange(issues);
+        diagnostics.Warnings.AddRange(warnings);
+
+        await WriteAsync(
+            reportPath,
+            request,
+            executionMode,
+            realCadExecuted,
+            realCadConnected,
+            solidWorksVersion,
+            outputDirectory,
+            generatedArtifactPaths,
+            diagnostics,
+            finalStatus,
+            cancellationToken);
+    }
+
+    public static async Task WriteAsync(
+        string reportPath,
+        SolidWorksWorkerRequest request,
+        string executionMode,
+        bool realCadExecuted,
+        bool realCadConnected,
+        string? solidWorksVersion,
+        string outputDirectory,
+        IReadOnlyList<string> generatedArtifactPaths,
+        SolidWorksPlateBuildDiagnostics diagnostics,
+        string finalStatus,
+        CancellationToken cancellationToken)
+    {
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -113,9 +227,7 @@ public static class SolidWorksPlateBuildReportWriter
                 solidWorksVersion,
                 outputDirectory,
                 generatedArtifactPaths,
-                operationsExecuted,
-                issues,
-                warnings,
+                diagnostics,
                 finalStatus),
             cancellationToken);
     }
@@ -134,6 +246,36 @@ public static class SolidWorksPlateBuildReportWriter
         IReadOnlyList<string> warnings,
         string finalStatus)
     {
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        diagnostics.OperationsExecuted.AddRange(operationsExecuted);
+        diagnostics.Issues.AddRange(issues);
+        diagnostics.Warnings.AddRange(warnings);
+
+        Write(
+            reportPath,
+            request,
+            executionMode,
+            realCadExecuted,
+            realCadConnected,
+            solidWorksVersion,
+            outputDirectory,
+            generatedArtifactPaths,
+            diagnostics,
+            finalStatus);
+    }
+
+    public static void Write(
+        string reportPath,
+        SolidWorksWorkerRequest request,
+        string executionMode,
+        bool realCadExecuted,
+        bool realCadConnected,
+        string? solidWorksVersion,
+        string outputDirectory,
+        IReadOnlyList<string> generatedArtifactPaths,
+        SolidWorksPlateBuildDiagnostics diagnostics,
+        string finalStatus)
+    {
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -150,9 +292,7 @@ public static class SolidWorksPlateBuildReportWriter
                 solidWorksVersion,
                 outputDirectory,
                 generatedArtifactPaths,
-                operationsExecuted,
-                issues,
-                warnings,
+                diagnostics,
                 finalStatus));
     }
 
@@ -164,9 +304,7 @@ public static class SolidWorksPlateBuildReportWriter
         string? solidWorksVersion,
         string outputDirectory,
         IReadOnlyList<string> generatedArtifactPaths,
-        IReadOnlyList<string> operationsExecuted,
-        IReadOnlyList<string> issues,
-        IReadOnlyList<string> warnings,
+        SolidWorksPlateBuildDiagnostics diagnostics,
         string finalStatus)
     {
         var now = DateTimeOffset.UtcNow;
@@ -182,9 +320,29 @@ public static class SolidWorksPlateBuildReportWriter
             completed_at = now,
             output_directory = Path.GetFullPath(outputDirectory),
             generated_artifacts = generatedArtifactPaths.Select(Path.GetFullPath).ToArray(),
-            operations_executed = operationsExecuted,
-            issues,
-            warnings,
+            operations_executed = diagnostics.OperationsExecuted,
+            issues = diagnostics.Issues,
+            warnings = diagnostics.Warnings,
+            sldprt_save_attempted = diagnostics.SldprtSaveAttempted,
+            sldprt_save_success = diagnostics.SldprtSaveSuccess,
+            sldprt_save_errors = diagnostics.SldprtSaveErrors,
+            sldprt_save_warnings = diagnostics.SldprtSaveWarnings,
+            sldprt_path = diagnostics.SldprtPath,
+            sldprt_size_bytes = diagnostics.SldprtSizeBytes,
+            step_export_attempted = diagnostics.StepExportAttempted,
+            step_export_success = diagnostics.StepExportSuccess,
+            step_export_errors = diagnostics.StepExportErrors,
+            step_export_warnings = diagnostics.StepExportWarnings,
+            step_path = diagnostics.StepPath,
+            step_size_bytes = diagnostics.StepSizeBytes,
+            active_doc_title_before_step_export = diagnostics.ActiveDocTitleBeforeStepExport,
+            active_doc_title_after_activate = diagnostics.ActiveDocTitleAfterActivate,
+            plane_selection_attempted = diagnostics.PlaneSelectionAttempted,
+            plane_selection_success = diagnostics.PlaneSelectionSuccess,
+            selected_plane_name = diagnostics.SelectedPlaneName,
+            selected_plane_strategy = diagnostics.SelectedPlaneStrategy,
+            plane_selection_errors = diagnostics.PlaneSelectionErrors,
+            available_reference_planes = diagnostics.AvailableReferencePlanes,
             final_status = finalStatus
         };
 
@@ -218,78 +376,76 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         CancellationToken cancellationToken)
     {
         var logs = new List<string>();
-        var issues = new List<string>();
-        var warnings = new List<string>();
-        var operations = new List<string>();
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        var operations = diagnostics.OperationsExecuted;
+        var issues = diagnostics.Issues;
         object? model = null;
 
         var outputDirectory = SolidWorksPlateBuildOutput.ResolveOutputDirectory(request, options);
         var partPath = Path.Combine(outputDirectory, "plate_basic_4holes.SLDPRT");
         var stepPath = Path.Combine(outputDirectory, "plate_basic_4holes.STEP");
         var reportPath = Path.Combine(outputDirectory, "build_report.json");
+        diagnostics.SldprtPath = partPath;
+        diagnostics.StepPath = stepPath;
 
         try
         {
             Directory.CreateDirectory(outputDirectory);
+            Directory.CreateDirectory(Path.Combine(outputDirectory, "logs"));
+            operations.Add("real_build_request_received");
+            operations.Add("safety_flags_checked");
+            operations.Add("preflight_started");
+
             var dimensions = SolidWorksPlateDimensions.FromPlan(request.BuildPlan);
             if (dimensions is null)
             {
-                issues.Add("invalid_plate_basic_4holes_dimensions: BuildPlan parameters are missing or invalid.");
-                return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, issues, warnings, cancellationToken);
+                issues.Add("preflight_failed: invalid_plate_basic_4holes_dimensions.");
+                operations.Add("preflight_failed");
+                return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, diagnostics);
             }
 
             if (string.IsNullOrWhiteSpace(options.TemplatePartPath) || !File.Exists(options.TemplatePartPath))
             {
+                issues.Add("preflight_failed: template_part_path_required_for_real_build.");
                 issues.Add("template_part_path_required_for_real_build: SW_TEMPLATE_PART_PATH must point to an existing part template.");
-                return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, issues, warnings, cancellationToken);
+                operations.Add("preflight_failed");
+                return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, diagnostics);
             }
 
+            operations.Add("preflight_completed");
+            operations.Add("connection_success");
             logs.Add("Connecting SolidWorks session was provided by SolidWorksSessionManager.");
+
+            operations.Add("new_part_started");
             model = Invoke(application, "NewDocument", options.TemplatePartPath, 0, 0d, 0d);
+            RequireComResult(model, "new_part_failed: NewDocument returned null.");
             if (model is null)
             {
-                issues.Add("solidworks_new_document_failed: NewDocument returned null.");
-                return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, issues, warnings, cancellationToken);
+                throw new InvalidOperationException("new_part_failed: NewDocument returned null.");
             }
 
-            operations.Add("NewDocument");
-            SelectPlane(model, "Top Plane", "上视基准面", logs);
-            EnterSketch(model);
-            Invoke(GetProperty(model, "SketchManager"), "CreateCenterRectangle", 0d, 0d, 0d, dimensions.LengthMeters / 2, dimensions.WidthMeters / 2, 0d);
-            ExitSketch(model);
-            operations.Add("CreateSketch: base rectangle");
+            operations.Add("new_part_success");
 
-            var featureManager = GetProperty(model, "FeatureManager");
-            Invoke(
-                featureManager,
-                "FeatureExtrusion2",
-                true, false, false, 0, 0, dimensions.ThicknessMeters, 0d, false, false, false, false,
-                0d, 0d, false, false, false, false, true, true, true, 0, 0d, false);
-            operations.Add("ExtrudeBoss: plate thickness");
-
-            SelectPlane(model, "Top Plane", "上视基准面", logs);
-            EnterSketch(model);
-            foreach (var (x, y) in dimensions.HoleCentersMeters())
-            {
-                Invoke(GetProperty(model, "SketchManager"), "CreateCircleByRadius", x, y, 0d, dimensions.HoleRadiusMeters);
-            }
-
-            ExitSketch(model);
-            operations.Add("CreateSketch: four hole circles");
-            Invoke(
-                featureManager,
-                "FeatureCut4",
-                true, false, false, 1, 0, dimensions.ThicknessMeters * 2, 0d, false, false, false, false,
-                0d, 0d, false, false, false, false, false, true, true, true, true, false, 0, 0d,
-                false, false, false, false, false, false);
-            operations.Add("CutExtrude: four through holes");
+            var featureBuilder = new SolidWorksPlateFeatureBuilder();
+            featureBuilder.CreateBasePlate(
+                model,
+                dimensions.LengthMeters,
+                dimensions.WidthMeters,
+                dimensions.ThicknessMeters,
+                diagnostics,
+                logs);
+            featureBuilder.CreateThroughHoles(
+                model,
+                dimensions.HoleCentersMeters().ToArray(),
+                dimensions.HoleRadiusMeters,
+                dimensions.ThicknessMeters * 2,
+                diagnostics,
+                logs);
 
             ForceRebuild(model, logs);
-            SavePart(model, partPath, logs);
-            operations.Add("SavePart");
-            ActivateDocument(application, model, logs);
-            ExportStep(model, stepPath, logs);
-            operations.Add("ExportStep");
+            SavePart(model, partPath, diagnostics, logs);
+            ExportStep(application, model, stepPath, diagnostics, logs);
+            operations.Add("build_report_started");
 
             SolidWorksPlateBuildReportWriter.Write(
                 reportPath,
@@ -300,24 +456,23 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
                 solidWorksVersion,
                 outputDirectory,
                 new[] { partPath, stepPath },
-                operations,
-                issues,
-                warnings,
+                diagnostics,
                 "Passed");
+            operations.Add("build_report_written");
 
             return SolidWorksPlateBuildResult.Completed(
                 new[]
                 {
-                    SolidWorksPlateBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", "真实 SolidWorks 零件文件。"),
-                    SolidWorksPlateBuildOutput.Artifact("real-step", "Step", stepPath, ".STEP", "真实 STEP 导出文件。"),
-                    SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "真实构建报告。")
+                    SolidWorksPlateBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", "Real SolidWorks part file."),
+                    SolidWorksPlateBuildOutput.Artifact("real-step", "Step", stepPath, ".STEP", "Real STEP export file."),
+                    SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Real build report.")
                 },
                 logs.Concat(operations.Select(operation => $"operation_executed: {operation}")).ToArray());
         }
         catch (Exception ex) when (ex is COMException or TargetInvocationException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
             issues.Add($"solidworks_real_build_failed: {ex.GetBaseException().Message}");
-            return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, issues, warnings, cancellationToken);
+            return FailedWithReport(request, solidWorksVersion, outputDirectory, reportPath, logs, diagnostics);
         }
         finally
         {
@@ -334,50 +489,67 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         string outputDirectory,
         string reportPath,
         IReadOnlyList<string> logs,
-        IReadOnlyList<string> issues,
-        IReadOnlyList<string> warnings,
-        CancellationToken cancellationToken)
+        SolidWorksPlateBuildDiagnostics diagnostics)
     {
-        SolidWorksPlateBuildReportWriter.Write(
-            reportPath,
-            request,
-            SolidWorksPlateBuildOutput.ExecutionMode,
-            realCadExecuted: false,
-            realCadConnected: true,
-            solidWorksVersion,
-            outputDirectory,
-            Array.Empty<string>(),
-            Array.Empty<string>(),
-            issues,
-            warnings,
-            "Failed");
+        try
+        {
+            diagnostics.OperationsExecuted.Add("build_report_started");
+            SolidWorksPlateBuildReportWriter.Write(
+                reportPath,
+                request,
+                SolidWorksPlateBuildOutput.ExecutionMode,
+                realCadExecuted: false,
+                realCadConnected: true,
+                solidWorksVersion,
+                outputDirectory,
+                Array.Empty<string>(),
+                diagnostics,
+                "Failed");
+            diagnostics.OperationsExecuted.Add("build_report_written");
 
-        return SolidWorksPlateBuildResult.Failed(
-            logs,
-            issues,
-            new[]
-            {
-                SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "真实构建失败报告。")
-            });
+            return SolidWorksPlateBuildResult.Failed(
+                logs.Concat(diagnostics.OperationsExecuted.Select(operation => $"operation_executed: {operation}")).ToArray(),
+                diagnostics.Issues,
+                new[]
+                {
+                    SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Real build failure report.")
+                });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            diagnostics.Issues.Add($"build_report_write_failed: {ex.Message}");
+            return SolidWorksPlateBuildResult.Failed(logs, diagnostics.Issues);
+        }
     }
 
-    private static void SelectPlane(object model, string englishName, string chineseName, List<string> logs)
+    private static void SelectSketchPlane(object model, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
     {
-        var extension = GetProperty(model, "Extension");
-        var selected = TryInvokeBool(extension, "SelectByID2", englishName, "PLANE", 0d, 0d, 0d, false, 0, null!, 0) ||
-                       TryInvokeBool(extension, "SelectByID2", chineseName, "PLANE", 0d, 0d, 0d, false, 0, null!, 0);
-        if (!selected)
+        diagnostics.OperationsExecuted.Add("plane_selection_started");
+        diagnostics.PlaneSelectionAttempted = true;
+
+        var result = new SolidWorksPlaneSelector().SelectStandardPlane(model);
+        diagnostics.PlaneSelectionSuccess = result.Success;
+        diagnostics.SelectedPlaneName = result.SelectedPlaneName;
+        diagnostics.SelectedPlaneStrategy = result.SelectedPlaneStrategy;
+        diagnostics.PlaneSelectionErrors.Clear();
+        diagnostics.PlaneSelectionErrors.AddRange(result.Errors);
+        diagnostics.AvailableReferencePlanes.Clear();
+        diagnostics.AvailableReferencePlanes.AddRange(result.AvailableReferencePlanes);
+
+        if (!result.Success)
         {
-            throw new InvalidOperationException($"solidworks_select_plane_failed: {englishName}.");
+            diagnostics.Issues.Add("plane_selection_failed: select_plane_failed_all_candidates.");
+            var error = result.Errors.LastOrDefault() ?? "select_plane_failed_all_candidates";
+            throw new InvalidOperationException($"sketch_failed: {error}");
         }
 
-        logs.Add($"Selected sketch plane: {englishName}.");
+        diagnostics.OperationsExecuted.Add("plane_selection_success");
+        logs.Add($"Selected sketch plane: {result.SelectedPlaneName} using {result.SelectedPlaneStrategy}.");
     }
 
     private static void EnterSketch(object model) =>
         Invoke(GetProperty(model, "SketchManager"), "InsertSketch", true);
 
-    // SolidWorks toggles sketch edit mode when InsertSketch(true) is called again.
     private static void ExitSketch(object model) =>
         Invoke(GetProperty(model, "SketchManager"), "InsertSketch", true);
 
@@ -389,50 +561,116 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         }
     }
 
-    private static void SavePart(object model, string partPath, List<string> logs)
+    private static void SavePart(object model, string partPath, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
     {
+        diagnostics.OperationsExecuted.Add("save_sldprt_started");
+        diagnostics.SldprtSaveAttempted = true;
+        diagnostics.SldprtPath = Path.GetFullPath(partPath);
         Directory.CreateDirectory(Path.GetDirectoryName(partPath)!);
-        if (!TryInvokeBool(model, "SaveAs3", partPath, 0, 2) &&
-            !TryInvokeBool(model, "SaveAs", partPath))
+
+        var saved = TryExtensionSaveAs(model, partPath, diagnostics.SldprtSaveErrors, diagnostics.SldprtSaveWarnings) ||
+                    TryInvokeBool(model, "SaveAs3", partPath, 0, 1) ||
+                    TryInvokeBool(model, "SaveAs", partPath);
+
+        if (!saved)
         {
-            var extension = GetProperty(model, "Extension");
-            Invoke(extension, "SaveAs", partPath, 0, 1, null!, 0, 0);
+            diagnostics.SldprtSaveErrors.Add("sldprt_save_failed: SaveAs returned false.");
         }
 
         if (!File.Exists(partPath) || new FileInfo(partPath).Length <= 0)
         {
-            throw new IOException($"solidworks_part_save_failed: {partPath}");
+            diagnostics.SldprtSaveSuccess = false;
+            diagnostics.SldprtSaveErrors.Add($"sldprt_save_failed: {partPath}");
+            diagnostics.Issues.Add("sldprt_save_failed: SLDPRT file was not created or is empty.");
+            throw new IOException($"sldprt_save_failed: {partPath}");
         }
 
+        diagnostics.SldprtSaveSuccess = true;
+        diagnostics.SldprtSizeBytes = new FileInfo(partPath).Length;
+        diagnostics.OperationsExecuted.Add("save_sldprt_success");
         logs.Add($"Saved SolidWorks part: {partPath}.");
     }
 
-    private static void ActivateDocument(object application, object model, List<string> logs)
+    private static void ExportStep(object application, object model, string stepPath, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
+    {
+        diagnostics.OperationsExecuted.Add("export_step_started");
+        diagnostics.StepExportAttempted = true;
+        diagnostics.StepPath = Path.GetFullPath(stepPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(stepPath)!);
+
+        diagnostics.ActiveDocTitleBeforeStepExport = GetActiveDocumentTitle(application) ?? TryInvoke(model, "GetTitle")?.ToString();
+        ActivateDocument(application, model, diagnostics, logs);
+        var activeDocument = TryGetProperty(application, "ActiveDoc") ?? model;
+        TryInvoke(activeDocument, "ClearSelection2", true);
+
+        var exported = TryExtensionSaveAs(activeDocument, stepPath, diagnostics.StepExportErrors, diagnostics.StepExportWarnings) ||
+                       TryInvokeBool(activeDocument, "SaveAs3", stepPath, 0, 1) ||
+                       TryInvokeBool(activeDocument, "SaveAs", stepPath);
+
+        if (!exported)
+        {
+            diagnostics.StepExportErrors.Add("step_export_failed: SaveAs returned false.");
+        }
+
+        if (!File.Exists(stepPath) || new FileInfo(stepPath).Length <= 0)
+        {
+            diagnostics.StepExportSuccess = false;
+            diagnostics.StepExportErrors.Add($"step_export_failed: {stepPath}");
+            diagnostics.Issues.Add("step_export_failed: STEP file was not created or is empty.");
+            throw new IOException($"step_export_failed: {stepPath}");
+        }
+
+        diagnostics.StepExportSuccess = true;
+        diagnostics.StepSizeBytes = new FileInfo(stepPath).Length;
+        diagnostics.OperationsExecuted.Add("export_step_success");
+        logs.Add($"Exported STEP file: {stepPath}.");
+    }
+
+    private static void ActivateDocument(object application, object model, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
     {
         var title = TryInvoke(model, "GetTitle")?.ToString();
         if (!string.IsNullOrWhiteSpace(title))
         {
             TryInvoke(application, "ActivateDoc3", title, true, 0, 0);
+            diagnostics.ActiveDocTitleAfterActivate = GetActiveDocumentTitle(application) ?? title;
             logs.Add($"Activated SolidWorks document before STEP export: {title}.");
         }
     }
 
-    private static void ExportStep(object model, string stepPath, List<string> logs)
+    private static string? GetActiveDocumentTitle(object application)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(stepPath)!);
-        if (!TryInvokeBool(model, "SaveAs3", stepPath, 0, 2) &&
-            !TryInvokeBool(model, "SaveAs", stepPath))
+        var activeDocument = TryGetProperty(application, "ActiveDoc");
+        return activeDocument is null ? null : TryInvoke(activeDocument, "GetTitle")?.ToString();
+    }
+
+    private static bool TryExtensionSaveAs(
+        object model,
+        string path,
+        List<string> errors,
+        List<string> warnings)
+    {
+        try
         {
             var extension = GetProperty(model, "Extension");
-            Invoke(extension, "SaveAs", stepPath, 0, 1, null!, 0, 0);
-        }
+            var args = new object?[] { path, 0, 1, null, 0, 0 };
+            var result = Invoke(extension, "SaveAs", args);
+            if (args[4] is not null && Convert.ToInt32(args[4], CultureInfo.InvariantCulture) != 0)
+            {
+                errors.Add($"save_as_errors: {args[4]}");
+            }
 
-        if (!File.Exists(stepPath) || new FileInfo(stepPath).Length <= 0)
+            if (args[5] is not null && Convert.ToInt32(args[5], CultureInfo.InvariantCulture) != 0)
+            {
+                warnings.Add($"save_as_warnings: {args[5]}");
+            }
+
+            return result is bool value && value;
+        }
+        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
         {
-            throw new IOException($"solidworks_step_export_failed: {stepPath}");
+            errors.Add($"save_as_exception: {ex.GetBaseException().Message}");
+            return false;
         }
-
-        logs.Add($"Exported STEP file: {stepPath}.");
     }
 
     private static object GetProperty(object target, string name) =>
@@ -443,6 +681,18 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
             target,
             Array.Empty<object>())
         ?? throw new InvalidOperationException($"solidworks_property_missing: {name}.");
+
+    private static object? TryGetProperty(object target, string name)
+    {
+        try
+        {
+            return GetProperty(target, name);
+        }
+        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
 
     private static object? Invoke(object target, string name, params object?[] args) =>
         target.GetType().InvokeMember(
@@ -468,6 +718,14 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
     {
         var value = TryInvoke(target, name, args);
         return value is bool boolean && boolean;
+    }
+
+    private static void RequireComResult(object? value, string message)
+    {
+        if (value is null)
+        {
+            throw new InvalidOperationException(message);
+        }
     }
 
     private static void ReleaseComObject(object value)

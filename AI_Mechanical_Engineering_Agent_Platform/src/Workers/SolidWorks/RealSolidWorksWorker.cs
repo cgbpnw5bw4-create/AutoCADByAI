@@ -50,6 +50,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         var issues = preflight.Issues.ToList();
         var logs = new List<string>
         {
+            "operation_executed: real_build_request_received",
             "RealSolidWorksWorker V1.0-B executed preflight boundary checks.",
             "RealBuild generic mode is not implemented.",
             "V1.0-B only supports RealBuildPlateBasic4Holes under explicit safety switches."
@@ -88,29 +89,41 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         {
             logs.Add("COM connection was not attempted because a valid SolidWorks part template is required for real build.");
             issues.Add("template_part_path_required_for_real_build: SW_TEMPLATE_PART_PATH must point to an existing part template.");
-            return Result(
+            return RealBuildFailureResult(
                 request,
                 "Failed",
-                "RealPreflightOnly",
                 logs,
                 issues,
                 realCadConnected: false,
-                preflight);
+                preflight,
+                options,
+                "preflight_failed");
         }
 
         if (preflight.FinalStatus == "Failed")
         {
             logs.Add("COM connection was not attempted because preflight failed.");
-            return Result(
+            return request.ConnectionSmokeTestOnly
+                ? Result(
                 request,
                 "Failed",
                 "RealPreflightOnly",
                 logs,
                 issues,
                 realCadConnected: false,
-                preflight);
+                    preflight)
+                : RealBuildFailureResult(
+                    request,
+                    "Failed",
+                    logs,
+                    issues,
+                    realCadConnected: false,
+                    preflight,
+                    options,
+                    "preflight_failed");
         }
 
+        logs.Add("operation_executed: connection_started");
         var connection = await _sessionManager.ConnectAsync(options, cancellationToken);
         logs.AddRange(connection.Logs);
         issues.AddRange(connection.Issues);
@@ -126,16 +139,27 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         {
             if (!connection.Connected)
             {
-                return Result(
+                return request.ConnectionSmokeTestOnly
+                    ? Result(
                     request,
                     "Failed",
                     "RealConnectionSmokeTest",
                     logs,
                     issues,
                     realCadConnected: false,
-                    connectedPreflight);
+                        connectedPreflight)
+                    : RealBuildFailureResult(
+                        request,
+                        "Failed",
+                        logs,
+                        issues,
+                        realCadConnected: false,
+                        connectedPreflight,
+                        options,
+                        "solidworks_connection_failed");
             }
 
+            logs.Add("operation_executed: connection_success");
             if (request.ConnectionSmokeTestOnly)
             {
                 logs.Add("Connection smoke test requested; no CAD modeling command was executed.");
@@ -253,6 +277,62 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             RealCadExecuted: false,
             RealCadConnected: realCadConnected,
             PreflightReport: preflight);
+
+    private static SolidWorksWorkerResult RealBuildFailureResult(
+        SolidWorksWorkerRequest request,
+        string status,
+        IReadOnlyList<string> logs,
+        IReadOnlyList<string> issues,
+        bool realCadConnected,
+        SolidWorksPreflightReport preflight,
+        SolidWorksRuntimeOptions options,
+        string failedStage)
+    {
+        var outputDirectory = SolidWorksPlateBuildOutput.ResolveOutputDirectory(request, options);
+        var reportPath = Path.Combine(outputDirectory, "build_report.json");
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        diagnostics.OperationsExecuted.Add("real_build_request_received");
+        diagnostics.OperationsExecuted.Add("safety_flags_checked");
+        diagnostics.OperationsExecuted.Add("preflight_started");
+        diagnostics.OperationsExecuted.Add(failedStage);
+        diagnostics.Issues.AddRange(issues);
+
+        var generatedArtifacts = Array.Empty<SolidWorksArtifact>();
+        var allIssues = issues.ToList();
+        try
+        {
+            SolidWorksPlateBuildReportWriter.Write(
+                reportPath,
+                request,
+                SolidWorksPlateBuildOutput.ExecutionMode,
+                realCadExecuted: false,
+                realCadConnected,
+                preflight.SolidWorksVersion,
+                outputDirectory,
+                Array.Empty<string>(),
+                diagnostics,
+                "Failed");
+            generatedArtifacts = new[]
+            {
+                SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Real build failure report.")
+            };
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            allIssues.Add($"build_report_write_failed: {ex.Message}");
+        }
+
+        return new SolidWorksWorkerResult(
+            request.RequestId,
+            status,
+            generatedArtifacts,
+            logs,
+            allIssues,
+            SolidWorksPlateBuildOutput.ExecutionMode,
+            RealCadExecuted: false,
+            RealCadConnected: realCadConnected,
+            PreflightReport: preflight with { Issues = allIssues });
+    }
 
     private static SolidWorksPreflightReport CreatePreflightReport(
         SolidWorksWorkerRequest request,

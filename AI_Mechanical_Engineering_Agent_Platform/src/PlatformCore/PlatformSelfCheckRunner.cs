@@ -152,6 +152,7 @@ public static class PlatformSelfCheckRunner
         var workflowQualityChecks = await RunWorkflowQualityLoopChecks();
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var solidWorksSkeletonChecks = await RunSolidWorksSkeletonChecks(root, platform, outputRoot, cancellationToken);
+        var executableDocsChecks = RunExecutableDocsLayerChecks(root);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -277,11 +278,34 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealBuildRequiresEnvFlag &&
             solidWorksSkeletonChecks.SolidWorksRealBuildRequiresRequestFlag &&
             solidWorksSkeletonChecks.SolidWorksRealBuildRequiresDryRunFalse &&
-            solidWorksSkeletonChecks.SolidWorksRealBuildDefaultDisabled &&
+            (!solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted ||
+             (solidWorksSkeletonChecks.RealBuildRequestDryRun == false &&
+              solidWorksSkeletonChecks.RealBuildRequestAllowRealCadExecution == true &&
+              solidWorksSkeletonChecks.RealBuildExecutionMode == "RealBuildPlateBasic4Holes" &&
+              !string.IsNullOrWhiteSpace(solidWorksSkeletonChecks.RealBuildOutputDirectory) &&
+              Path.IsPathFullyQualified(solidWorksSkeletonChecks.RealBuildOutputDirectory) &&
+              !string.IsNullOrWhiteSpace(solidWorksSkeletonChecks.RealBuildLatestReportPath) &&
+              File.Exists(solidWorksSkeletonChecks.RealBuildLatestReportPath))) &&
+            (solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealBuildDefaultDisabled) &&
             (!solidWorksSkeletonChecks.SolidWorksStrictRealBuildSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestPassed) &&
-            solidWorksSkeletonChecks.SolidWorksRealBuildNotCalledInDefaultSelfCheck &&
+            (solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealBuildNotCalledInDefaultSelfCheck) &&
+            solidWorksSkeletonChecks.SolidWorksDiagnosticRunnerExists &&
+            solidWorksSkeletonChecks.SolidWorksDiagnosticRunnerNotCalledByDefault &&
+            solidWorksSkeletonChecks.SolidWorksRealBuildErrorIsActionable &&
+            solidWorksSkeletonChecks.SolidWorksApiFailureAnalyzerExists &&
+            solidWorksSkeletonChecks.SolidWorksApiEvidenceCollectorExists &&
+            solidWorksSkeletonChecks.SolidWorksApiEvidenceReportSchemaExists &&
+            solidWorksSkeletonChecks.SolidWorksCutHolesApiEvidenceSupported &&
+            solidWorksSkeletonChecks.SolidWorksReferenceSkillReadonlyAnalysisSupported &&
+            solidWorksSkeletonChecks.SolidWorksExternalScriptsNotCopied &&
+            solidWorksSkeletonChecks.SolidWorksApiRepairLoopAvailable &&
+            solidWorksSkeletonChecks.SolidWorksMacroRecordingRequestAvailable &&
+            solidWorksSkeletonChecks.SolidWorksPlateFeatureBuilderExists &&
+            executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -420,6 +444,61 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealBuildOutputsStep,
             solidWorksSkeletonChecks.SolidWorksRealBuildOutputsJsonReport,
             solidWorksSkeletonChecks.SolidWorksRealBuildNotCalledInDefaultSelfCheck,
+            solidWorksSkeletonChecks.SwEnableRealExecutionEnvValue,
+            solidWorksSkeletonChecks.SwRealBuildSmokeTestEnvValue,
+            solidWorksSkeletonChecks.SwStrictRealBuildTestEnvValue,
+            solidWorksSkeletonChecks.RealBuildRequestDryRun,
+            solidWorksSkeletonChecks.RealBuildRequestAllowRealCadExecution,
+            solidWorksSkeletonChecks.RealBuildExecutionMode,
+            solidWorksSkeletonChecks.RealBuildOutputDirectory,
+            solidWorksSkeletonChecks.RealBuildLatestReportPath,
+            solidWorksSkeletonChecks.SolidWorksDiagnosticRunnerExists,
+            solidWorksSkeletonChecks.SolidWorksDiagnosticRunnerNotCalledByDefault,
+            solidWorksSkeletonChecks.SolidWorksLatestDiagnosticReportPath,
+            solidWorksSkeletonChecks.SolidWorksRealBuildFailureStage,
+            solidWorksSkeletonChecks.SolidWorksRealBuildErrorIsActionable,
+            solidWorksSkeletonChecks.SolidWorksApiFailureAnalyzerExists,
+            solidWorksSkeletonChecks.SolidWorksApiEvidenceCollectorExists,
+            solidWorksSkeletonChecks.SolidWorksApiEvidenceReportSchemaExists,
+            solidWorksSkeletonChecks.SolidWorksCutHolesApiEvidenceSupported,
+            solidWorksSkeletonChecks.SolidWorksReferenceSkillReadonlyAnalysisSupported,
+            solidWorksSkeletonChecks.SolidWorksExternalScriptsNotCopied,
+            solidWorksSkeletonChecks.SolidWorksApiRepairLoopAvailable,
+            solidWorksSkeletonChecks.SolidWorksMacroRecordingRequestAvailable,
+            solidWorksSkeletonChecks.SolidWorksPlateFeatureBuilderExists,
+            executableDocsChecks.ExecutableDocsLayerEnabled,
+            executableDocsChecks.DocsIndexExists,
+            executableDocsChecks.ProjectExecutionStandardExists,
+            executableDocsChecks.ModuleDocumentStandardExists,
+            executableDocsChecks.StepExecutionStandardExists,
+            executableDocsChecks.FailureRepairStandardExists,
+            executableDocsChecks.CodexExecutionProtocolExists,
+            executableDocsChecks.ClaudeReviewProtocolExists,
+            executableDocsChecks.VersionStageIndexExists,
+            executableDocsChecks.CodexAgentTeamGuideExists,
+            executableDocsChecks.AgentsMdExists,
+            executableDocsChecks.CodexAgentsConfigured,
+            executableDocsChecks.CodexConfigExampleExists,
+            executableDocsChecks.CodexProjectManagerAgentExists,
+            executableDocsChecks.CodexCodeMapperAgentExists,
+            executableDocsChecks.CodexApiResearcherAgentExists,
+            executableDocsChecks.CodexCadWorkerAgentExists,
+            executableDocsChecks.CodexQualityGateAgentExists,
+            executableDocsChecks.CodexDocsWriterAgentExists,
+            executableDocsChecks.CodexAgentsDoNotReplaceProjectModules,
+            executableDocsChecks.CodexAgentsRespectWorkerBoundaries,
+            executableDocsChecks.AgentsSkillsDirectoryExists,
+            executableDocsChecks.SolidWorksApiRepairSkillExists,
+            executableDocsChecks.MarkdownDocsStandardSkillExists,
+            executableDocsChecks.QualityReviewSkillExists,
+            executableDocsChecks.CadModelingExecutionDocExists,
+            executableDocsChecks.CadModelingFailureRepairDocExists,
+            executableDocsChecks.CadModelingApiEvidenceDocExists,
+            executableDocsChecks.CadModelingReviewChecklistExists,
+            executableDocsChecks.SolidWorksWorkerExecutionDocExists,
+            executableDocsChecks.SolidWorksWorkerFailureRepairDocExists,
+            executableDocsChecks.SolidWorksWorkerApiEvidenceDocExists,
+            executableDocsChecks.SolidWorksWorkerReviewChecklistExists,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -519,6 +598,140 @@ public static class PlatformSelfCheckRunner
                StorageContractFiles.All(file => File.Exists(Path.Combine(storageRoot, file)));
     }
 
+    private static ExecutableDocsLayerSelfCheckResult RunExecutableDocsLayerChecks(string projectRoot)
+    {
+        bool Exists(params string[] parts) => File.Exists(Path.Combine(parts.Prepend(projectRoot).ToArray()));
+        bool DirectoryExists(params string[] parts) => Directory.Exists(Path.Combine(parts.Prepend(projectRoot).ToArray()));
+        string Read(params string[] parts)
+        {
+            var path = Path.Combine(parts.Prepend(projectRoot).ToArray());
+            return File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+        }
+
+        var docsIndexExists = Exists("docs", "index.md");
+        var projectExecutionStandardExists = Exists("docs", "project_execution_standard.md");
+        var moduleDocumentStandardExists = Exists("docs", "module_document_standard.md");
+        var stepExecutionStandardExists = Exists("docs", "step_execution_standard.md");
+        var failureRepairStandardExists = Exists("docs", "failure_repair_standard.md");
+        var codexExecutionProtocolExists = Exists("docs", "codex_execution_protocol.md");
+        var claudeReviewProtocolExists = Exists("docs", "claude_review_protocol.md");
+        var versionStageIndexExists = Exists("docs", "version_stage_index.md");
+        var codexAgentTeamGuideExists = Exists("docs", "codex_agent_team_guide.md");
+        var agentsMdExists = Exists("AGENTS.md");
+        var codexConfigExampleExists = Exists(".codex", "config.example.toml");
+
+        var projectManager = Read(".codex", "agents", "project-manager.toml");
+        var codeMapper = Read(".codex", "agents", "code-mapper.toml");
+        var apiResearcher = Read(".codex", "agents", "api-researcher.toml");
+        var cadWorker = Read(".codex", "agents", "cad-worker.toml");
+        var qualityGate = Read(".codex", "agents", "quality-gate.toml");
+        var docsWriter = Read(".codex", "agents", "docs-writer.toml");
+
+        var codexProjectManagerAgentExists = AgentConfigured(projectManager, "project_manager", "read-only");
+        var codexCodeMapperAgentExists = AgentConfigured(codeMapper, "code_mapper", "read-only");
+        var codexApiResearcherAgentExists = AgentConfigured(apiResearcher, "api_researcher", "read-only");
+        var codexCadWorkerAgentExists = AgentConfigured(cadWorker, "cad_worker", "workspace-write");
+        var codexQualityGateAgentExists = AgentConfigured(qualityGate, "quality_gate", "read-only");
+        var codexDocsWriterAgentExists = AgentConfigured(docsWriter, "docs_writer", "workspace-write");
+        var codexAgentsConfigured =
+            codexProjectManagerAgentExists &&
+            codexCodeMapperAgentExists &&
+            codexApiResearcherAgentExists &&
+            codexCadWorkerAgentExists &&
+            codexQualityGateAgentExists &&
+            codexDocsWriterAgentExists;
+
+        var agentsText = Read("AGENTS.md");
+        var guideText = Read("docs", "codex_agent_team_guide.md");
+        var codexAgentsDoNotReplaceProjectModules =
+            agentsText.Contains("不能替代 `src/Modules`", StringComparison.OrdinalIgnoreCase) &&
+            guideText.Contains("不能替代 `src/Modules`", StringComparison.OrdinalIgnoreCase);
+        var codexAgentsRespectWorkerBoundaries =
+            agentsText.Contains("不能直接调用 `Worker`", StringComparison.OrdinalIgnoreCase) &&
+            guideText.Contains("不能直接执行真实 CAD", StringComparison.OrdinalIgnoreCase);
+
+        var agentsSkillsDirectoryExists = DirectoryExists(".agents", "skills");
+        var solidWorksApiRepairSkillExists = Exists(".agents", "skills", "solidworks-api-repair", "SKILL.md");
+        var markdownDocsStandardSkillExists = Exists(".agents", "skills", "markdown-docs-standard", "SKILL.md");
+        var qualityReviewSkillExists = Exists(".agents", "skills", "quality-review", "SKILL.md");
+
+        var cadModelingExecutionDocExists = Exists("src", "Modules", "CADModeling", "execution.md");
+        var cadModelingFailureRepairDocExists = Exists("src", "Modules", "CADModeling", "failure_repair.md");
+        var cadModelingApiEvidenceDocExists = Exists("src", "Modules", "CADModeling", "api_evidence.md");
+        var cadModelingReviewChecklistExists = Exists("src", "Modules", "CADModeling", "review_checklist.md");
+        var solidWorksWorkerExecutionDocExists = Exists("src", "Workers", "SolidWorks", "execution.md");
+        var solidWorksWorkerFailureRepairDocExists = Exists("src", "Workers", "SolidWorks", "failure_repair.md");
+        var solidWorksWorkerApiEvidenceDocExists = Exists("src", "Workers", "SolidWorks", "api_evidence.md");
+        var solidWorksWorkerReviewChecklistExists = Exists("src", "Workers", "SolidWorks", "review_checklist.md");
+
+        var executableDocsLayerEnabled =
+            docsIndexExists &&
+            projectExecutionStandardExists &&
+            moduleDocumentStandardExists &&
+            stepExecutionStandardExists &&
+            failureRepairStandardExists &&
+            codexExecutionProtocolExists &&
+            claudeReviewProtocolExists &&
+            versionStageIndexExists &&
+            codexAgentTeamGuideExists &&
+            agentsMdExists &&
+            codexAgentsConfigured &&
+            codexConfigExampleExists &&
+            codexAgentsDoNotReplaceProjectModules &&
+            codexAgentsRespectWorkerBoundaries &&
+            agentsSkillsDirectoryExists &&
+            solidWorksApiRepairSkillExists &&
+            markdownDocsStandardSkillExists &&
+            qualityReviewSkillExists &&
+            cadModelingExecutionDocExists &&
+            cadModelingFailureRepairDocExists &&
+            cadModelingApiEvidenceDocExists &&
+            cadModelingReviewChecklistExists &&
+            solidWorksWorkerExecutionDocExists &&
+            solidWorksWorkerFailureRepairDocExists &&
+            solidWorksWorkerApiEvidenceDocExists &&
+            solidWorksWorkerReviewChecklistExists;
+
+        return new ExecutableDocsLayerSelfCheckResult(
+            executableDocsLayerEnabled,
+            docsIndexExists,
+            projectExecutionStandardExists,
+            moduleDocumentStandardExists,
+            stepExecutionStandardExists,
+            failureRepairStandardExists,
+            codexExecutionProtocolExists,
+            claudeReviewProtocolExists,
+            versionStageIndexExists,
+            codexAgentTeamGuideExists,
+            agentsMdExists,
+            codexAgentsConfigured,
+            codexConfigExampleExists,
+            codexProjectManagerAgentExists,
+            codexCodeMapperAgentExists,
+            codexApiResearcherAgentExists,
+            codexCadWorkerAgentExists,
+            codexQualityGateAgentExists,
+            codexDocsWriterAgentExists,
+            codexAgentsDoNotReplaceProjectModules,
+            codexAgentsRespectWorkerBoundaries,
+            agentsSkillsDirectoryExists,
+            solidWorksApiRepairSkillExists,
+            markdownDocsStandardSkillExists,
+            qualityReviewSkillExists,
+            cadModelingExecutionDocExists,
+            cadModelingFailureRepairDocExists,
+            cadModelingApiEvidenceDocExists,
+            cadModelingReviewChecklistExists,
+            solidWorksWorkerExecutionDocExists,
+            solidWorksWorkerFailureRepairDocExists,
+            solidWorksWorkerApiEvidenceDocExists,
+            solidWorksWorkerReviewChecklistExists);
+    }
+
+    private static bool AgentConfigured(string toml, string name, string sandboxMode) =>
+        toml.Contains($"name = \"{name}\"", StringComparison.OrdinalIgnoreCase) &&
+        toml.Contains($"sandbox_mode = \"{sandboxMode}\"", StringComparison.OrdinalIgnoreCase);
+
     private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform, string? testScenario = null)
     {
         var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")
@@ -568,6 +781,54 @@ public static class PlatformSelfCheckRunner
                 cadModuleYaml.Contains("SolidWorksWorkerRequest", StringComparison.OrdinalIgnoreCase) &&
                 cadModuleYaml.Contains("SolidWorksWorkerResult", StringComparison.OrdinalIgnoreCase) &&
                 cadModuleYaml.Contains("SolidWorksArtifact", StringComparison.OrdinalIgnoreCase);
+            var solidWorksDiagnosticRunnerExists = File.Exists(Path.Combine(
+                projectRoot,
+                "tools",
+                "SolidWorksSmokeRunner",
+                "SolidWorksSmokeRunner.csproj"));
+            var apiFailureAnalyzerPath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "Diagnostics", "SolidWorksApiFailureAnalyzer.cs");
+            var apiEvidenceCollectorPath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "Diagnostics", "SolidWorksApiEvidenceCollector.cs");
+            var apiFailureAnalyzerText = File.Exists(apiFailureAnalyzerPath) ? File.ReadAllText(apiFailureAnalyzerPath) : string.Empty;
+            var apiEvidenceCollectorText = File.Exists(apiEvidenceCollectorPath) ? File.ReadAllText(apiEvidenceCollectorPath) : string.Empty;
+            var plateFeatureBuilderPath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksPlateFeatureBuilder.cs");
+            var plateFeatureBuilderText = File.Exists(plateFeatureBuilderPath) ? File.ReadAllText(plateFeatureBuilderPath) : string.Empty;
+            var smokeRunnerPath = Path.Combine(projectRoot, "tools", "SolidWorksSmokeRunner", "SolidWorksDiagnosticRunner.cs");
+            var smokeRunnerText = File.Exists(smokeRunnerPath) ? File.ReadAllText(smokeRunnerPath) : string.Empty;
+            var solidWorksApiFailureAnalyzerExists =
+                apiFailureAnalyzerText.Contains("SolidWorksApiFailureAnalyzer", StringComparison.Ordinal) &&
+                apiFailureAnalyzerText.Contains("cut_holes_failed", StringComparison.OrdinalIgnoreCase);
+            var solidWorksApiEvidenceCollectorExists =
+                apiEvidenceCollectorText.Contains("SolidWorksApiEvidenceCollector", StringComparison.Ordinal) &&
+                apiEvidenceCollectorText.Contains("cut_holes_failed_api_evidence_report", StringComparison.Ordinal);
+            var solidWorksApiEvidenceReportSchemaExists =
+                typeof(ApiEvidenceReport).GetProperties().Any(property => property.Name == nameof(ApiEvidenceReport.SelectedApiStrategy)) &&
+                typeof(ApiCandidate).GetProperties().Any(property => property.Name == nameof(ApiCandidate.RequiredSelectionState));
+            var solidWorksCutHolesApiEvidenceSupported =
+                apiFailureAnalyzerText.Contains("SolidWorks API FeatureCut4 cut extrude", StringComparison.OrdinalIgnoreCase) &&
+                apiFailureAnalyzerText.Contains("SolidWorks API CreateCircleByRadius SketchManager", StringComparison.OrdinalIgnoreCase) &&
+                apiEvidenceCollectorText.Contains("FeatureCut4", StringComparison.Ordinal) &&
+                apiEvidenceCollectorText.Contains("CreateCircleByRadius", StringComparison.Ordinal);
+            var solidWorksReferenceSkillReadonlyAnalysisSupported =
+                File.Exists(Path.Combine(projectRoot, "references", "external", "solidworks-automation-skill-analysis.md")) &&
+                apiEvidenceCollectorText.Contains("CanReuseCode: false", StringComparison.Ordinal) &&
+                apiEvidenceCollectorText.Contains("CanReuseIdea: true", StringComparison.Ordinal);
+            var solidWorksExternalScriptsNotCopied =
+                !Directory.EnumerateFiles(Path.Combine(projectRoot, "src", "Workers", "SolidWorks"), "*.py", SearchOption.AllDirectories).Any() &&
+                !Directory.EnumerateFiles(Path.Combine(projectRoot, "tools", "SolidWorksSmokeRunner"), "*.py", SearchOption.AllDirectories).Any();
+            var solidWorksApiRepairLoopAvailable =
+                smokeRunnerText.Contains("MaxRepairAttempts = 1", StringComparison.Ordinal) &&
+                smokeRunnerText.Contains("TryRepairCutHolesOnce", StringComparison.Ordinal) &&
+                smokeRunnerText.Contains("ApiRepairAttempted", StringComparison.Ordinal);
+            var solidWorksMacroRecordingRequestAvailable =
+                apiEvidenceCollectorText.Contains("macro_recording_request.md", StringComparison.Ordinal) &&
+                apiEvidenceCollectorText.Contains("SolidWorks 切孔宏录制请求", StringComparison.Ordinal);
+            var solidWorksPlateFeatureBuilderExists =
+                plateFeatureBuilderText.Contains("SolidWorksPlateFeatureBuilder", StringComparison.Ordinal) &&
+                plateFeatureBuilderText.Contains("CreateThroughHoles", StringComparison.Ordinal);
+            var solidWorksDiagnosticRunnerNotCalledByDefault = true;
+            var solidWorksLatestDiagnosticReportPath = FindLatestDiagnosticReportPath(projectRoot);
+            string? solidWorksRealBuildFailureStage = null;
+            var solidWorksRealBuildErrorIsActionable = true;
 
             var skill = platform.SkillRegistry.GetByName("solidworks-build-plan-skill") as SolidWorksBuildPlanSkill
                 ?? new SolidWorksBuildPlanSkill();
@@ -727,6 +988,14 @@ public static class PlatformSelfCheckRunner
             var solidWorksRealBuildOutputsStep = false;
             var solidWorksRealBuildOutputsJsonReport = false;
             var solidWorksRealBuildNotCalledInDefaultSelfCheck = !solidWorksRealBuildSmokeTestAttempted;
+            var swEnableRealExecutionEnvValue = Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION");
+            var swRealBuildSmokeTestEnvValue = Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST");
+            var swStrictRealBuildTestEnvValue = Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST");
+            bool? realBuildRequestDryRun = null;
+            bool? realBuildRequestAllowRealCadExecution = null;
+            string? realBuildExecutionMode = null;
+            string? realBuildOutputDirectory = null;
+            string? realBuildLatestReportPath = null;
 
             if (realSolidWorksWorkerType is not null && plan is not null)
             {
@@ -836,14 +1105,19 @@ public static class PlatformSelfCheckRunner
 
                 if (solidWorksRealBuildSmokeTestAttempted)
                 {
+                    var requestOutputDirectory = CreateRealBuildSmokeOutputDirectory(projectRoot);
                     var buildRequest = envFlagProbe with
                     {
                         RequestId = $"self-check-solidworks-real-build-{Guid.NewGuid():N}",
-                        OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "real"),
+                        OutputDirectory = requestOutputDirectory,
                         DryRun = false,
                         AllowRealCadExecution = true,
                         ConnectionSmokeTestOnly = false
                     };
+                    realBuildRequestDryRun = buildRequest.DryRun;
+                    realBuildRequestAllowRealCadExecution = buildRequest.AllowRealCadExecution;
+                    realBuildExecutionMode = "RealBuildPlateBasic4Holes";
+                    realBuildOutputDirectory = Path.GetFullPath(buildRequest.OutputDirectory);
 
                     try
                     {
@@ -852,6 +1126,10 @@ public static class PlatformSelfCheckRunner
                             SolidWorksRuntimeOptions.FromEnvironment(),
                             buildRequest,
                             cancellationToken);
+                        realBuildExecutionMode = buildResult.ExecutionMode;
+                        var latestReportArtifact = buildResult.GeneratedArtifacts.FirstOrDefault(artifact =>
+                            artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase));
+                        realBuildLatestReportPath = latestReportArtifact?.FilePath;
                         solidWorksRealBuildOutputsSldprt = buildResult.GeneratedArtifacts.Any(artifact =>
                             artifact.FilePath.EndsWith(".SLDPRT", StringComparison.OrdinalIgnoreCase) &&
                             File.Exists(artifact.FilePath) &&
@@ -864,6 +1142,15 @@ public static class PlatformSelfCheckRunner
                             artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase) &&
                             File.Exists(artifact.FilePath) &&
                             new FileInfo(artifact.FilePath).Length > 0);
+                        if (realBuildLatestReportPath is null)
+                        {
+                            realBuildLatestReportPath = FindLatestBuildReportPath(realBuildOutputDirectory);
+                            solidWorksRealBuildOutputsJsonReport =
+                                !string.IsNullOrWhiteSpace(realBuildLatestReportPath) &&
+                                File.Exists(realBuildLatestReportPath) &&
+                                new FileInfo(realBuildLatestReportPath).Length > 0;
+                        }
+
                         solidWorksRealBuildReportGenerated = solidWorksRealBuildOutputsJsonReport;
                         solidWorksRealBuildArtifactsValidated =
                             new SolidWorksArtifactValidator(Path.Combine(projectRoot, "output", "solidworks"))
@@ -880,11 +1167,24 @@ public static class PlatformSelfCheckRunner
                             solidWorksRealBuildArtifactsValidated;
                         solidWorksRealBuildSmokeTestError = solidWorksRealBuildSmokeTestPassed
                             ? null
-                            : string.Join("; ", buildResult.Issues);
+                            : BuildRealSmokeTestError(buildResult.Issues, realBuildLatestReportPath);
+                        solidWorksRealBuildFailureStage = solidWorksRealBuildSmokeTestPassed
+                            ? null
+                            : DetermineSolidWorksRealBuildFailureStage(buildResult.Issues, solidWorksRealBuildSmokeTestError);
+                        solidWorksRealBuildErrorIsActionable = IsActionableFailureStage(
+                            solidWorksRealBuildFailureStage,
+                            solidWorksRealBuildSmokeTestError);
                     }
                     catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException)
                     {
                         solidWorksRealBuildSmokeTestError = ex.GetBaseException().Message;
+                        realBuildLatestReportPath ??= FindLatestBuildReportPath(realBuildOutputDirectory);
+                        solidWorksRealBuildFailureStage = DetermineSolidWorksRealBuildFailureStage(
+                            Array.Empty<string>(),
+                            solidWorksRealBuildSmokeTestError);
+                        solidWorksRealBuildErrorIsActionable = IsActionableFailureStage(
+                            solidWorksRealBuildFailureStage,
+                            solidWorksRealBuildSmokeTestError);
                     }
                 }
             }
@@ -933,7 +1233,29 @@ public static class PlatformSelfCheckRunner
                 solidWorksRealBuildOutputsSldprt,
                 solidWorksRealBuildOutputsStep,
                 solidWorksRealBuildOutputsJsonReport,
-                solidWorksRealBuildNotCalledInDefaultSelfCheck);
+                solidWorksRealBuildNotCalledInDefaultSelfCheck,
+                swEnableRealExecutionEnvValue,
+                swRealBuildSmokeTestEnvValue,
+                swStrictRealBuildTestEnvValue,
+                realBuildRequestDryRun,
+                realBuildRequestAllowRealCadExecution,
+                realBuildExecutionMode,
+                realBuildOutputDirectory,
+                realBuildLatestReportPath,
+                solidWorksDiagnosticRunnerExists,
+                solidWorksDiagnosticRunnerNotCalledByDefault,
+                solidWorksLatestDiagnosticReportPath,
+                solidWorksRealBuildFailureStage,
+                solidWorksRealBuildErrorIsActionable,
+                solidWorksApiFailureAnalyzerExists,
+                solidWorksApiEvidenceCollectorExists,
+                solidWorksApiEvidenceReportSchemaExists,
+                solidWorksCutHolesApiEvidenceSupported,
+                solidWorksReferenceSkillReadonlyAnalysisSupported,
+                solidWorksExternalScriptsNotCopied,
+                solidWorksApiRepairLoopAvailable,
+                solidWorksMacroRecordingRequestAvailable,
+                solidWorksPlateFeatureBuilderExists);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
         {
@@ -983,7 +1305,29 @@ public static class PlatformSelfCheckRunner
                 SolidWorksRealBuildOutputsSldprt: false,
                 SolidWorksRealBuildOutputsStep: false,
                 SolidWorksRealBuildOutputsJsonReport: false,
-                SolidWorksRealBuildNotCalledInDefaultSelfCheck: false);
+                SolidWorksRealBuildNotCalledInDefaultSelfCheck: false,
+                SwEnableRealExecutionEnvValue: Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"),
+                SwRealBuildSmokeTestEnvValue: Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST"),
+                SwStrictRealBuildTestEnvValue: Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST"),
+                RealBuildRequestDryRun: null,
+                RealBuildRequestAllowRealCadExecution: null,
+                RealBuildExecutionMode: null,
+                RealBuildOutputDirectory: null,
+                RealBuildLatestReportPath: null,
+                SolidWorksDiagnosticRunnerExists: File.Exists(Path.Combine(projectRoot, "tools", "SolidWorksSmokeRunner", "SolidWorksSmokeRunner.csproj")),
+                SolidWorksDiagnosticRunnerNotCalledByDefault: true,
+                SolidWorksLatestDiagnosticReportPath: FindLatestDiagnosticReportPath(projectRoot),
+                SolidWorksRealBuildFailureStage: null,
+                SolidWorksRealBuildErrorIsActionable: false,
+                SolidWorksApiFailureAnalyzerExists: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "Diagnostics", "SolidWorksApiFailureAnalyzer.cs")),
+                SolidWorksApiEvidenceCollectorExists: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "Diagnostics", "SolidWorksApiEvidenceCollector.cs")),
+                SolidWorksApiEvidenceReportSchemaExists: typeof(ApiEvidenceReport) is not null,
+                SolidWorksCutHolesApiEvidenceSupported: false,
+                SolidWorksReferenceSkillReadonlyAnalysisSupported: false,
+                SolidWorksExternalScriptsNotCopied: false,
+                SolidWorksApiRepairLoopAvailable: false,
+                SolidWorksMacroRecordingRequestAvailable: false,
+                SolidWorksPlateFeatureBuilderExists: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksPlateFeatureBuilder.cs")));
         }
     }
 
@@ -1017,6 +1361,126 @@ public static class PlatformSelfCheckRunner
 
     private static bool StrictRealSolidWorksBuildTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static string CreateRealBuildSmokeOutputDirectory(string projectRoot) =>
+        Path.GetFullPath(Path.Combine(
+            projectRoot,
+            "output",
+            "solidworks",
+            "real",
+            "plate_basic_4holes",
+            $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
+
+    private static string? FindLatestBuildReportPath(string? outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory) || !Directory.Exists(outputDirectory))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(outputDirectory, "build_report.json", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestDiagnosticReportPath(string projectRoot)
+    {
+        var diagnosticsRoot = Path.Combine(projectRoot, "output", "solidworks", "diagnostics");
+        if (!Directory.Exists(diagnosticsRoot))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(diagnosticsRoot, "diagnostic_report.json", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? DetermineSolidWorksRealBuildFailureStage(
+        IEnumerable<string> issues,
+        string? error)
+    {
+        var text = string.Join(" ", issues.Append(error ?? string.Empty));
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        if (text.Contains("preflight", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("template_part_path", StringComparison.OrdinalIgnoreCase))
+        {
+            return "preflight_failed";
+        }
+
+        if (text.Contains("connection", StringComparison.OrdinalIgnoreCase))
+        {
+            return "connection_failed";
+        }
+
+        if (text.Contains("new_part", StringComparison.OrdinalIgnoreCase))
+        {
+            return "new_part_failed";
+        }
+
+        if (text.Contains("sketch", StringComparison.OrdinalIgnoreCase))
+        {
+            return "sketch_failed";
+        }
+
+        if (text.Contains("extrude", StringComparison.OrdinalIgnoreCase))
+        {
+            return "extrude_failed";
+        }
+
+        if (text.Contains("cut_holes", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("hole", StringComparison.OrdinalIgnoreCase))
+        {
+            return "cut_holes_failed";
+        }
+
+        if (text.Contains("sldprt", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("save", StringComparison.OrdinalIgnoreCase))
+        {
+            return "save_sldprt_failed";
+        }
+
+        if (text.Contains("step", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("export", StringComparison.OrdinalIgnoreCase))
+        {
+            return "export_step_failed";
+        }
+
+        if (text.Contains("report", StringComparison.OrdinalIgnoreCase))
+        {
+            return "build_report_failed";
+        }
+
+        return "unknown_failed";
+    }
+
+    private static bool IsActionableFailureStage(string? failureStage, string? error) =>
+        string.IsNullOrWhiteSpace(error) ||
+        (!string.IsNullOrWhiteSpace(failureStage) &&
+         !failureStage.Equals("unknown_failed", StringComparison.OrdinalIgnoreCase));
+
+    private static string BuildRealSmokeTestError(
+        IReadOnlyList<string> issues,
+        string? latestReportPath)
+    {
+        var joined = issues.Count == 0
+            ? "real_build_smoke_test_failed_without_issue"
+            : string.Join("; ", issues);
+
+        return string.IsNullOrWhiteSpace(latestReportPath)
+            ? joined
+            : $"{joined}; build_report={latestReportPath}";
+    }
 
     private static AgentContracts.AgentContext CreateCadModelerSelfCheckContext()
     {
@@ -2102,7 +2566,64 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksRealBuildOutputsSldprt,
         bool SolidWorksRealBuildOutputsStep,
         bool SolidWorksRealBuildOutputsJsonReport,
-        bool SolidWorksRealBuildNotCalledInDefaultSelfCheck);
+        bool SolidWorksRealBuildNotCalledInDefaultSelfCheck,
+        string? SwEnableRealExecutionEnvValue,
+        string? SwRealBuildSmokeTestEnvValue,
+        string? SwStrictRealBuildTestEnvValue,
+        bool? RealBuildRequestDryRun,
+        bool? RealBuildRequestAllowRealCadExecution,
+        string? RealBuildExecutionMode,
+        string? RealBuildOutputDirectory,
+        string? RealBuildLatestReportPath,
+        bool SolidWorksDiagnosticRunnerExists,
+        bool SolidWorksDiagnosticRunnerNotCalledByDefault,
+        string? SolidWorksLatestDiagnosticReportPath,
+        string? SolidWorksRealBuildFailureStage,
+        bool SolidWorksRealBuildErrorIsActionable,
+        bool SolidWorksApiFailureAnalyzerExists,
+        bool SolidWorksApiEvidenceCollectorExists,
+        bool SolidWorksApiEvidenceReportSchemaExists,
+        bool SolidWorksCutHolesApiEvidenceSupported,
+        bool SolidWorksReferenceSkillReadonlyAnalysisSupported,
+        bool SolidWorksExternalScriptsNotCopied,
+        bool SolidWorksApiRepairLoopAvailable,
+        bool SolidWorksMacroRecordingRequestAvailable,
+        bool SolidWorksPlateFeatureBuilderExists);
+
+    private sealed record ExecutableDocsLayerSelfCheckResult(
+        bool ExecutableDocsLayerEnabled,
+        bool DocsIndexExists,
+        bool ProjectExecutionStandardExists,
+        bool ModuleDocumentStandardExists,
+        bool StepExecutionStandardExists,
+        bool FailureRepairStandardExists,
+        bool CodexExecutionProtocolExists,
+        bool ClaudeReviewProtocolExists,
+        bool VersionStageIndexExists,
+        bool CodexAgentTeamGuideExists,
+        bool AgentsMdExists,
+        bool CodexAgentsConfigured,
+        bool CodexConfigExampleExists,
+        bool CodexProjectManagerAgentExists,
+        bool CodexCodeMapperAgentExists,
+        bool CodexApiResearcherAgentExists,
+        bool CodexCadWorkerAgentExists,
+        bool CodexQualityGateAgentExists,
+        bool CodexDocsWriterAgentExists,
+        bool CodexAgentsDoNotReplaceProjectModules,
+        bool CodexAgentsRespectWorkerBoundaries,
+        bool AgentsSkillsDirectoryExists,
+        bool SolidWorksApiRepairSkillExists,
+        bool MarkdownDocsStandardSkillExists,
+        bool QualityReviewSkillExists,
+        bool CadModelingExecutionDocExists,
+        bool CadModelingFailureRepairDocExists,
+        bool CadModelingApiEvidenceDocExists,
+        bool CadModelingReviewChecklistExists,
+        bool SolidWorksWorkerExecutionDocExists,
+        bool SolidWorksWorkerFailureRepairDocExists,
+        bool SolidWorksWorkerApiEvidenceDocExists,
+        bool SolidWorksWorkerReviewChecklistExists);
 
     private static JsonSerializerOptions JsonOptions()
     {

@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\Storage\Storage.csproj" />
     <ProjectReference Include="..\..\src\AgentRuntime.Microsoft\AgentRuntime.Microsoft.csproj" />
     <ProjectReference Include="..\..\src\Workers\SolidWorks\SolidWorksWorker.csproj" />
+    <ProjectReference Include="..\..\tools\SolidWorksSmokeRunner\SolidWorksSmokeRunner.csproj" />
   </ItemGroup>
 
 </Project>

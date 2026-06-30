@@ -177,6 +177,18 @@ public sealed class SolidWorksArtifactValidator : IValidator
             {
                 issues.Add("build_report execution_mode must be RealBuildPlateBasic4Holes.");
             }
+
+            if (!root.TryGetProperty("sldprt_save_success", out var sldprtSaveSuccess) ||
+                sldprtSaveSuccess.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("build_report sldprt_save_success must be true.");
+            }
+
+            if (!root.TryGetProperty("step_export_success", out var stepExportSuccess) ||
+                stepExportSuccess.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("build_report step_export_success must be true.");
+            }
         }
         catch (JsonException ex)
         {

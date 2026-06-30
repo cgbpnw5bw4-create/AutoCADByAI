@@ -1,0 +1,7 @@
+[agents]
+max_threads = 6
+max_depth = 1
+job_max_runtime_seconds = 1800
+
+# 本文件是项目模板，不假设当前 Codex 版本一定自动读取。
+# 如需启用，请按当前 Codex 环境要求复制到用户级配置，例如 ~/.codex/config.toml。

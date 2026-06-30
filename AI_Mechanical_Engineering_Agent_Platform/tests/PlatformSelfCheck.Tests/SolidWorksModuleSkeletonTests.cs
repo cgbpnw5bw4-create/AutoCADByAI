@@ -8,7 +8,10 @@ using PlatformCore.Modules.CADModeling.Skills;
 using PlatformCore.Modules.CADModeling.Validators;
 using QualityGate;
 using SkillContracts;
+using SolidWorksSmokeRunner;
 using SolidWorksWorker;
+using SolidWorksWorker.Diagnostics;
+using System.Text.Json;
 using WorkerContracts;
 
 namespace PlatformSelfCheck.Tests;
@@ -449,6 +452,11 @@ public sealed class SolidWorksModuleSkeletonTests
             using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(reportPath));
             Assert.Equal("RealBuildPlateBasic4Holes", document.RootElement.GetProperty("execution_mode").GetString());
             Assert.True(document.RootElement.GetProperty("real_cad_executed").GetBoolean());
+            Assert.True(document.RootElement.TryGetProperty("plane_selection_attempted", out _));
+            Assert.True(document.RootElement.TryGetProperty("plane_selection_success", out _));
+            Assert.True(document.RootElement.TryGetProperty("selected_plane_name", out _));
+            Assert.True(document.RootElement.TryGetProperty("selected_plane_strategy", out _));
+            Assert.True(document.RootElement.TryGetProperty("available_reference_planes", out _));
         }
         finally
         {
@@ -537,6 +545,56 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public async Task RealSolidWorksWorkerWritesBuildReportWhenTemplateIsMissing()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", "plate_basic_4holes", $"template-missing-{Guid.NewGuid():N}");
+        try
+        {
+            var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
+            var worker = new RealSolidWorksWorker(
+                sessionManager,
+                SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+                {
+                    ["SW_ENABLE_REAL_EXECUTION"] = "true",
+                    ["SW_OUTPUT_DIRECTORY"] = outputRoot,
+                    ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+                }));
+            var request = new SolidWorksWorkerRequest(
+                $"request-{Guid.NewGuid():N}",
+                await CreatePlanAsync(),
+                outputRoot,
+                DryRun: false,
+                AllowRealCadExecution: true);
+
+            var result = await worker.ExecuteAsync(request, CancellationToken.None);
+
+            var reportArtifact = Assert.Single(result.GeneratedArtifacts, artifact =>
+                artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal("RealBuildPlateBasic4Holes", result.ExecutionMode);
+            Assert.False(result.RealCadExecuted);
+            Assert.False(result.RealCadConnected);
+            Assert.Equal(0, sessionManager.ConnectAttempts);
+            Assert.Contains(result.Issues, issue => issue.Contains("template_part_path_required_for_real_build", StringComparison.OrdinalIgnoreCase));
+            Assert.True(File.Exists(reportArtifact.FilePath));
+            using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(reportArtifact.FilePath));
+            Assert.Equal("Failed", document.RootElement.GetProperty("final_status").GetString());
+            Assert.False(document.RootElement.GetProperty("sldprt_save_attempted").GetBoolean());
+            Assert.False(document.RootElement.GetProperty("step_export_attempted").GetBoolean());
+            Assert.Contains(
+                document.RootElement.GetProperty("operations_executed").EnumerateArray(),
+                item => item.GetString() == "preflight_failed");
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task SolidWorksArtifactValidatorAcceptsControlledRealPlateArtifacts()
     {
         var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"validator-real-test-{Guid.NewGuid():N}");
@@ -572,6 +630,72 @@ public sealed class SolidWorksModuleSkeletonTests
 
             Assert.True(report.IsPassed);
             Assert.Empty(report.Issues);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SolidWorksArtifactValidatorRejectsMissingStepArtifact()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", "plate_basic_4holes", $"missing-step-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(outputRoot);
+            var partPath = Path.Combine(outputRoot, "plate_basic_4holes.SLDPRT");
+            var reportPath = Path.Combine(outputRoot, "build_report.json");
+            await File.WriteAllTextAsync(partPath, "part bytes");
+            await SolidWorksPlateBuildReportWriter.WriteAsync(
+                reportPath,
+                new SolidWorksWorkerRequest(
+                    $"request-{Guid.NewGuid():N}",
+                    await CreatePlanAsync(),
+                    outputRoot,
+                    DryRun: false,
+                    AllowRealCadExecution: true),
+                "RealBuildPlateBasic4Holes",
+                realCadExecuted: true,
+                realCadConnected: true,
+                "TestVersion",
+                outputRoot,
+                new[] { partPath },
+                new SolidWorksPlateBuildDiagnostics
+                {
+                    SldprtSaveAttempted = true,
+                    SldprtSaveSuccess = true,
+                    SldprtPath = partPath,
+                    SldprtSizeBytes = new FileInfo(partPath).Length,
+                    StepExportAttempted = true,
+                    StepExportSuccess = false,
+                    StepPath = Path.Combine(outputRoot, "plate_basic_4holes.STEP")
+                },
+                "Failed",
+                CancellationToken.None);
+
+            var workerResult = new SolidWorksWorkerResult(
+                $"request-{Guid.NewGuid():N}",
+                "Failed",
+                new[]
+                {
+                    SolidWorksPlateBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", "Part."),
+                    SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Report.")
+                },
+                Array.Empty<string>(),
+                new[] { "step_export_failed" },
+                "RealBuildPlateBasic4Holes",
+                RealCadExecuted: true,
+                RealCadConnected: true);
+
+            var report = new SolidWorksArtifactValidator(Path.Combine(FindProjectRoot(), "output", "solidworks")).Validate(workerResult);
+
+            Assert.False(report.IsPassed);
+            Assert.Contains(report.Issues, issue => issue.Contains(".STEP artifact", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(report.Issues, issue => issue.Contains("step_export_success", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {
@@ -740,9 +864,12 @@ public sealed class SolidWorksModuleSkeletonTests
 
             Assert.Equal(outputDirectories.Length, outputDirectories.Distinct(StringComparer.OrdinalIgnoreCase).Count());
             Assert.All(outputDirectories, directory =>
+            {
+                Assert.Equal("plate_basic_4holes", Path.GetFileName(Path.GetDirectoryName(directory)));
                 Assert.Matches(
-                    "^plate_basic_4holes_[0-9]{8}_[0-9]{6}_[0-9]{3}_[0-9a-f]{32}$",
-                    Path.GetFileName(directory)));
+                    "^[0-9]{8}_[0-9]{6}_[0-9]{3}_[0-9a-f]{32}$",
+                    Path.GetFileName(directory));
+            });
         }
         finally
         {
@@ -837,6 +964,23 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.False(report.SolidWorksRealBuildOutputsStep);
             Assert.False(report.SolidWorksRealBuildOutputsJsonReport);
             Assert.True(report.SolidWorksRealBuildNotCalledInDefaultSelfCheck);
+            Assert.True(report.SolidWorksDiagnosticRunnerExists);
+            Assert.True(report.SolidWorksDiagnosticRunnerNotCalledByDefault);
+            if (report.SolidWorksLatestDiagnosticReportPath is not null)
+            {
+                Assert.True(File.Exists(report.SolidWorksLatestDiagnosticReportPath));
+            }
+            Assert.Null(report.SolidWorksRealBuildFailureStage);
+            Assert.True(report.SolidWorksRealBuildErrorIsActionable);
+            Assert.True(report.SolidWorksApiFailureAnalyzerExists);
+            Assert.True(report.SolidWorksApiEvidenceCollectorExists);
+            Assert.True(report.SolidWorksApiEvidenceReportSchemaExists);
+            Assert.True(report.SolidWorksCutHolesApiEvidenceSupported);
+            Assert.True(report.SolidWorksReferenceSkillReadonlyAnalysisSupported);
+            Assert.True(report.SolidWorksExternalScriptsNotCopied);
+            Assert.True(report.SolidWorksApiRepairLoopAvailable);
+            Assert.True(report.SolidWorksMacroRecordingRequestAvailable);
+            Assert.True(report.SolidWorksPlateFeatureBuilderExists);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }
@@ -847,6 +991,269 @@ public sealed class SolidWorksModuleSkeletonTests
                 Directory.Delete(outputRoot, recursive: true);
             }
         }
+    }
+
+    [Fact]
+    public async Task SelfCheckRealBuildSmokeTestReportsFailureDiagnosticsWithoutStrictMode()
+    {
+        var root = FindProjectRoot();
+        var platform = PlatformBootstrapper.CreateDefault(root);
+        var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_solidworks_real", Guid.NewGuid().ToString("N"));
+
+        using var _ = new EnvironmentScope(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "true",
+            ["SW_REAL_BUILD_SMOKE_TEST"] = "true",
+            ["SW_STRICT_REAL_BUILD_TEST"] = null,
+            ["SW_TEMPLATE_PART_PATH"] = null,
+            ["SW_OUTPUT_DIRECTORY"] = null
+        });
+
+        try
+        {
+            var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, root);
+
+            Assert.Equal("true", report.SwEnableRealExecutionEnvValue);
+            Assert.Equal("true", report.SwRealBuildSmokeTestEnvValue);
+            Assert.True(report.SolidWorksRealBuildSmokeTestAttempted);
+            Assert.False(report.SolidWorksRealBuildSmokeTestPassed);
+            Assert.False(report.RealBuildRequestDryRun);
+            Assert.True(report.RealBuildRequestAllowRealCadExecution);
+            Assert.Equal("RealBuildPlateBasic4Holes", report.RealBuildExecutionMode);
+            Assert.NotNull(report.RealBuildOutputDirectory);
+            Assert.True(Path.IsPathFullyQualified(report.RealBuildOutputDirectory));
+            Assert.Contains(Path.Combine("output", "solidworks", "real", "plate_basic_4holes"), report.RealBuildOutputDirectory, StringComparison.OrdinalIgnoreCase);
+            Assert.NotNull(report.RealBuildLatestReportPath);
+            Assert.True(File.Exists(report.RealBuildLatestReportPath));
+            Assert.Contains("template_part_path_required_for_real_build", report.SolidWorksRealBuildSmokeTestError, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal("preflight_failed", report.SolidWorksRealBuildFailureStage);
+            Assert.True(report.SolidWorksRealBuildErrorIsActionable);
+            Assert.Equal("Passed", report.FinalStatus);
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SolidWorksSmokeRunnerProjectExists()
+    {
+        var projectRoot = FindProjectRoot();
+
+        Assert.True(File.Exists(Path.Combine(
+            projectRoot,
+            "tools",
+            "SolidWorksSmokeRunner",
+            "SolidWorksSmokeRunner.csproj")));
+    }
+
+    [Fact]
+    public void SolidWorksDiagnosticReportSchemaCanSerialize()
+    {
+        var report = new SolidWorksDiagnosticReport
+        {
+            OutputDirectory = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "solidworks-diagnostics-schema")),
+            SolidWorksConnected = false,
+            FailureStage = "connection_failed",
+            FinalStatus = "Failed",
+            SldprtPath = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "plate_basic_4holes.SLDPRT")),
+            StepPath = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "plate_basic_4holes.STEP"))
+        };
+        report.Errors.Add("connection_failed: SldWorks.Application COM ProgID was not found.");
+        report.Operations.Add(new SolidWorksDiagnosticOperation
+        {
+            Name = "connection_started",
+            StartedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow,
+            Success = false,
+            Error = "connection_failed",
+            ElapsedMs = 1
+        });
+
+        var json = JsonSerializer.Serialize(report);
+
+        Assert.Contains("failure_stage", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("connection_failed", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("save_sldprt_attempted", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("export_step_attempted", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("plane_selection_attempted", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("plane_selection_success", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("available_reference_planes", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("api_evidence_report_path", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("api_repair_attempted", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("api_repair_strategy", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("repair_failure_reason", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SolidWorksApiFailureAnalyzerRecognizesCutHolesFailure()
+    {
+        var analysis = new SolidWorksApiFailureAnalyzer().AnalyzeFailureStage("cut_holes_failed");
+
+        Assert.Equal("cut_holes_failed", analysis.FailureStage);
+        Assert.Contains("FeatureCut4", string.Join(" ", analysis.RecommendedApiSearchTerms), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CreateCircleByRadius", string.Join(" ", analysis.RecommendedApiSearchTerms), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(analysis.SuspectedCauses, cause => cause.Contains("参数", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ApiEvidenceReportSchemaCanSerialize()
+    {
+        var report = new ApiEvidenceReport(
+            "api-evidence-test",
+            DateTimeOffset.UtcNow,
+            "cut_holes_failed",
+            "through-hole cut",
+            new[]
+            {
+                new ApiEvidenceSource(
+                    "official_api",
+                    "IFeatureManager.FeatureCut4",
+                    "https://help.solidworks.com/",
+                    new[] { "FeatureCut4" },
+                    "FeatureCut4 用于切除拉伸。",
+                    "官方文档仅作为事实来源。",
+                    CanReuseCode: false,
+                    CanReuseIdea: true)
+            },
+            Array.Empty<ApiEvidenceSource>(),
+            Array.Empty<ApiEvidenceSource>(),
+            new[]
+            {
+                new ApiCandidate(
+                    "FeatureManager.FeatureCut4",
+                    "切除四个通孔。",
+                    new[] { "创建孔草图", "执行切除" },
+                    new[] { "草图已创建" },
+                    "草图或轮廓可被识别",
+                    "返回 Feature",
+                    new[] { "参数数量不匹配" },
+                    "运行诊断 Runner")
+            },
+            "featurecut4_reference_signature_with_flip_retry",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            "按证据修复切孔封装。");
+
+        var json = JsonSerializer.Serialize(report);
+
+        Assert.Contains("selected_api_strategy", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("required_selection_state", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SolidWorksApiEvidenceCollectorHandlesMissingReferenceRepositoryWithoutCopyingScripts()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), "solidworks_api_evidence_test", Guid.NewGuid().ToString("N"));
+        var projectRoot = Path.Combine(tempRoot, "project");
+        var outputRoot = Path.Combine(tempRoot, "output-root");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(projectRoot, "references", "external"));
+            File.WriteAllText(
+                Path.Combine(projectRoot, "references", "external", "solidworks-automation-skill-analysis.md"),
+                "# SolidWorks 自动化 Skill 分析\n\n该文档说明 preflight、Worker 封装和 QualityGate 边界。");
+
+            var analysis = new SolidWorksApiFailureAnalyzer().AnalyzeFailureStage("cut_holes_failed");
+            var result = new SolidWorksApiEvidenceCollector().CollectCutHolesEvidence(
+                projectRoot,
+                outputRoot,
+                analysis,
+                "测试中的原始 FeatureCut4 调用失败。");
+
+            Assert.True(File.Exists(result.JsonReportPath));
+            Assert.True(File.Exists(result.MarkdownReportPath));
+            Assert.True(File.Exists(result.MacroRecordingRequestPath));
+            Assert.True(result.ReferenceSkillAnalysisRead);
+            Assert.False(result.ReferenceRepositoryFound);
+            Assert.False(result.ExternalScriptsCopied);
+
+            var markdown = File.ReadAllText(result.MarkdownReportPath);
+            Assert.Contains("API 证据报告", markdown, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("不复制", markdown, StringComparison.OrdinalIgnoreCase);
+            Assert.False(Directory.EnumerateFiles(tempRoot, "*.py", SearchOption.AllDirectories).Any());
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SolidWorksPlateFeatureBuilderExposesThroughHoleRepairMethod()
+    {
+        Assert.NotNull(typeof(SolidWorksPlateFeatureBuilder).GetMethod(nameof(SolidWorksPlateFeatureBuilder.CreateThroughHoles)));
+        Assert.Equal(1, SolidWorksDiagnosticRunner.MaxRepairAttempts);
+    }
+
+    [Fact]
+    public void SolidWorksPlaneSelectorExposesEnglishAndLocalizedCandidates()
+    {
+        Assert.Contains("Top Plane", SolidWorksPlaneSelector.EnglishPlaneNames);
+        Assert.Contains("Front Plane", SolidWorksPlaneSelector.EnglishPlaneNames);
+        Assert.Contains("Right Plane", SolidWorksPlaneSelector.EnglishPlaneNames);
+        Assert.Contains("上视基准面", SolidWorksPlaneSelector.LocalizedPlaneNames);
+        Assert.Contains("前视基准面", SolidWorksPlaneSelector.LocalizedPlaneNames);
+        Assert.Contains("右视基准面", SolidWorksPlaneSelector.LocalizedPlaneNames);
+    }
+
+    [Fact]
+    public void SolidWorksPlaneSelectorFallsBackToLocalizedNameWhenEnglishFails()
+    {
+        var extension = new FakeSolidWorksModelExtension(new Dictionary<string, bool>
+        {
+            ["上视基准面"] = true
+        });
+        var model = new FakeSolidWorksModel(extension, firstFeature: null);
+
+        var result = new SolidWorksPlaneSelector().SelectStandardPlane(model);
+
+        Assert.True(result.Success);
+        Assert.Equal("上视基准面", result.SelectedPlaneName);
+        Assert.Equal("named_localized", result.SelectedPlaneStrategy);
+        Assert.Contains("Top Plane", extension.AttemptedNames);
+        Assert.Contains("Front Plane", extension.AttemptedNames);
+        Assert.Contains("Right Plane", extension.AttemptedNames);
+        Assert.Contains("上视基准面", extension.AttemptedNames);
+    }
+
+    [Fact]
+    public void SolidWorksPlaneSelectorScansFeatureManagerWhenNameSelectionFails()
+    {
+        var extension = new FakeSolidWorksModelExtension(new Dictionary<string, bool>());
+        var feature = new FakeSolidWorksFeature("前视基准面", "RefPlane", selectSuccess: true);
+        var model = new FakeSolidWorksModel(extension, feature);
+
+        var result = new SolidWorksPlaneSelector().SelectStandardPlane(model);
+
+        Assert.True(result.Success);
+        Assert.Equal("前视基准面", result.SelectedPlaneName);
+        Assert.Equal("feature_scan_preferred", result.SelectedPlaneStrategy);
+        Assert.Contains(result.AvailableReferencePlanes, plane =>
+            plane.Name == "前视基准面" &&
+            plane.TypeName == "RefPlane" &&
+            plane.SelectSuccess == true);
+    }
+
+    [Theory]
+    [InlineData("solidworks_connection_failed", "connection_failed")]
+    [InlineData("new_part_failed: NewDocument returned null", "new_part_failed")]
+    [InlineData("sketch_failed: SelectByID2 failed", "sketch_failed")]
+    [InlineData("extrude_failed: FeatureExtrusion2 returned null", "extrude_failed")]
+    [InlineData("cut_holes_failed: FeatureCut4 returned null", "cut_holes_failed")]
+    [InlineData("sldprt_save_failed: SaveAs returned false", "save_sldprt_failed")]
+    [InlineData("step_export_failed: STEP file missing", "export_step_failed")]
+    public void SolidWorksSmokeRunnerMapsFailureStage(string error, string expectedStage)
+    {
+        Assert.Equal(expectedStage, SolidWorksDiagnosticRunner.MapFailureStage(error));
     }
 
     private static async Task<SolidWorksBuildPlan> CreatePlanAsync()
@@ -967,6 +1374,81 @@ public sealed class SolidWorksModuleSkeletonTests
         }
     }
 
+    private sealed class FakeSolidWorksModel
+    {
+        private readonly FakeSolidWorksFeature? _firstFeature;
+
+        public FakeSolidWorksModel(FakeSolidWorksModelExtension extension, FakeSolidWorksFeature? firstFeature)
+        {
+            Extension = extension;
+            _firstFeature = firstFeature;
+        }
+
+        public FakeSolidWorksModelExtension Extension { get; }
+
+        public FakeSolidWorksFeature? FirstFeature() => _firstFeature;
+    }
+
+    private sealed class FakeSolidWorksModelExtension
+    {
+        private readonly IReadOnlyDictionary<string, bool> _selectionResults;
+
+        public FakeSolidWorksModelExtension(IReadOnlyDictionary<string, bool> selectionResults)
+        {
+            _selectionResults = selectionResults;
+        }
+
+        public List<string> AttemptedNames { get; } = [];
+
+        public bool SelectByID2(
+            string name,
+            string type,
+            double x,
+            double y,
+            double z,
+            bool append,
+            int mark,
+            object? callout,
+            int option)
+        {
+            AttemptedNames.Add(name);
+            return type == "PLANE" &&
+                   _selectionResults.TryGetValue(name, out var selected) &&
+                   selected;
+        }
+    }
+
+    private sealed class FakeSolidWorksFeature
+    {
+        private readonly bool _selectSuccess;
+        private FakeSolidWorksFeature? _nextFeature;
+
+        public FakeSolidWorksFeature(string name, string typeName, bool selectSuccess)
+        {
+            Name = name;
+            TypeName = typeName;
+            _selectSuccess = selectSuccess;
+        }
+
+        public string Name { get; }
+
+        public string TypeName { get; }
+
+        public string GetTypeName2() => TypeName;
+
+        public string GetTypeName() => TypeName;
+
+        public bool Select2(bool append, int mark) => _selectSuccess;
+
+        public FakeSolidWorksFeature? GetNextFeature() => _nextFeature;
+
+        public FakeSolidWorksFeature WithNext(FakeSolidWorksFeature nextFeature)
+        {
+            _nextFeature = nextFeature;
+            return this;
+        }
+    }
+
     private sealed class TestSolidWorksPlateBuilder : ISolidWorksPlateBuilder
     {
         public int BuildAttempts { get; private set; }
@@ -989,6 +1471,35 @@ public sealed class SolidWorksModuleSkeletonTests
 
             await File.WriteAllTextAsync(partPath, "fake real SolidWorks part bytes for tests", cancellationToken);
             await File.WriteAllTextAsync(stepPath, "fake real STEP bytes for tests", cancellationToken);
+            var diagnostics = new SolidWorksPlateBuildDiagnostics
+            {
+                SldprtSaveAttempted = true,
+                SldprtSaveSuccess = true,
+                SldprtPath = partPath,
+                SldprtSizeBytes = new FileInfo(partPath).Length,
+                StepExportAttempted = true,
+                StepExportSuccess = true,
+                StepPath = stepPath,
+                StepSizeBytes = new FileInfo(stepPath).Length,
+                ActiveDocTitleBeforeStepExport = "plate_basic_4holes",
+                ActiveDocTitleAfterActivate = "plate_basic_4holes",
+                PlaneSelectionAttempted = true,
+                PlaneSelectionSuccess = true,
+                SelectedPlaneName = "上视基准面",
+                SelectedPlaneStrategy = "named_localized"
+            };
+            diagnostics.AvailableReferencePlanes.Add(new SolidWorksReferencePlaneInfo("上视基准面", "RefPlane", true));
+            diagnostics.OperationsExecuted.AddRange(new[]
+            {
+                "real_build_request_received",
+                "safety_flags_checked",
+                "new_part_success",
+                "plane_selection_started",
+                "plane_selection_success",
+                "save_sldprt_success",
+                "export_step_success",
+                "build_report_written"
+            });
             await SolidWorksPlateBuildReportWriter.WriteAsync(
                 reportPath,
                 request,
@@ -998,9 +1509,7 @@ public sealed class SolidWorksModuleSkeletonTests
                 solidWorksVersion,
                 outputDirectory,
                 new[] { partPath, stepPath },
-                new[] { "Create part", "Save SLDPRT", "Export STEP" },
-                Array.Empty<string>(),
-                Array.Empty<string>(),
+                diagnostics,
                 "Passed",
                 cancellationToken);
 
@@ -1057,6 +1566,28 @@ public sealed class SolidWorksModuleSkeletonTests
         {
             ReleasedApplications++;
             Interlocked.Decrement(ref _activeApplications);
+        }
+    }
+
+    private sealed class EnvironmentScope : IDisposable
+    {
+        private readonly Dictionary<string, string?> _previousValues = new(StringComparer.OrdinalIgnoreCase);
+
+        public EnvironmentScope(IReadOnlyDictionary<string, string?> values)
+        {
+            foreach (var (key, value) in values)
+            {
+                _previousValues[key] = Environment.GetEnvironmentVariable(key);
+                Environment.SetEnvironmentVariable(key, value);
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (var (key, value) in _previousValues)
+            {
+                Environment.SetEnvironmentVariable(key, value);
+            }
         }
     }
 
