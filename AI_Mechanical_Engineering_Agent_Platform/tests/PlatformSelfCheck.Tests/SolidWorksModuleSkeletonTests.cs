@@ -969,6 +969,14 @@ public sealed class SolidWorksModuleSkeletonTests
             if (report.SolidWorksLatestDiagnosticReportPath is not null)
             {
                 Assert.True(File.Exists(report.SolidWorksLatestDiagnosticReportPath));
+                using var diagnosticReport = JsonDocument.Parse(await File.ReadAllTextAsync(report.SolidWorksLatestDiagnosticReportPath));
+                Assert.Equal(
+                    diagnosticReport.RootElement.GetProperty("final_status").GetString(),
+                    report.SolidWorksLatestDiagnosticFinalStatus);
+            }
+            else
+            {
+                Assert.Null(report.SolidWorksLatestDiagnosticFinalStatus);
             }
             Assert.Null(report.SolidWorksRealBuildFailureStage);
             Assert.True(report.SolidWorksRealBuildErrorIsActionable);
@@ -1095,6 +1103,7 @@ public sealed class SolidWorksModuleSkeletonTests
         var analysis = new SolidWorksApiFailureAnalyzer().AnalyzeFailureStage("cut_holes_failed");
 
         Assert.Equal("cut_holes_failed", analysis.FailureStage);
+        Assert.Contains("FeatureExtrusion2", string.Join(" ", analysis.RecommendedApiSearchTerms), StringComparison.OrdinalIgnoreCase);
         Assert.Contains("FeatureCut4", string.Join(" ", analysis.RecommendedApiSearchTerms), StringComparison.OrdinalIgnoreCase);
         Assert.Contains("CreateCircleByRadius", string.Join(" ", analysis.RecommendedApiSearchTerms), StringComparison.OrdinalIgnoreCase);
         Assert.Contains(analysis.SuspectedCauses, cause => cause.Contains("参数", StringComparison.OrdinalIgnoreCase));
@@ -1172,6 +1181,9 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(result.ReferenceSkillAnalysisRead);
             Assert.False(result.ReferenceRepositoryFound);
             Assert.False(result.ExternalScriptsCopied);
+            Assert.Equal("macro_recorded_active_sketch_featurecut4_after_base_extrusion", result.Report.SelectedApiStrategy);
+            Assert.Contains("FeatureCut4", result.Report.FinalRecommendation, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("FeatureExtrusion2", result.Report.FinalRecommendation, StringComparison.OrdinalIgnoreCase);
 
             var markdown = File.ReadAllText(result.MarkdownReportPath);
             Assert.Contains("API 证据报告", markdown, StringComparison.OrdinalIgnoreCase);
@@ -1191,7 +1203,47 @@ public sealed class SolidWorksModuleSkeletonTests
     public void SolidWorksPlateFeatureBuilderExposesThroughHoleRepairMethod()
     {
         Assert.NotNull(typeof(SolidWorksPlateFeatureBuilder).GetMethod(nameof(SolidWorksPlateFeatureBuilder.CreateThroughHoles)));
+        Assert.NotNull(typeof(SolidWorksPlateFeatureBuilder).GetMethod(
+            "SelectSketchForFeatureCut",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));
         Assert.Equal(1, SolidWorksDiagnosticRunner.MaxRepairAttempts);
+    }
+
+    [Fact]
+    public void SolidWorksDiagnosticRunnerSeparatesBuildAndRepairLogPrefixes()
+    {
+        var copyDiagnostics = typeof(SolidWorksDiagnosticRunner).GetMethod(
+            "CopyRepairDiagnostics",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(copyDiagnostics);
+
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        var buildReport = new SolidWorksDiagnosticReport();
+        copyDiagnostics.Invoke(
+            null,
+            new object[]
+            {
+                buildReport,
+                diagnostics,
+                new[] { "normal build path log" },
+                "build_log"
+            });
+
+        Assert.Contains(buildReport.Warnings, warning => warning.Contains("build_log: normal build path log", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(buildReport.Warnings, warning => warning.Contains("repair_log:", StringComparison.OrdinalIgnoreCase));
+
+        var repairReport = new SolidWorksDiagnosticReport();
+        copyDiagnostics.Invoke(
+            null,
+            new object[]
+            {
+                repairReport,
+                diagnostics,
+                new[] { "repair path log" },
+                "repair_log"
+            });
+
+        Assert.Contains(repairReport.Warnings, warning => warning.Contains("repair_log: repair path log", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

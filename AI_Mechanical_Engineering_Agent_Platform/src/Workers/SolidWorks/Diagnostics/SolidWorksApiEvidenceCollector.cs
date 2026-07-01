@@ -38,9 +38,11 @@ public sealed class SolidWorksApiEvidenceCollector
         var implementationNotes = new List<string>
         {
             currentCallSummary,
-            "本轮选择先封装 SolidWorksPlateFeatureBuilder.CreateThroughHoles，再由诊断 Runner 和 RealSolidWorksWorker 复用。",
-            "切孔策略按本地参考 Skill 中已验证的 FeatureCut4 短参数顺序优先，并对 direction / flip 做有限回退。FeatureCut3 只作为后续候选，不作为本轮默认路径。"
+            "用户第二份录制宏显示：FeatureExtrusion2 用于板件基体拉伸，FeatureCut4 用于后续活动孔草图切除。",
+            "本轮选择继续复用 SolidWorksPlateFeatureBuilder.CreateBasePlate 创建基体，并由 SolidWorksPlateFeatureBuilder.CreateThroughHoles 封装宏录制的活动孔草图切除路径。"
         };
+
+        implementationNotes.Add("用户第二份宏已覆盖上一轮一草图假设：正确主链路是先用 FeatureExtrusion2 拉伸板件基体，再在活动孔草图中用 FeatureCut4 切除。");
 
         var analysisPath = Path.Combine(projectRoot, "references", "external", "solidworks-automation-skill-analysis.md");
         var referenceSkillAnalysisRead = File.Exists(analysisPath);
@@ -84,7 +86,7 @@ public sealed class SolidWorksApiEvidenceCollector
             localSources,
             thirdPartySources,
             candidates,
-            "featurecut4_reference_signature_with_flip_retry",
+            "macro_recorded_active_sketch_featurecut4_after_base_extrusion",
             new[]
             {
                 "只保留原始 FeatureCut4 长参数调用：已在诊断中触发参数数量不匹配，不能继续作为唯一策略。",
@@ -93,7 +95,13 @@ public sealed class SolidWorksApiEvidenceCollector
             },
             riskNotes,
             implementationNotes,
-            "使用 CreateCircleByRadius 创建四个孔草图圆，退出草图后按本地参考 Skill 提炼出的 FeatureCut4 短参数顺序执行贯穿切除，并在 direction / flip 两个维度最多尝试有限候选。每个候选失败都要记录异常和返回值。");
+            "按用户第二份录制宏执行：先用 FeatureExtrusion2 创建板件基体，再进入活动孔草图，用 CreateCircle 创建孔圆并调用 FeatureCut4 切除。后续如果仍失败，再回到 API evidence 流程分析宏参数差异。");
+
+        report = report with
+        {
+            FinalRecommendation = "按用户第二份录制宏执行：先选择标准基准面并进入基体草图，用 CreateCenterRectangle 创建板件外轮廓，调用 FeatureExtrusion2 生成基体；随后重新选择标准基准面并进入孔草图，用 CreateCircle 创建孔圆，保持孔草图活动状态直接调用 FeatureCut4。若仍失败，记录 api_evidence_insufficient，并继续对照完整文本宏参数。",
+            ImplementationNotes = implementationNotes.ToArray()
+        };
 
         var jsonReportPath = Path.Combine(evidenceDirectory, $"{CutHolesEvidenceFileStem}.json");
         var markdownReportPath = Path.Combine(evidenceDirectory, $"{CutHolesEvidenceFileStem}.md");
@@ -118,10 +126,19 @@ public sealed class SolidWorksApiEvidenceCollector
         {
             new ApiEvidenceSource(
                 "official_api",
+                "IFeatureManager.FeatureExtrusion2",
+                "https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureExtrusion2.html",
+                new[] { "FeatureExtrusion2" },
+                "官方 API 条目说明 FeatureExtrusion2 属于 FeatureManager 的拉伸特征创建方法；用户第二份录制宏显示它用于先创建板件基体。",
+                "官方帮助文档仅作为 API 事实来源，不复制其正文。",
+                CanReuseCode: false,
+                CanReuseIdea: true),
+            new ApiEvidenceSource(
+                "official_api",
                 "IFeatureManager.FeatureCut4",
                 "https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureCut4.html",
                 new[] { "FeatureCut4" },
-                "官方 API 条目说明 FeatureCut4 属于 FeatureManager 的切除拉伸特征创建方法。该方法参数较长，版本差异和 late binding 参数数量不匹配风险较高。",
+                "官方 API 条目说明 FeatureCut4 属于 FeatureManager 的切除拉伸特征创建方法；用户第二份录制宏显示它在孔草图仍为活动草图时执行切孔。",
                 "官方帮助文档仅作为 API 事实来源，不复制其正文。",
                 CanReuseCode: false,
                 CanReuseIdea: true),
@@ -174,19 +191,38 @@ public sealed class SolidWorksApiEvidenceCollector
                 new[] { "草图未激活", "坐标单位错误", "半径为零", "COM 返回 null" },
                 "诊断 Runner 记录每个圆的中心、半径和 COM 返回值。"),
             new ApiCandidate(
-                "FeatureManager.FeatureCut4",
-                "对孔草图轮廓执行贯穿切除，使用从本地参考 Skill 提炼出的短参数顺序，并进行 direction / flip 有限回退。",
+                "FeatureManager.FeatureExtrusion2",
+                "创建板件基体拉伸特征，不作为切孔 API 使用。",
                 new[]
                 {
-                    "退出孔草图",
-                    "清理选择状态",
-                    "尝试 FeatureCut4 through-all 短参数候选",
-                    "若返回 null，尝试翻转切除方向",
+                    "选择标准基准面",
+                    "进入草图",
+                    "创建中心矩形外轮廓",
+                    "直接调用 FeatureExtrusion2 拉伸草图生成基体",
+                    "检查返回 Feature 非 null",
+                    "进入后续孔草图切孔"
+                },
+                new[] { "矩形外轮廓在活动草图中", "尺寸单位为米" },
+                "活动草图包含闭合矩形外轮廓。",
+                "返回拉伸 Feature，几何结果应为板件基体。",
+                new[] { "草图轮廓不闭合", "FeatureExtrusion2 返回 null", "宏参数与当前 SolidWorks 版本不匹配" },
+                "手动运行 SolidWorksSmokeRunner，检查 base_plate_started、cut_holes_started 和后续输出。"),
+            new ApiCandidate(
+                "FeatureManager.FeatureCut4",
+                "对活动孔草图轮廓执行切除，优先使用用户第二份录制宏中的 FeatureCut4 调用顺序。",
+                new[]
+                {
+                    "选择标准基准面",
+                    "进入孔草图",
+                    "用 CreateCircle 创建四个孔圆",
+                    "保持孔草图活动状态",
+                    "调用宏录制的 FeatureCut4 候选",
+                    "若返回 null，再退出草图并尝试稳定草图引用 fallback",
                     "检查返回 Feature 非 null",
                     "失败时记录参数候选名和异常"
                 },
-                new[] { "孔草图已创建", "模型有可切除实体", "切除深度和单位已统一为米" },
-                "孔草图或轮廓可被 FeatureManager 识别；候选失败要记录选择状态和异常。",
+                new[] { "板件基体已创建", "孔草图处于活动状态", "模型有可切除实体", "切除深度和单位已统一为米" },
+                "活动孔草图包含四个孔圆；fallback 才依赖草图引用选择。",
                 "返回 Feature COM 对象，失败时为 null 或抛出 COM 异常。",
                 new[] { "参数签名不匹配", "选择状态错误", "轮廓未闭合", "切除方向错误" },
                 "手动运行 SolidWorksSmokeRunner，检查 cut_holes_success 和后续保存输出。"),
@@ -320,6 +356,9 @@ public sealed class SolidWorksApiEvidenceCollector
 
         builder.AppendLine();
         builder.AppendLine("## 必须明确的事实");
+        builder.AppendLine("- 用户第一份宏曾提示一草图轮廓方案，但本轮以第二份“拉伸后再切除”宏为准。");
+        builder.AppendLine("- 当前证据结论：`FeatureExtrusion2` 创建板件基体，`FeatureCut4` 在活动孔草图中执行切除。");
+        builder.AppendLine("- `CreateCircle` 是本轮宏证据中的孔圆创建方式，参数为圆心和圆上一点。");
         builder.AppendLine("- `FeatureCut4` 是 SolidWorks API 中用于创建 cut extrude feature 的方法。");
         builder.AppendLine("- `CreateCircleByRadius` 是 `SketchManager` 中用于按圆心和半径创建圆的方法。");
         builder.AppendLine("- `SelectByID2` 依赖对象名称、类型、坐标和选择状态，语言环境和选择状态可能导致失败。");

@@ -455,6 +455,7 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksDiagnosticRunnerExists,
             solidWorksSkeletonChecks.SolidWorksDiagnosticRunnerNotCalledByDefault,
             solidWorksSkeletonChecks.SolidWorksLatestDiagnosticReportPath,
+            solidWorksSkeletonChecks.SolidWorksLatestDiagnosticFinalStatus,
             solidWorksSkeletonChecks.SolidWorksRealBuildFailureStage,
             solidWorksSkeletonChecks.SolidWorksRealBuildErrorIsActionable,
             solidWorksSkeletonChecks.SolidWorksApiFailureAnalyzerExists,
@@ -827,6 +828,7 @@ public static class PlatformSelfCheckRunner
                 plateFeatureBuilderText.Contains("CreateThroughHoles", StringComparison.Ordinal);
             var solidWorksDiagnosticRunnerNotCalledByDefault = true;
             var solidWorksLatestDiagnosticReportPath = FindLatestDiagnosticReportPath(projectRoot);
+            var solidWorksLatestDiagnosticFinalStatus = ReadDiagnosticFinalStatus(solidWorksLatestDiagnosticReportPath);
             string? solidWorksRealBuildFailureStage = null;
             var solidWorksRealBuildErrorIsActionable = true;
 
@@ -1245,6 +1247,7 @@ public static class PlatformSelfCheckRunner
                 solidWorksDiagnosticRunnerExists,
                 solidWorksDiagnosticRunnerNotCalledByDefault,
                 solidWorksLatestDiagnosticReportPath,
+                solidWorksLatestDiagnosticFinalStatus,
                 solidWorksRealBuildFailureStage,
                 solidWorksRealBuildErrorIsActionable,
                 solidWorksApiFailureAnalyzerExists,
@@ -1317,6 +1320,7 @@ public static class PlatformSelfCheckRunner
                 SolidWorksDiagnosticRunnerExists: File.Exists(Path.Combine(projectRoot, "tools", "SolidWorksSmokeRunner", "SolidWorksSmokeRunner.csproj")),
                 SolidWorksDiagnosticRunnerNotCalledByDefault: true,
                 SolidWorksLatestDiagnosticReportPath: FindLatestDiagnosticReportPath(projectRoot),
+                SolidWorksLatestDiagnosticFinalStatus: ReadDiagnosticFinalStatus(FindLatestDiagnosticReportPath(projectRoot)),
                 SolidWorksRealBuildFailureStage: null,
                 SolidWorksRealBuildErrorIsActionable: false,
                 SolidWorksApiFailureAnalyzerExists: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "Diagnostics", "SolidWorksApiFailureAnalyzer.cs")),
@@ -1400,6 +1404,34 @@ public static class PlatformSelfCheckRunner
             .OrderByDescending(file => file.LastWriteTimeUtc)
             .FirstOrDefault()
             ?.FullName;
+    }
+
+    private static string? ReadDiagnosticFinalStatus(string? diagnosticReportPath)
+    {
+        if (string.IsNullOrWhiteSpace(diagnosticReportPath) || !File.Exists(diagnosticReportPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(diagnosticReportPath));
+            return document.RootElement.TryGetProperty("final_status", out var finalStatus)
+                ? finalStatus.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return "InvalidJson";
+        }
+        catch (IOException)
+        {
+            return "Unreadable";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return "Unreadable";
+        }
     }
 
     private static string? DetermineSolidWorksRealBuildFailureStage(
@@ -2578,6 +2610,7 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksDiagnosticRunnerExists,
         bool SolidWorksDiagnosticRunnerNotCalledByDefault,
         string? SolidWorksLatestDiagnosticReportPath,
+        string? SolidWorksLatestDiagnosticFinalStatus,
         string? SolidWorksRealBuildFailureStage,
         bool SolidWorksRealBuildErrorIsActionable,
         bool SolidWorksApiFailureAnalyzerExists,

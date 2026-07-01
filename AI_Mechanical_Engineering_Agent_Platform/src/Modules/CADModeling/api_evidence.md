@@ -29,11 +29,27 @@
 - `InsertSketch`
 - `CreateCornerRectangle` 或等价矩形草图 API
 - `CreateCircleByRadius`
-- `FeatureExtrusion`、`FeatureExtrusion2` 或等价拉伸 API
+- `FeatureExtrusion`、`FeatureExtrusion2` 或等价基体拉伸 API
 - `FeatureCut3`、`FeatureCut4` 或等价切除 API
 - `SaveAs`、`SaveAs2`、`SaveAs3`
 - `ActivateDoc`、`ActiveDoc`
 - `ClearSelection2`
+
+## `cut_holes_failed` 当前证据结论
+
+切孔失败优先检查活动孔草图状态和 `FeatureCut4` 参数，而不是把 `FeatureExtrusion2` 当切孔候选。只有活动孔草图 `FeatureCut4` 路径失败后，孔草图退出并按“草图 `Feature` 对象、草图对象、轮廓、区域、线段、`FeatureByName`、`SelectByID2("SKETCH")`”的顺序重建选择集，并且每个 fallback 切孔候选前都要重新选择。
+
+若 `FeatureCut4` 活动草图路径与 fallback 候选都失败，不能继续盲改 API，应输出 `api_evidence_insufficient`，并要求用户提供最小宏录制结果作为下一轮证据。
+
+## V1.0-B-REPAIR 最新切孔证据
+
+用户第二份宏已经修正上一轮判断：`FeatureExtrusion2` 负责板件基体拉伸，孔由后续孔草图上的 `FeatureCut4` 切除。CADModeling 模块在生成、审查或修复 `plate_basic_4holes` 时，必须把该顺序作为当前主证据：
+
+1. `SolidWorksBuildPlanSkill` 仍只生成结构化计划，不直接调用 Worker。
+2. `RealSolidWorksWorker` 通过 `SolidWorksPlateFeatureBuilder.CreateBasePlate` 创建基体。
+3. `RealSolidWorksWorker` 通过 `SolidWorksPlateFeatureBuilder.CreateThroughHoles` 执行活动孔草图 `FeatureCut4`。
+4. `FeatureExtrusion2` 不得再被当成切孔候选。
+5. 若 `FeatureCut4` 仍失败，必须补充完整文本宏或官方 API 参数证据后再改。
 
 ## 使用边界
 

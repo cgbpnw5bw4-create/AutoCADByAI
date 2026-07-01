@@ -158,6 +158,7 @@ public sealed record PlatformSelfCheckReport(
     [property: JsonPropertyName("solidworks_diagnostic_runner_exists")] bool SolidWorksDiagnosticRunnerExists,
     [property: JsonPropertyName("solidworks_diagnostic_runner_not_called_by_default")] bool SolidWorksDiagnosticRunnerNotCalledByDefault,
     [property: JsonPropertyName("solidworks_latest_diagnostic_report_path")] string? SolidWorksLatestDiagnosticReportPath,
+    [property: JsonPropertyName("solidworks_latest_diagnostic_final_status")] string? SolidWorksLatestDiagnosticFinalStatus,
     [property: JsonPropertyName("solidworks_real_build_failure_stage")] string? SolidWorksRealBuildFailureStage,
     [property: JsonPropertyName("solidworks_real_build_error_is_actionable")] bool SolidWorksRealBuildErrorIsActionable,
     [property: JsonPropertyName("solidworks_api_failure_analyzer_exists")] bool SolidWorksApiFailureAnalyzerExists,

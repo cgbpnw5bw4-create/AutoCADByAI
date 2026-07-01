@@ -34,18 +34,22 @@ public sealed class SolidWorksApiFailureAnalyzer
                 "plate_basic_4holes through-hole cut extrude",
                 new[]
                 {
-                    "孔草图已经创建，但切除特征调用的参数签名可能与当前 SolidWorks 版本不匹配。",
-                    "孔草图可能没有处于可被 FeatureCut 识别的选择状态。",
-                    "切除前可能没有清理或设置正确的选择对象。",
+                    "用户第二份录制宏显示，FeatureExtrusion2 用于板件基体拉伸，FeatureCut4 用于后续活动孔草图切除。",
+                    "切孔失败可能来自 FeatureCut4 长参数顺序、活动草图状态或切除方向，而不是 FeatureExtrusion2 本身。",
+                    "孔圆需要用 CreateCircle 的圆心加圆上一点形式创建，并保持孔草图活动状态后再切除。",
                     "FeatureCut4 长参数列表存在版本差异，late binding 下容易触发参数数量不匹配。",
                     "切除深度、方向和单位必须统一为米。"
                 },
                 new[]
                 {
+                    "SolidWorks API FeatureExtrusion2 base extrude",
+                    "SolidWorks API CreateCircle SketchManager",
+                    "SolidWorks API FeatureCut4 active sketch cut extrude",
                     "SolidWorks API FeatureCut4 cut extrude",
                     "SolidWorks API CreateCircleByRadius SketchManager",
                     "SolidWorks API Cut Extrude Example VBA",
                     "SolidWorks API SelectByID2 sketch cut extrude",
+                    "SolidWorks API FeatureManager FeatureExtrusion2 parameters",
                     "SolidWorks API FeatureManager FeatureCut4 parameters"
                 });
         }

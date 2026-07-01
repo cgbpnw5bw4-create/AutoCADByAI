@@ -63,79 +63,47 @@ public sealed class SolidWorksDiagnosticRunner
                 return Finish(report);
             }
 
-            if (!RunOperation(report, "plane_selection_started", () => SelectSketchPlane(report, model!)))
-            {
-                return Finish(report);
-            }
-            AddSucceededOperation(report, "plane_selection_success");
-
-            if (!RunOperation(report, "base_sketch_started", () =>
+            var featureBuilder = new SolidWorksPlateFeatureBuilder();
+            var baseDiagnostics = new SolidWorksPlateBuildDiagnostics();
+            var baseLogs = new List<string>();
+            if (!RunOperation(report, "base_plate_started", () =>
                 {
-                    EnterSketch(model!);
-                    RequireComResult(
-                        Invoke(GetProperty(model!, "SketchManager"), "CreateCenterRectangle", 0d, 0d, 0d, 80d * MmToMeters, 40d * MmToMeters, 0d),
-                        "sketch_failed: CreateCenterRectangle returned null.");
-                    ExitSketch(model!);
-                }))
-            {
-                return Finish(report);
-            }
-
-            if (!RunOperation(report, "extrude_started", () =>
-                {
-                    RequireComResult(
-                        Invoke(
-                            GetProperty(model!, "FeatureManager"),
-                            "FeatureExtrusion2",
-                            true, false, false, 0, 0, 12d * MmToMeters, 0d, false, false, false, false,
-                            0d, 0d, false, false, false, false, true, true, true, 0, 0d, false),
-                        "extrude_failed: FeatureExtrusion2 returned null.");
-                }))
-            {
-                return Finish(report);
-            }
-
-            if (!RunOperation(report, "plane_selection_started", () => SelectSketchPlane(report, model!)))
-            {
-                return Finish(report);
-            }
-            AddSucceededOperation(report, "plane_selection_success");
-
-            if (!RunOperation(report, "hole_sketch_started", () =>
-                {
-                    EnterSketch(model!);
-                    var sketchManager = GetProperty(model!, "SketchManager");
-                    foreach (var (x, y) in HoleCentersMeters())
-                    {
-                        RequireComResult(
-                            Invoke(sketchManager, "CreateCircleByRadius", x, y, 0d, 5d * MmToMeters),
-                            "sketch_failed: CreateCircleByRadius returned null.");
-                    }
-
-                    ExitSketch(model!);
-                }))
-            {
-                return Finish(report);
-            }
-
-            if (!RunOperation(report, "cut_holes_started", () =>
-                {
-                    RequireComResult(
-                        Invoke(
-                            GetProperty(model!, "FeatureManager"),
-                            "FeatureCut4",
-                            true, false, false, 1, 0, 24d * MmToMeters, 0d, false, false, false, false,
-                            0d, 0d, false, false, false, false, false, true, true, true, true, false, 0, 0d,
-                            false, false, false, false, false, false),
-                        "cut_holes_failed: FeatureCut4 returned null.");
+                    featureBuilder.CreateBasePlate(
+                        model!,
+                        160d * MmToMeters,
+                        80d * MmToMeters,
+                        12d * MmToMeters,
+                        baseDiagnostics,
+                        baseLogs);
                     TryInvoke(model!, "ForceRebuild3", false);
                 }))
             {
+                CopyRepairDiagnostics(report, baseDiagnostics, baseLogs, "build_log");
+                return Finish(report);
+            }
+            CopyRepairDiagnostics(report, baseDiagnostics, baseLogs, "build_log");
+
+            var cutDiagnostics = new SolidWorksPlateBuildDiagnostics();
+            var cutLogs = new List<string>();
+            if (!RunOperation(report, "cut_holes_started", () =>
+                {
+                    featureBuilder.CreateThroughHoles(
+                        model!,
+                        HoleCentersMeters().ToArray(),
+                        5d * MmToMeters,
+                        24d * MmToMeters,
+                        cutDiagnostics,
+                        cutLogs);
+                    TryInvoke(model!, "ForceRebuild3", false);
+                }))
+            {
+                CopyRepairDiagnostics(report, cutDiagnostics, cutLogs, "build_log");
                 if (!TryRepairCutHolesOnce(report, model!, options))
                 {
                     return Finish(report);
                 }
             }
+            CopyRepairDiagnostics(report, cutDiagnostics, cutLogs, "build_log");
 
             if (!RunOperation(report, "save_sldprt_started", () => SavePart(model!, report)))
             {
@@ -184,7 +152,7 @@ public sealed class SolidWorksDiagnosticRunner
                 projectRoot,
                 Path.Combine(projectRoot, "output"),
                 analysis,
-                "当前诊断 Runner 的原始 cut_holes_started 调用直接执行 30 参数 FeatureCut4，失败信息为参数数量不匹配。");
+                "当前诊断 Runner 按用户第二份录制宏执行：先用 FeatureExtrusion2 拉伸板件基体，再在活动孔草图中调用 FeatureCut4 切除；失败说明宏参数或活动草图状态仍需继续对照。");
 
             report.ApiEvidenceReportPath = evidence.JsonReportPath;
             report.ApiRepairStrategy = evidence.Report.SelectedApiStrategy;
@@ -211,7 +179,7 @@ public sealed class SolidWorksDiagnosticRunner
             TryInvoke(model, "ForceRebuild3", false);
         });
 
-        CopyRepairDiagnostics(report, repairDiagnostics, logs);
+        CopyRepairDiagnostics(report, repairDiagnostics, logs, "repair_log");
         if (!repaired)
         {
             report.RepairFailureReason = string.Join("; ", repairDiagnostics.Issues.Concat(repairDiagnostics.Warnings).DefaultIfEmpty("cut_holes_repair_failed"));
@@ -361,7 +329,8 @@ public sealed class SolidWorksDiagnosticRunner
     private static void CopyRepairDiagnostics(
         SolidWorksDiagnosticReport report,
         SolidWorksPlateBuildDiagnostics diagnostics,
-        IReadOnlyList<string> logs)
+        IReadOnlyList<string> logs,
+        string logPrefix)
     {
         foreach (var warning in diagnostics.Warnings)
         {
@@ -381,7 +350,7 @@ public sealed class SolidWorksDiagnosticRunner
 
         foreach (var log in logs)
         {
-            report.Warnings.Add($"repair_log: {log}");
+            report.Warnings.Add($"{logPrefix}: {log}");
         }
 
         report.PlaneSelectionAttempted = report.PlaneSelectionAttempted || diagnostics.PlaneSelectionAttempted;
