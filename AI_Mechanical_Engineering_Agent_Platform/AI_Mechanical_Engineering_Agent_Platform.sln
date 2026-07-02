@@ -49,6 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{07C2787E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksSmokeRunner", "tools\SolidWorksSmokeRunner\SolidWorksSmokeRunner.csproj", "{1F9CFF08-079C-4AE4-A3DE-D52D308404EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksDrawingSmokeRunner", "tools\SolidWorksDrawingSmokeRunner\SolidWorksDrawingSmokeRunner.csproj", "{42142BE0-021D-4780-8021-52DF3A88AFCB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -251,6 +253,18 @@ Global
 		{1F9CFF08-079C-4AE4-A3DE-D52D308404EA}.Release|x64.Build.0 = Release|Any CPU
 		{1F9CFF08-079C-4AE4-A3DE-D52D308404EA}.Release|x86.ActiveCfg = Release|Any CPU
 		{1F9CFF08-079C-4AE4-A3DE-D52D308404EA}.Release|x86.Build.0 = Release|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Debug|x64.Build.0 = Debug|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Debug|x86.Build.0 = Debug|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x64.ActiveCfg = Release|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x64.Build.0 = Release|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x86.ActiveCfg = Release|Any CPU
+		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -276,5 +290,6 @@ Global
 		{FF7891EA-3001-4A4E-BAA1-63255F22C282} = {63B3D61F-35CB-AE97-AD5F-A6200F8219CD}
 		{81AB4EDE-A517-4252-A4E5-6C134F900AE6} = {63B3D61F-35CB-AE97-AD5F-A6200F8219CD}
 		{1F9CFF08-079C-4AE4-A3DE-D52D308404EA} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{42142BE0-021D-4780-8021-52DF3A88AFCB} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal

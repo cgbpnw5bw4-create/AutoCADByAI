@@ -1,4 +1,5 @@
 using AgentContracts;
+using DomainSchemas;
 
 namespace PlatformCore;
 
@@ -24,7 +25,32 @@ public sealed class InternalAgentRouter
         }
 
         _auditLog.Record("agent", agent.Id, "internal_agent_invoked", $"Internal agent '{agent.Id}' invoked for task {context.TaskId}.");
-        var output = await agent.ExecuteAsync(context);
+        AgentOutput output;
+        try
+        {
+            output = await agent.ExecuteAsync(context);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            var rootException = ex.GetBaseException();
+            output = new AgentOutput(
+                AgentOutputStatus.Failed,
+                $"Internal agent '{agent.Id}' failed with an exception.",
+                Array.Empty<ArtifactInfo>(),
+                new[] { $"internal_agent_exception: {rootException.GetType().Name}: {rootException.Message}" },
+                new[]
+                {
+                    $"internal_agent_exception: agent_id={agent.Id}, exception_type={rootException.GetType().FullName}, message={rootException.Message}"
+                },
+                "error-diagnosis");
+            _auditLog.Record("agent", agent.Id, "internal_agent_failed", $"Internal agent '{agent.Id}' failed with exception {rootException.GetType().Name}.");
+            return output;
+        }
+
         _auditLog.Record("agent", agent.Id, "internal_agent_completed", $"Internal agent '{agent.Id}' completed with status {output.Status}.");
         return output;
     }

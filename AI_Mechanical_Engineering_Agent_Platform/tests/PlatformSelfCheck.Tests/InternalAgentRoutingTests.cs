@@ -72,6 +72,25 @@ public sealed class InternalAgentRoutingTests
     }
 
     [Fact]
+    public async Task InternalAgentRouterConvertsInternalAgentExceptionToFailedOutput()
+    {
+        var registry = new AgentRegistry();
+        var auditLog = new InMemoryAuditLog();
+        registry.Register(new ThrowingInternalAgent());
+        var router = new InternalAgentRouter(registry, auditLog);
+
+        var output = await router.InvokeInternalAgentAsync("throwing-internal-agent", CreateAgentContext());
+
+        Assert.Equal(AgentOutputStatus.Failed, output.Status);
+        Assert.Equal("error-diagnosis", output.NextRecommendedAgentId);
+        Assert.Contains(output.Issues, issue => issue.Contains("internal_agent_exception", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(output.Issues, issue => issue.Contains("InvalidOperationException", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(auditLog.GetEntries(), entry => entry.Action == "internal_agent_invoked" && entry.Actor == "throwing-internal-agent");
+        Assert.Contains(auditLog.GetEntries(), entry => entry.Action == "internal_agent_failed" && entry.Actor == "throwing-internal-agent");
+        Assert.DoesNotContain(auditLog.GetEntries(), entry => entry.Action == "internal_agent_completed" && entry.Actor == "throwing-internal-agent");
+    }
+
+    [Fact]
     public void QualityGateCanEvaluateCollaborationReportOutput()
     {
         var report = new InternalCollaborationReport(
@@ -163,5 +182,21 @@ public sealed class InternalAgentRoutingTests
         }
 
         throw new DirectoryNotFoundException("Could not locate project root.");
+    }
+
+    private sealed class ThrowingInternalAgent : IAgent
+    {
+        public string Id => "throwing-internal-agent";
+
+        public string Name => "Throwing Internal Agent";
+
+        public AgentRole Role { get; } = new("throwing", "Throwing", "Throws for router failure tests.");
+
+        public string Description => "Throws for router failure tests.";
+
+        public AgentVisibility Visibility => AgentVisibility.Internal;
+
+        public Task<AgentOutput> ExecuteAsync(AgentContext context) =>
+            throw new InvalidOperationException("test internal agent failure");
     }
 }

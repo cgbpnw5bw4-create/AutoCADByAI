@@ -15,6 +15,8 @@ public sealed class ExecutableDocsLayerTests
     [InlineData("docs/claude_review_protocol.md")]
     [InlineData("docs/version_stage_index.md")]
     [InlineData("docs/codex_agent_team_guide.md")]
+    [InlineData("docs/codex_agent_registry.md")]
+    [InlineData("docs/codex_agent_governance.md")]
     [InlineData("AGENTS.md")]
     [InlineData(".codex/config.example.toml")]
     [InlineData(".agents/skills/solidworks-api-repair/SKILL.md")]
@@ -71,6 +73,51 @@ public sealed class ExecutableDocsLayerTests
     }
 
     [Fact]
+    public void CodexAgentRegistryAndGovernanceDocumentCanonicalReusePolicy()
+    {
+        var root = FindProjectRoot();
+        var registryText = File.ReadAllText(Path.Combine(root, "docs", "codex_agent_registry.md"));
+        var governanceText = File.ReadAllText(Path.Combine(root, "docs", "codex_agent_governance.md"));
+        var agentsText = File.ReadAllText(Path.Combine(root, "AGENTS.md"));
+        var protocolText = File.ReadAllText(Path.Combine(root, "docs", "codex_execution_protocol.md"));
+
+        foreach (var agent in CanonicalAgentNames)
+        {
+            Assert.Contains($"`{agent}`", registryText, StringComparison.OrdinalIgnoreCase);
+        }
+
+        Assert.Contains("不允许重复创建同职责 Agent", governanceText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(".agents/skills/solidworks-api-repair/SKILL.md", governanceText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(".agents/skills/quality-review/SKILL.md", governanceText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(".agents/skills/markdown-docs-standard/SKILL.md", governanceText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Codex Agent 复用规则", agentsText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("canonical agent", protocolText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ActiveCodexAgentsOnlyContainCanonicalAgentsWithoutDuplicates()
+    {
+        var agentDirectory = Path.Combine(FindProjectRoot(), ".codex", "agents");
+        var activeAgentFiles = Directory
+            .GetFiles(agentDirectory, "*.toml", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileName)
+            .ToArray();
+        var activeAgentNames = Directory
+            .GetFiles(agentDirectory, "*.toml", SearchOption.TopDirectoryOnly)
+            .Select(path => ExtractAgentName(File.ReadAllText(path)))
+            .ToArray();
+
+        Assert.Equal(CanonicalAgentFiles.Length, activeAgentFiles.Length);
+        Assert.True(activeAgentFiles.ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(CanonicalAgentFiles));
+        Assert.True(activeAgentNames.ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(CanonicalAgentNames));
+        Assert.Equal(activeAgentNames.Length, activeAgentNames.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.DoesNotContain(activeAgentFiles, file => file?.Contains("api_researcher", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.DoesNotContain(activeAgentFiles, file => file?.Contains("code_mapper", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.DoesNotContain(activeAgentFiles, file => file?.Contains("quality_gate", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.DoesNotContain(activeAgentFiles, file => file?.Contains("docs_writer", StringComparison.OrdinalIgnoreCase) == true);
+    }
+
+    [Fact]
     public async Task SelfCheckReportContainsExecutableDocsLayerFields()
     {
         var root = FindProjectRoot();
@@ -93,8 +140,16 @@ public sealed class ExecutableDocsLayerTests
             Assert.True(report.ClaudeReviewProtocolExists);
             Assert.True(report.VersionStageIndexExists);
             Assert.True(report.CodexAgentTeamGuideExists);
+            Assert.True(report.CodexAgentRegistryExists);
+            Assert.True(report.CodexAgentGovernanceDocExists);
             Assert.True(report.AgentsMdExists);
             Assert.True(report.CodexAgentsConfigured);
+            Assert.True(report.CodexAgentRegistryListsCanonicalAgents);
+            Assert.True(report.CodexNoDuplicateActiveAgents);
+            Assert.True(report.CodexAgentReusePolicyDocumented);
+            Assert.True(report.CodexAgentNewRequirementsGoToSkillsOrDocs);
+            Assert.True(report.CodexActiveAgentCountIsExpected);
+            Assert.True(report.CodexOnlyCanonicalAgentsActive);
             Assert.True(report.CodexConfigExampleExists);
             Assert.True(report.CodexProjectManagerAgentExists);
             Assert.True(report.CodexCodeMapperAgentExists);
@@ -121,6 +176,9 @@ public sealed class ExecutableDocsLayerTests
 
             Assert.True(rootElement.TryGetProperty("executable_docs_layer_enabled", out _));
             Assert.True(rootElement.TryGetProperty("codex_agents_configured", out _));
+            Assert.True(rootElement.TryGetProperty("codex_agent_registry_exists", out _));
+            Assert.True(rootElement.TryGetProperty("codex_agent_governance_doc_exists", out _));
+            Assert.True(rootElement.TryGetProperty("codex_only_canonical_agents_active", out _));
             Assert.True(rootElement.TryGetProperty("solidworks_worker_api_evidence_doc_exists", out _));
         }
         finally
@@ -134,6 +192,48 @@ public sealed class ExecutableDocsLayerTests
 
     private static string Normalize(string relativePath) =>
         relativePath.Replace('/', Path.DirectorySeparatorChar);
+
+    private static readonly string[] CanonicalAgentNames =
+    [
+        "project_manager",
+        "code_mapper",
+        "api_researcher",
+        "cad_worker",
+        "quality_gate",
+        "docs_writer"
+    ];
+
+    private static readonly string[] CanonicalAgentFiles =
+    [
+        "project-manager.toml",
+        "code-mapper.toml",
+        "api-researcher.toml",
+        "cad-worker.toml",
+        "quality-gate.toml",
+        "docs-writer.toml"
+    ];
+
+    private static string ExtractAgentName(string toml)
+    {
+        foreach (var line in toml.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("name", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var separatorIndex = trimmed.IndexOf('=');
+            if (separatorIndex < 0)
+            {
+                continue;
+            }
+
+            return trimmed[(separatorIndex + 1)..].Trim().Trim('"');
+        }
+
+        return string.Empty;
+    }
 
     private static string FindProjectRoot()
     {

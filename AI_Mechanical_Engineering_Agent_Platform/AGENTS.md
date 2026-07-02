@@ -22,6 +22,14 @@
 
 `Codex Agent` 不能替代 `src/Modules`，禁止让 `Codex Agent` 绕过项目 `Worker`，禁止让 `Runtime Agent` 修改代码。
 
+## Codex Agent 复用规则
+
+`Codex Agent Team` 只能使用 `docs/codex_agent_registry.md` 登记的 canonical agents：`project_manager`、`code_mapper`、`api_researcher`、`cad_worker`、`quality_gate`、`docs_writer`。
+
+执行任务前必须先检查 `.codex/agents/` 是否已有 canonical agent 覆盖当前职责。若只是职责扩展，不创建同职责新 Agent，必须把新要求写入对应 Skill 或 Markdown。`api_researcher` 新要求写入 `.agents/skills/solidworks-api-repair/SKILL.md` 或 `api_evidence.md`；`code_mapper` 新要求写入 canonical agent 或 `docs/codex_execution_protocol.md`；`quality_gate` 新要求写入 `.agents/skills/quality-review/SKILL.md` 或 `review_checklist.md`；`docs_writer` 新要求写入 `.agents/skills/markdown-docs-standard/SKILL.md` 或 `module_document_standard.md`。
+
+active `.codex/agents/` 只能保留 canonical agents。发现重复 Agent 时不要盲删，先合并有价值指令，再移动到 `.codex/agents/archive/`；archive 中的 Agent 不作为 active agent 使用。确实需要新增 Agent 时，必须先更新 `docs/codex_agent_registry.md` 并说明现有 6 个 Agent 为什么无法覆盖。
+
 ## Markdown 规则
 
 所有 Markdown 说明文字必须中文。允许保留英文的内容仅限代码标识符、路径、命令、API 名称、NuGet 包名、配置键和第三方许可证原文。

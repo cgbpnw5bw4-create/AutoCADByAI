@@ -468,6 +468,136 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public async Task RealSolidWorksWorkerCreatesBasicViewsDrawingWhenAllSafetySwitchesAreEnabled()
+    {
+        var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"drawing-basic-views-test-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(outputRoot);
+            var sourcePartPath = Path.Combine(outputRoot, "plate_basic_4holes.SLDPRT");
+            await File.WriteAllTextAsync(sourcePartPath, "fake source part bytes for drawing tests");
+            var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
+            var drawingBuilder = new TestSolidWorksDrawingBuilder();
+            var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+            {
+                ["SW_ENABLE_REAL_EXECUTION"] = "true",
+                ["SW_VISIBLE"] = "false",
+                ["SW_OUTPUT_DIRECTORY"] = outputRoot,
+                ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+            });
+            var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder(), drawingBuilder);
+            var request = new SolidWorksWorkerRequest(
+                $"request-{Guid.NewGuid():N}",
+                await CreatePlanAsync(),
+                outputRoot,
+                DryRun: false,
+                AllowRealCadExecution: true,
+                DrawingSmokeTestOnly: true,
+                SourcePartPath: sourcePartPath);
+
+            var result = await worker.ExecuteAsync(request, CancellationToken.None);
+            var artifactReport = new SolidWorksArtifactValidator(Path.Combine(FindProjectRoot(), "output", "solidworks")).Validate(result);
+
+            Assert.Equal(1, sessionManager.ConnectAttempts);
+            Assert.Equal(1, sessionManager.ExecuteWithApplicationAttempts);
+            Assert.Equal(1, drawingBuilder.BuildAttempts);
+            Assert.Equal("Completed", result.Status);
+            Assert.Equal("RealDrawingBasicViews", result.ExecutionMode);
+            Assert.True(result.RealCadConnected);
+            Assert.True(result.RealCadExecuted);
+            Assert.True(artifactReport.IsPassed);
+            Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith(".SLDDRW", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith("drawing_report.json", StringComparison.OrdinalIgnoreCase));
+            Assert.All(result.GeneratedArtifacts, artifact => Assert.True(File.Exists(artifact.FilePath)));
+            var reportPath = result.GeneratedArtifacts.Single(artifact => artifact.FilePath.EndsWith("drawing_report.json", StringComparison.OrdinalIgnoreCase)).FilePath;
+            using var document = JsonDocument.Parse(await File.ReadAllTextAsync(reportPath));
+            Assert.Equal("Passed", document.RootElement.GetProperty("final_status").GetString());
+            Assert.True(document.RootElement.GetProperty("drawing_created").GetBoolean());
+            Assert.Contains(document.RootElement.GetProperty("views_created").EnumerateArray(), view => view.GetString() == "Front");
+            Assert.Contains(document.RootElement.GetProperty("views_created").EnumerateArray(), view => view.GetString() == "Isometric");
+        }
+        finally
+        {
+            if (Directory.Exists(outputRoot))
+            {
+                Directory.Delete(outputRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task RealSolidWorksWorkerRejectsDrawingWhenSafetySwitchesAreMissing()
+    {
+        var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
+        });
+        var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder(), new TestSolidWorksDrawingBuilder());
+        var request = new SolidWorksWorkerRequest(
+            $"request-{Guid.NewGuid():N}",
+            await CreatePlanAsync(),
+            Path.Combine(Path.GetTempPath(), "solidworks_drawing_reject", Guid.NewGuid().ToString("N")),
+            DryRun: false,
+            AllowRealCadExecution: true,
+            DrawingSmokeTestOnly: true,
+            SourcePartPath: Path.Combine(Path.GetTempPath(), "plate_basic_4holes.SLDPRT"));
+
+        var result = await worker.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.Equal("Rejected", result.Status);
+        Assert.Equal("RealPreflightOnly", result.ExecutionMode);
+        Assert.False(result.RealCadConnected);
+        Assert.False(result.RealCadExecuted);
+        Assert.Equal(0, sessionManager.ConnectAttempts);
+        Assert.Contains(result.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void SolidWorksDrawingReportSchemaSerializesExpectedFields()
+    {
+        var report = new SolidWorksDrawingReport
+        {
+            SourcePartPath = @"C:\temp\plate_basic_4holes.SLDPRT",
+            OutputDirectory = @"C:\temp\drawing",
+            SolidWorksConnected = true,
+            SolidWorksVersion = "TestVersion",
+            DrawingCreated = true,
+            SlddrwPath = @"C:\temp\drawing\plate_basic_4holes.SLDDRW",
+            SlddrwExists = true,
+            SlddrwSizeBytes = 12,
+            PdfPath = @"C:\temp\drawing\plate_basic_4holes.pdf",
+            PdfExists = true,
+            PdfSizeBytes = 10,
+            FinalStatus = "Passed"
+        };
+        report.ViewsCreated.AddRange(new[] { "Front", "Top", "Right", "Isometric" });
+        report.Operations.Add("front_view_create_success");
+
+        var json = JsonSerializer.Serialize(report, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        });
+
+        Assert.Contains("source_part_path", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("views_created", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("slddrw_path", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("pdf_path", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("final_status", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SolidWorksDrawingBuilderAndSmokeRunnerAreAvailable()
+    {
+        Assert.NotNull(typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(nameof(LateBoundSolidWorksDrawingBuilder.CreateBasicViewsDrawingAsync)));
+        Assert.Equal("front_view_create_failed", LateBoundSolidWorksDrawingBuilder.MapDrawingFailureStage("front_view_create_failed: view null"));
+        Assert.Equal("pdf_export_failed", LateBoundSolidWorksDrawingBuilder.MapDrawingFailureStage("pdf file missing"));
+        Assert.True(File.Exists(Path.Combine(FindProjectRoot(), "tools", "SolidWorksDrawingSmokeRunner", "SolidWorksDrawingSmokeRunner.csproj")));
+    }
+
+    [Fact]
     public async Task RealSolidWorksWorkerDisconnectTimeoutDoesNotHideBuildResult()
     {
         var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"disconnect-timeout-test-{Guid.NewGuid():N}");
@@ -803,6 +933,32 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public async Task SolidWorksSessionManagerReturnsTimeoutWhenComCallIgnoresCancellation()
+    {
+        var comActivator = new TrackingSolidWorksComActivator
+        {
+            SetVisibleAction = (_, _, _) => Thread.Sleep(TimeSpan.FromSeconds(3))
+        };
+        var manager = new SolidWorksSessionManager(comActivator);
+        var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+        {
+            ["SW_ENABLE_REAL_EXECUTION"] = "true",
+            ["SW_CONNECT_TIMEOUT_SECONDS"] = "1"
+        });
+        var started = DateTimeOffset.UtcNow;
+
+        var result = await manager.ConnectAsync(options, CancellationToken.None);
+        var elapsed = DateTimeOffset.UtcNow - started;
+
+        Assert.False(result.Connected);
+        Assert.True(elapsed < TimeSpan.FromSeconds(2.5), $"Non-cooperative COM call should time out before it returns; elapsed {elapsed}.");
+        Assert.Contains(result.Issues, issue => issue.Contains("timeout", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(1, comActivator.CreatedApplications);
+        await WaitForAsync(() => comActivator.ReleasedApplications == 1, TimeSpan.FromSeconds(5));
+        Assert.Equal(1, comActivator.ReleasedApplications);
+    }
+
+    [Fact]
     public async Task SolidWorksSessionManagerSerializesConcurrentConnections()
     {
         var comActivator = new TrackingSolidWorksComActivator
@@ -989,6 +1145,23 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksApiRepairLoopAvailable);
             Assert.True(report.SolidWorksMacroRecordingRequestAvailable);
             Assert.True(report.SolidWorksPlateFeatureBuilderExists);
+            Assert.True(report.SolidWorksRealDrawingBasicViewsImplemented);
+            Assert.True(report.SolidWorksRealDrawingDefaultDisabled);
+            Assert.True(report.SolidWorksRealDrawingRequiresEnvFlag);
+            Assert.False(report.SolidWorksRealDrawingSmokeTestAttempted);
+            Assert.False(report.SolidWorksRealDrawingSmokeTestPassed);
+            Assert.Null(report.SolidWorksRealDrawingSmokeTestError);
+            Assert.False(report.SolidWorksRealDrawingOutputsSlddrw);
+            Assert.False(report.SolidWorksRealDrawingOutputsPdf);
+            Assert.False(report.SolidWorksRealDrawingOutputsJsonReport);
+            Assert.True(report.SolidWorksRealDrawingNotCalledInDefaultSelfCheck);
+            Assert.False(report.SolidWorksDrawingReportGenerated);
+            Assert.Null(report.SolidWorksRealDrawingFailureStage);
+            Assert.True(report.SolidWorksDrawingFailureStageActionable);
+            Assert.True(report.V11VersionStageDocumented);
+            Assert.True(report.SolidWorksDrawingFailureRepairDocumented);
+            Assert.True(report.SolidWorksDrawingApiEvidenceDocumented);
+            Assert.True(report.SolidWorksDrawingReviewChecklistUpdated);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }
@@ -1210,6 +1383,82 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public void SolidWorksPlateFeatureBuilderSavePartThrowsWhenAllSaveMethodsFail()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_savepart_false_test", Guid.NewGuid().ToString("N"));
+        var partPath = Path.Combine(root, "plate_basic_4holes.SLDPRT");
+        var builder = new SolidWorksPlateFeatureBuilder();
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        var logs = new List<string>();
+
+        try
+        {
+            var exception = Assert.Throws<IOException>(() => builder.SavePart(
+                new object(),
+                partPath,
+                diagnostics,
+                logs,
+                (_, _, _, _) => false,
+                (_, _, _) => false));
+
+            Assert.Contains("sldprt_save_failed", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.True(diagnostics.SldprtSaveAttempted);
+            Assert.False(diagnostics.SldprtSaveSuccess);
+            Assert.Equal(Path.GetFullPath(partPath), diagnostics.SldprtPath);
+            Assert.Contains(diagnostics.SldprtSaveErrors, error => error.Contains("SaveAs returned false", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(diagnostics.Issues, issue => issue.Contains("sldprt_save_failed", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain("save_sldprt_success", diagnostics.OperationsExecuted);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SolidWorksPlateFeatureBuilderSavePartRejectsEmptySldprtFile()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_savepart_empty_test", Guid.NewGuid().ToString("N"));
+        var partPath = Path.Combine(root, "plate_basic_4holes.SLDPRT");
+        var builder = new SolidWorksPlateFeatureBuilder();
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        var logs = new List<string>();
+
+        try
+        {
+            var exception = Assert.Throws<IOException>(() => builder.SavePart(
+                new object(),
+                partPath,
+                diagnostics,
+                logs,
+                (_, savePath, _, _) =>
+                {
+                    File.WriteAllBytes(savePath, Array.Empty<byte>());
+                    return true;
+                },
+                (_, _, _) => false));
+
+            Assert.Contains("sldprt_save_failed", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.True(diagnostics.SldprtSaveAttempted);
+            Assert.False(diagnostics.SldprtSaveSuccess);
+            Assert.True(File.Exists(partPath));
+            Assert.Equal(0, new FileInfo(partPath).Length);
+            Assert.Contains(diagnostics.Issues, issue => issue.Contains("SLDPRT file was not created or is empty", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain("save_sldprt_success", diagnostics.OperationsExecuted);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void SolidWorksDiagnosticRunnerSeparatesBuildAndRepairLogPrefixes()
     {
         var copyDiagnostics = typeof(SolidWorksDiagnosticRunner).GetMethod(
@@ -1306,6 +1555,22 @@ public sealed class SolidWorksModuleSkeletonTests
     public void SolidWorksSmokeRunnerMapsFailureStage(string error, string expectedStage)
     {
         Assert.Equal(expectedStage, SolidWorksDiagnosticRunner.MapFailureStage(error));
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var deadline = DateTimeOffset.UtcNow + timeout;
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (condition())
+            {
+                return;
+            }
+
+            await Task.Delay(50);
+        }
+
+        Assert.True(condition(), $"Condition was not met within {timeout}.");
     }
 
     private static async Task<SolidWorksBuildPlan> CreatePlanAsync()
@@ -1573,6 +1838,71 @@ public sealed class SolidWorksModuleSkeletonTests
                     SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "真实构建报告。")
                 },
                 new[] { "test plate builder generated controlled artifacts" });
+        }
+    }
+
+    private sealed class TestSolidWorksDrawingBuilder : ISolidWorksDrawingBuilder
+    {
+        public int BuildAttempts { get; private set; }
+
+        public async Task<SolidWorksDrawingBuildResult> CreateBasicViewsDrawingAsync(
+            object application,
+            SolidWorksWorkerRequest request,
+            SolidWorksRuntimeOptions options,
+            string? solidWorksVersion,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            BuildAttempts++;
+
+            var outputDirectory = SolidWorksDrawingBuildOutput.ResolveOutputDirectory(request, options);
+            Directory.CreateDirectory(outputDirectory);
+            var drawingPath = Path.Combine(outputDirectory, "plate_basic_4holes.SLDDRW");
+            var pdfPath = Path.Combine(outputDirectory, "plate_basic_4holes.pdf");
+            var reportPath = Path.Combine(outputDirectory, "drawing_report.json");
+
+            await File.WriteAllTextAsync(drawingPath, "fake real SolidWorks drawing bytes for tests", cancellationToken);
+            await File.WriteAllTextAsync(pdfPath, "fake real drawing PDF bytes for tests", cancellationToken);
+
+            var report = new SolidWorksDrawingReport
+            {
+                SourcePartPath = request.SourcePartPath,
+                OutputDirectory = outputDirectory,
+                SolidWorksConnected = true,
+                SolidWorksVersion = solidWorksVersion,
+                DrawingCreated = true,
+                SlddrwPath = drawingPath,
+                SlddrwExists = true,
+                SlddrwSizeBytes = new FileInfo(drawingPath).Length,
+                PdfPath = pdfPath,
+                PdfExists = true,
+                PdfSizeBytes = new FileInfo(pdfPath).Length,
+                CompletedAt = DateTimeOffset.UtcNow,
+                FinalStatus = "Passed"
+            };
+            report.ViewsCreated.AddRange(new[] { "Front", "Top", "Right", "Isometric" });
+            report.Operations.AddRange(new[]
+            {
+                "drawing_request_received",
+                "source_part_open_success",
+                "front_view_create_success",
+                "top_view_create_success",
+                "right_view_create_success",
+                "isometric_view_create_success",
+                "slddrw_save_success",
+                "pdf_export_success",
+                "drawing_report_written"
+            });
+            await SolidWorksDrawingReportWriter.WriteAsync(reportPath, report, cancellationToken);
+
+            return SolidWorksDrawingBuildResult.Completed(
+                new[]
+                {
+                    SolidWorksDrawingBuildOutput.Artifact("real-drawing", "Drawing", drawingPath, ".SLDDRW", "真实 SolidWorks 工程图文件。"),
+                    SolidWorksDrawingBuildOutput.Artifact("real-drawing-pdf", "Pdf", pdfPath, ".pdf", "真实工程图 PDF 导出文件。"),
+                    SolidWorksDrawingBuildOutput.Artifact("real-drawing-report", "DrawingReport", reportPath, ".json", "真实工程图报告。")
+                },
+                new[] { "test drawing builder generated controlled artifacts" });
         }
     }
 

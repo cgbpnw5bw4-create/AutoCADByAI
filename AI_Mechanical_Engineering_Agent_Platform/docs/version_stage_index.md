@@ -18,6 +18,8 @@
 | V1.0-B-DIAG | SolidWorks 诊断隔离 | 不改 Gateway | SmokeRunner、diagnostic_report | `src/Workers/SolidWorks/failure_repair.md` | `solidworks_diagnostic_runner_exists` | `../reviewrep` |
 | V1.0-B-REPAIR | API Evidence Driven Repair Loop | 不盲改 API | Analyzer、EvidenceCollector、PlateFeatureBuilder | `src/Workers/SolidWorks/api_evidence.md` | `solidworks_api_repair_loop_available` | `../reviewrep` |
 | V1.0-DOCS-AGENTS | 可执行文档层与 Codex Agent Team | 不继续修 API | 文档协议、Codex Agents、Skills 骨架 | `docs/codex_agent_team_guide.md` | `executable_docs_layer_enabled` | `../reviewrep` |
+| V1.1-GOVERNED-DRAWING | Codex Agent 复用治理与 SolidWorks 真实工程图基础视图 | 不新增同职责 Agent，不做尺寸、标题栏、BOM、装配体或复杂模板 | `codex_agent_registry.md`、`codex_agent_governance.md`、`SolidWorksDrawingBuilder`、`SolidWorksDrawingSmokeRunner`、`drawing_report.json`、SLDDRW、PDF | `docs/codex_agent_governance.md`、`src/Workers/SolidWorks/execution.md`、`src/Workers/SolidWorks/api_evidence.md`、`src/Workers/SolidWorks/failure_repair.md` | `codex_only_canonical_agents_active`、`solidworks_real_drawing_basic_views_implemented`、`solidworks_real_drawing_not_called_in_default_self_check`、`solidworks_drawing_failure_stage_actionable` | `../reviewrep` |
+| V1.1 | SolidWorks 真实工程图基础视图 | 不做尺寸、标题栏、BOM、装配体或复杂模板 | `SolidWorksDrawingBuilder`、`SolidWorksDrawingSmokeRunner`、`drawing_report.json`、SLDDRW、PDF | `src/Workers/SolidWorks/execution.md`、`src/Workers/SolidWorks/api_evidence.md`、`src/Workers/SolidWorks/failure_repair.md` | `solidworks_real_drawing_basic_views_implemented`、`solidworks_real_drawing_not_called_in_default_self_check`、`solidworks_drawing_failure_stage_actionable` | `../reviewrep` |
 
 ## 使用方式
 

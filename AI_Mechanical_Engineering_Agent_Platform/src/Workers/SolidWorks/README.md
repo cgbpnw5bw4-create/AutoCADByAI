@@ -1,6 +1,6 @@
 # SolidWorks Worker 说明
 
-本目录是 SolidWorks 执行层边界。V0.9-B 已提供 `FakeSolidWorksWorker` dry-run skeleton；V1.0-A 新增真实执行前的安全边界、环境预检、COM 会话封装和 `RealSolidWorksWorker` 骨架；V1.0-B 新增第一个受控真实建模场景 `plate_basic_4holes`。
+本目录是 SolidWorks 执行层边界。V0.9-B 已提供 `FakeSolidWorksWorker` dry-run skeleton；V1.0-A 新增真实执行前的安全边界、环境预检、COM 会话封装和 `RealSolidWorksWorker` 骨架；V1.0-B 新增第一个受控真实建模场景 `plate_basic_4holes`；V1.1 新增基于该零件的真实工程图基础视图能力。
 
 当前仍然默认禁止真实 CAD 执行：
 
@@ -45,8 +45,11 @@ V1.0-A 的 `RealSolidWorksWorker` 只实现真实执行前边界和连接 smoke 
 - `RealPreflightOnly`
 - `RealConnectionSmokeTest`
 - `RealBuildPlateBasic4Holes`
+- `RealDrawingBasicViews`
 
 通用 `RealBuild` 仍然是预留模式，不在 V1.0-B 实现。连接 smoke test 成功时只能设置 `RealCadConnected = true`，不能设置 `RealCadExecuted = true`。只有 `RealBuildPlateBasic4Holes` 完成真实建模、保存和导出后，才允许设置 `RealCadExecuted = true`。
+
+`RealDrawingBasicViews` 只在 V1.1 工程图 smoke test 中使用，必须基于已有的 `plate_basic_4holes.SLDPRT` 创建工程图，不得创建尺寸、标题栏、BOM 或装配体工程图。
 
 ## V1.0-B 最小真实建模
 
@@ -64,6 +67,27 @@ V1.0-A 的 `RealSolidWorksWorker` 只实现真实执行前边界和连接 smoke 
 
 真实建模失败时必须返回结构化 issue，并保留 `build_report.json` 或错误日志，不能把失败伪装成成功。
 
+## V1.1 基础工程图
+
+V1.1 的目标是最小真实工程图链路：
+
+- 打开 `plate_basic_4holes.SLDPRT`。
+- 创建 Drawing 文档。
+- 插入 Front、Top、Right、Isometric 四个基础视图。
+- 保存 `plate_basic_4holes.SLDDRW`。
+- 导出 `plate_basic_4holes.pdf`。
+- 写出 `drawing_report.json`。
+
+默认 self-check 不执行真实工程图。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true` 时，才允许真实工程图 smoke test。严格模式需要额外设置 `SW_STRICT_REAL_DRAWING_TEST=true`。
+
+手动诊断命令：
+
+```powershell
+dotnet run --project tools/SolidWorksDrawingSmokeRunner -- --source-part "output/solidworks/real/plate_basic_4holes/<timestamp>/plate_basic_4holes.SLDPRT" --output output/solidworks/real/plate_basic_4holes_drawing
+```
+
+如果需要指定工程图模板，可以使用 `--template` 参数或设置 `SW_TEMPLATE_DRAWING_PATH`。V1.1 不做尺寸标注、标题栏字段、BOM、装配体工程图、复杂模板和钣金展开图。
+
 ## SolidWorksSessionManager
 
 `SolidWorksSessionManager` 使用 late binding 封装 `SldWorks.Application` 连接，不引入 SolidWorks Interop 编译期依赖。它负责：
@@ -78,6 +102,8 @@ V1.0-A 的 `RealSolidWorksWorker` 只实现真实执行前边界和连接 smoke 
 
 真实建模 smoke test 与连接 smoke test 分离。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_BUILD_SMOKE_TEST=true` 时，self-check 才允许调用 `RealBuildPlateBasic4Holes`；如果还设置 `SW_STRICT_REAL_BUILD_TEST=true`，真实建模失败才会导致 final_status 失败。
 
+真实工程图 smoke test 与真实建模 smoke test 也分离。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true` 时，self-check 才允许调用 `RealDrawingBasicViews`；如果还设置 `SW_STRICT_REAL_DRAWING_TEST=true`，工程图失败才会导致 final_status 失败。
+
 ## 平台边界
 
 - Agent 只能提出计划和协作建议，不能直接调用 Worker。
@@ -85,4 +111,4 @@ V1.0-A 的 `RealSolidWorksWorker` 只实现真实执行前边界和连接 smoke 
 - LLM 不能直接调用 Worker。
 - Worker 必须通过平台调度边界执行，并保留审计日志。
 - 真实 CAD 执行必须经过请求级开关、环境变量级开关和 QualityGate。
-- V1.0-B 的真实建模能力不改变 Agent、Gateway、LLM 的权限模型。
+- V1.0-B 的真实建模能力和 V1.1 的真实工程图能力都不改变 Agent、Gateway、LLM 的权限模型。

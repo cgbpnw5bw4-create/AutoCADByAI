@@ -34,6 +34,12 @@
 - `SaveAs`、`SaveAs2`、`SaveAs3`
 - `ActivateDoc`、`ActiveDoc`
 - `ClearSelection2`
+- `NewDocument`
+- `OpenDoc6`
+- `CreateDrawViewFromModelView3`
+- `IModelDocExtension.SaveAs`
+- `GetExportFileData`
+- `IExportPdfData.SetSheets`
 
 ## `cut_holes_failed` 当前证据结论
 
@@ -54,3 +60,18 @@
 ## 使用边界
 
 证据可以指导封装重写，但不能绕过 `Worker`、`Validator`、`Reviewer` 和 `QualityGate`。未验证 API 不能直接进入主 Worker。
+
+## V1.1 工程图 API 证据
+
+V1.1 工程图只允许基础视图能力。当前候选顺序是：
+
+1. `OpenDoc6` 打开 `plate_basic_4holes.SLDPRT`。
+2. `ActivateDoc3` 激活源零件。
+3. `NewDocument` 使用 `.drwdot` 创建 Drawing。
+4. `CreateDrawViewFromModelView3` 创建 `*Front`、`*Top`、`*Right`、`*Isometric`。
+5. `IModelDocExtension.SaveAs` 保存 `SLDDRW`。
+6. 激活 Drawing 后通过 `IModelDocExtension.SaveAs` 导出 PDF，必要时使用 `GetExportFileData` 和 `IExportPdfData.SetSheets`。
+
+官方证据已覆盖 `OpenDoc6`、`ActivateDoc3`、`NewDocument`、`CreateDrawViewFromModelView3`、`IModelDocExtension.SaveAs`、`GetExportFileData` 和 `IExportPdfData.SetSheets`。详细 URL 记录在 `src/Workers/SolidWorks/api_evidence.md`。
+
+任何视图创建、保存或 PDF 导出失败，都必须先生成 `drawing_report.json`，再依据官方 API 或宏录制证据修复。不能把工程图宏直接作为生产路径。

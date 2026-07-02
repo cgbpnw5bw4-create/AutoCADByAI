@@ -28,10 +28,11 @@ public sealed class SolidWorksArtifactValidator : IValidator
 
         var isFakeMode = string.Equals(result.ExecutionMode, "Fake", StringComparison.OrdinalIgnoreCase);
         var isRealPlateBuildMode = string.Equals(result.ExecutionMode, "RealBuildPlateBasic4Holes", StringComparison.OrdinalIgnoreCase);
+        var isRealDrawingMode = string.Equals(result.ExecutionMode, "RealDrawingBasicViews", StringComparison.OrdinalIgnoreCase);
 
-        if (!isFakeMode && !isRealPlateBuildMode)
+        if (!isFakeMode && !isRealPlateBuildMode && !isRealDrawingMode)
         {
-            issues.Add("execution_mode must be Fake or RealBuildPlateBasic4Holes.");
+            issues.Add("execution_mode must be Fake, RealBuildPlateBasic4Holes, or RealDrawingBasicViews.");
         }
 
         if (result.GeneratedArtifacts.Count == 0)
@@ -46,6 +47,10 @@ public sealed class SolidWorksArtifactValidator : IValidator
         else if (isRealPlateBuildMode)
         {
             ValidateRealPlateBuildMode(result, issues);
+        }
+        else if (isRealDrawingMode)
+        {
+            ValidateRealDrawingMode(result, issues);
         }
 
         return Report(issues);
@@ -134,6 +139,42 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
     }
 
+    private void ValidateRealDrawingMode(SolidWorksWorkerResult result, List<string> issues)
+    {
+        if (!result.RealCadExecuted)
+        {
+            issues.Add("real_cad_executed must be true for RealDrawingBasicViews.");
+        }
+
+        if (!result.RealCadConnected)
+        {
+            issues.Add("real_cad_connected must be true for RealDrawingBasicViews.");
+        }
+
+        var drawing = FindArtifact(result, ".SLDDRW");
+        var pdf = FindArtifact(result, ".pdf");
+        var report = result.GeneratedArtifacts.FirstOrDefault(artifact =>
+            Path.GetFileName(artifact.FilePath).Equals("drawing_report.json", StringComparison.OrdinalIgnoreCase));
+
+        ValidateRealArtifact(drawing, ".SLDDRW", issues);
+        ValidateRealArtifact(pdf, ".pdf", issues);
+        ValidateRealArtifact(report, "drawing_report.json", issues);
+
+        foreach (var artifact in result.GeneratedArtifacts)
+        {
+            var fullPath = Path.GetFullPath(artifact.FilePath);
+            if (!IsUnderRealArtifactRoot(fullPath))
+            {
+                issues.Add($"real drawing artifact path must be under output/solidworks/real: {artifact.FilePath}.");
+            }
+        }
+
+        if (report is not null && File.Exists(report.FilePath))
+        {
+            ValidateRealDrawingReport(report.FilePath, issues);
+        }
+    }
+
     private static SolidWorksArtifact? FindArtifact(SolidWorksWorkerResult result, string extension) =>
         result.GeneratedArtifacts.FirstOrDefault(artifact =>
             string.Equals(artifact.ExpectedExtension, extension, StringComparison.OrdinalIgnoreCase) ||
@@ -193,6 +234,61 @@ public sealed class SolidWorksArtifactValidator : IValidator
         catch (JsonException ex)
         {
             issues.Add($"build_report.json is invalid: {ex.Message}.");
+        }
+    }
+
+    private static void ValidateRealDrawingReport(string reportPath, List<string> issues)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = document.RootElement;
+            if (!root.TryGetProperty("drawing_created", out var drawingCreated) ||
+                drawingCreated.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("drawing_report drawing_created must be true.");
+            }
+
+            if (!root.TryGetProperty("slddrw_exists", out var slddrwExists) ||
+                slddrwExists.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("drawing_report slddrw_exists must be true.");
+            }
+
+            if (!root.TryGetProperty("pdf_exists", out var pdfExists) ||
+                pdfExists.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("drawing_report pdf_exists must be true.");
+            }
+
+            if (!root.TryGetProperty("final_status", out var finalStatus) ||
+                !string.Equals(finalStatus.GetString(), "Passed", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add("drawing_report final_status must be Passed.");
+            }
+
+            if (!root.TryGetProperty("views_created", out var views) ||
+                views.ValueKind != JsonValueKind.Array)
+            {
+                issues.Add("drawing_report views_created must be present.");
+                return;
+            }
+
+            var viewNames = views.EnumerateArray()
+                .Select(view => view.GetString())
+                .Where(view => !string.IsNullOrWhiteSpace(view))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var expectedView in new[] { "Front", "Top", "Right", "Isometric" })
+            {
+                if (!viewNames.Contains(expectedView))
+                {
+                    issues.Add($"drawing_report missing view: {expectedView}.");
+                }
+            }
+        }
+        catch (JsonException ex)
+        {
+            issues.Add($"drawing_report.json is invalid: {ex.Message}.");
         }
     }
 

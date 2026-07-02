@@ -51,7 +51,20 @@ public sealed class SequentialWorkflowEngine
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var rawResult = await step.ExecuteAsync(context);
+                WorkflowStepResult rawResult;
+                try
+                {
+                    rawResult = await step.ExecuteAsync(context);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    rawResult = BuildExceptionResult(step, ex);
+                }
+
                 var decision = rawResult.GateDecision ?? PassedDecision(step);
                 var issues = ResolveIssues(rawResult);
                 var typedIssues = issues.Select(Issue.FromText).ToArray();
@@ -190,6 +203,29 @@ public sealed class SequentialWorkflowEngine
             $"gate-{step.StepId ?? step.Name}-{Guid.NewGuid():N}",
             GateDecisionResult.Passed,
             $"Workflow step '{step.Name}' did not request rejection, failure or human approval.");
+
+    private static WorkflowStepResult BuildExceptionResult(WorkflowStep step, Exception exception)
+    {
+        var rootException = exception.GetBaseException();
+        var stepId = step.StepId ?? step.Name;
+        var issue = $"workflow_step_exception: {rootException.GetType().Name}: {rootException.Message}";
+        var decision = new GateDecision(
+            $"gate-{stepId}-exception-{Guid.NewGuid():N}",
+            GateDecisionResult.Failed,
+            $"Workflow step '{step.Name}' threw an exception.");
+
+        return new WorkflowStepResult(
+            stepId,
+            step.Name,
+            WorkflowStepStatus.Failed,
+            $"Workflow step '{step.Name}' failed with an exception.",
+            GateDecision: decision,
+            Logs: new[]
+            {
+                $"workflow_step_exception: step_id={stepId}, exception_type={rootException.GetType().FullName}, message={rootException.Message}"
+            },
+            Issues: new[] { issue });
+    }
 
     private static IReadOnlyList<string> ResolveIssues(WorkflowStepResult result)
     {

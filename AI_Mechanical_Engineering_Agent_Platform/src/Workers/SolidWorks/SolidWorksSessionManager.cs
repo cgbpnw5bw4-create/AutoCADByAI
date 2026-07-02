@@ -66,14 +66,29 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(options.ConnectTimeoutSeconds));
 
+        Task<SolidWorksConnectedApplication>? connectTask = null;
+
         await _connectionLock.WaitAsync(cancellationToken);
         try
         {
             ReleaseCurrentApplication();
-            return await Task.Run(() => ConnectCore(options, timeout.Token), timeout.Token);
+            connectTask = Task.Run(() => ConnectCore(options, timeout.Token), CancellationToken.None);
+            var connected = await connectTask.WaitAsync(timeout.Token);
+            _application = connected.Application;
+
+            return new SolidWorksSessionConnectionResult(
+                Connected: true,
+                connected.SolidWorksVersion,
+                Array.Empty<string>(),
+                new[] { "SolidWorks COM session connected. CAD build execution is still controlled by RealSolidWorksWorker." });
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
+            if (connectTask is not null)
+            {
+                ReleaseLateConnection(connectTask);
+            }
+
             ReleaseCurrentApplication();
             return Failed("solidworks_connection_timeout: SolidWorks connection timed out.");
         }
@@ -169,7 +184,7 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
         }
     }
 
-    private SolidWorksSessionConnectionResult ConnectCore(
+    private SolidWorksConnectedApplication ConnectCore(
         SolidWorksRuntimeOptions options,
         CancellationToken cancellationToken)
     {
@@ -181,14 +196,10 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
             application = _comActivator.CreateApplication(cancellationToken);
             _comActivator.SetVisible(application, options.Visible, cancellationToken);
             var version = _comActivator.ReadVersion(application, cancellationToken);
-            _application = application;
+            var connected = new SolidWorksConnectedApplication(application, version);
             application = null;
 
-            return new SolidWorksSessionConnectionResult(
-                Connected: true,
-                version,
-                Array.Empty<string>(),
-                new[] { "SolidWorks COM session connected. CAD build execution is still controlled by RealSolidWorksWorker." });
+            return connected;
         }
         finally
         {
@@ -199,12 +210,40 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
         }
     }
 
+    private void ReleaseLateConnection(Task<SolidWorksConnectedApplication> connectTask)
+    {
+        _ = connectTask.ContinueWith(
+            task =>
+            {
+                if (task.Status == TaskStatus.RanToCompletion)
+                {
+                    try
+                    {
+                        _comActivator.Release(task.Result.Application);
+                    }
+                    catch
+                    {
+                        // Late COM cleanup must not surface as an unobserved continuation failure.
+                    }
+                }
+                else if (task.IsFaulted)
+                {
+                    _ = task.Exception;
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+    }
+
     private static SolidWorksSessionConnectionResult Failed(string issue) =>
         new(
             Connected: false,
             SolidWorksVersion: null,
             new[] { issue },
             new[] { "SolidWorks COM session was not connected." });
+
+    private sealed record SolidWorksConnectedApplication(object Application, string? SolidWorksVersion);
 }
 
 public sealed class LateBoundSolidWorksComActivator : ISolidWorksComActivator

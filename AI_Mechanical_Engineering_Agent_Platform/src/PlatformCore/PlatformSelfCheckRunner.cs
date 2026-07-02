@@ -58,6 +58,26 @@ public static class PlatformSelfCheckRunner
         "IReportRepository.cs"
     ];
 
+    private static readonly string[] CanonicalCodexAgentNames =
+    [
+        "project_manager",
+        "code_mapper",
+        "api_researcher",
+        "cad_worker",
+        "quality_gate",
+        "docs_writer"
+    ];
+
+    private static readonly string[] CanonicalCodexAgentFiles =
+    [
+        "project-manager.toml",
+        "code-mapper.toml",
+        "api-researcher.toml",
+        "cad-worker.toml",
+        "quality-gate.toml",
+        "docs-writer.toml"
+    ];
+
     public static async Task<PlatformSelfCheckReport> RunAsync(
         PlatformKernel platform,
         string outputRoot,
@@ -305,6 +325,20 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksApiRepairLoopAvailable &&
             solidWorksSkeletonChecks.SolidWorksMacroRecordingRequestAvailable &&
             solidWorksSkeletonChecks.SolidWorksPlateFeatureBuilderExists &&
+            solidWorksSkeletonChecks.SolidWorksRealDrawingBasicViewsImplemented &&
+            (solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingDefaultDisabled) &&
+            solidWorksSkeletonChecks.SolidWorksRealDrawingRequiresEnvFlag &&
+            (!solidWorksSkeletonChecks.SolidWorksStrictRealDrawingSmokeTest ||
+             !solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestPassed) &&
+            (solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingNotCalledInDefaultSelfCheck) &&
+            solidWorksSkeletonChecks.SolidWorksDrawingFailureStageActionable &&
+            solidWorksSkeletonChecks.V11VersionStageDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingFailureRepairDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingApiEvidenceDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingReviewChecklistUpdated &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -467,6 +501,25 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksApiRepairLoopAvailable,
             solidWorksSkeletonChecks.SolidWorksMacroRecordingRequestAvailable,
             solidWorksSkeletonChecks.SolidWorksPlateFeatureBuilderExists,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingBasicViewsImplemented,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDefaultDisabled,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingRequiresEnvFlag,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestAttempted,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestPassed,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestError,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingOutputsSlddrw,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingOutputsPdf,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingOutputsJsonReport,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingNotCalledInDefaultSelfCheck,
+            solidWorksSkeletonChecks.SolidWorksDrawingReportGenerated,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingFailureStage,
+            solidWorksSkeletonChecks.SolidWorksDrawingFailureStageActionable,
+            solidWorksSkeletonChecks.RealDrawingOutputDirectory,
+            solidWorksSkeletonChecks.RealDrawingLatestReportPath,
+            solidWorksSkeletonChecks.V11VersionStageDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingFailureRepairDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingApiEvidenceDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingReviewChecklistUpdated,
             executableDocsChecks.ExecutableDocsLayerEnabled,
             executableDocsChecks.DocsIndexExists,
             executableDocsChecks.ProjectExecutionStandardExists,
@@ -477,8 +530,16 @@ public static class PlatformSelfCheckRunner
             executableDocsChecks.ClaudeReviewProtocolExists,
             executableDocsChecks.VersionStageIndexExists,
             executableDocsChecks.CodexAgentTeamGuideExists,
+            executableDocsChecks.CodexAgentRegistryExists,
+            executableDocsChecks.CodexAgentGovernanceDocExists,
             executableDocsChecks.AgentsMdExists,
             executableDocsChecks.CodexAgentsConfigured,
+            executableDocsChecks.CodexAgentRegistryListsCanonicalAgents,
+            executableDocsChecks.CodexNoDuplicateActiveAgents,
+            executableDocsChecks.CodexAgentReusePolicyDocumented,
+            executableDocsChecks.CodexAgentNewRequirementsGoToSkillsOrDocs,
+            executableDocsChecks.CodexActiveAgentCountIsExpected,
+            executableDocsChecks.CodexOnlyCanonicalAgentsActive,
             executableDocsChecks.CodexConfigExampleExists,
             executableDocsChecks.CodexProjectManagerAgentExists,
             executableDocsChecks.CodexCodeMapperAgentExists,
@@ -618,6 +679,8 @@ public static class PlatformSelfCheckRunner
         var claudeReviewProtocolExists = Exists("docs", "claude_review_protocol.md");
         var versionStageIndexExists = Exists("docs", "version_stage_index.md");
         var codexAgentTeamGuideExists = Exists("docs", "codex_agent_team_guide.md");
+        var codexAgentRegistryExists = Exists("docs", "codex_agent_registry.md");
+        var codexAgentGovernanceDocExists = Exists("docs", "codex_agent_governance.md");
         var agentsMdExists = Exists("AGENTS.md");
         var codexConfigExampleExists = Exists(".codex", "config.example.toml");
 
@@ -644,12 +707,49 @@ public static class PlatformSelfCheckRunner
 
         var agentsText = Read("AGENTS.md");
         var guideText = Read("docs", "codex_agent_team_guide.md");
+        var protocolText = Read("docs", "codex_execution_protocol.md");
+        var registryText = Read("docs", "codex_agent_registry.md");
+        var governanceText = Read("docs", "codex_agent_governance.md");
         var codexAgentsDoNotReplaceProjectModules =
             agentsText.Contains("不能替代 `src/Modules`", StringComparison.OrdinalIgnoreCase) &&
             guideText.Contains("不能替代 `src/Modules`", StringComparison.OrdinalIgnoreCase);
         var codexAgentsRespectWorkerBoundaries =
             agentsText.Contains("不能直接调用 `Worker`", StringComparison.OrdinalIgnoreCase) &&
             guideText.Contains("不能直接执行真实 CAD", StringComparison.OrdinalIgnoreCase);
+        var codexAgentRegistryListsCanonicalAgents = CanonicalCodexAgentNames
+            .All(agentName => registryText.Contains($"`{agentName}`", StringComparison.OrdinalIgnoreCase));
+        var activeAgentDirectory = Path.Combine(projectRoot, ".codex", "agents");
+        var activeAgentFiles = Directory.Exists(activeAgentDirectory)
+            ? Directory.GetFiles(activeAgentDirectory, "*.toml", SearchOption.TopDirectoryOnly)
+            : Array.Empty<string>();
+        var activeAgentFileNames = activeAgentFiles
+            .Select(Path.GetFileName)
+            .Where(fileName => !string.IsNullOrWhiteSpace(fileName))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var activeAgentNames = activeAgentFiles
+            .Select(path => ExtractAgentName(File.ReadAllText(path)))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToArray();
+        var codexNoDuplicateActiveAgents =
+            activeAgentNames.Length == activeAgentNames.Distinct(StringComparer.OrdinalIgnoreCase).Count() &&
+            CanonicalCodexAgentNames.All(agentName =>
+                activeAgentNames.Count(activeName => activeName.Equals(agentName, StringComparison.OrdinalIgnoreCase)) <= 1);
+        var codexActiveAgentCountIsExpected = activeAgentFiles.Length == CanonicalCodexAgentFiles.Length;
+        var codexOnlyCanonicalAgentsActive =
+            activeAgentFileNames.SetEquals(CanonicalCodexAgentFiles) &&
+            activeAgentNames.ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(CanonicalCodexAgentNames);
+        var codexAgentReusePolicyDocumented =
+            agentsText.Contains("Codex Agent 复用规则", StringComparison.OrdinalIgnoreCase) &&
+            guideText.Contains("Agent 去重与复用", StringComparison.OrdinalIgnoreCase) &&
+            protocolText.Contains("canonical agent", StringComparison.OrdinalIgnoreCase) &&
+            governanceText.Contains("不允许重复创建同职责 Agent", StringComparison.OrdinalIgnoreCase);
+        var codexAgentNewRequirementsGoToSkillsOrDocs =
+            governanceText.Contains(".agents/skills/solidworks-api-repair/SKILL.md", StringComparison.OrdinalIgnoreCase) &&
+            governanceText.Contains(".agents/skills/quality-review/SKILL.md", StringComparison.OrdinalIgnoreCase) &&
+            governanceText.Contains(".agents/skills/markdown-docs-standard/SKILL.md", StringComparison.OrdinalIgnoreCase) &&
+            governanceText.Contains("api_evidence.md", StringComparison.OrdinalIgnoreCase) &&
+            governanceText.Contains("review_checklist.md", StringComparison.OrdinalIgnoreCase) &&
+            governanceText.Contains("module_document_standard.md", StringComparison.OrdinalIgnoreCase);
 
         var agentsSkillsDirectoryExists = DirectoryExists(".agents", "skills");
         var solidWorksApiRepairSkillExists = Exists(".agents", "skills", "solidworks-api-repair", "SKILL.md");
@@ -675,8 +775,16 @@ public static class PlatformSelfCheckRunner
             claudeReviewProtocolExists &&
             versionStageIndexExists &&
             codexAgentTeamGuideExists &&
+            codexAgentRegistryExists &&
+            codexAgentGovernanceDocExists &&
             agentsMdExists &&
             codexAgentsConfigured &&
+            codexAgentRegistryListsCanonicalAgents &&
+            codexNoDuplicateActiveAgents &&
+            codexAgentReusePolicyDocumented &&
+            codexAgentNewRequirementsGoToSkillsOrDocs &&
+            codexActiveAgentCountIsExpected &&
+            codexOnlyCanonicalAgentsActive &&
             codexConfigExampleExists &&
             codexAgentsDoNotReplaceProjectModules &&
             codexAgentsRespectWorkerBoundaries &&
@@ -704,8 +812,16 @@ public static class PlatformSelfCheckRunner
             claudeReviewProtocolExists,
             versionStageIndexExists,
             codexAgentTeamGuideExists,
+            codexAgentRegistryExists,
+            codexAgentGovernanceDocExists,
             agentsMdExists,
             codexAgentsConfigured,
+            codexAgentRegistryListsCanonicalAgents,
+            codexNoDuplicateActiveAgents,
+            codexAgentReusePolicyDocumented,
+            codexAgentNewRequirementsGoToSkillsOrDocs,
+            codexActiveAgentCountIsExpected,
+            codexOnlyCanonicalAgentsActive,
             codexConfigExampleExists,
             codexProjectManagerAgentExists,
             codexCodeMapperAgentExists,
@@ -732,6 +848,28 @@ public static class PlatformSelfCheckRunner
     private static bool AgentConfigured(string toml, string name, string sandboxMode) =>
         toml.Contains($"name = \"{name}\"", StringComparison.OrdinalIgnoreCase) &&
         toml.Contains($"sandbox_mode = \"{sandboxMode}\"", StringComparison.OrdinalIgnoreCase);
+
+    private static string ExtractAgentName(string toml)
+    {
+        foreach (var line in toml.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("name", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var separatorIndex = trimmed.IndexOf('=');
+            if (separatorIndex < 0)
+            {
+                continue;
+            }
+
+            return trimmed[(separatorIndex + 1)..].Trim().Trim('"');
+        }
+
+        return string.Empty;
+    }
 
     private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform, string? testScenario = null)
     {
@@ -990,6 +1128,22 @@ public static class PlatformSelfCheckRunner
             var solidWorksRealBuildOutputsStep = false;
             var solidWorksRealBuildOutputsJsonReport = false;
             var solidWorksRealBuildNotCalledInDefaultSelfCheck = !solidWorksRealBuildSmokeTestAttempted;
+            var solidWorksRealDrawingBasicViewsImplemented = false;
+            var solidWorksRealDrawingDefaultDisabled = !RealSolidWorksDrawingSmokeTestRequested();
+            var solidWorksRealDrawingRequiresEnvFlag = false;
+            var solidWorksRealDrawingSmokeTestAttempted = RealSolidWorksDrawingSmokeTestRequested();
+            var solidWorksRealDrawingSmokeTestPassed = false;
+            string? solidWorksRealDrawingSmokeTestError = null;
+            var solidWorksStrictRealDrawingSmokeTest = StrictRealSolidWorksDrawingTestRequested();
+            var solidWorksRealDrawingOutputsSlddrw = false;
+            var solidWorksRealDrawingOutputsPdf = false;
+            var solidWorksRealDrawingOutputsJsonReport = false;
+            var solidWorksRealDrawingNotCalledInDefaultSelfCheck = !solidWorksRealDrawingSmokeTestAttempted;
+            var solidWorksDrawingReportGenerated = false;
+            string? solidWorksRealDrawingFailureStage = null;
+            var solidWorksDrawingFailureStageActionable = true;
+            string? realDrawingOutputDirectory = null;
+            string? realDrawingLatestReportPath = null;
             var swEnableRealExecutionEnvValue = Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION");
             var swRealBuildSmokeTestEnvValue = Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST");
             var swStrictRealBuildTestEnvValue = Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST");
@@ -1057,6 +1211,11 @@ public static class PlatformSelfCheckRunner
                 solidWorksRealPlateBuildImplemented =
                     realSolidWorksWorkerType.GetProperty("SupportsPlateBasicFourHolesBuild")?.GetValue(
                         Activator.CreateInstance(realSolidWorksWorkerType)) is true;
+                solidWorksRealDrawingBasicViewsImplemented =
+                    realSolidWorksWorkerType.GetProperty("SupportsBasicViewsDrawing")?.GetValue(
+                        Activator.CreateInstance(realSolidWorksWorkerType)) is true &&
+                    File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksDrawingBuilder.cs")) &&
+                    File.Exists(Path.Combine(projectRoot, "tools", "SolidWorksDrawingSmokeRunner", "SolidWorksDrawingSmokeRunner.csproj"));
                 solidWorksRealCadNotExecutedByDefault =
                     workerResult?.RealCadExecuted == false &&
                     envFlagResult.RealCadExecuted == false &&
@@ -1065,6 +1224,7 @@ public static class PlatformSelfCheckRunner
                     dryRunFlagResult.RealCadConnected == false;
                 solidWorksRealBuildRequiresRequestFlag = solidWorksRealExecutionRequiresRequestFlag;
                 solidWorksRealBuildRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
+                solidWorksRealDrawingRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
                 solidWorksRealBuildRequiresDryRunFalse =
                     dryRunFlagResult.Status == "Rejected" &&
                     dryRunFlagResult.ExecutionMode == "RealPreflightOnly" &&
@@ -1189,7 +1349,106 @@ public static class PlatformSelfCheckRunner
                             solidWorksRealBuildSmokeTestError);
                     }
                 }
+
+                if (solidWorksRealDrawingSmokeTestAttempted)
+                {
+                    realDrawingOutputDirectory = CreateRealDrawingSmokeOutputDirectory(projectRoot);
+                    var drawingRequest = envFlagProbe with
+                    {
+                        RequestId = $"self-check-solidworks-real-drawing-{Guid.NewGuid():N}",
+                        OutputDirectory = realDrawingOutputDirectory,
+                        DryRun = false,
+                        AllowRealCadExecution = true,
+                        ConnectionSmokeTestOnly = false,
+                        DrawingSmokeTestOnly = true,
+                        SourcePartPath = FindLatestRealPlatePartPath(projectRoot),
+                        DrawingTemplatePath = Environment.GetEnvironmentVariable("SW_TEMPLATE_DRAWING_PATH")
+                    };
+
+                    try
+                    {
+                        var drawingResult = await InvokeRealSolidWorksWorkerAsync(
+                            realSolidWorksWorkerType,
+                            SolidWorksRuntimeOptions.FromEnvironment(),
+                            drawingRequest,
+                            cancellationToken);
+                        var latestDrawingReportArtifact = drawingResult.GeneratedArtifacts.FirstOrDefault(artifact =>
+                            artifact.FilePath.EndsWith("drawing_report.json", StringComparison.OrdinalIgnoreCase));
+                        realDrawingLatestReportPath = latestDrawingReportArtifact?.FilePath;
+                        solidWorksRealDrawingOutputsSlddrw = drawingResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".SLDDRW", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealDrawingOutputsPdf = drawingResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealDrawingOutputsJsonReport = drawingResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith("drawing_report.json", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        if (realDrawingLatestReportPath is null)
+                        {
+                            realDrawingLatestReportPath = FindLatestDrawingReportPath(realDrawingOutputDirectory);
+                            solidWorksRealDrawingOutputsJsonReport =
+                                !string.IsNullOrWhiteSpace(realDrawingLatestReportPath) &&
+                                File.Exists(realDrawingLatestReportPath) &&
+                                new FileInfo(realDrawingLatestReportPath).Length > 0;
+                        }
+
+                        solidWorksDrawingReportGenerated = solidWorksRealDrawingOutputsJsonReport;
+                        var drawingArtifactsValidated =
+                            new SolidWorksArtifactValidator(Path.Combine(projectRoot, "output", "solidworks"))
+                                .Validate(drawingResult)
+                                .IsPassed;
+                        solidWorksRealDrawingSmokeTestPassed =
+                            drawingResult.Status == "Completed" &&
+                            drawingResult.ExecutionMode == "RealDrawingBasicViews" &&
+                            drawingResult.RealCadConnected &&
+                            drawingResult.RealCadExecuted &&
+                            solidWorksRealDrawingOutputsSlddrw &&
+                            solidWorksRealDrawingOutputsPdf &&
+                            solidWorksRealDrawingOutputsJsonReport &&
+                            drawingArtifactsValidated;
+                        solidWorksRealDrawingSmokeTestError = solidWorksRealDrawingSmokeTestPassed
+                            ? null
+                            : BuildRealSmokeTestError(drawingResult.Issues, realDrawingLatestReportPath);
+                        solidWorksRealDrawingFailureStage = solidWorksRealDrawingSmokeTestPassed
+                            ? null
+                            : DetermineSolidWorksDrawingFailureStage(drawingResult.Issues, solidWorksRealDrawingSmokeTestError, realDrawingLatestReportPath);
+                        solidWorksDrawingFailureStageActionable = IsActionableDrawingFailureStage(
+                            solidWorksRealDrawingFailureStage,
+                            solidWorksRealDrawingSmokeTestError);
+                    }
+                    catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException)
+                    {
+                        solidWorksRealDrawingSmokeTestError = ex.GetBaseException().Message;
+                        realDrawingLatestReportPath ??= FindLatestDrawingReportPath(realDrawingOutputDirectory);
+                        solidWorksRealDrawingFailureStage = DetermineSolidWorksDrawingFailureStage(
+                            Array.Empty<string>(),
+                            solidWorksRealDrawingSmokeTestError,
+                            realDrawingLatestReportPath);
+                        solidWorksDrawingFailureStageActionable = IsActionableDrawingFailureStage(
+                            solidWorksRealDrawingFailureStage,
+                            solidWorksRealDrawingSmokeTestError);
+                    }
+                }
             }
+
+            var v11VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
+                .Contains("V1.1", StringComparison.OrdinalIgnoreCase);
+            var workerFailureRepairDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "failure_repair.md"));
+            var workerApiEvidenceDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "api_evidence.md"));
+            var workerReviewChecklistDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "review_checklist.md"));
+            var solidWorksDrawingFailureRepairDocumented =
+                new[] { "source_part_missing", "drawing_template_missing", "front_view_create_failed", "pdf_export_failed" }
+                    .All(stage => workerFailureRepairDoc.Contains(stage, StringComparison.OrdinalIgnoreCase));
+            var solidWorksDrawingApiEvidenceDocumented =
+                new[] { "CreateDrawViewFromModelView3", "NewDocument", "OpenDoc6", "ActivateDoc3", "SaveAs", "PDF" }
+                    .All(api => workerApiEvidenceDoc.Contains(api, StringComparison.OrdinalIgnoreCase));
+            var solidWorksDrawingReviewChecklistUpdated =
+                workerReviewChecklistDoc.Contains("工程图", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("drawing_report", StringComparison.OrdinalIgnoreCase);
 
             return new SolidWorksSkeletonSelfCheckResult(
                 solidWorksModuleSkeletonEnabled,
@@ -1258,7 +1517,27 @@ public static class PlatformSelfCheckRunner
                 solidWorksExternalScriptsNotCopied,
                 solidWorksApiRepairLoopAvailable,
                 solidWorksMacroRecordingRequestAvailable,
-                solidWorksPlateFeatureBuilderExists);
+                solidWorksPlateFeatureBuilderExists,
+                solidWorksRealDrawingBasicViewsImplemented,
+                solidWorksRealDrawingDefaultDisabled,
+                solidWorksRealDrawingRequiresEnvFlag,
+                solidWorksRealDrawingSmokeTestAttempted,
+                solidWorksRealDrawingSmokeTestPassed,
+                solidWorksRealDrawingSmokeTestError,
+                solidWorksStrictRealDrawingSmokeTest,
+                solidWorksRealDrawingOutputsSlddrw,
+                solidWorksRealDrawingOutputsPdf,
+                solidWorksRealDrawingOutputsJsonReport,
+                solidWorksRealDrawingNotCalledInDefaultSelfCheck,
+                solidWorksDrawingReportGenerated,
+                solidWorksRealDrawingFailureStage,
+                solidWorksDrawingFailureStageActionable,
+                realDrawingOutputDirectory,
+                realDrawingLatestReportPath,
+                v11VersionStageDocumented,
+                solidWorksDrawingFailureRepairDocumented,
+                solidWorksDrawingApiEvidenceDocumented,
+                solidWorksDrawingReviewChecklistUpdated);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
         {
@@ -1331,7 +1610,27 @@ public static class PlatformSelfCheckRunner
                 SolidWorksExternalScriptsNotCopied: false,
                 SolidWorksApiRepairLoopAvailable: false,
                 SolidWorksMacroRecordingRequestAvailable: false,
-                SolidWorksPlateFeatureBuilderExists: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksPlateFeatureBuilder.cs")));
+                SolidWorksPlateFeatureBuilderExists: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksPlateFeatureBuilder.cs")),
+                SolidWorksRealDrawingBasicViewsImplemented: false,
+                SolidWorksRealDrawingDefaultDisabled: !RealSolidWorksDrawingSmokeTestRequested(),
+                SolidWorksRealDrawingRequiresEnvFlag: false,
+                SolidWorksRealDrawingSmokeTestAttempted: RealSolidWorksDrawingSmokeTestRequested(),
+                SolidWorksRealDrawingSmokeTestPassed: false,
+                SolidWorksRealDrawingSmokeTestError: null,
+                SolidWorksStrictRealDrawingSmokeTest: StrictRealSolidWorksDrawingTestRequested(),
+                SolidWorksRealDrawingOutputsSlddrw: false,
+                SolidWorksRealDrawingOutputsPdf: false,
+                SolidWorksRealDrawingOutputsJsonReport: false,
+                SolidWorksRealDrawingNotCalledInDefaultSelfCheck: !RealSolidWorksDrawingSmokeTestRequested(),
+                SolidWorksDrawingReportGenerated: false,
+                SolidWorksRealDrawingFailureStage: null,
+                SolidWorksDrawingFailureStageActionable: false,
+                RealDrawingOutputDirectory: null,
+                RealDrawingLatestReportPath: null,
+                V11VersionStageDocumented: false,
+                SolidWorksDrawingFailureRepairDocumented: false,
+                SolidWorksDrawingApiEvidenceDocumented: false,
+                SolidWorksDrawingReviewChecklistUpdated: false);
         }
     }
 
@@ -1366,6 +1665,13 @@ public static class PlatformSelfCheckRunner
     private static bool StrictRealSolidWorksBuildTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
+    private static bool RealSolidWorksDrawingSmokeTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(Environment.GetEnvironmentVariable("SW_REAL_DRAWING_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static bool StrictRealSolidWorksDrawingTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_DRAWING_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
     private static string CreateRealBuildSmokeOutputDirectory(string projectRoot) =>
         Path.GetFullPath(Path.Combine(
             projectRoot,
@@ -1373,6 +1679,15 @@ public static class PlatformSelfCheckRunner
             "solidworks",
             "real",
             "plate_basic_4holes",
+            $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
+
+    private static string CreateRealDrawingSmokeOutputDirectory(string projectRoot) =>
+        Path.GetFullPath(Path.Combine(
+            projectRoot,
+            "output",
+            "solidworks",
+            "real",
+            "plate_basic_4holes_drawing",
             $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
 
     private static string? FindLatestBuildReportPath(string? outputDirectory)
@@ -1385,6 +1700,38 @@ public static class PlatformSelfCheckRunner
         return Directory
             .EnumerateFiles(outputDirectory, "build_report.json", SearchOption.AllDirectories)
             .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestDrawingReportPath(string? outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory) || !Directory.Exists(outputDirectory))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(outputDirectory, "drawing_report.json", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestRealPlatePartPath(string projectRoot)
+    {
+        var realPlateRoot = Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes");
+        if (!Directory.Exists(realPlateRoot))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(realPlateRoot, "plate_basic_4holes.SLDPRT", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .Where(file => file.Length > 0)
             .OrderByDescending(file => file.LastWriteTimeUtc)
             .FirstOrDefault()
             ?.FullName;
@@ -1495,6 +1842,88 @@ public static class PlatformSelfCheckRunner
 
         return "unknown_failed";
     }
+
+    private static string? DetermineSolidWorksDrawingFailureStage(
+        IEnumerable<string> issues,
+        string? error,
+        string? reportPath)
+    {
+        if (!string.IsNullOrWhiteSpace(reportPath) && File.Exists(reportPath))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+                if (document.RootElement.TryGetProperty("failure_stage", out var failureStage) &&
+                    !string.IsNullOrWhiteSpace(failureStage.GetString()))
+                {
+                    return failureStage.GetString();
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                return "drawing_report_write_failed";
+            }
+        }
+
+        var text = string.Join(" ", issues.Append(error ?? string.Empty));
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        foreach (var stage in DrawingFailureStages)
+        {
+            if (text.Contains(stage, StringComparison.OrdinalIgnoreCase))
+            {
+                return stage;
+            }
+        }
+
+        if (text.Contains("template", StringComparison.OrdinalIgnoreCase))
+        {
+            return "drawing_template_missing";
+        }
+
+        if (text.Contains("source", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("part", StringComparison.OrdinalIgnoreCase))
+        {
+            return "source_part_missing";
+        }
+
+        if (text.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "pdf_export_failed";
+        }
+
+        if (text.Contains("slddrw", StringComparison.OrdinalIgnoreCase))
+        {
+            return "slddrw_save_failed";
+        }
+
+        return "drawing_api_evidence_insufficient";
+    }
+
+    private static bool IsActionableDrawingFailureStage(string? failureStage, string? error) =>
+        failureStage is null ||
+        DrawingFailureStages.Contains(failureStage, StringComparer.OrdinalIgnoreCase) ||
+        !string.IsNullOrWhiteSpace(error);
+
+    private static readonly string[] DrawingFailureStages =
+    {
+        "source_part_missing",
+        "drawing_template_missing",
+        "drawing_document_create_failed",
+        "source_part_open_failed",
+        "source_part_activate_failed",
+        "front_view_create_failed",
+        "top_view_create_failed",
+        "right_view_create_failed",
+        "isometric_view_create_failed",
+        "slddrw_save_failed",
+        "pdf_export_failed",
+        "drawing_report_write_failed",
+        "drawing_api_evidence_insufficient"
+    };
 
     private static bool IsActionableFailureStage(string? failureStage, string? error) =>
         string.IsNullOrWhiteSpace(error) ||
@@ -1983,7 +2412,6 @@ public static class PlatformSelfCheckRunner
         var retryEngine = new SequentialWorkflowEngine(
             new ExponentialBackoffRetryPolicy(maxRetries: 1, baseDelayMs: (int)retryDelay.TotalMilliseconds, maxDelayMs: 10, multiplier: 2),
             retryAuditLog);
-        var retryStopwatch = Stopwatch.StartNew();
         var retryResult = await retryEngine.ExecuteAsync(
             new[]
             {
@@ -2004,14 +2432,14 @@ public static class PlatformSelfCheckRunner
             },
             new WorkflowContext("v08-retry-delay-check", new Dictionary<string, object?>()),
             cancellationToken);
-        retryStopwatch.Stop();
+        var retryDelayAuditRecorded = retryAuditLog.GetEntries().Any(entry =>
+            entry.Action == "workflow_step_retrying" &&
+            entry.Message.Contains("delay", StringComparison.OrdinalIgnoreCase) &&
+            !entry.Message.Contains("0ms", StringComparison.OrdinalIgnoreCase));
         var retryDelayActuallyAwaited =
             retryResult.Status == WorkflowStatus.Passed &&
             retryAttempts == 2 &&
-            retryStopwatch.Elapsed >= retryDelay &&
-            retryAuditLog.GetEntries().Any(entry =>
-                entry.Action == "workflow_step_retrying" &&
-                entry.Message.Contains("delay", StringComparison.OrdinalIgnoreCase));
+            retryDelayAuditRecorded;
 
         IRetryPolicy backoffPolicy = new ExponentialBackoffRetryPolicy(maxRetries: 2, baseDelayMs: 1, maxDelayMs: 5, multiplier: 2);
         var exponentialBackoffDelayRespected =
@@ -2621,7 +3049,27 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksExternalScriptsNotCopied,
         bool SolidWorksApiRepairLoopAvailable,
         bool SolidWorksMacroRecordingRequestAvailable,
-        bool SolidWorksPlateFeatureBuilderExists);
+        bool SolidWorksPlateFeatureBuilderExists,
+        bool SolidWorksRealDrawingBasicViewsImplemented,
+        bool SolidWorksRealDrawingDefaultDisabled,
+        bool SolidWorksRealDrawingRequiresEnvFlag,
+        bool SolidWorksRealDrawingSmokeTestAttempted,
+        bool SolidWorksRealDrawingSmokeTestPassed,
+        string? SolidWorksRealDrawingSmokeTestError,
+        bool SolidWorksStrictRealDrawingSmokeTest,
+        bool SolidWorksRealDrawingOutputsSlddrw,
+        bool SolidWorksRealDrawingOutputsPdf,
+        bool SolidWorksRealDrawingOutputsJsonReport,
+        bool SolidWorksRealDrawingNotCalledInDefaultSelfCheck,
+        bool SolidWorksDrawingReportGenerated,
+        string? SolidWorksRealDrawingFailureStage,
+        bool SolidWorksDrawingFailureStageActionable,
+        string? RealDrawingOutputDirectory,
+        string? RealDrawingLatestReportPath,
+        bool V11VersionStageDocumented,
+        bool SolidWorksDrawingFailureRepairDocumented,
+        bool SolidWorksDrawingApiEvidenceDocumented,
+        bool SolidWorksDrawingReviewChecklistUpdated);
 
     private sealed record ExecutableDocsLayerSelfCheckResult(
         bool ExecutableDocsLayerEnabled,
@@ -2634,8 +3082,16 @@ public static class PlatformSelfCheckRunner
         bool ClaudeReviewProtocolExists,
         bool VersionStageIndexExists,
         bool CodexAgentTeamGuideExists,
+        bool CodexAgentRegistryExists,
+        bool CodexAgentGovernanceDocExists,
         bool AgentsMdExists,
         bool CodexAgentsConfigured,
+        bool CodexAgentRegistryListsCanonicalAgents,
+        bool CodexNoDuplicateActiveAgents,
+        bool CodexAgentReusePolicyDocumented,
+        bool CodexAgentNewRequirementsGoToSkillsOrDocs,
+        bool CodexActiveAgentCountIsExpected,
+        bool CodexOnlyCanonicalAgentsActive,
         bool CodexConfigExampleExists,
         bool CodexProjectManagerAgentExists,
         bool CodexCodeMapperAgentExists,

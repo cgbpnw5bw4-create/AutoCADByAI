@@ -21,6 +21,14 @@
 - `quality_gate`：只读审查边界、self-check 字段和测试。
 - `docs_writer`：只修改 Markdown 文档，保持中文规范。
 
+## Agent 去重与复用
+
+执行任务时只允许复用 `docs/codex_agent_registry.md` 登记的 canonical agents：`project_manager`、`code_mapper`、`api_researcher`、`cad_worker`、`quality_gate`、`docs_writer`。不得因为任务轮次变化而创建同职责新 Agent。
+
+如果现有 Agent 指令不足，优先把新要求写入对应 Skill 或 Markdown：`api_researcher` 写入 `.agents/skills/solidworks-api-repair/SKILL.md` 或 `api_evidence.md`；`code_mapper` 写入 canonical agent 或 `docs/codex_execution_protocol.md`；`quality_gate` 写入 `.agents/skills/quality-review/SKILL.md` 或 `review_checklist.md`；`docs_writer` 写入 `.agents/skills/markdown-docs-standard/SKILL.md` 或 `module_document_standard.md`。
+
+active `.codex/agents/` 只能保留 canonical agents。发现重复 Agent 时先合并有价值指令，再移动到 `.codex/agents/archive/`；archive 中的 Agent 不作为 active agent 使用。确实需要新增 Agent 时，必须先更新 registry 并说明现有 6 个 Agent 无法覆盖的原因。
+
 ## SolidWorks API 失败流程
 
 1. `code_mapper` 读取最新 `diagnostic_report.json`。

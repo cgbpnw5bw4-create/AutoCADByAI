@@ -7,6 +7,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
 {
     private readonly ISolidWorksSessionManager _sessionManager;
     private readonly ISolidWorksPlateBuilder _plateBuilder;
+    private readonly ISolidWorksDrawingBuilder _drawingBuilder;
     private readonly SolidWorksRuntimeOptions? _options;
 
     public RealSolidWorksWorker()
@@ -25,9 +26,19 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         ISolidWorksSessionManager? sessionManager,
         SolidWorksRuntimeOptions? options,
         ISolidWorksPlateBuilder? plateBuilder)
+        : this(sessionManager, options, plateBuilder, null)
+    {
+    }
+
+    public RealSolidWorksWorker(
+        ISolidWorksSessionManager? sessionManager,
+        SolidWorksRuntimeOptions? options,
+        ISolidWorksPlateBuilder? plateBuilder,
+        ISolidWorksDrawingBuilder? drawingBuilder)
     {
         _sessionManager = sessionManager ?? new SolidWorksSessionManager();
         _plateBuilder = plateBuilder ?? new LateBoundSolidWorksPlateBuilder();
+        _drawingBuilder = drawingBuilder ?? new LateBoundSolidWorksDrawingBuilder();
         _options = options;
     }
 
@@ -38,6 +49,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
     public bool SupportsGenericRealBuild => false;
 
     public bool SupportsPlateBasicFourHolesBuild => true;
+
+    public bool SupportsBasicViewsDrawing => true;
 
     public async Task<SolidWorksWorkerResult> ExecuteAsync(
         SolidWorksWorkerRequest request,
@@ -70,6 +83,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         }
 
         if (!request.ConnectionSmokeTestOnly &&
+            !request.DrawingSmokeTestOnly &&
             !string.Equals(request.BuildPlan.PartType, "plate_basic_4holes", StringComparison.OrdinalIgnoreCase))
         {
             logs.Add("COM connection was not attempted because the real build plan is unsupported.");
@@ -85,6 +99,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         }
 
         if (!request.ConnectionSmokeTestOnly &&
+            !request.DrawingSmokeTestOnly &&
             (string.IsNullOrWhiteSpace(options.TemplatePartPath) || !File.Exists(options.TemplatePartPath)))
         {
             logs.Add("COM connection was not attempted because a valid SolidWorks part template is required for real build.");
@@ -171,6 +186,48 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     issues,
                     realCadConnected: true,
                     connectedPreflight);
+            }
+
+            if (request.DrawingSmokeTestOnly)
+            {
+                SolidWorksDrawingBuildResult drawingResult;
+                try
+                {
+                    drawingResult = await _sessionManager.ExecuteWithApplicationAsync(
+                        (application, token) => _drawingBuilder.CreateBasicViewsDrawingAsync(
+                            application,
+                            request,
+                            options,
+                            connection.SolidWorksVersion,
+                            token),
+                        cancellationToken);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(ex.Message);
+                    return Result(
+                        request,
+                        "Failed",
+                        SolidWorksDrawingBuildOutput.ExecutionMode,
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight);
+                }
+
+                logs.AddRange(drawingResult.Logs);
+                issues.AddRange(drawingResult.Issues);
+
+                return new SolidWorksWorkerResult(
+                    request.RequestId,
+                    drawingResult.Status,
+                    drawingResult.GeneratedArtifacts,
+                    logs,
+                    issues,
+                    SolidWorksDrawingBuildOutput.ExecutionMode,
+                    RealCadExecuted: drawingResult.RealCadExecuted,
+                    RealCadConnected: true,
+                    PreflightReport: connectedPreflight with { Issues = issues });
             }
 
             SolidWorksPlateBuildResult buildResult;

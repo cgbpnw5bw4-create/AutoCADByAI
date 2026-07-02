@@ -20,13 +20,16 @@ Codex 不允许在未读取相关说明文件的情况下直接修改核心逻�
 ## 执行流程
 
 1. 读取 `AGENTS.md` 和 `docs/index.md`。
-2. 读取项目执行规范和当前阶段索引。
-3. 读取当前模块文档。
-4. 读取最新报告和相关测试。
-5. 做最小修改。
-6. 更新 self-check 字段和测试。
-7. 运行 build、test、self-check。
-8. 输出已验证结果和剩余风险。
+2. 检查 `docs/codex_agent_registry.md`，确认是否已有 canonical agent 覆盖当前职责。
+3. 检查 active `.codex/agents/` 是否只包含 canonical agents，若只是职责扩展，不创建新 Agent。
+4. 将新要求优先写入对应 Skill 或 Markdown，例如 `solidworks-api-repair`、`quality-review`、`markdown-docs-standard`、`api_evidence.md`、`review_checklist.md` 或本协议。
+5. 读取项目执行规范和当前阶段索引。
+6. 读取当前模块文档。
+7. 读取最新报告和相关测试。
+8. 做最小修改。
+9. 更新 self-check 字段和测试。
+10. 运行 build、test、self-check。
+11. 输出已验证结果和剩余风险。
 
 ## 失败流程
 

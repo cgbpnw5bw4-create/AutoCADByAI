@@ -25,7 +25,10 @@ public sealed record SolidWorksWorkerRequest(
     string OutputDirectory,
     bool DryRun = true,
     bool AllowRealCadExecution = false,
-    bool ConnectionSmokeTestOnly = false);
+    bool ConnectionSmokeTestOnly = false,
+    bool DrawingSmokeTestOnly = false,
+    string? SourcePartPath = null,
+    string? DrawingTemplatePath = null);
 
 public sealed record SolidWorksWorkerResult(
     string RequestId,
@@ -52,7 +55,8 @@ public sealed record SolidWorksRuntimeOptions(
     bool Visible,
     string? TemplatePartPath,
     string OutputDirectory,
-    int ConnectTimeoutSeconds)
+    int ConnectTimeoutSeconds,
+    string? DrawingTemplatePath = null)
 {
     public const int DefaultConnectTimeoutSeconds = 30;
     public const int MinimumConnectTimeoutSeconds = 1;
@@ -70,7 +74,8 @@ public sealed record SolidWorksRuntimeOptions(
             ParseBool(Get("SW_VISIBLE")),
             EmptyToNull(Get("SW_TEMPLATE_PART_PATH")),
             EmptyToNull(Get("SW_OUTPUT_DIRECTORY")) ?? DefaultOutputDirectory(),
-            ParseTimeout(Get("SW_CONNECT_TIMEOUT_SECONDS")));
+            ParseTimeout(Get("SW_CONNECT_TIMEOUT_SECONDS")),
+            EmptyToNull(Get("SW_TEMPLATE_DRAWING_PATH")));
     }
 
     private static string DefaultOutputDirectory() =>
@@ -88,6 +93,49 @@ public sealed record SolidWorksRuntimeOptions(
 
     private static string? EmptyToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
+}
+
+public sealed class SolidWorksDrawingReport
+{
+    public string DrawingId { get; set; } = $"solidworks-drawing-{Guid.NewGuid():N}";
+
+    public string? SourcePartPath { get; set; }
+
+    public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    public string OutputDirectory { get; set; } = string.Empty;
+
+    public bool SolidWorksConnected { get; set; }
+
+    public string? SolidWorksVersion { get; set; }
+
+    public bool DrawingCreated { get; set; }
+
+    public List<string> ViewsCreated { get; } = [];
+
+    public string? SlddrwPath { get; set; }
+
+    public bool SlddrwExists { get; set; }
+
+    public long SlddrwSizeBytes { get; set; }
+
+    public string? PdfPath { get; set; }
+
+    public bool PdfExists { get; set; }
+
+    public long PdfSizeBytes { get; set; }
+
+    public List<string> Operations { get; } = [];
+
+    public List<string> Errors { get; } = [];
+
+    public List<string> Warnings { get; } = [];
+
+    public string? FailureStage { get; set; }
+
+    public string FinalStatus { get; set; } = "Failed";
 }
 
 public sealed record SolidWorksPreflightReport(

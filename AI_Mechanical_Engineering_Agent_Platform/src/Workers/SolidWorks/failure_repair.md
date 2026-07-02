@@ -61,3 +61,24 @@
 ## 报告失败
 
 如果 `build_report.json` 或 `diagnostic_report.json` 未写出，先修输出路径和权限，不要继续 CAD API 调试。
+
+## V1.1 工程图基础视图失败
+
+V1.1 工程图失败必须先读取 `drawing_report.json`，再判断 `failure_stage`。默认 self-check 不应启动 SolidWorks；只有工程图 smoke test 明确开启时才允许真实调用。
+
+| failure_stage | 可能原因 | 首先读取 | 处理方式 |
+|---|---|---|---|
+| `source_part_missing` | 输入的 `plate_basic_4holes.SLDPRT` 不存在或路径错误 | `drawing_report.json`、self-check 的 `real_drawing_output_directory` | 先确认 V1.0-B 是否生成真实零件，再重新传入绝对路径 |
+| `drawing_template_missing` | `SW_TEMPLATE_DRAWING_PATH` 未设置且无法在 SolidWorks 模板目录找到 `.drwdot` | `drawing_report.json`、环境变量 | 要求用户提供工程图模板路径，不能盲建空 Drawing |
+| `drawing_document_create_failed` | `NewDocument` 返回空或模板不兼容 | `drawing_report.json`、SolidWorks 日志 | 在 `SolidWorksDrawingSmokeRunner` 中隔离验证模板 |
+| `source_part_open_failed` | `OpenDoc6` 打开零件失败 | `drawing_report.json` | 检查 SLDPRT 是否完整、是否被占用、路径是否为绝对路径 |
+| `source_part_activate_failed` | `ActivateDoc3` 无法激活零件文档 | `drawing_report.json` | 检查活动文档标题和打开文档列表 |
+| `front_view_create_failed` | Front 视图创建失败 | `drawing_report.json`、API evidence | 查证 `CreateDrawViewFromModelView3` 的视图名和坐标 |
+| `top_view_create_failed` | Top 视图创建失败 | `drawing_report.json`、API evidence | 查证标准视图名 `*Top` 是否适配当前版本 |
+| `right_view_create_failed` | Right 视图创建失败 | `drawing_report.json`、API evidence | 查证标准视图名 `*Right` 和模型路径 |
+| `isometric_view_create_failed` | Isometric 视图创建失败 | `drawing_report.json`、API evidence | 查证标准视图名 `*Isometric` |
+| `slddrw_save_failed` | 工程图保存失败、路径权限不足或 `SaveAs` 返回失败 | `drawing_report.json` | 检查 `slddrw_path`、文件大小和保存错误 |
+| `pdf_export_failed` | PDF 导出失败或导出后文件为空 | `drawing_report.json`、API evidence | 确认 Drawing 是活动文档，优先查证 `IModelDocExtension.SaveAs` 和 PDF export data |
+| `drawing_report_write_failed` | 报告写出失败 | 输出目录 | 先修目录和权限，不继续改 SolidWorks API |
+
+工程图 API 不确定时必须进入 API evidence 流程，不允许凭感觉修改长参数或把宏作为生产路径。

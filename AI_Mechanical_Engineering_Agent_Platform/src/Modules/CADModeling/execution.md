@@ -12,6 +12,7 @@ CADModelSpec
 → SolidWorksBuildPlanValidator
 → SolidWorksWorkerRequest
 → FakeSolidWorksWorker 或 RealSolidWorksWorker
+→ 可选 V1.1 SolidWorksDrawingBuilder 生成基础工程图
 → SolidWorksArtifactValidator
 → SolidWorksBuildPlanReviewer
 → QualityGate
@@ -48,3 +49,19 @@ CADModelSpec
 ## 成功标准
 
 默认 self-check 必须 Passed，且不能启动真实 CAD。涉及真实 API 的修复必须先在诊断 Runner 中验证，再回填 Worker。
+
+## V1.1 工程图补充
+
+V1.1 只在真实零件已经存在时，从 `plate_basic_4holes.SLDPRT` 生成基础工程图。该能力仍属于 Worker 层，`Agent`、`Gateway` 和 `LLM` 不能直接调用。
+
+```text
+plate_basic_4holes.SLDPRT
+→ SolidWorksDrawingBuilder
+→ Front / Top / Right / Isometric 基础视图
+→ plate_basic_4holes.SLDDRW
+→ plate_basic_4holes.pdf
+→ drawing_report.json
+→ SolidWorksArtifactValidator
+```
+
+默认 self-check 不执行真实工程图。真实工程图 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true`。

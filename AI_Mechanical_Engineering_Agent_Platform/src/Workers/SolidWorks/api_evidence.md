@@ -66,3 +66,38 @@ API 调用必须沉淀到 `SolidWorksPlateFeatureBuilder` 或类似封装。`Rea
 9. `FeatureCut4` 返回 `null` 时才进入草图引用 fallback。
 
 禁止继续把一草图内部轮廓拉伸作为当前主策略。该方案只能作为历史尝试记录，不能覆盖本轮宏证据。
+
+## V1.1 工程图 API 证据规则
+
+V1.1 只做基础视图工程图。API 证据优先级仍然是官方 `SolidWorks API Help`、本地 SDK 或宏录制、项目诊断报告、只读参考资料。
+
+## V1.1 官方 API 来源
+
+本轮已查证官方 `SolidWorks API Help`，工程图基础视图链路证据充分：
+
+- `ISldWorks.OpenDoc6`：官方条目 `https://help.solidworks.com/2026/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ISldWorks~OpenDoc6.html`。
+- `ISldWorks.NewDocument`：官方条目 `https://help.solidworks.com/2026/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ISldWorks~NewDocument.html`。
+- `ISldWorks.ActivateDoc3`：官方条目 `https://help.solidworks.com/2026/English/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.ISldWorks~ActivateDoc3.html`。
+- `IDrawingDoc.CreateDrawViewFromModelView3`：官方条目 `https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IDrawingDoc~CreateDrawViewFromModelView3.html`。
+- `IModelDocExtension.SaveAs`：官方条目 `https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IModelDocExtension~SaveAs.html`。
+- `IExportPdfData`、`ISldWorks.GetExportFileData`、`IExportPdfData.SetSheets`：官方条目 `https://help.solidworks.com/2026/English/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IExportPdfData.html` 和 `https://help.solidworks.com/2024/English/api/sldworksapi/SolidWorks.interop.sldworks~SolidWorks.interop.sldworks.IExportPDFData~SetSheets.html`。
+
+当前选定的工程图候选 API：
+
+- `ISldWorks.OpenDoc6`：打开 `plate_basic_4holes.SLDPRT`。
+- `ISldWorks.ActivateDoc3`：导出或插入视图前激活目标文档。
+- `ISldWorks.NewDocument`：基于 `.drwdot` 模板创建 Drawing 文档。
+- `IDrawingDoc.CreateDrawViewFromModelView3`：按模型路径和标准视图名创建 `*Front`、`*Top`、`*Right`、`*Isometric` 基础视图。
+- `IModelDocExtension.SaveAs`：保存 `SLDDRW`，并在 Drawing 文档为活动文档时导出 PDF。
+- `ISldWorks.GetExportFileData` 与 `IExportPdfData.SetSheets`：可用于 PDF 导出配置；不可用时必须记录 warning 并尝试无 export data 的保存路径。
+
+工程图 API 失败时必须记录：
+
+- 失败阶段。
+- 使用的模板路径。
+- 源零件绝对路径。
+- 创建成功的视图列表。
+- `SLDDRW` 和 `PDF` 的保存路径、存在状态和大小。
+- 失败 API 名称和返回值。
+
+如果 `CreateDrawViewFromModelView3` 或 PDF 导出失败，先在 `SolidWorksDrawingSmokeRunner` 中复现并生成 `drawing_report.json`，再回填 `SolidWorksDrawingBuilder`。不得直接把宏录制文件作为生产路径。

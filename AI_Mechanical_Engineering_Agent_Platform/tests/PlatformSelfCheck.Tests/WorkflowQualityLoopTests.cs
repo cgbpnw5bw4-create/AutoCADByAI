@@ -104,6 +104,46 @@ public sealed class WorkflowQualityLoopTests
     }
 
     [Fact]
+    public async Task WorkflowEngineThrownStepGeneratesFailureReport()
+    {
+        var downstreamExecuted = false;
+        var engine = new SequentialWorkflowEngine(new RetryPolicy());
+
+        var result = await engine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("throwing-step", _ => throw new InvalidOperationException("test workflow failure")),
+                new WorkflowStep("should-not-run", _ =>
+                {
+                    downstreamExecuted = true;
+                    return Task.FromResult(Result("should-not-run", GateDecisionResult.Passed));
+                })
+            },
+            CreateWorkflowContext());
+
+        Assert.False(downstreamExecuted);
+        Assert.Equal(WorkflowStatus.Failed, result.Status);
+        Assert.NotNull(result.FailureReport);
+        Assert.Equal("throwing-step", result.FailureReport!.FailedStepId);
+        Assert.Contains(result.FailureReport.Issues, issue => issue.Contains("workflow_step_exception", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.FailureReport.Issues, issue => issue.Contains("InvalidOperationException", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.AuditLogs, entry => entry.Action == "workflow_step_failed" && entry.Actor == "throwing-step");
+    }
+
+    [Fact]
+    public async Task WorkflowEngineCancellationStillPropagates()
+    {
+        var engine = new SequentialWorkflowEngine(new RetryPolicy());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => engine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("cancelled-step", _ => throw new OperationCanceledException("test cancellation"))
+            },
+            CreateWorkflowContext()));
+    }
+
+    [Fact]
     public async Task WorkflowEngineHumanApprovalStepGeneratesHumanApprovalRequest()
     {
         var downstreamExecuted = false;
