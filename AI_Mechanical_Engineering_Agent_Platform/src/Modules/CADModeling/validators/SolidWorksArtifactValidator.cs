@@ -29,10 +29,12 @@ public sealed class SolidWorksArtifactValidator : IValidator
         var isFakeMode = string.Equals(result.ExecutionMode, "Fake", StringComparison.OrdinalIgnoreCase);
         var isRealPlateBuildMode = string.Equals(result.ExecutionMode, "RealBuildPlateBasic4Holes", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingMode = string.Equals(result.ExecutionMode, "RealDrawingBasicViews", StringComparison.OrdinalIgnoreCase);
+        var isRealDrawingDimensionMode = string.Equals(result.ExecutionMode, "RealDrawingDimensions", StringComparison.OrdinalIgnoreCase);
+        var isRealDrawingTitleBlockMode = string.Equals(result.ExecutionMode, "RealDrawingTitleBlock", StringComparison.OrdinalIgnoreCase);
 
-        if (!isFakeMode && !isRealPlateBuildMode && !isRealDrawingMode)
+        if (!isFakeMode && !isRealPlateBuildMode && !isRealDrawingMode && !isRealDrawingDimensionMode && !isRealDrawingTitleBlockMode)
         {
-            issues.Add("execution_mode must be Fake, RealBuildPlateBasic4Holes, or RealDrawingBasicViews.");
+            issues.Add("execution_mode must be Fake, RealBuildPlateBasic4Holes, RealDrawingBasicViews, RealDrawingDimensions, or RealDrawingTitleBlock.");
         }
 
         if (result.GeneratedArtifacts.Count == 0)
@@ -51,6 +53,14 @@ public sealed class SolidWorksArtifactValidator : IValidator
         else if (isRealDrawingMode)
         {
             ValidateRealDrawingMode(result, issues);
+        }
+        else if (isRealDrawingDimensionMode)
+        {
+            ValidateRealDrawingDimensionMode(result, issues);
+        }
+        else if (isRealDrawingTitleBlockMode)
+        {
+            ValidateRealDrawingTitleBlockMode(result, issues);
         }
 
         return Report(issues);
@@ -175,6 +185,78 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
     }
 
+    private void ValidateRealDrawingDimensionMode(SolidWorksWorkerResult result, List<string> issues)
+    {
+        if (!result.RealCadExecuted)
+        {
+            issues.Add("real_cad_executed must be true for RealDrawingDimensions.");
+        }
+
+        if (!result.RealCadConnected)
+        {
+            issues.Add("real_cad_connected must be true for RealDrawingDimensions.");
+        }
+
+        var drawing = FindArtifact(result, ".SLDDRW");
+        var pdf = FindArtifact(result, ".pdf");
+        var report = result.GeneratedArtifacts.FirstOrDefault(artifact =>
+            Path.GetFileName(artifact.FilePath).Equals("dimension_report.json", StringComparison.OrdinalIgnoreCase));
+
+        ValidateRealArtifact(drawing, ".SLDDRW", issues);
+        ValidateRealArtifact(pdf, ".pdf", issues);
+        ValidateRealArtifact(report, "dimension_report.json", issues);
+
+        foreach (var artifact in result.GeneratedArtifacts)
+        {
+            var fullPath = Path.GetFullPath(artifact.FilePath);
+            if (!IsUnderRealArtifactRoot(fullPath))
+            {
+                issues.Add($"real drawing dimension artifact path must be under output/solidworks/real: {artifact.FilePath}.");
+            }
+        }
+
+        if (report is not null && File.Exists(report.FilePath))
+        {
+            ValidateRealDrawingDimensionReport(report.FilePath, issues);
+        }
+    }
+
+    private void ValidateRealDrawingTitleBlockMode(SolidWorksWorkerResult result, List<string> issues)
+    {
+        if (!result.RealCadExecuted)
+        {
+            issues.Add("real_cad_executed must be true for RealDrawingTitleBlock.");
+        }
+
+        if (!result.RealCadConnected)
+        {
+            issues.Add("real_cad_connected must be true for RealDrawingTitleBlock.");
+        }
+
+        var drawing = FindArtifact(result, ".SLDDRW");
+        var pdf = FindArtifact(result, ".pdf");
+        var report = result.GeneratedArtifacts.FirstOrDefault(artifact =>
+            Path.GetFileName(artifact.FilePath).Equals("title_block_report.json", StringComparison.OrdinalIgnoreCase));
+
+        ValidateRealArtifact(drawing, ".SLDDRW", issues);
+        ValidateRealArtifact(pdf, ".pdf", issues);
+        ValidateRealArtifact(report, "title_block_report.json", issues);
+
+        foreach (var artifact in result.GeneratedArtifacts)
+        {
+            var fullPath = Path.GetFullPath(artifact.FilePath);
+            if (!IsUnderRealArtifactRoot(fullPath))
+            {
+                issues.Add($"real drawing title block artifact path must be under output/solidworks/real: {artifact.FilePath}.");
+            }
+        }
+
+        if (report is not null && File.Exists(report.FilePath))
+        {
+            ValidateRealDrawingTitleBlockReport(report.FilePath, issues);
+        }
+    }
+
     private static SolidWorksArtifact? FindArtifact(SolidWorksWorkerResult result, string extension) =>
         result.GeneratedArtifacts.FirstOrDefault(artifact =>
             string.Equals(artifact.ExpectedExtension, extension, StringComparison.OrdinalIgnoreCase) ||
@@ -289,6 +371,180 @@ public sealed class SolidWorksArtifactValidator : IValidator
         catch (JsonException ex)
         {
             issues.Add($"drawing_report.json is invalid: {ex.Message}.");
+        }
+    }
+
+    private static void ValidateRealDrawingDimensionReport(string reportPath, List<string> issues)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = document.RootElement;
+            if (!root.TryGetProperty("drawing_opened", out var drawingOpened) ||
+                drawingOpened.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("dimension_report drawing_opened must be true.");
+            }
+
+            if (!root.TryGetProperty("slddrw_exists", out var slddrwExists) ||
+                slddrwExists.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("dimension_report slddrw_exists must be true.");
+            }
+
+            if (!root.TryGetProperty("pdf_exists", out var pdfExists) ||
+                pdfExists.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("dimension_report pdf_exists must be true.");
+            }
+
+            if (!root.TryGetProperty("final_status", out var finalStatus) ||
+                !string.Equals(finalStatus.GetString(), "Passed", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add("dimension_report final_status must be Passed.");
+            }
+
+            foreach (var flagName in new[]
+            {
+                "length_dimension_added",
+                "width_dimension_added",
+                "thickness_dimension_added",
+                "hole_diameter_dimension_added",
+                "hole_position_dimension_added"
+            })
+            {
+                if (!root.TryGetProperty(flagName, out var flag) || flag.ValueKind != JsonValueKind.True)
+                {
+                    issues.Add($"dimension_report {flagName} must be true.");
+                }
+            }
+
+            if (!root.TryGetProperty("views_confirmed", out var views) ||
+                views.ValueKind != JsonValueKind.Array)
+            {
+                issues.Add("dimension_report views_confirmed must be present.");
+                return;
+            }
+
+            var viewNames = views.EnumerateArray()
+                .Select(view => view.GetString())
+                .Where(view => !string.IsNullOrWhiteSpace(view))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var expectedView in new[] { "Front", "Top", "Right", "Isometric" })
+            {
+                if (!viewNames.Contains(expectedView))
+                {
+                    issues.Add($"dimension_report missing confirmed view: {expectedView}.");
+                }
+            }
+
+            if (!root.TryGetProperty("dimensions", out var dimensions) ||
+                dimensions.ValueKind != JsonValueKind.Array ||
+                dimensions.GetArrayLength() < 5)
+            {
+                issues.Add("dimension_report dimensions must include the required basic dimensions.");
+                return;
+            }
+
+            var failedDimension = dimensions.EnumerateArray().FirstOrDefault(dimension =>
+                !dimension.TryGetProperty("status", out var status) ||
+                !string.Equals(status.GetString(), "Passed", StringComparison.OrdinalIgnoreCase));
+            if (failedDimension.ValueKind != JsonValueKind.Undefined)
+            {
+                issues.Add("dimension_report dimensions must all have status Passed.");
+            }
+        }
+        catch (JsonException ex)
+        {
+            issues.Add($"dimension_report.json is invalid: {ex.Message}.");
+        }
+    }
+
+    private static void ValidateRealDrawingTitleBlockReport(string reportPath, List<string> issues)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = document.RootElement;
+            foreach (var flagName in new[]
+            {
+                "drawing_opened",
+                "title_block_template_detected",
+                "drawing_properties_read",
+                "custom_properties_written",
+                "title_block_updated",
+                "slddrw_exists",
+                "pdf_exists"
+            })
+            {
+                if (!root.TryGetProperty(flagName, out var flag) || flag.ValueKind != JsonValueKind.True)
+                {
+                    issues.Add($"title_block_report {flagName} must be true.");
+                }
+            }
+
+            if (!root.TryGetProperty("final_status", out var finalStatus) ||
+                !string.Equals(finalStatus.GetString(), "Passed", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add("title_block_report final_status must be Passed.");
+            }
+
+            if (!root.TryGetProperty("title_block_population_strategy", out var populationStrategy) ||
+                !string.Equals(populationStrategy.GetString(), "custom_properties_only", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add("title_block_report title_block_population_strategy must be custom_properties_only.");
+            }
+
+            if (!root.TryGetProperty("title_block_fields_verified_in_sheet_format", out var fieldsVerified) ||
+                fieldsVerified.ValueKind != JsonValueKind.False)
+            {
+                issues.Add("title_block_report title_block_fields_verified_in_sheet_format must be false until sheet format note rendering is verified.");
+            }
+
+            var expectedFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["part_name"] = "plate_basic_4holes",
+                ["drawing_number"] = "PLATE-BASIC-4HOLES",
+                ["revision"] = "A"
+            };
+
+            foreach (var expected in expectedFields)
+            {
+                if (!root.TryGetProperty(expected.Key, out var field) ||
+                    !string.Equals(field.GetString(), expected.Value, StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add($"title_block_report {expected.Key} must be {expected.Value}.");
+                }
+            }
+
+            foreach (var requiredField in new[] { "material", "scale", "drawing_date" })
+            {
+                if (!root.TryGetProperty(requiredField, out var field) ||
+                    string.IsNullOrWhiteSpace(field.GetString()))
+                {
+                    issues.Add($"title_block_report {requiredField} must be present.");
+                }
+            }
+
+            if (!root.TryGetProperty("properties", out var properties) ||
+                properties.ValueKind != JsonValueKind.Array ||
+                properties.GetArrayLength() < 6)
+            {
+                issues.Add("title_block_report properties must include the required title block fields.");
+                return;
+            }
+
+            var failedProperty = properties.EnumerateArray().FirstOrDefault(property =>
+                !property.TryGetProperty("status", out var status) ||
+                !string.Equals(status.GetString(), "Passed", StringComparison.OrdinalIgnoreCase));
+            if (failedProperty.ValueKind != JsonValueKind.Undefined)
+            {
+                issues.Add("title_block_report properties must all have status Passed.");
+            }
+        }
+        catch (JsonException ex)
+        {
+            issues.Add($"title_block_report.json is invalid: {ex.Message}.");
         }
     }
 

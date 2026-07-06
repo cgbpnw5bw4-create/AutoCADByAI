@@ -34,9 +34,35 @@
 | `slddrw_save_failed` | 工程图保存失败 | drawing report | `slddrw_path`、`slddrw_size_bytes` | `SolidWorksDrawingSmokeRunner` | 是 | 可选 | SLDDRW 存在且 size > 0 |
 | `pdf_export_failed` | PDF 导出失败 | drawing report | `pdf_path`、`pdf_size_bytes` | `SolidWorksDrawingSmokeRunner` | 是 | 可选 | PDF 存在且 size > 0 |
 | `drawing_report_write_failed` | 工程图报告写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | 报告可写 |
+| `source_drawing_missing` | 尺寸标注源工程图缺失 | dimension report | `source_drawing_path` | `SolidWorksDrawingDimensionSmokeRunner` | 否 | 否 | V1.1 SLDDRW 存在 |
+| `source_drawing_open_failed` | 源工程图打开失败 | dimension report | `source_drawing_path`、`errors` | `SolidWorksDrawingDimensionSmokeRunner` | 视情况 | 可选 | 工程图可打开 |
+| `drawing_view_missing` | 基础视图缺失 | dimension report | `views_confirmed` | `SolidWorksDrawingDimensionSmokeRunner` | 否 | 否 | 回到 V1.1 修复四视图 |
+| `drawing_view_activate_failed` | 视图激活失败 | dimension report | `views_confirmed`、`operations` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | 视图可激活 |
+| `length_dimension_failed` | 160 mm 长度尺寸失败 | dimension report | `dimensions` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | 长度尺寸成功 |
+| `width_dimension_failed` | 80 mm 宽度尺寸失败 | dimension report | `dimensions` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | 宽度尺寸成功 |
+| `thickness_dimension_failed` | 12 mm 厚度尺寸失败 | dimension report | `dimensions` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | 厚度尺寸成功 |
+| `hole_diameter_dimension_failed` | Φ10 孔径尺寸失败 | dimension report | `dimensions` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | 孔径尺寸成功 |
+| `hole_position_dimension_failed` | 孔中心距尺寸失败 | dimension report | `dimensions` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | 120 mm 与 40 mm 中心距成功 |
+| `dimension_save_failed` | 带尺寸工程图保存失败 | dimension report | `slddrw_path`、`slddrw_size_bytes` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | SLDDRW 存在且 size > 0 |
+| `dimension_pdf_export_failed` | 带尺寸 PDF 导出失败 | dimension report | `pdf_path`、`pdf_size_bytes` | `SolidWorksDrawingDimensionSmokeRunner` | 是 | 可选 | PDF 存在且 size > 0 |
+| `dimension_report_write_failed` | 尺寸报告写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | 报告可写 |
+| `drawing_dimension_api_evidence_insufficient` | 尺寸 API 证据不足 | dimension report 和官方 API | `dimensions`、`errors` | `SolidWorksDrawingDimensionSmokeRunner` | 必须 | 建议 | 证据充分后再回填 |
+| `source_dimensioned_drawing_missing` | 标题栏源带尺寸工程图缺失 | title block report | `source_dimensioned_drawing_path` | `SolidWorksDrawingTitleBlockSmokeRunner` | 否 | 否 | V1.2 SLDDRW 存在 |
+| `title_block_template_missing` | Sheet 或标题栏模板不可读 | title block report | `title_block_template_detected` | `SolidWorksDrawingTitleBlockSmokeRunner` | 视情况 | 可选 | 当前 Sheet 可读 |
+| `custom_property_write_failed` | 自定义属性写入失败 | title block report | `properties` | `SolidWorksDrawingTitleBlockSmokeRunner` | 是 | 可选 | `PartName` 等属性写入成功 |
+| `drawing_property_read_failed` | 图纸属性或比例读取失败 | title block report | `drawing_properties_read`、`scale` | `SolidWorksDrawingTitleBlockSmokeRunner` | 是 | 可选 | 比例读取或记录为 `auto` |
+| `title_block_update_failed` | 标题栏字段刷新失败 | title block report | `title_block_updated`、`operations` | `SolidWorksDrawingTitleBlockSmokeRunner` | 是 | 可选 | 工程图刷新成功 |
+| `title_block_save_failed` | 带标题栏工程图保存失败 | title block report | `slddrw_path`、`slddrw_size_bytes` | `SolidWorksDrawingTitleBlockSmokeRunner` | 是 | 可选 | SLDDRW 存在且 size > 0 |
+| `title_block_pdf_export_failed` | 带标题栏 PDF 导出失败 | title block report | `pdf_path`、`pdf_size_bytes` | `SolidWorksDrawingTitleBlockSmokeRunner` | 是 | 可选 | PDF 存在且 size > 0 |
+| `title_block_report_write_failed` | 标题栏报告写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | 报告可写 |
+| `drawing_title_block_api_evidence_insufficient` | 标题栏 API 证据不足 | title block report 和官方 API | `properties`、`errors` | `SolidWorksDrawingTitleBlockSmokeRunner` | 必须 | 建议 | 证据充分后再回填 |
 
 ## 修复原则
 
 不能直接瞎改 `FeatureCut` 参数。涉及 API 不确定时，必须生成 `ApiEvidenceReport`，查官方 API、本地参考资料和宏录制结果。只有诊断 Runner 成功后，才能回填 `RealSolidWorksWorker`。
 
 V1.1 工程图失败同样不能只记录 Failed。必须输出 `drawing_report.json`、明确 `failure_stage`，并优先在 `SolidWorksDrawingSmokeRunner` 中隔离验证，再回填 `SolidWorksDrawingBuilder`。
+
+V1.2 尺寸标注失败必须输出 `dimension_report.json`、明确 `failure_stage`，并优先在 `SolidWorksDrawingDimensionSmokeRunner` 中隔离验证，再回填 `SolidWorksDrawingDimensionBuilder`。不得借 V1.2 修复进入 BOM、标题栏、自动全尺寸标注、复杂公差或 V1.3。
+
+V1.3 标题栏基础信息失败必须输出 `title_block_report.json`、明确 `failure_stage`，并优先在 `SolidWorksDrawingTitleBlockSmokeRunner` 中隔离验证，再回填 `SolidWorksDrawingTitleBlockBuilder`。不得借 V1.3 修复进入 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4。

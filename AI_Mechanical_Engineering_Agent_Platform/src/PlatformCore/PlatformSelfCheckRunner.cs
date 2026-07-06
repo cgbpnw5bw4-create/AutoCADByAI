@@ -339,6 +339,34 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksDrawingFailureRepairDocumented &&
             solidWorksSkeletonChecks.SolidWorksDrawingApiEvidenceDocumented &&
             solidWorksSkeletonChecks.SolidWorksDrawingReviewChecklistUpdated &&
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsImplemented &&
+            (solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsDefaultDisabled) &&
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsRequiresEnvFlag &&
+            (!solidWorksSkeletonChecks.SolidWorksStrictRealDrawingDimensionSmokeTest ||
+             !solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestPassed) &&
+            (solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsNotCalledInDefaultSelfCheck) &&
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionFailureStageActionable &&
+            solidWorksSkeletonChecks.V12VersionStageDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionFailureRepairDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionApiEvidenceDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionReviewChecklistUpdated &&
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockImplemented &&
+            (solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockDefaultDisabled) &&
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockRequiresEnvFlag &&
+            (!solidWorksSkeletonChecks.SolidWorksStrictRealDrawingTitleBlockSmokeTest ||
+             !solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestPassed) &&
+            (solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestAttempted ||
+             solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockNotCalledInDefaultSelfCheck) &&
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFailureStageActionable &&
+            solidWorksSkeletonChecks.V13VersionStageDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFailureRepairDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockApiEvidenceDocumented &&
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockReviewChecklistUpdated &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -520,6 +548,46 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksDrawingFailureRepairDocumented,
             solidWorksSkeletonChecks.SolidWorksDrawingApiEvidenceDocumented,
             solidWorksSkeletonChecks.SolidWorksDrawingReviewChecklistUpdated,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsImplemented,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsDefaultDisabled,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsRequiresEnvFlag,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestAttempted,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestPassed,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestError,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsOutputsSlddrw,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsOutputsPdf,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsOutputsJsonReport,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsNotCalledInDefaultSelfCheck,
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionReportGenerated,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionFailureStage,
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionFailureStageActionable,
+            solidWorksSkeletonChecks.RealDrawingDimensionOutputDirectory,
+            solidWorksSkeletonChecks.RealDrawingDimensionLatestReportPath,
+            solidWorksSkeletonChecks.V12VersionStageDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionFailureRepairDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionApiEvidenceDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingDimensionReviewChecklistUpdated,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockImplemented,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockDefaultDisabled,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockRequiresEnvFlag,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestAttempted,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestPassed,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestError,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockOutputsSlddrw,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockOutputsPdf,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockOutputsJsonReport,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockNotCalledInDefaultSelfCheck,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockReportGenerated,
+            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockFailureStage,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFailureStageActionable,
+            solidWorksSkeletonChecks.RealDrawingTitleBlockOutputDirectory,
+            solidWorksSkeletonChecks.RealDrawingTitleBlockLatestReportPath,
+            solidWorksSkeletonChecks.V13VersionStageDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFailureRepairDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockApiEvidenceDocumented,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockReviewChecklistUpdated,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockPopulationStrategy,
+            solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat,
             executableDocsChecks.ExecutableDocsLayerEnabled,
             executableDocsChecks.DocsIndexExists,
             executableDocsChecks.ProjectExecutionStandardExists,
@@ -1144,6 +1212,38 @@ public static class PlatformSelfCheckRunner
             var solidWorksDrawingFailureStageActionable = true;
             string? realDrawingOutputDirectory = null;
             string? realDrawingLatestReportPath = null;
+            var solidWorksRealDrawingDimensionsImplemented = false;
+            var solidWorksRealDrawingDimensionsDefaultDisabled = !RealSolidWorksDrawingDimensionSmokeTestRequested();
+            var solidWorksRealDrawingDimensionsRequiresEnvFlag = false;
+            var solidWorksRealDrawingDimensionsSmokeTestAttempted = RealSolidWorksDrawingDimensionSmokeTestRequested();
+            var solidWorksRealDrawingDimensionsSmokeTestPassed = false;
+            string? solidWorksRealDrawingDimensionsSmokeTestError = null;
+            var solidWorksStrictRealDrawingDimensionSmokeTest = StrictRealSolidWorksDrawingDimensionTestRequested();
+            var solidWorksRealDrawingDimensionsOutputsSlddrw = false;
+            var solidWorksRealDrawingDimensionsOutputsPdf = false;
+            var solidWorksRealDrawingDimensionsOutputsJsonReport = false;
+            var solidWorksRealDrawingDimensionsNotCalledInDefaultSelfCheck = !solidWorksRealDrawingDimensionsSmokeTestAttempted;
+            var solidWorksDrawingDimensionReportGenerated = false;
+            string? solidWorksRealDrawingDimensionFailureStage = null;
+            var solidWorksDrawingDimensionFailureStageActionable = true;
+            string? realDrawingDimensionOutputDirectory = null;
+            string? realDrawingDimensionLatestReportPath = null;
+            var solidWorksRealDrawingTitleBlockImplemented = false;
+            var solidWorksRealDrawingTitleBlockDefaultDisabled = !RealSolidWorksDrawingTitleBlockSmokeTestRequested();
+            var solidWorksRealDrawingTitleBlockRequiresEnvFlag = false;
+            var solidWorksRealDrawingTitleBlockSmokeTestAttempted = RealSolidWorksDrawingTitleBlockSmokeTestRequested();
+            var solidWorksRealDrawingTitleBlockSmokeTestPassed = false;
+            string? solidWorksRealDrawingTitleBlockSmokeTestError = null;
+            var solidWorksStrictRealDrawingTitleBlockSmokeTest = StrictRealSolidWorksDrawingTitleBlockTestRequested();
+            var solidWorksRealDrawingTitleBlockOutputsSlddrw = false;
+            var solidWorksRealDrawingTitleBlockOutputsPdf = false;
+            var solidWorksRealDrawingTitleBlockOutputsJsonReport = false;
+            var solidWorksRealDrawingTitleBlockNotCalledInDefaultSelfCheck = !solidWorksRealDrawingTitleBlockSmokeTestAttempted;
+            var solidWorksDrawingTitleBlockReportGenerated = false;
+            string? solidWorksRealDrawingTitleBlockFailureStage = null;
+            var solidWorksDrawingTitleBlockFailureStageActionable = true;
+            string? realDrawingTitleBlockOutputDirectory = null;
+            string? realDrawingTitleBlockLatestReportPath = null;
             var swEnableRealExecutionEnvValue = Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION");
             var swRealBuildSmokeTestEnvValue = Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST");
             var swStrictRealBuildTestEnvValue = Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST");
@@ -1216,6 +1316,16 @@ public static class PlatformSelfCheckRunner
                         Activator.CreateInstance(realSolidWorksWorkerType)) is true &&
                     File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksDrawingBuilder.cs")) &&
                     File.Exists(Path.Combine(projectRoot, "tools", "SolidWorksDrawingSmokeRunner", "SolidWorksDrawingSmokeRunner.csproj"));
+                solidWorksRealDrawingDimensionsImplemented =
+                    realSolidWorksWorkerType.GetProperty("SupportsDrawingDimensions")?.GetValue(
+                        Activator.CreateInstance(realSolidWorksWorkerType)) is true &&
+                    File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksDrawingDimensionBuilder.cs")) &&
+                    File.Exists(Path.Combine(projectRoot, "tools", "SolidWorksDrawingDimensionSmokeRunner", "SolidWorksDrawingDimensionSmokeRunner.csproj"));
+                solidWorksRealDrawingTitleBlockImplemented =
+                    realSolidWorksWorkerType.GetProperty("SupportsDrawingTitleBlock")?.GetValue(
+                        Activator.CreateInstance(realSolidWorksWorkerType)) is true &&
+                    File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksDrawingTitleBlockBuilder.cs")) &&
+                    File.Exists(Path.Combine(projectRoot, "tools", "SolidWorksDrawingTitleBlockSmokeRunner", "SolidWorksDrawingTitleBlockSmokeRunner.csproj"));
                 solidWorksRealCadNotExecutedByDefault =
                     workerResult?.RealCadExecuted == false &&
                     envFlagResult.RealCadExecuted == false &&
@@ -1225,6 +1335,8 @@ public static class PlatformSelfCheckRunner
                 solidWorksRealBuildRequiresRequestFlag = solidWorksRealExecutionRequiresRequestFlag;
                 solidWorksRealBuildRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
                 solidWorksRealDrawingRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
+                solidWorksRealDrawingDimensionsRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
+                solidWorksRealDrawingTitleBlockRequiresEnvFlag = solidWorksRealExecutionRequiresEnvFlag;
                 solidWorksRealBuildRequiresDryRunFalse =
                     dryRunFlagResult.Status == "Rejected" &&
                     dryRunFlagResult.ExecutionMode == "RealPreflightOnly" &&
@@ -1433,10 +1545,183 @@ public static class PlatformSelfCheckRunner
                             solidWorksRealDrawingSmokeTestError);
                     }
                 }
+
+                if (solidWorksRealDrawingDimensionsSmokeTestAttempted)
+                {
+                    realDrawingDimensionOutputDirectory = CreateRealDrawingDimensionSmokeOutputDirectory(projectRoot);
+                    var dimensionRequest = envFlagProbe with
+                    {
+                        RequestId = $"self-check-solidworks-real-drawing-dimension-{Guid.NewGuid():N}",
+                        OutputDirectory = realDrawingDimensionOutputDirectory,
+                        DryRun = false,
+                        AllowRealCadExecution = true,
+                        ConnectionSmokeTestOnly = false,
+                        DrawingSmokeTestOnly = false,
+                        DrawingDimensionSmokeTestOnly = true,
+                        SourceDrawingPath = FindLatestRealDrawingPath(projectRoot)
+                    };
+
+                    try
+                    {
+                        var dimensionResult = await InvokeRealSolidWorksWorkerAsync(
+                            realSolidWorksWorkerType,
+                            SolidWorksRuntimeOptions.FromEnvironment(),
+                            dimensionRequest,
+                            cancellationToken);
+                        var latestDimensionReportArtifact = dimensionResult.GeneratedArtifacts.FirstOrDefault(artifact =>
+                            artifact.FilePath.EndsWith("dimension_report.json", StringComparison.OrdinalIgnoreCase));
+                        realDrawingDimensionLatestReportPath = latestDimensionReportArtifact?.FilePath;
+                        solidWorksRealDrawingDimensionsOutputsSlddrw = dimensionResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".SLDDRW", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealDrawingDimensionsOutputsPdf = dimensionResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealDrawingDimensionsOutputsJsonReport = dimensionResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith("dimension_report.json", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        if (realDrawingDimensionLatestReportPath is null)
+                        {
+                            realDrawingDimensionLatestReportPath = FindLatestDimensionReportPath(realDrawingDimensionOutputDirectory);
+                            solidWorksRealDrawingDimensionsOutputsJsonReport =
+                                !string.IsNullOrWhiteSpace(realDrawingDimensionLatestReportPath) &&
+                                File.Exists(realDrawingDimensionLatestReportPath) &&
+                                new FileInfo(realDrawingDimensionLatestReportPath).Length > 0;
+                        }
+
+                        solidWorksDrawingDimensionReportGenerated = solidWorksRealDrawingDimensionsOutputsJsonReport;
+                        var drawingDimensionArtifactsValidated =
+                            new SolidWorksArtifactValidator(Path.Combine(projectRoot, "output", "solidworks"))
+                                .Validate(dimensionResult)
+                                .IsPassed;
+                        solidWorksRealDrawingDimensionsSmokeTestPassed =
+                            dimensionResult.Status == "Completed" &&
+                            dimensionResult.ExecutionMode == "RealDrawingDimensions" &&
+                            dimensionResult.RealCadConnected &&
+                            dimensionResult.RealCadExecuted &&
+                            solidWorksRealDrawingDimensionsOutputsSlddrw &&
+                            solidWorksRealDrawingDimensionsOutputsPdf &&
+                            solidWorksRealDrawingDimensionsOutputsJsonReport &&
+                            drawingDimensionArtifactsValidated;
+                        solidWorksRealDrawingDimensionsSmokeTestError = solidWorksRealDrawingDimensionsSmokeTestPassed
+                            ? null
+                            : BuildRealSmokeTestError(dimensionResult.Issues, realDrawingDimensionLatestReportPath, "dimension_report");
+                        solidWorksRealDrawingDimensionFailureStage = solidWorksRealDrawingDimensionsSmokeTestPassed
+                            ? null
+                            : DetermineSolidWorksDrawingDimensionFailureStage(dimensionResult.Issues, solidWorksRealDrawingDimensionsSmokeTestError, realDrawingDimensionLatestReportPath);
+                        solidWorksDrawingDimensionFailureStageActionable = IsActionableDrawingDimensionFailureStage(
+                            solidWorksRealDrawingDimensionFailureStage,
+                            solidWorksRealDrawingDimensionsSmokeTestError);
+                    }
+                    catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException)
+                    {
+                        solidWorksRealDrawingDimensionsSmokeTestError = ex.GetBaseException().Message;
+                        realDrawingDimensionLatestReportPath ??= FindLatestDimensionReportPath(realDrawingDimensionOutputDirectory);
+                        solidWorksRealDrawingDimensionFailureStage = DetermineSolidWorksDrawingDimensionFailureStage(
+                            Array.Empty<string>(),
+                            solidWorksRealDrawingDimensionsSmokeTestError,
+                            realDrawingDimensionLatestReportPath);
+                        solidWorksDrawingDimensionFailureStageActionable = IsActionableDrawingDimensionFailureStage(
+                            solidWorksRealDrawingDimensionFailureStage,
+                            solidWorksRealDrawingDimensionsSmokeTestError);
+                    }
+                }
+
+                if (solidWorksRealDrawingTitleBlockSmokeTestAttempted)
+                {
+                    realDrawingTitleBlockOutputDirectory = CreateRealDrawingTitleBlockSmokeOutputDirectory(projectRoot);
+                    var titleBlockRequest = envFlagProbe with
+                    {
+                        RequestId = $"self-check-solidworks-real-drawing-title-block-{Guid.NewGuid():N}",
+                        OutputDirectory = realDrawingTitleBlockOutputDirectory,
+                        DryRun = false,
+                        AllowRealCadExecution = true,
+                        ConnectionSmokeTestOnly = false,
+                        DrawingSmokeTestOnly = false,
+                        DrawingDimensionSmokeTestOnly = false,
+                        DrawingTitleBlockSmokeTestOnly = true,
+                        SourceDimensionedDrawingPath = FindLatestDimensionedDrawingPath(projectRoot)
+                    };
+
+                    try
+                    {
+                        var titleBlockResult = await InvokeRealSolidWorksWorkerAsync(
+                            realSolidWorksWorkerType,
+                            SolidWorksRuntimeOptions.FromEnvironment(),
+                            titleBlockRequest,
+                            cancellationToken);
+                        var latestTitleBlockReportArtifact = titleBlockResult.GeneratedArtifacts.FirstOrDefault(artifact =>
+                            artifact.FilePath.EndsWith("title_block_report.json", StringComparison.OrdinalIgnoreCase));
+                        realDrawingTitleBlockLatestReportPath = latestTitleBlockReportArtifact?.FilePath;
+                        solidWorksRealDrawingTitleBlockOutputsSlddrw = titleBlockResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".SLDDRW", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealDrawingTitleBlockOutputsPdf = titleBlockResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        solidWorksRealDrawingTitleBlockOutputsJsonReport = titleBlockResult.GeneratedArtifacts.Any(artifact =>
+                            artifact.FilePath.EndsWith("title_block_report.json", StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(artifact.FilePath) &&
+                            new FileInfo(artifact.FilePath).Length > 0);
+                        if (realDrawingTitleBlockLatestReportPath is null)
+                        {
+                            realDrawingTitleBlockLatestReportPath = FindLatestTitleBlockReportPath(realDrawingTitleBlockOutputDirectory);
+                            solidWorksRealDrawingTitleBlockOutputsJsonReport =
+                                !string.IsNullOrWhiteSpace(realDrawingTitleBlockLatestReportPath) &&
+                                File.Exists(realDrawingTitleBlockLatestReportPath) &&
+                                new FileInfo(realDrawingTitleBlockLatestReportPath).Length > 0;
+                        }
+
+                        solidWorksDrawingTitleBlockReportGenerated = solidWorksRealDrawingTitleBlockOutputsJsonReport;
+                        var titleBlockArtifactsValidated =
+                            new SolidWorksArtifactValidator(Path.Combine(projectRoot, "output", "solidworks"))
+                                .Validate(titleBlockResult)
+                                .IsPassed;
+                        solidWorksRealDrawingTitleBlockSmokeTestPassed =
+                            titleBlockResult.Status == "Completed" &&
+                            titleBlockResult.ExecutionMode == "RealDrawingTitleBlock" &&
+                            titleBlockResult.RealCadConnected &&
+                            titleBlockResult.RealCadExecuted &&
+                            solidWorksRealDrawingTitleBlockOutputsSlddrw &&
+                            solidWorksRealDrawingTitleBlockOutputsPdf &&
+                            solidWorksRealDrawingTitleBlockOutputsJsonReport &&
+                            titleBlockArtifactsValidated;
+                        solidWorksRealDrawingTitleBlockSmokeTestError = solidWorksRealDrawingTitleBlockSmokeTestPassed
+                            ? null
+                            : BuildRealSmokeTestError(titleBlockResult.Issues, realDrawingTitleBlockLatestReportPath, "title_block_report");
+                        solidWorksRealDrawingTitleBlockFailureStage = solidWorksRealDrawingTitleBlockSmokeTestPassed
+                            ? null
+                            : DetermineSolidWorksDrawingTitleBlockFailureStage(titleBlockResult.Issues, solidWorksRealDrawingTitleBlockSmokeTestError, realDrawingTitleBlockLatestReportPath);
+                        solidWorksDrawingTitleBlockFailureStageActionable = IsActionableDrawingTitleBlockFailureStage(
+                            solidWorksRealDrawingTitleBlockFailureStage,
+                            solidWorksRealDrawingTitleBlockSmokeTestError);
+                    }
+                    catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException)
+                    {
+                        solidWorksRealDrawingTitleBlockSmokeTestError = ex.GetBaseException().Message;
+                        realDrawingTitleBlockLatestReportPath ??= FindLatestTitleBlockReportPath(realDrawingTitleBlockOutputDirectory);
+                        solidWorksRealDrawingTitleBlockFailureStage = DetermineSolidWorksDrawingTitleBlockFailureStage(
+                            Array.Empty<string>(),
+                            solidWorksRealDrawingTitleBlockSmokeTestError,
+                            realDrawingTitleBlockLatestReportPath);
+                        solidWorksDrawingTitleBlockFailureStageActionable = IsActionableDrawingTitleBlockFailureStage(
+                            solidWorksRealDrawingTitleBlockFailureStage,
+                            solidWorksRealDrawingTitleBlockSmokeTestError);
+                    }
+                }
             }
 
             var v11VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
                 .Contains("V1.1", StringComparison.OrdinalIgnoreCase);
+            var v12VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
+                .Contains("V1.2", StringComparison.OrdinalIgnoreCase);
+            var v13VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
+                .Contains("V1.3", StringComparison.OrdinalIgnoreCase);
             var workerFailureRepairDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "failure_repair.md"));
             var workerApiEvidenceDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "api_evidence.md"));
             var workerReviewChecklistDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "review_checklist.md"));
@@ -1449,6 +1734,24 @@ public static class PlatformSelfCheckRunner
             var solidWorksDrawingReviewChecklistUpdated =
                 workerReviewChecklistDoc.Contains("工程图", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("drawing_report", StringComparison.OrdinalIgnoreCase);
+            var solidWorksDrawingDimensionFailureRepairDocumented =
+                DrawingDimensionFailureStages.All(stage => workerFailureRepairDoc.Contains(stage, StringComparison.OrdinalIgnoreCase));
+            var solidWorksDrawingDimensionApiEvidenceDocumented =
+                new[] { "CreateLinearDim4", "ICreateDiamDim4", "AddDimension2", "dimension_report" }
+                    .All(api => workerApiEvidenceDoc.Contains(api, StringComparison.OrdinalIgnoreCase));
+            var solidWorksDrawingDimensionReviewChecklistUpdated =
+                workerReviewChecklistDoc.Contains("SW_REAL_DRAWING_DIMENSION_SMOKE_TEST", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("dimension_report", StringComparison.OrdinalIgnoreCase);
+            var solidWorksDrawingTitleBlockFailureRepairDocumented =
+                DrawingTitleBlockFailureStages.All(stage => workerFailureRepairDoc.Contains(stage, StringComparison.OrdinalIgnoreCase));
+            var solidWorksDrawingTitleBlockApiEvidenceDocumented =
+                new[] { "CustomPropertyManager", "Add3", "Set2", "Get6", "GetCurrentSheet", "GetProperties2", "title_block_report" }
+                    .All(api => workerApiEvidenceDoc.Contains(api, StringComparison.OrdinalIgnoreCase));
+            var solidWorksDrawingTitleBlockReviewChecklistUpdated =
+                workerReviewChecklistDoc.Contains("SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("title_block_report", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("title_block_population_strategy", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("title_block_fields_verified_in_sheet_format", StringComparison.OrdinalIgnoreCase);
 
             return new SolidWorksSkeletonSelfCheckResult(
                 solidWorksModuleSkeletonEnabled,
@@ -1537,7 +1840,49 @@ public static class PlatformSelfCheckRunner
                 v11VersionStageDocumented,
                 solidWorksDrawingFailureRepairDocumented,
                 solidWorksDrawingApiEvidenceDocumented,
-                solidWorksDrawingReviewChecklistUpdated);
+                solidWorksDrawingReviewChecklistUpdated,
+                solidWorksRealDrawingDimensionsImplemented,
+                solidWorksRealDrawingDimensionsDefaultDisabled,
+                solidWorksRealDrawingDimensionsRequiresEnvFlag,
+                solidWorksRealDrawingDimensionsSmokeTestAttempted,
+                solidWorksRealDrawingDimensionsSmokeTestPassed,
+                solidWorksRealDrawingDimensionsSmokeTestError,
+                solidWorksStrictRealDrawingDimensionSmokeTest,
+                solidWorksRealDrawingDimensionsOutputsSlddrw,
+                solidWorksRealDrawingDimensionsOutputsPdf,
+                solidWorksRealDrawingDimensionsOutputsJsonReport,
+                solidWorksRealDrawingDimensionsNotCalledInDefaultSelfCheck,
+                solidWorksDrawingDimensionReportGenerated,
+                solidWorksRealDrawingDimensionFailureStage,
+                solidWorksDrawingDimensionFailureStageActionable,
+                realDrawingDimensionOutputDirectory,
+                realDrawingDimensionLatestReportPath,
+                v12VersionStageDocumented,
+                solidWorksDrawingDimensionFailureRepairDocumented,
+                solidWorksDrawingDimensionApiEvidenceDocumented,
+                solidWorksDrawingDimensionReviewChecklistUpdated,
+                solidWorksRealDrawingTitleBlockImplemented,
+                solidWorksRealDrawingTitleBlockDefaultDisabled,
+                solidWorksRealDrawingTitleBlockRequiresEnvFlag,
+                solidWorksRealDrawingTitleBlockSmokeTestAttempted,
+                solidWorksRealDrawingTitleBlockSmokeTestPassed,
+                solidWorksRealDrawingTitleBlockSmokeTestError,
+                solidWorksStrictRealDrawingTitleBlockSmokeTest,
+                solidWorksRealDrawingTitleBlockOutputsSlddrw,
+                solidWorksRealDrawingTitleBlockOutputsPdf,
+                solidWorksRealDrawingTitleBlockOutputsJsonReport,
+                solidWorksRealDrawingTitleBlockNotCalledInDefaultSelfCheck,
+                solidWorksDrawingTitleBlockReportGenerated,
+                solidWorksRealDrawingTitleBlockFailureStage,
+                solidWorksDrawingTitleBlockFailureStageActionable,
+                realDrawingTitleBlockOutputDirectory,
+                realDrawingTitleBlockLatestReportPath,
+                v13VersionStageDocumented,
+                solidWorksDrawingTitleBlockFailureRepairDocumented,
+                solidWorksDrawingTitleBlockApiEvidenceDocumented,
+                solidWorksDrawingTitleBlockReviewChecklistUpdated,
+                "custom_properties_only",
+                false);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
         {
@@ -1630,7 +1975,49 @@ public static class PlatformSelfCheckRunner
                 V11VersionStageDocumented: false,
                 SolidWorksDrawingFailureRepairDocumented: false,
                 SolidWorksDrawingApiEvidenceDocumented: false,
-                SolidWorksDrawingReviewChecklistUpdated: false);
+                SolidWorksDrawingReviewChecklistUpdated: false,
+                SolidWorksRealDrawingDimensionsImplemented: false,
+                SolidWorksRealDrawingDimensionsDefaultDisabled: !RealSolidWorksDrawingDimensionSmokeTestRequested(),
+                SolidWorksRealDrawingDimensionsRequiresEnvFlag: false,
+                SolidWorksRealDrawingDimensionsSmokeTestAttempted: RealSolidWorksDrawingDimensionSmokeTestRequested(),
+                SolidWorksRealDrawingDimensionsSmokeTestPassed: false,
+                SolidWorksRealDrawingDimensionsSmokeTestError: null,
+                SolidWorksStrictRealDrawingDimensionSmokeTest: StrictRealSolidWorksDrawingDimensionTestRequested(),
+                SolidWorksRealDrawingDimensionsOutputsSlddrw: false,
+                SolidWorksRealDrawingDimensionsOutputsPdf: false,
+                SolidWorksRealDrawingDimensionsOutputsJsonReport: false,
+                SolidWorksRealDrawingDimensionsNotCalledInDefaultSelfCheck: !RealSolidWorksDrawingDimensionSmokeTestRequested(),
+                SolidWorksDrawingDimensionReportGenerated: false,
+                SolidWorksRealDrawingDimensionFailureStage: null,
+                SolidWorksDrawingDimensionFailureStageActionable: false,
+                RealDrawingDimensionOutputDirectory: null,
+                RealDrawingDimensionLatestReportPath: null,
+                V12VersionStageDocumented: false,
+                SolidWorksDrawingDimensionFailureRepairDocumented: false,
+                SolidWorksDrawingDimensionApiEvidenceDocumented: false,
+                SolidWorksDrawingDimensionReviewChecklistUpdated: false,
+                SolidWorksRealDrawingTitleBlockImplemented: false,
+                SolidWorksRealDrawingTitleBlockDefaultDisabled: !RealSolidWorksDrawingTitleBlockSmokeTestRequested(),
+                SolidWorksRealDrawingTitleBlockRequiresEnvFlag: false,
+                SolidWorksRealDrawingTitleBlockSmokeTestAttempted: RealSolidWorksDrawingTitleBlockSmokeTestRequested(),
+                SolidWorksRealDrawingTitleBlockSmokeTestPassed: false,
+                SolidWorksRealDrawingTitleBlockSmokeTestError: null,
+                SolidWorksStrictRealDrawingTitleBlockSmokeTest: StrictRealSolidWorksDrawingTitleBlockTestRequested(),
+                SolidWorksRealDrawingTitleBlockOutputsSlddrw: false,
+                SolidWorksRealDrawingTitleBlockOutputsPdf: false,
+                SolidWorksRealDrawingTitleBlockOutputsJsonReport: false,
+                SolidWorksRealDrawingTitleBlockNotCalledInDefaultSelfCheck: !RealSolidWorksDrawingTitleBlockSmokeTestRequested(),
+                SolidWorksDrawingTitleBlockReportGenerated: false,
+                SolidWorksRealDrawingTitleBlockFailureStage: null,
+                SolidWorksDrawingTitleBlockFailureStageActionable: false,
+                RealDrawingTitleBlockOutputDirectory: null,
+                RealDrawingTitleBlockLatestReportPath: null,
+                V13VersionStageDocumented: false,
+                SolidWorksDrawingTitleBlockFailureRepairDocumented: false,
+                SolidWorksDrawingTitleBlockApiEvidenceDocumented: false,
+                SolidWorksDrawingTitleBlockReviewChecklistUpdated: false,
+                SolidWorksDrawingTitleBlockPopulationStrategy: "custom_properties_only",
+                SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat: false);
         }
     }
 
@@ -1672,6 +2059,20 @@ public static class PlatformSelfCheckRunner
     private static bool StrictRealSolidWorksDrawingTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_DRAWING_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
+    private static bool RealSolidWorksDrawingDimensionSmokeTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(Environment.GetEnvironmentVariable("SW_REAL_DRAWING_DIMENSION_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static bool StrictRealSolidWorksDrawingDimensionTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_DRAWING_DIMENSION_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static bool RealSolidWorksDrawingTitleBlockSmokeTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(Environment.GetEnvironmentVariable("SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+    private static bool StrictRealSolidWorksDrawingTitleBlockTestRequested() =>
+        string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
     private static string CreateRealBuildSmokeOutputDirectory(string projectRoot) =>
         Path.GetFullPath(Path.Combine(
             projectRoot,
@@ -1688,6 +2089,24 @@ public static class PlatformSelfCheckRunner
             "solidworks",
             "real",
             "plate_basic_4holes_drawing",
+            $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
+
+    private static string CreateRealDrawingDimensionSmokeOutputDirectory(string projectRoot) =>
+        Path.GetFullPath(Path.Combine(
+            projectRoot,
+            "output",
+            "solidworks",
+            "real",
+            "plate_basic_4holes_drawing_dimensions",
+            $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
+
+    private static string CreateRealDrawingTitleBlockSmokeOutputDirectory(string projectRoot) =>
+        Path.GetFullPath(Path.Combine(
+            projectRoot,
+            "output",
+            "solidworks",
+            "real",
+            "plate_basic_4holes_title_block",
             $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
 
     private static string? FindLatestBuildReportPath(string? outputDirectory)
@@ -1720,6 +2139,36 @@ public static class PlatformSelfCheckRunner
             ?.FullName;
     }
 
+    private static string? FindLatestDimensionReportPath(string? outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory) || !Directory.Exists(outputDirectory))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(outputDirectory, "dimension_report.json", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestTitleBlockReportPath(string? outputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(outputDirectory) || !Directory.Exists(outputDirectory))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(outputDirectory, "title_block_report.json", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
     private static string? FindLatestRealPlatePartPath(string projectRoot)
     {
         var realPlateRoot = Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes");
@@ -1730,6 +2179,40 @@ public static class PlatformSelfCheckRunner
 
         return Directory
             .EnumerateFiles(realPlateRoot, "plate_basic_4holes.SLDPRT", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .Where(file => file.Length > 0)
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestRealDrawingPath(string projectRoot)
+    {
+        var realDrawingRoot = Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_drawing");
+        if (!Directory.Exists(realDrawingRoot))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(realDrawingRoot, "plate_basic_4holes.SLDDRW", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .Where(file => file.Length > 0)
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestDimensionedDrawingPath(string projectRoot)
+    {
+        var realDrawingDimensionRoot = Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_drawing_dimensions");
+        if (!Directory.Exists(realDrawingDimensionRoot))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(realDrawingDimensionRoot, "plate_basic_4holes_dimensioned.SLDDRW", SearchOption.AllDirectories)
             .Select(path => new FileInfo(path))
             .Where(file => file.Length > 0)
             .OrderByDescending(file => file.LastWriteTimeUtc)
@@ -1908,6 +2391,134 @@ public static class PlatformSelfCheckRunner
         DrawingFailureStages.Contains(failureStage, StringComparer.OrdinalIgnoreCase) ||
         !string.IsNullOrWhiteSpace(error);
 
+    private static string? DetermineSolidWorksDrawingDimensionFailureStage(
+        IEnumerable<string> issues,
+        string? error,
+        string? reportPath)
+    {
+        if (!string.IsNullOrWhiteSpace(reportPath) && File.Exists(reportPath))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+                if (document.RootElement.TryGetProperty("failure_stage", out var failureStage) &&
+                    !string.IsNullOrWhiteSpace(failureStage.GetString()))
+                {
+                    return failureStage.GetString();
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                return "dimension_report_write_failed";
+            }
+        }
+
+        var text = string.Join(" ", issues.Append(error ?? string.Empty));
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        foreach (var stage in DrawingDimensionFailureStages)
+        {
+            if (text.Contains(stage, StringComparison.OrdinalIgnoreCase))
+            {
+                return stage;
+            }
+        }
+
+        if (text.Contains("source", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("drawing", StringComparison.OrdinalIgnoreCase))
+        {
+            return "source_drawing_missing";
+        }
+
+        if (text.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "dimension_pdf_export_failed";
+        }
+
+        if (text.Contains("slddrw", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("save", StringComparison.OrdinalIgnoreCase))
+        {
+            return "dimension_save_failed";
+        }
+
+        return "drawing_dimension_api_evidence_insufficient";
+    }
+
+    private static bool IsActionableDrawingDimensionFailureStage(string? failureStage, string? error) =>
+        failureStage is null ||
+        DrawingDimensionFailureStages.Contains(failureStage, StringComparer.OrdinalIgnoreCase) ||
+        !string.IsNullOrWhiteSpace(error);
+
+    private static string? DetermineSolidWorksDrawingTitleBlockFailureStage(
+        IEnumerable<string> issues,
+        string? error,
+        string? reportPath)
+    {
+        if (!string.IsNullOrWhiteSpace(reportPath) && File.Exists(reportPath))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+                if (document.RootElement.TryGetProperty("failure_stage", out var failureStage) &&
+                    !string.IsNullOrWhiteSpace(failureStage.GetString()))
+                {
+                    return failureStage.GetString();
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                return "title_block_report_write_failed";
+            }
+        }
+
+        var text = string.Join(" ", issues.Append(error ?? string.Empty));
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        foreach (var stage in DrawingTitleBlockFailureStages)
+        {
+            if (text.Contains(stage, StringComparison.OrdinalIgnoreCase))
+            {
+                return stage;
+            }
+        }
+
+        if (text.Contains("source", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("dimensioned", StringComparison.OrdinalIgnoreCase))
+        {
+            return "source_dimensioned_drawing_missing";
+        }
+
+        if (text.Contains("custom", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("property", StringComparison.OrdinalIgnoreCase))
+        {
+            return "custom_property_write_failed";
+        }
+
+        if (text.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "title_block_pdf_export_failed";
+        }
+
+        if (text.Contains("slddrw", StringComparison.OrdinalIgnoreCase) ||
+            text.Contains("save", StringComparison.OrdinalIgnoreCase))
+        {
+            return "title_block_save_failed";
+        }
+
+        return "drawing_title_block_api_evidence_insufficient";
+    }
+
+    private static bool IsActionableDrawingTitleBlockFailureStage(string? failureStage, string? error) =>
+        failureStage is null ||
+        DrawingTitleBlockFailureStages.Contains(failureStage, StringComparer.OrdinalIgnoreCase) ||
+        !string.IsNullOrWhiteSpace(error);
+
     private static readonly string[] DrawingFailureStages =
     {
         "source_part_missing",
@@ -1925,6 +2536,37 @@ public static class PlatformSelfCheckRunner
         "drawing_api_evidence_insufficient"
     };
 
+    private static readonly string[] DrawingDimensionFailureStages =
+    {
+        "source_drawing_missing",
+        "source_drawing_open_failed",
+        "drawing_view_missing",
+        "drawing_view_activate_failed",
+        "length_dimension_failed",
+        "width_dimension_failed",
+        "thickness_dimension_failed",
+        "hole_diameter_dimension_failed",
+        "hole_position_dimension_failed",
+        "dimension_save_failed",
+        "dimension_pdf_export_failed",
+        "dimension_report_write_failed",
+        "drawing_dimension_api_evidence_insufficient"
+    };
+
+    private static readonly string[] DrawingTitleBlockFailureStages =
+    {
+        "source_dimensioned_drawing_missing",
+        "source_drawing_open_failed",
+        "title_block_template_missing",
+        "custom_property_write_failed",
+        "drawing_property_read_failed",
+        "title_block_update_failed",
+        "title_block_save_failed",
+        "title_block_pdf_export_failed",
+        "title_block_report_write_failed",
+        "drawing_title_block_api_evidence_insufficient"
+    };
+
     private static bool IsActionableFailureStage(string? failureStage, string? error) =>
         string.IsNullOrWhiteSpace(error) ||
         (!string.IsNullOrWhiteSpace(failureStage) &&
@@ -1932,7 +2574,8 @@ public static class PlatformSelfCheckRunner
 
     private static string BuildRealSmokeTestError(
         IReadOnlyList<string> issues,
-        string? latestReportPath)
+        string? latestReportPath,
+        string reportLabel = "build_report")
     {
         var joined = issues.Count == 0
             ? "real_build_smoke_test_failed_without_issue"
@@ -1940,7 +2583,7 @@ public static class PlatformSelfCheckRunner
 
         return string.IsNullOrWhiteSpace(latestReportPath)
             ? joined
-            : $"{joined}; build_report={latestReportPath}";
+            : $"{joined}; {reportLabel}={latestReportPath}";
     }
 
     private static AgentContracts.AgentContext CreateCadModelerSelfCheckContext()
@@ -3069,7 +3712,49 @@ public static class PlatformSelfCheckRunner
         bool V11VersionStageDocumented,
         bool SolidWorksDrawingFailureRepairDocumented,
         bool SolidWorksDrawingApiEvidenceDocumented,
-        bool SolidWorksDrawingReviewChecklistUpdated);
+        bool SolidWorksDrawingReviewChecklistUpdated,
+        bool SolidWorksRealDrawingDimensionsImplemented,
+        bool SolidWorksRealDrawingDimensionsDefaultDisabled,
+        bool SolidWorksRealDrawingDimensionsRequiresEnvFlag,
+        bool SolidWorksRealDrawingDimensionsSmokeTestAttempted,
+        bool SolidWorksRealDrawingDimensionsSmokeTestPassed,
+        string? SolidWorksRealDrawingDimensionsSmokeTestError,
+        bool SolidWorksStrictRealDrawingDimensionSmokeTest,
+        bool SolidWorksRealDrawingDimensionsOutputsSlddrw,
+        bool SolidWorksRealDrawingDimensionsOutputsPdf,
+        bool SolidWorksRealDrawingDimensionsOutputsJsonReport,
+        bool SolidWorksRealDrawingDimensionsNotCalledInDefaultSelfCheck,
+        bool SolidWorksDrawingDimensionReportGenerated,
+        string? SolidWorksRealDrawingDimensionFailureStage,
+        bool SolidWorksDrawingDimensionFailureStageActionable,
+        string? RealDrawingDimensionOutputDirectory,
+        string? RealDrawingDimensionLatestReportPath,
+        bool V12VersionStageDocumented,
+        bool SolidWorksDrawingDimensionFailureRepairDocumented,
+        bool SolidWorksDrawingDimensionApiEvidenceDocumented,
+        bool SolidWorksDrawingDimensionReviewChecklistUpdated,
+        bool SolidWorksRealDrawingTitleBlockImplemented,
+        bool SolidWorksRealDrawingTitleBlockDefaultDisabled,
+        bool SolidWorksRealDrawingTitleBlockRequiresEnvFlag,
+        bool SolidWorksRealDrawingTitleBlockSmokeTestAttempted,
+        bool SolidWorksRealDrawingTitleBlockSmokeTestPassed,
+        string? SolidWorksRealDrawingTitleBlockSmokeTestError,
+        bool SolidWorksStrictRealDrawingTitleBlockSmokeTest,
+        bool SolidWorksRealDrawingTitleBlockOutputsSlddrw,
+        bool SolidWorksRealDrawingTitleBlockOutputsPdf,
+        bool SolidWorksRealDrawingTitleBlockOutputsJsonReport,
+        bool SolidWorksRealDrawingTitleBlockNotCalledInDefaultSelfCheck,
+        bool SolidWorksDrawingTitleBlockReportGenerated,
+        string? SolidWorksRealDrawingTitleBlockFailureStage,
+        bool SolidWorksDrawingTitleBlockFailureStageActionable,
+        string? RealDrawingTitleBlockOutputDirectory,
+        string? RealDrawingTitleBlockLatestReportPath,
+        bool V13VersionStageDocumented,
+        bool SolidWorksDrawingTitleBlockFailureRepairDocumented,
+        bool SolidWorksDrawingTitleBlockApiEvidenceDocumented,
+        bool SolidWorksDrawingTitleBlockReviewChecklistUpdated,
+        string SolidWorksDrawingTitleBlockPopulationStrategy,
+        bool SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat);
 
     private sealed record ExecutableDocsLayerSelfCheckResult(
         bool ExecutableDocsLayerEnabled,

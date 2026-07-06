@@ -101,3 +101,86 @@ V1.1 只做基础视图工程图。API 证据优先级仍然是官方 `SolidWork
 - 失败 API 名称和返回值。
 
 如果 `CreateDrawViewFromModelView3` 或 PDF 导出失败，先在 `SolidWorksDrawingSmokeRunner` 中复现并生成 `drawing_report.json`，再回填 `SolidWorksDrawingBuilder`。不得直接把宏录制文件作为生产路径。
+
+## V1.2 工程图尺寸 API 证据规则
+
+V1.2 只做已有工程图上的最小基础尺寸标注。当前选择非关联尺寸 API，是因为官方证据能直接支持按坐标和数值创建线性尺寸、直径尺寸，并能生成可审计的 `dimension_report.json`。可关联孔中心选取需要更多 `IView.GetVisibleEntities2`、边线和圆弧绑定证据，本轮不作为生产路径。
+
+## V1.2 官方 API 来源
+
+本轮已查证官方 `SolidWorks API Help`，基础尺寸标注的最小证据充分：
+
+- `IDrawingDoc.CreateLinearDim4`：官方条目 `https://help.solidworks.com/2025/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IDrawingDoc~CreateLinearDim4.html`。用于创建非关联线性尺寸，参数包含点数组、显示值、角度和文本高度。
+- `IDrawingDoc.ICreateDiamDim4`：官方条目 `https://help.solidworks.com/2024/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IDrawingDoc~ICreateDiamDim4.html`。用于创建非关联直径尺寸，参数包含尺寸点、圆上近点、圆上远点、法向、文本点、显示值和文本高度。
+- `IModelDoc2.AddDimension2`：官方条目 `https://help.solidworks.com/2022/english/api/sldworksapi/solidworks.interop.sldworks~SolidWorks.Interop.sldworks.IModelDoc2~AddDimension2.html`。该 API 需要预先选择实体，本轮仅作为后续关联尺寸候选证据，不作为当前主路径。
+- `IDrawingDoc.InsertModelDimensions`：官方条目 `https://help.solidworks.com/2026/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IDrawingDoc~InsertModelDimensions.html`。该 API 用于插入模型尺寸，本轮拒绝使用，因为用户明确不要自动全尺寸标注。
+- `IView.GetVisibleEntities2`：官方条目 `https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IView~GetVisibleEntities2.html`。该 API 可用于后续关联视图几何实体，本轮只记录为未来增强候选。
+
+当前选定的工程图尺寸候选 API：
+
+- `ISldWorks.OpenDoc6`：打开 V1.1 的 `plate_basic_4holes.SLDDRW`。
+- `IDrawingDoc.ActivateView`：尝试激活 Front 视图，失败时记录 `drawing_view_activate_failed`。
+- `IDrawingDoc.CreateLinearDim4`：添加 160 mm 板长、80 mm 板宽、12 mm 板厚、120 mm 与 40 mm 孔中心距。
+- `IDrawingDoc.ICreateDiamDim4`：添加 Φ10 孔径尺寸。
+- `IModelDocExtension.SaveAs`：保存 `plate_basic_4holes_dimensioned.SLDDRW`，并导出 `plate_basic_4holes_dimensioned.pdf`。
+
+拒绝策略：
+
+- 不使用 `InsertModelDimensions` 自动导入模型尺寸，避免超出 V1.2 范围。
+- 不把宏录制作为生产路径。
+- 不复制第三方 `scripts`。
+- 不在 API 证据不足时硬做关联孔位尺寸。
+
+尺寸失败时必须记录：
+
+- 失败阶段。
+- 源工程图绝对路径。
+- 已确认视图列表。
+- 每个尺寸的名称、预期毫米值、API 策略、状态和失败阶段。
+- `SLDDRW`、`PDF` 和 `dimension_report.json` 的保存路径、存在状态和大小。
+
+如果 `CreateLinearDim4`、`ICreateDiamDim4`、保存或 PDF 导出失败，先在 `SolidWorksDrawingDimensionSmokeRunner` 中复现并生成 `dimension_report.json`，再回填 `SolidWorksDrawingDimensionBuilder`。
+
+## V1.3 工程图标题栏 API 证据规则
+
+V1.3 只做带尺寸工程图上的最小标题栏/图纸属性信息。当前选择文档级自定义属性路径，是因为官方证据能直接支持读取当前 Sheet、读取比例、写入自定义属性、刷新工程图、保存 SLDDRW 和导出 PDF，并能生成可审计的 `title_block_report.json`。复杂标题栏表格、国标模板几何绘制和明细栏不作为本轮生产路径。
+
+## V1.3 官方 API 来源
+
+本轮已查证官方 `SolidWorks API Help`，标题栏基础信息链路的最小证据充分：
+
+- `IModelDocExtension.CustomPropertyManager`：官方条目 `https://help.solidworks.com/2026/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IModelDocExtension~CustomPropertyManager.html`。用于取得文档级或配置级自定义属性管理器。
+- `ICustomPropertyManager.Add3`：官方条目 `https://help.solidworks.com/2023/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ICustomPropertyManager~Add3.html`。用于添加或按覆盖策略写入自定义属性。
+- `ICustomPropertyManager.Set2`：官方条目 `https://help.solidworks.com/2025/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ICustomPropertyManager~Set2.html`。用于设置已有自定义属性的值。
+- `ICustomPropertyManager.Get6`：官方条目 `https://help.solidworks.com/2018/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ICustomPropertyManager~Get6.html`。用于读取并验证自定义属性值。
+- `IDrawingDoc.GetCurrentSheet`：官方条目 `https://help.solidworks.com/2023/English/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IDrawingDoc~GetCurrentSheet.html`。用于取得当前 Drawing Sheet。
+- `ISheet.GetProperties2`：官方条目 `https://help.solidworks.com/2026/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ISheet~GetProperties2.html`。用于读取图纸属性数组，其中包含比例字段。
+- `IDrawingDoc.EditTemplate`：官方条目 `https://help.solidworks.com/2019/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IDrawingDoc~EditTemplate.html`。该 API 证明存在编辑模板的官方路径，但 V1.3 不进入复杂模板几何编辑。
+- `Entering Title Block Data`：官方帮助 `https://help.solidworks.com/2024/English/solidworks/sldworks/t_titleblock_Entering_Title_Block_Data.htm`。该文档说明工程图模板可包含可编辑标题栏字段，本轮用自定义属性支撑字段值。
+
+当前选定的工程图标题栏候选 API：
+
+- `ISldWorks.OpenDoc6`：打开 V1.2 的 `plate_basic_4holes_dimensioned.SLDDRW`。
+- `IDrawingDoc.GetCurrentSheet` 与 `ISheet.GetProperties2`：读取当前 Sheet 和比例；比例不可用时记录为 `auto`。
+- `IModelDocExtension.CustomPropertyManager`：获取文档级自定义属性管理器。
+- `ICustomPropertyManager.Add3`、`Set2`、`Get6`：写入并验证 `PartName`、`DrawingNumber`、`Material`、`Scale`、`DrawingDate`、`Revision`。
+- `IModelDoc2.ForceRebuild3` 或 `EditRebuild3`：刷新标题栏字段引用。
+- `IModelDocExtension.SaveAs`：保存 `plate_basic_4holes_title_block.SLDDRW`，并导出 `plate_basic_4holes_title_block.pdf`。
+
+拒绝策略：
+
+- 不绘制复杂国标标题栏模板。
+- 不创建 BOM、装配图、明细栏、公差系统、形位公差或表面粗糙度。
+- 不把宏录制作为生产路径。
+- 不复制第三方 `scripts`。
+- 不在 API 证据不足时硬做标题栏表格或模板几何编辑。
+
+标题栏失败时必须记录：
+
+- 失败阶段。
+- 源带尺寸工程图绝对路径。
+- Sheet 和比例读取状态。
+- 每个标题栏属性的名称、值、API 策略、状态和失败阶段。
+- `SLDDRW`、`PDF` 和 `title_block_report.json` 的保存路径、存在状态和大小。
+
+如果 `CustomPropertyManager`、`Add3`、`Set2`、`Get6`、`GetCurrentSheet`、`GetProperties2`、保存或 PDF 导出失败，先在 `SolidWorksDrawingTitleBlockSmokeRunner` 中复现并生成 `title_block_report.json`，再回填 `SolidWorksDrawingTitleBlockBuilder`。

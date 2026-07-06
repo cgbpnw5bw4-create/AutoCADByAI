@@ -13,6 +13,8 @@ CADModelSpec
 → SolidWorksWorkerRequest
 → FakeSolidWorksWorker 或 RealSolidWorksWorker
 → 可选 V1.1 SolidWorksDrawingBuilder 生成基础工程图
+→ 可选 V1.2 SolidWorksDrawingDimensionBuilder 生成基础尺寸工程图
+→ 可选 V1.3 SolidWorksDrawingTitleBlockBuilder 写入标题栏基础信息
 → SolidWorksArtifactValidator
 → SolidWorksBuildPlanReviewer
 → QualityGate
@@ -45,6 +47,12 @@ CADModelSpec
 - `solidworks_build_plan_reviewer_passed`
 - `solidworks_quality_gate_passed`
 - `solidworks_api_repair_loop_available`
+- `solidworks_real_drawing_dimensions_implemented`
+- `solidworks_real_drawing_dimensions_not_called_in_default_self_check`
+- `solidworks_drawing_dimension_failure_stage_actionable`
+- `solidworks_real_drawing_title_block_implemented`
+- `solidworks_real_drawing_title_block_not_called_in_default_self_check`
+- `solidworks_drawing_title_block_failure_stage_actionable`
 
 ## 成功标准
 
@@ -65,3 +73,37 @@ plate_basic_4holes.SLDPRT
 ```
 
 默认 self-check 不执行真实工程图。真实工程图 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true`。
+
+## V1.2 工程图尺寸补充
+
+V1.2 只在 V1.1 工程图已经存在时，从 `plate_basic_4holes.SLDDRW` 生成带基础尺寸的工程图。该能力仍属于 Worker 层，`Agent`、`Gateway` 和 `LLM` 不能直接调用。
+
+```text
+plate_basic_4holes.SLDDRW
+→ SolidWorksDrawingDimensionBuilder
+→ 确认 Front / Top / Right / Isometric
+→ 160 mm 长度、80 mm 宽度、12 mm 厚度、Φ10 孔径、孔中心距
+→ plate_basic_4holes_dimensioned.SLDDRW
+→ plate_basic_4holes_dimensioned.pdf
+→ dimension_report.json
+→ SolidWorksArtifactValidator
+```
+
+默认 self-check 不执行真实尺寸标注。真实尺寸 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_DIMENSION_SMOKE_TEST=true`。严格模式使用 `SW_STRICT_REAL_DRAWING_DIMENSION_TEST=true`。
+
+## V1.3 工程图标题栏补充
+
+V1.3 只在 V1.2 带尺寸工程图已经存在时，从 `plate_basic_4holes_dimensioned.SLDDRW` 生成带最小标题栏信息的工程图。该能力仍属于 Worker 层，`Agent`、`Gateway` 和 `LLM` 不能直接调用。
+
+```text
+plate_basic_4holes_dimensioned.SLDDRW
+→ SolidWorksDrawingTitleBlockBuilder
+→ 读取当前 Sheet 和比例
+→ 写入 PartName、DrawingNumber、Material、Scale、DrawingDate、Revision
+→ plate_basic_4holes_title_block.SLDDRW
+→ plate_basic_4holes_title_block.pdf
+→ title_block_report.json
+→ SolidWorksArtifactValidator
+```
+
+默认 self-check 不执行真实标题栏测试。真实标题栏 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST=true`。严格模式使用 `SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST=true`。

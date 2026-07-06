@@ -8,6 +8,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
     private readonly ISolidWorksSessionManager _sessionManager;
     private readonly ISolidWorksPlateBuilder _plateBuilder;
     private readonly ISolidWorksDrawingBuilder _drawingBuilder;
+    private readonly ISolidWorksDrawingDimensionBuilder _drawingDimensionBuilder;
+    private readonly ISolidWorksDrawingTitleBlockBuilder _drawingTitleBlockBuilder;
     private readonly SolidWorksRuntimeOptions? _options;
 
     public RealSolidWorksWorker()
@@ -35,10 +37,33 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         SolidWorksRuntimeOptions? options,
         ISolidWorksPlateBuilder? plateBuilder,
         ISolidWorksDrawingBuilder? drawingBuilder)
+        : this(sessionManager, options, plateBuilder, drawingBuilder, null)
+    {
+    }
+
+    public RealSolidWorksWorker(
+        ISolidWorksSessionManager? sessionManager,
+        SolidWorksRuntimeOptions? options,
+        ISolidWorksPlateBuilder? plateBuilder,
+        ISolidWorksDrawingBuilder? drawingBuilder,
+        ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder)
+        : this(sessionManager, options, plateBuilder, drawingBuilder, drawingDimensionBuilder, null)
+    {
+    }
+
+    public RealSolidWorksWorker(
+        ISolidWorksSessionManager? sessionManager,
+        SolidWorksRuntimeOptions? options,
+        ISolidWorksPlateBuilder? plateBuilder,
+        ISolidWorksDrawingBuilder? drawingBuilder,
+        ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder,
+        ISolidWorksDrawingTitleBlockBuilder? drawingTitleBlockBuilder)
     {
         _sessionManager = sessionManager ?? new SolidWorksSessionManager();
         _plateBuilder = plateBuilder ?? new LateBoundSolidWorksPlateBuilder();
         _drawingBuilder = drawingBuilder ?? new LateBoundSolidWorksDrawingBuilder();
+        _drawingDimensionBuilder = drawingDimensionBuilder ?? new LateBoundSolidWorksDrawingDimensionBuilder();
+        _drawingTitleBlockBuilder = drawingTitleBlockBuilder ?? new LateBoundSolidWorksDrawingTitleBlockBuilder();
         _options = options;
     }
 
@@ -51,6 +76,10 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
     public bool SupportsPlateBasicFourHolesBuild => true;
 
     public bool SupportsBasicViewsDrawing => true;
+
+    public bool SupportsDrawingDimensions => true;
+
+    public bool SupportsDrawingTitleBlock => true;
 
     public async Task<SolidWorksWorkerResult> ExecuteAsync(
         SolidWorksWorkerRequest request,
@@ -84,6 +113,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
 
         if (!request.ConnectionSmokeTestOnly &&
             !request.DrawingSmokeTestOnly &&
+            !request.DrawingDimensionSmokeTestOnly &&
+            !request.DrawingTitleBlockSmokeTestOnly &&
             !string.Equals(request.BuildPlan.PartType, "plate_basic_4holes", StringComparison.OrdinalIgnoreCase))
         {
             logs.Add("COM connection was not attempted because the real build plan is unsupported.");
@@ -100,6 +131,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
 
         if (!request.ConnectionSmokeTestOnly &&
             !request.DrawingSmokeTestOnly &&
+            !request.DrawingDimensionSmokeTestOnly &&
+            !request.DrawingTitleBlockSmokeTestOnly &&
             (string.IsNullOrWhiteSpace(options.TemplatePartPath) || !File.Exists(options.TemplatePartPath)))
         {
             logs.Add("COM connection was not attempted because a valid SolidWorks part template is required for real build.");
@@ -200,9 +233,22 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                             options,
                             connection.SolidWorksVersion,
                             token),
-                        cancellationToken);
+                        cancellationToken,
+                        options.ExecutionTimeoutSeconds);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(ex.Message);
+                    return Result(
+                        request,
+                        "Failed",
+                        SolidWorksDrawingBuildOutput.ExecutionMode,
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight);
+                }
+                catch (TimeoutException ex) when (ex.Message.StartsWith("solidworks_execution_timeout:", StringComparison.OrdinalIgnoreCase))
                 {
                     issues.Add(ex.Message);
                     return Result(
@@ -230,6 +276,116 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     PreflightReport: connectedPreflight with { Issues = issues });
             }
 
+            if (request.DrawingDimensionSmokeTestOnly)
+            {
+                SolidWorksDrawingDimensionBuildResult dimensionResult;
+                try
+                {
+                    dimensionResult = await _sessionManager.ExecuteWithApplicationAsync(
+                        (application, token) => _drawingDimensionBuilder.CreateDimensionedDrawingAsync(
+                            application,
+                            request,
+                            options,
+                            connection.SolidWorksVersion,
+                            token),
+                        cancellationToken,
+                        options.ExecutionTimeoutSeconds);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(ex.Message);
+                    return Result(
+                        request,
+                        "Failed",
+                        SolidWorksDrawingDimensionBuildOutput.ExecutionMode,
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight);
+                }
+                catch (TimeoutException ex) when (ex.Message.StartsWith("solidworks_execution_timeout:", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(ex.Message);
+                    return Result(
+                        request,
+                        "Failed",
+                        SolidWorksDrawingDimensionBuildOutput.ExecutionMode,
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight);
+                }
+
+                logs.AddRange(dimensionResult.Logs);
+                issues.AddRange(dimensionResult.Issues);
+
+                return new SolidWorksWorkerResult(
+                    request.RequestId,
+                    dimensionResult.Status,
+                    dimensionResult.GeneratedArtifacts,
+                    logs,
+                    issues,
+                    SolidWorksDrawingDimensionBuildOutput.ExecutionMode,
+                    RealCadExecuted: dimensionResult.RealCadExecuted,
+                    RealCadConnected: true,
+                    PreflightReport: connectedPreflight with { Issues = issues });
+            }
+
+            if (request.DrawingTitleBlockSmokeTestOnly)
+            {
+                SolidWorksDrawingTitleBlockBuildResult titleBlockResult;
+                try
+                {
+                    titleBlockResult = await _sessionManager.ExecuteWithApplicationAsync(
+                        (application, token) => _drawingTitleBlockBuilder.ApplyTitleBlockAsync(
+                            application,
+                            request,
+                            options,
+                            connection.SolidWorksVersion,
+                            token),
+                        cancellationToken,
+                        options.ExecutionTimeoutSeconds);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(ex.Message);
+                    return Result(
+                        request,
+                        "Failed",
+                        SolidWorksDrawingTitleBlockBuildOutput.ExecutionMode,
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight);
+                }
+                catch (TimeoutException ex) when (ex.Message.StartsWith("solidworks_execution_timeout:", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(ex.Message);
+                    return Result(
+                        request,
+                        "Failed",
+                        SolidWorksDrawingTitleBlockBuildOutput.ExecutionMode,
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight);
+                }
+
+                logs.AddRange(titleBlockResult.Logs);
+                issues.AddRange(titleBlockResult.Issues);
+
+                return new SolidWorksWorkerResult(
+                    request.RequestId,
+                    titleBlockResult.Status,
+                    titleBlockResult.GeneratedArtifacts,
+                    logs,
+                    issues,
+                    SolidWorksDrawingTitleBlockBuildOutput.ExecutionMode,
+                    RealCadExecuted: titleBlockResult.RealCadExecuted,
+                    RealCadConnected: true,
+                    PreflightReport: connectedPreflight with { Issues = issues });
+            }
+
             SolidWorksPlateBuildResult buildResult;
             try
             {
@@ -240,9 +396,22 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                         options,
                         connection.SolidWorksVersion,
                         token),
-                    cancellationToken);
+                    cancellationToken,
+                    options.ExecutionTimeoutSeconds);
             }
             catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add(ex.Message);
+                return Result(
+                    request,
+                    "Failed",
+                    SolidWorksPlateBuildOutput.ExecutionMode,
+                    logs,
+                    issues,
+                    realCadConnected: true,
+                    connectedPreflight);
+            }
+            catch (TimeoutException ex) when (ex.Message.StartsWith("solidworks_execution_timeout:", StringComparison.OrdinalIgnoreCase))
             {
                 issues.Add(ex.Message);
                 return Result(

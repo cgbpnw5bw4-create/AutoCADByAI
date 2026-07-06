@@ -37,6 +37,15 @@
 - `NewDocument`
 - `OpenDoc6`
 - `CreateDrawViewFromModelView3`
+- `CreateLinearDim4`
+- `ICreateDiamDim4`
+- `AddDimension2`
+- `CustomPropertyManager`
+- `Add3`
+- `Set2`
+- `Get6`
+- `GetCurrentSheet`
+- `GetProperties2`
 - `IModelDocExtension.SaveAs`
 - `GetExportFileData`
 - `IExportPdfData.SetSheets`
@@ -75,3 +84,33 @@ V1.1 工程图只允许基础视图能力。当前候选顺序是：
 官方证据已覆盖 `OpenDoc6`、`ActivateDoc3`、`NewDocument`、`CreateDrawViewFromModelView3`、`IModelDocExtension.SaveAs`、`GetExportFileData` 和 `IExportPdfData.SetSheets`。详细 URL 记录在 `src/Workers/SolidWorks/api_evidence.md`。
 
 任何视图创建、保存或 PDF 导出失败，都必须先生成 `drawing_report.json`，再依据官方 API 或宏录制证据修复。不能把工程图宏直接作为生产路径。
+
+## V1.2 工程图尺寸 API 证据
+
+V1.2 工程图尺寸只允许最小基础尺寸标注。当前候选顺序是：
+
+1. `OpenDoc6` 打开 V1.1 的 `plate_basic_4holes.SLDDRW`。
+2. 读取并确认 Front、Top、Right、Isometric 四个视图。
+3. `CreateLinearDim4` 创建 160 mm 长度、80 mm 宽度、12 mm 厚度、120 mm 与 40 mm 孔中心距。
+4. `ICreateDiamDim4` 创建 Φ10 孔径尺寸。
+5. `IModelDocExtension.SaveAs` 保存带尺寸 SLDDRW，并导出 PDF。
+
+官方证据已覆盖 `CreateLinearDim4`、`ICreateDiamDim4`、`AddDimension2`、`InsertModelDimensions` 和 `IView.GetVisibleEntities2`。详细 URL 记录在 `src/Workers/SolidWorks/api_evidence.md`。
+
+当前主路径拒绝 `InsertModelDimensions`，因为它会接近自动导入模型尺寸，超出 V1.2 范围。`AddDimension2` 和 `IView.GetVisibleEntities2` 暂作为后续关联尺寸候选，不作为本轮生产路径。任何尺寸创建、保存或 PDF 导出失败，都必须先生成 `dimension_report.json`，再依据官方 API 或宏录制证据修复。
+
+## V1.3 工程图标题栏 API 证据
+
+V1.3 工程图标题栏只允许最小标题栏/图纸属性信息。当前候选顺序是：
+
+1. `OpenDoc6` 打开 V1.2 的 `plate_basic_4holes_dimensioned.SLDDRW`。
+2. `GetCurrentSheet` 取得当前 Sheet。
+3. `GetProperties2` 读取图纸比例；不可读时记录为 `auto` 或明确失败。
+4. `CustomPropertyManager` 获取文档级自定义属性管理器。
+5. `Add3`、`Set2`、`Get6` 写入并验证 `PartName`、`DrawingNumber`、`Material`、`Scale`、`DrawingDate`、`Revision`。
+6. `ForceRebuild3` 或 `EditRebuild3` 刷新标题栏字段引用。
+7. `IModelDocExtension.SaveAs` 保存带标题栏信息 SLDDRW，并导出 PDF。
+
+官方证据已覆盖 `CustomPropertyManager`、`Add3`、`Set2`、`Get6`、`GetCurrentSheet`、`GetProperties2`、`EditTemplate` 和标题栏数据输入说明。详细 URL 记录在 `src/Workers/SolidWorks/api_evidence.md`。
+
+当前主路径拒绝复杂国标模板几何编辑、BOM、明细栏、公差系统和宏生产路径。任何标题栏属性写入、图纸属性读取、刷新、保存或 PDF 导出失败，都必须先生成 `title_block_report.json`，再依据官方 API 或宏录制证据修复。

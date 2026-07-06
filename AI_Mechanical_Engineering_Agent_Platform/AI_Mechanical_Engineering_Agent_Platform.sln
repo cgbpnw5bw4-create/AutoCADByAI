@@ -51,6 +51,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksSmokeRunner", "to
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksDrawingSmokeRunner", "tools\SolidWorksDrawingSmokeRunner\SolidWorksDrawingSmokeRunner.csproj", "{42142BE0-021D-4780-8021-52DF3A88AFCB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksDrawingDimensionSmokeRunner", "tools\SolidWorksDrawingDimensionSmokeRunner\SolidWorksDrawingDimensionSmokeRunner.csproj", "{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksDrawingTitleBlockSmokeRunner", "tools\SolidWorksDrawingTitleBlockSmokeRunner\SolidWorksDrawingTitleBlockSmokeRunner.csproj", "{936982BC-8587-4567-9C84-05CDD0C0116D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -265,6 +269,30 @@ Global
 		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x64.Build.0 = Release|Any CPU
 		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x86.ActiveCfg = Release|Any CPU
 		{42142BE0-021D-4780-8021-52DF3A88AFCB}.Release|x86.Build.0 = Release|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Debug|x64.Build.0 = Debug|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Debug|x86.Build.0 = Debug|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Release|x64.ActiveCfg = Release|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Release|x64.Build.0 = Release|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Release|x86.ActiveCfg = Release|Any CPU
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D}.Release|x86.Build.0 = Release|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Debug|x64.Build.0 = Debug|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Debug|x86.Build.0 = Debug|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x64.ActiveCfg = Release|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x64.Build.0 = Release|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x86.ActiveCfg = Release|Any CPU
+		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -291,5 +319,7 @@ Global
 		{81AB4EDE-A517-4252-A4E5-6C134F900AE6} = {63B3D61F-35CB-AE97-AD5F-A6200F8219CD}
 		{1F9CFF08-079C-4AE4-A3DE-D52D308404EA} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{42142BE0-021D-4780-8021-52DF3A88AFCB} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{936982BC-8587-4567-9C84-05CDD0C0116D} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal

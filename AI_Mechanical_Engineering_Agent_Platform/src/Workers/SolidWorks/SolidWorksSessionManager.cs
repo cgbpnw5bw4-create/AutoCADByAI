@@ -12,7 +12,8 @@ public interface ISolidWorksSessionManager
 
     Task<T> ExecuteWithApplicationAsync<T>(
         Func<object, CancellationToken, Task<T>> action,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        int? executionTimeoutSeconds = null);
 
     Task DisconnectAsync(CancellationToken cancellationToken = default);
 }
@@ -114,11 +115,20 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
 
     public async Task<T> ExecuteWithApplicationAsync<T>(
         Func<object, CancellationToken, Task<T>> action,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? executionTimeoutSeconds = null)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(action);
         cancellationToken.ThrowIfCancellationRequested();
+
+        var timeoutSeconds = Math.Clamp(
+            executionTimeoutSeconds ?? SolidWorksRuntimeOptions.DefaultExecutionTimeoutSeconds,
+            SolidWorksRuntimeOptions.MinimumExecutionTimeoutSeconds,
+            SolidWorksRuntimeOptions.MaximumExecutionTimeoutSeconds);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+        Task<T>? executionTask = null;
 
         await _connectionLock.WaitAsync(cancellationToken);
         try
@@ -128,7 +138,23 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
                 throw new InvalidOperationException("solidworks_application_missing: active SolidWorks COM session is not connected.");
             }
 
-            return await action(_application, cancellationToken);
+            var application = _application;
+            executionTask = Task.Run(() => action(application, timeout.Token), CancellationToken.None);
+            return await executionTask.WaitAsync(timeout.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            if (executionTask is not null)
+            {
+                ObserveLateExecution(executionTask);
+            }
+
+            ReleaseCurrentApplication();
+            throw new TimeoutException($"solidworks_execution_timeout: SolidWorks execution timed out after {timeoutSeconds} seconds.");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         finally
         {
@@ -227,6 +253,21 @@ public sealed class SolidWorksSessionManager : ISolidWorksSessionManager, IDispo
                     }
                 }
                 else if (task.IsFaulted)
+                {
+                    _ = task.Exception;
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+    }
+
+    private static void ObserveLateExecution<T>(Task<T> executionTask)
+    {
+        _ = executionTask.ContinueWith(
+            task =>
+            {
+                if (task.IsFaulted)
                 {
                     _ = task.Exception;
                 }

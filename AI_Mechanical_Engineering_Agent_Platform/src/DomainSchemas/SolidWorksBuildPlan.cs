@@ -28,7 +28,11 @@ public sealed record SolidWorksWorkerRequest(
     bool ConnectionSmokeTestOnly = false,
     bool DrawingSmokeTestOnly = false,
     string? SourcePartPath = null,
-    string? DrawingTemplatePath = null);
+    string? DrawingTemplatePath = null,
+    bool DrawingDimensionSmokeTestOnly = false,
+    string? SourceDrawingPath = null,
+    bool DrawingTitleBlockSmokeTestOnly = false,
+    string? SourceDimensionedDrawingPath = null);
 
 public sealed record SolidWorksWorkerResult(
     string RequestId,
@@ -56,11 +60,15 @@ public sealed record SolidWorksRuntimeOptions(
     string? TemplatePartPath,
     string OutputDirectory,
     int ConnectTimeoutSeconds,
+    int ExecutionTimeoutSeconds,
     string? DrawingTemplatePath = null)
 {
     public const int DefaultConnectTimeoutSeconds = 30;
     public const int MinimumConnectTimeoutSeconds = 1;
     public const int MaximumConnectTimeoutSeconds = 600;
+    public const int DefaultExecutionTimeoutSeconds = 300;
+    public const int MinimumExecutionTimeoutSeconds = 1;
+    public const int MaximumExecutionTimeoutSeconds = 3_600;
 
     public static SolidWorksRuntimeOptions FromEnvironment(IReadOnlyDictionary<string, string?>? environment = null)
     {
@@ -75,6 +83,7 @@ public sealed record SolidWorksRuntimeOptions(
             EmptyToNull(Get("SW_TEMPLATE_PART_PATH")),
             EmptyToNull(Get("SW_OUTPUT_DIRECTORY")) ?? DefaultOutputDirectory(),
             ParseTimeout(Get("SW_CONNECT_TIMEOUT_SECONDS")),
+            ParseExecutionTimeout(Get("SW_EXECUTION_TIMEOUT_SECONDS")),
             EmptyToNull(Get("SW_TEMPLATE_DRAWING_PATH")));
     }
 
@@ -90,6 +99,11 @@ public sealed record SolidWorksRuntimeOptions(
         int.TryParse(value, out var parsed)
             ? Math.Clamp(parsed, MinimumConnectTimeoutSeconds, MaximumConnectTimeoutSeconds)
             : DefaultConnectTimeoutSeconds;
+
+    private static int ParseExecutionTimeout(string? value) =>
+        int.TryParse(value, out var parsed)
+            ? Math.Clamp(parsed, MinimumExecutionTimeoutSeconds, MaximumExecutionTimeoutSeconds)
+            : DefaultExecutionTimeoutSeconds;
 
     private static string? EmptyToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
@@ -137,6 +151,144 @@ public sealed class SolidWorksDrawingReport
 
     public string FinalStatus { get; set; } = "Failed";
 }
+
+public sealed class SolidWorksDrawingDimensionReport
+{
+    public string DimensionId { get; set; } = $"solidworks-drawing-dimension-{Guid.NewGuid():N}";
+
+    public string? SourceDrawingPath { get; set; }
+
+    public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    public string OutputDirectory { get; set; } = string.Empty;
+
+    public bool SolidWorksConnected { get; set; }
+
+    public string? SolidWorksVersion { get; set; }
+
+    public bool DrawingOpened { get; set; }
+
+    public List<string> ViewsConfirmed { get; } = [];
+
+    public bool LengthDimensionAdded { get; set; }
+
+    public bool WidthDimensionAdded { get; set; }
+
+    public bool ThicknessDimensionAdded { get; set; }
+
+    public bool HoleDiameterDimensionAdded { get; set; }
+
+    public bool HolePositionDimensionAdded { get; set; }
+
+    public List<SolidWorksDrawingDimensionResult> Dimensions { get; } = [];
+
+    public string? SlddrwPath { get; set; }
+
+    public bool SlddrwExists { get; set; }
+
+    public long SlddrwSizeBytes { get; set; }
+
+    public string? PdfPath { get; set; }
+
+    public bool PdfExists { get; set; }
+
+    public long PdfSizeBytes { get; set; }
+
+    public List<string> Operations { get; } = [];
+
+    public List<string> Errors { get; } = [];
+
+    public List<string> Warnings { get; } = [];
+
+    public string? FailureStage { get; set; }
+
+    public string FinalStatus { get; set; } = "Failed";
+}
+
+public sealed record SolidWorksDrawingDimensionResult(
+    string Name,
+    double ExpectedValueMm,
+    string Status,
+    string FailureStage,
+    string ApiStrategy,
+    string Message);
+
+public sealed class SolidWorksDrawingTitleBlockReport
+{
+    public string TitleBlockId { get; set; } = $"solidworks-drawing-title-block-{Guid.NewGuid():N}";
+
+    public string? SourceDimensionedDrawingPath { get; set; }
+
+    public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    public string OutputDirectory { get; set; } = string.Empty;
+
+    public bool SolidWorksConnected { get; set; }
+
+    public string? SolidWorksVersion { get; set; }
+
+    public bool DrawingOpened { get; set; }
+
+    public bool TitleBlockTemplateDetected { get; set; }
+
+    public bool DrawingPropertiesRead { get; set; }
+
+    public bool CustomPropertiesWritten { get; set; }
+
+    public bool TitleBlockUpdated { get; set; }
+
+    public string TitleBlockPopulationStrategy { get; set; } = "custom_properties_only";
+
+    public bool TitleBlockFieldsVerifiedInSheetFormat { get; set; }
+
+    public string PartName { get; set; } = string.Empty;
+
+    public string DrawingNumber { get; set; } = string.Empty;
+
+    public string Material { get; set; } = string.Empty;
+
+    public string Scale { get; set; } = string.Empty;
+
+    public string DrawingDate { get; set; } = string.Empty;
+
+    public string Revision { get; set; } = string.Empty;
+
+    public List<SolidWorksDrawingTitleBlockProperty> Properties { get; } = [];
+
+    public string? SlddrwPath { get; set; }
+
+    public bool SlddrwExists { get; set; }
+
+    public long SlddrwSizeBytes { get; set; }
+
+    public string? PdfPath { get; set; }
+
+    public bool PdfExists { get; set; }
+
+    public long PdfSizeBytes { get; set; }
+
+    public List<string> Operations { get; } = [];
+
+    public List<string> Errors { get; } = [];
+
+    public List<string> Warnings { get; } = [];
+
+    public string? FailureStage { get; set; }
+
+    public string FinalStatus { get; set; } = "Failed";
+}
+
+public sealed record SolidWorksDrawingTitleBlockProperty(
+    string Name,
+    string Value,
+    string Status,
+    string FailureStage,
+    string ApiStrategy,
+    string Message);
 
 public sealed record SolidWorksPreflightReport(
     string ReportId,
