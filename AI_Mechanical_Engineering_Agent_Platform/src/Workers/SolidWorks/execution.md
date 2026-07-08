@@ -10,6 +10,7 @@
 - `SolidWorksDrawingBuilder`：封装 V1.1 工程图基础视图 API，不让 `RealSolidWorksWorker` 直接堆满工程图 COM 调用。
 - `SolidWorksDrawingDimensionBuilder`：封装 V1.2 工程图基础尺寸 API，只在已有工程图上增加最小尺寸标注。
 - `SolidWorksDrawingTitleBlockBuilder`：封装 V1.3 工程图标题栏基础信息 API，只在带尺寸工程图上写入最小自定义属性并刷新工程图。
+- `SolidWorksReleasePackageBuilder`：封装 V1.4 发布包收集逻辑，只复制已有真实输出并生成 manifest、summary 和 quality report，不启动 SolidWorks。
 - `SolidWorksSmokeRunner`：独立诊断 Runner，不依赖 Agent、Gateway、LLM 或 WorkflowEngine。
 - `SolidWorksDrawingSmokeRunner`：V1.1 工程图独立诊断 Runner，只能手动运行，不被默认 self-check 调用。
 - `SolidWorksDrawingDimensionSmokeRunner`：V1.2 工程图尺寸独立诊断 Runner，只能手动运行，不被默认 self-check 调用。
@@ -95,6 +96,68 @@ dotnet run --project tools/SolidWorksDrawingTitleBlockSmokeRunner -- --source-dr
 ```
 
 V1.3 不做 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4 内容。标题栏字段采用文档级自定义属性驱动；若模板未引用这些属性，报告仍必须记录属性写入状态和 `failure_stage`。
+
+## V1.4 工程发布包与质量检查链路
+
+V1.4 只整理 V1.0-B、V1.1、V1.2 和 V1.3 已经生成的真实输出，不创建或修改 CAD 文件。最小链路如下：
+
+```text
+output/solidworks/real/plate_basic_4holes/**
+output/solidworks/real/plate_basic_4holes_drawing/**
+output/solidworks/real/plate_basic_4holes_drawing_dimensions/**
+output/solidworks/real/plate_basic_4holes_title_block/**
+output/solidworks/diagnostics/plate_basic_4holes/**
+→ SolidWorksReleasePackageBuilder
+→ artifacts/plate_basic_4holes.SLDPRT
+→ artifacts/plate_basic_4holes.STEP
+→ artifacts/plate_basic_4holes.SLDDRW
+→ artifacts/plate_basic_4holes.pdf
+→ reports/*.json
+→ release_manifest.json
+→ package_quality_report.json
+→ release_summary.md
+```
+
+发布包输出目录固定为 `output/solidworks/release/plate_basic_4holes/<timestamp>/`。质量检查只验证文件存在、大小大于 0、包内路径正确、PDF 存在，以及报告中的 `final_status` 和失败报告的 `failure_stage`。若源工程图、PDF 或报告缺失，仍必须生成 `release_manifest.json`、`package_quality_report.json` 和 `release_summary.md`，并把失败阶段记录为 `source_artifacts_missing` 或 `source_report_missing`。
+
+V1.4 默认 self-check 可以执行发布包收集，因为它只读写文件系统，不调用 COM、不连接 SolidWorks、不触发任何真实 CAD smoke test。V1.4 不做 BOM、装配图、批量出图、国标模板美化、复杂图纸审查、几何 OCR、PDF 视觉识别或 V1.5 内容。
+
+## V1.5 真实 CAD 主工作流集成
+
+V1.5 不新增 SolidWorks 子功能，只把已有 `plate_basic_4holes` 真实 CAD 能力接入平台主流程。Worker 仍不暴露给 Agent、Gateway 或 LLM；`SolidWorksWorkflowRouter` 负责把显式 flag、结构化上下文或具体 `plate_basic_4holes` 请求转换为主流程请求，`SolidWorksMainWorkflowRunner` 负责把 Skill、Validator、Worker、Reviewer 和 QualityGate 串成一个 `SequentialWorkflowEngine` 工作流。泛化提到 `SolidWorks` 不应单独触发 CAD 主流程。
+
+```text
+ChiefEngineerOrchestrator
+→ SolidWorksWorkflowRouter
+→ SolidWorksMainWorkflowRunner
+→ SolidWorksBuildPlanSkill
+→ SolidWorksBuildPlanValidator
+→ FakeSolidWorksWorker 或 RealSolidWorksWorker
+→ SolidWorksArtifactValidator
+→ SolidWorksBuildPlanReviewer
+→ QualityGate
+```
+
+默认路径仍使用 `FakeSolidWorksWorker`，不会启动 SolidWorks。真实路径必须同时满足：
+
+- 请求上下文包含 `allow_real_cad_execution=true`。
+- 请求上下文包含 `dry_run=false`。
+- 环境变量包含 `SW_ENABLE_REAL_EXECUTION=true`。
+
+若请求级开关或环境级开关任一缺失，主流程必须保持 fake / dry-run 路径，并在结果中记录 `real_cad_executed=false`。主流程返回的 artifact 元数据必须包含 `real_cad_executed`、`quality_gate_passed`、`execution_mode` 和输出目录。
+
+## V1.5 发布包语义修正
+
+`release_manifest.json` 和 `package_quality_report.json` 必须区分以下字段：
+
+- `package_build_status`：打包流程是否成功，只代表文件复制、manifest、summary 和 quality report 是否生成。
+- `source_reports_checked`：是否已读取所有源报告的 `final_status`。
+- `all_source_reports_passed`：所有源报告是否均为 `Passed`。
+- `source_report_failures`：`final_status=Failed` 的源报告列表。
+- `source_report_warnings`：非 `Passed` 且非 `Failed` 的源报告列表。
+- `deliverable_status`：最终是否可交付。
+
+如果任一源报告 `final_status=Failed`，则 `package_build_status` 仍可以是 `Passed`，但 `all_source_reports_passed=false`、`deliverable_status=NotDeliverable`、`final_status=Failed`，并且 `source_report_failures` 必须列出失败报告。不得再把发布包打包成功误解释为工程交付通过。
 
 ## 禁止事项
 

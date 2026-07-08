@@ -290,6 +290,131 @@ public sealed record SolidWorksDrawingTitleBlockProperty(
     string ApiStrategy,
     string Message);
 
+public sealed class SolidWorksReleaseManifest
+{
+    public string ReleaseId { get; set; } = $"solidworks-release-{Guid.NewGuid():N}";
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public string PartName { get; set; } = "plate_basic_4holes";
+
+    public string SourceRoot { get; set; } = string.Empty;
+
+    public string OutputDirectory { get; set; } = string.Empty;
+
+    public List<SolidWorksReleaseManifestItem> Artifacts { get; } = [];
+
+    public List<SolidWorksReleaseManifestItem> Reports { get; } = [];
+
+    public List<string> Warnings { get; } = [];
+
+    public List<string> Errors { get; } = [];
+
+    public string PackageBuildStatus { get; set; } = "Failed";
+
+    public bool SourceReportsChecked { get; set; }
+
+    public bool AllSourceReportsPassed { get; set; }
+
+    public List<SolidWorksSourceReportStatus> SourceReportFailures { get; } = [];
+
+    public List<SolidWorksSourceReportStatus> SourceReportWarnings { get; } = [];
+
+    public string DeliverableStatus { get; set; } = "NotDeliverable";
+
+    public string? FailureStage { get; set; }
+
+    public string FinalStatus { get; set; } = "Failed";
+}
+
+public sealed class SolidWorksReleaseManifestItem
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string Kind { get; set; } = string.Empty;
+
+    public bool Required { get; set; } = true;
+
+    public string? SourcePath { get; set; }
+
+    public string? PackagePath { get; set; }
+
+    public bool Exists { get; set; }
+
+    public long SizeBytes { get; set; }
+
+    public string? Sha256 { get; set; }
+
+    public DateTimeOffset? SourceLastWriteTimeUtc { get; set; }
+
+    public string? FinalStatus { get; set; }
+
+    public string? FailureStage { get; set; }
+}
+
+public sealed class SolidWorksPackageQualityReport
+{
+    public string QualityReportId { get; set; } = $"solidworks-release-quality-{Guid.NewGuid():N}";
+
+    public DateTimeOffset CheckedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public string OutputDirectory { get; set; } = string.Empty;
+
+    public bool ManifestExists { get; set; }
+
+    public bool ReleaseSummaryExists { get; set; }
+
+    public bool ArtifactsCollected { get; set; }
+
+    public bool ReportsCollected { get; set; }
+
+    public bool PdfExists { get; set; }
+
+    public bool PathsUnderReleaseDirectory { get; set; }
+
+    public bool FileSizesValid { get; set; }
+
+    public bool ReportsFinalStatusChecked { get; set; }
+
+    public bool FailureStagesChecked { get; set; }
+
+    public string PackageBuildStatus { get; set; } = "Failed";
+
+    public bool SourceReportsChecked { get; set; }
+
+    public bool AllSourceReportsPassed { get; set; }
+
+    public List<SolidWorksSourceReportStatus> SourceReportFailures { get; } = [];
+
+    public List<SolidWorksSourceReportStatus> SourceReportWarnings { get; } = [];
+
+    public string DeliverableStatus { get; set; } = "NotDeliverable";
+
+    public List<SolidWorksPackageQualityCheck> Checks { get; } = [];
+
+    public List<string> Warnings { get; } = [];
+
+    public List<string> Errors { get; } = [];
+
+    public string? FailureStage { get; set; }
+
+    public string FinalStatus { get; set; } = "Failed";
+}
+
+public sealed record SolidWorksSourceReportStatus(
+    string Name,
+    string? FinalStatus,
+    string? FailureStage,
+    string? SourcePath,
+    string? PackagePath,
+    string Message);
+
+public sealed record SolidWorksPackageQualityCheck(
+    string Name,
+    string Status,
+    string? FailureStage,
+    string Message);
+
 public sealed record SolidWorksPreflightReport(
     string ReportId,
     DateTimeOffset CheckedAt,

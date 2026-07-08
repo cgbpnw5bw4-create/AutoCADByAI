@@ -56,6 +56,14 @@
 | `title_block_pdf_export_failed` | 带标题栏 PDF 导出失败 | title block report | `pdf_path`、`pdf_size_bytes` | `SolidWorksDrawingTitleBlockSmokeRunner` | 是 | 可选 | PDF 存在且 size > 0 |
 | `title_block_report_write_failed` | 标题栏报告写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | 报告可写 |
 | `drawing_title_block_api_evidence_insufficient` | 标题栏 API 证据不足 | title block report 和官方 API | `properties`、`errors` | `SolidWorksDrawingTitleBlockSmokeRunner` | 必须 | 建议 | 证据充分后再回填 |
+| `source_artifacts_missing` | 发布包源 SLDPRT、STEP、SLDDRW 或 PDF 缺失 | `release_manifest.json`、`package_quality_report.json` | artifacts 列表 | 不需要真实 CAD | 否 | 否 | 回到对应阶段生成真实输出 |
+| `source_report_missing` | 发布包源报告缺失 | `release_manifest.json`、`package_quality_report.json` | reports 列表 | 不需要真实 CAD | 否 | 否 | 回到对应阶段补报告 |
+| `source_report_failed` | 发布包源报告已收集但至少一个 `final_status=Failed` | `package_quality_report.json` | `source_report_failures`、`deliverable_status` | 不需要真实 CAD | 否 | 否 | 回到失败源报告所属阶段修复 |
+| `artifact_copy_failed` | 发布包复制文件失败 | Builder 日志 | `errors` | 不需要真实 CAD | 否 | 否 | 修复权限或文件占用 |
+| `manifest_write_failed` | `release_manifest.json` 写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | manifest 可写 |
+| `quality_report_write_failed` | `package_quality_report.json` 写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | quality report 可写 |
+| `release_summary_write_failed` | `release_summary.md` 写出失败 | 输出目录 | `output_directory` | 不需要真实 CAD | 否 | 否 | summary 可写 |
+| `package_validation_failed` | 发布包路径、大小、PDF 或报告状态校验失败 | `package_quality_report.json` | `checks` | 不需要真实 CAD | 否 | 否 | 所有最小检查通过 |
 
 ## 修复原则
 
@@ -66,3 +74,7 @@ V1.1 工程图失败同样不能只记录 Failed。必须输出 `drawing_report.
 V1.2 尺寸标注失败必须输出 `dimension_report.json`、明确 `failure_stage`，并优先在 `SolidWorksDrawingDimensionSmokeRunner` 中隔离验证，再回填 `SolidWorksDrawingDimensionBuilder`。不得借 V1.2 修复进入 BOM、标题栏、自动全尺寸标注、复杂公差或 V1.3。
 
 V1.3 标题栏基础信息失败必须输出 `title_block_report.json`、明确 `failure_stage`，并优先在 `SolidWorksDrawingTitleBlockSmokeRunner` 中隔离验证，再回填 `SolidWorksDrawingTitleBlockBuilder`。不得借 V1.3 修复进入 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4。
+
+V1.4 发布包失败必须输出 `release_manifest.json`、`package_quality_report.json` 和 `release_summary.md`，并明确 `failure_stage`。本阶段只做文件收集和最小质量检查，不得借 V1.4 修复进入 BOM、装配图、批量出图、国标模板美化、复杂图纸审查、几何 OCR、PDF 视觉识别或 V1.5。
+
+V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步骤、Worker result、ArtifactValidator 和 QualityGate 决策。若 `package_build_status=Passed` 但 `deliverable_status=NotDeliverable`，说明打包过程成功但源报告未全部通过，必须回到失败源报告所属阶段修复。

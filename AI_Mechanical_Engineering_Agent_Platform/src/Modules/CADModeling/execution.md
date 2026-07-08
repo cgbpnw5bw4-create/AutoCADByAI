@@ -12,9 +12,11 @@ CADModelSpec
 → SolidWorksBuildPlanValidator
 → SolidWorksWorkerRequest
 → FakeSolidWorksWorker 或 RealSolidWorksWorker
+→ SolidWorksMainWorkflowRunner 在主流程中串接 Worker、Validator、Reviewer 和 QualityGate
 → 可选 V1.1 SolidWorksDrawingBuilder 生成基础工程图
 → 可选 V1.2 SolidWorksDrawingDimensionBuilder 生成基础尺寸工程图
 → 可选 V1.3 SolidWorksDrawingTitleBlockBuilder 写入标题栏基础信息
+→ 可选 V1.4 SolidWorksReleasePackageBuilder 收集发布包
 → SolidWorksArtifactValidator
 → SolidWorksBuildPlanReviewer
 → QualityGate
@@ -53,6 +55,23 @@ CADModelSpec
 - `solidworks_real_drawing_title_block_implemented`
 - `solidworks_real_drawing_title_block_not_called_in_default_self_check`
 - `solidworks_drawing_title_block_failure_stage_actionable`
+- `solidworks_release_package_implemented`
+- `solidworks_release_package_default_no_cad_execution`
+- `solidworks_release_manifest_generated`
+- `solidworks_package_quality_report_generated`
+- `solidworks_release_summary_generated`
+- `solidworks_release_package_failure_stage_actionable`
+- `real_cad_worker_integrated_into_main_workflow`
+- `chief_engineer_orchestrator_invokes_cad_workflow`
+- `workflow_engine_can_route_to_solidworks_worker`
+- `real_cad_main_workflow_default_disabled`
+- `real_cad_main_workflow_requires_request_flag`
+- `real_cad_main_workflow_requires_env_flag`
+- `real_cad_main_workflow_passes_quality_gate`
+- `release_package_all_source_reports_passed_field_exists`
+- `release_package_deliverable_status_field_exists`
+- `release_package_failed_source_reports_block_deliverable`
+- `v1_5_version_stage_documented`
 
 ## 成功标准
 
@@ -107,3 +126,44 @@ plate_basic_4holes_dimensioned.SLDDRW
 ```
 
 默认 self-check 不执行真实标题栏测试。真实标题栏 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST=true`。严格模式使用 `SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST=true`。
+
+## V1.4 工程发布包补充
+
+V1.4 只在 V1.0-B 到 V1.3 的真实输出已经存在时，将 `plate_basic_4holes` 相关文件整理成发布包。该能力属于 Worker 层文件收集和质量检查，`Agent`、`Gateway` 和 `LLM` 不能直接调用，也不能借机启动 SolidWorks。
+
+```text
+V1.0-B / V1.1 / V1.2 / V1.3 真实输出
+→ SolidWorksReleasePackageBuilder
+→ artifacts/plate_basic_4holes.SLDPRT
+→ artifacts/plate_basic_4holes.STEP
+→ artifacts/plate_basic_4holes.SLDDRW
+→ artifacts/plate_basic_4holes.pdf
+→ reports/*.json
+→ release_manifest.json
+→ package_quality_report.json
+→ release_summary.md
+```
+
+默认 self-check 可运行 V1.4 发布包检查，因为它只读写文件系统，不执行 CAD。若源 SLDDRW、PDF 或报告缺失，发布包必须保持 Failed，并输出 `source_artifacts_missing` 或 `source_report_missing`，不得伪造真实工程图产物。
+
+## V1.5 主工作流集成补充
+
+V1.5 不新增 CAD 子功能，只把 V1.0-B 到 V1.4 已有的真实 SolidWorks 能力接入主工作流。主流程由 `ChiefEngineerOrchestrator` 委托 `SolidWorksWorkflowRouter` 识别显式 flag、结构化上下文或具体 `plate_basic_4holes` 请求后触发；泛化提到 `SolidWorks` 不应单独触发 CAD 主流程。主流程仍必须经过 `SequentialWorkflowEngine`、`SolidWorksBuildPlanSkill`、`SolidWorksBuildPlanValidator`、Worker、`SolidWorksArtifactValidator`、`SolidWorksBuildPlanReviewer` 和 `QualityGate`。
+
+```text
+ChiefEngineerOrchestrator
+→ SequentialWorkflowEngine 内部 Agent 协作
+→ SolidWorksWorkflowRouter
+→ SolidWorksMainWorkflowRunner
+→ SolidWorksBuildPlanSkill
+→ SolidWorksBuildPlanValidator
+→ FakeSolidWorksWorker 或 RealSolidWorksWorker
+→ SolidWorksArtifactValidator
+→ SolidWorksBuildPlanReviewer
+→ QualityGate
+→ AgentOutput 返回 real_cad_executed、quality_gate_passed 和 artifact 路径
+```
+
+默认主流程仍走 `FakeSolidWorksWorker`，不会启动 SolidWorks。只有请求上下文同时声明 `allow_real_cad_execution=true` 和 `dry_run=false`，并且环境变量 `SW_ENABLE_REAL_EXECUTION=true` 时，`SolidWorksMainWorkflowRunner` 才允许选择 `RealSolidWorksWorker`。`Agent`、`Gateway` 和 `LLM` 仍不能直接调用 Worker。
+
+V1.5 还修正发布包语义：`package_build_status` 只表示打包过程是否成功，`all_source_reports_passed` 表示所有源报告是否通过，`deliverable_status` 表示最终是否可交付。任一源报告 `final_status=Failed` 时，`source_report_failures` 必须列出失败报告，`all_source_reports_passed=false`，`deliverable_status=NotDeliverable`。

@@ -94,7 +94,12 @@ public static class PlatformBootstrapper
             internalAgentRouter,
             platform.AgentRegistry,
             platform.AuditLog,
-            platform.WorkflowEngine);
+            platform.WorkflowEngine,
+            new SolidWorksMainWorkflowRunner(
+                platform.SkillRegistry,
+                platform.WorkerRegistry,
+                platform.AuditLog,
+                platform.WorkflowEngine));
 
         platform.AgentRegistry.Register(new ChiefEngineerAgent(chiefEngineerOrchestrator));
         platform.AgentRegistry.Register(new MechanicalDesignerAgent());

@@ -140,6 +140,223 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public async Task SolidWorksMainWorkflowRunnerUsesFakeWorkerByDefaultAndRequiresBothRealFlags()
+    {
+        var projectRoot = FindProjectRoot();
+        var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+        var outputBase = Path.Combine(projectRoot, "output", "solidworks", $"main-workflow-test-{Guid.NewGuid():N}");
+        var defaultOptions = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
+
+        try
+        {
+            var runner = new SolidWorksMainWorkflowRunner(
+                platform.SkillRegistry,
+                platform.WorkerRegistry,
+                platform.AuditLog,
+                platform.WorkflowEngine,
+                () => defaultOptions);
+
+            var defaultResult = await runner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                $"request-{Guid.NewGuid():N}",
+                $"task-{Guid.NewGuid():N}",
+                projectRoot,
+                Path.Combine(outputBase, "default"),
+                DryRun: true,
+                AllowRealCadExecution: false));
+            var envOnlyResult = await new SolidWorksMainWorkflowRunner(
+                platform.SkillRegistry,
+                platform.WorkerRegistry,
+                platform.AuditLog,
+                platform.WorkflowEngine,
+                () => defaultOptions with { EnableRealExecution = true })
+                .ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                    $"request-{Guid.NewGuid():N}",
+                    $"task-{Guid.NewGuid():N}",
+                    projectRoot,
+                    Path.Combine(outputBase, "env-only"),
+                    DryRun: false,
+                    AllowRealCadExecution: false));
+            var requestOnlyResult = await runner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                $"request-{Guid.NewGuid():N}",
+                $"task-{Guid.NewGuid():N}",
+                projectRoot,
+                Path.Combine(outputBase, "request-only"),
+                DryRun: false,
+                AllowRealCadExecution: true));
+
+            Assert.Equal("Completed", defaultResult.Status);
+            Assert.Equal("Fake", defaultResult.ExecutionMode);
+            Assert.False(defaultResult.RealCadExecuted);
+            Assert.True(defaultResult.QualityGatePassed);
+            Assert.Contains(defaultResult.WorkflowResult.Steps, step => step.StepId == "solidworks-worker-execution");
+            Assert.NotEmpty(defaultResult.ArtifactPaths);
+            Assert.Equal("Fake", envOnlyResult.ExecutionMode);
+            Assert.False(envOnlyResult.RealCadExecuted);
+            Assert.Equal("Fake", requestOnlyResult.ExecutionMode);
+            Assert.False(requestOnlyResult.RealCadExecuted);
+        }
+        finally
+        {
+            if (Directory.Exists(outputBase))
+            {
+                Directory.Delete(outputBase, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SolidWorksWorkflowRouterUsesStructuredInputsAndIgnoresGenericSolidWorksMentions()
+    {
+        var projectRoot = FindProjectRoot();
+        var router = new SolidWorksWorkflowRouter();
+        var genericMention = new AgentContext(
+            $"task-{Guid.NewGuid():N}",
+            new AgentInput(
+                "test",
+                "test-channel",
+                $"conversation-{Guid.NewGuid():N}",
+                "user",
+                "Discuss SolidWorks automation risks without launching CAD.",
+                Array.Empty<string>(),
+                new Dictionary<string, string>
+                {
+                    ["project_root"] = projectRoot
+                }),
+            new Dictionary<string, object?>(),
+            DateTimeOffset.UtcNow);
+        var structuredRequest = new AgentContext(
+            $"task-{Guid.NewGuid():N}",
+            new AgentInput(
+                "test",
+                "test-channel",
+                $"conversation-{Guid.NewGuid():N}",
+                "user",
+                "Build the requested CAD model through the main workflow.",
+                Array.Empty<string>(),
+                new Dictionary<string, string>
+                {
+                    ["project_root"] = projectRoot,
+                    ["solidworks_output_directory"] = Path.Combine(projectRoot, "output", "solidworks", $"router-test-{Guid.NewGuid():N}"),
+                    ["cad_model_type"] = "plate_basic_4holes",
+                    ["length_mm"] = "200",
+                    ["width_mm"] = "90",
+                    ["thickness_mm"] = "14",
+                    ["hole_diameter_mm"] = "12",
+                    ["hole_count"] = "4",
+                    ["dry_run"] = "false",
+                    ["allow_real_cad_execution"] = "true"
+                }),
+            new Dictionary<string, object?>(),
+            DateTimeOffset.UtcNow);
+
+        Assert.Null(router.TryBuildRequest(genericMention));
+        var request = router.TryBuildRequest(structuredRequest);
+
+        Assert.NotNull(request);
+        Assert.False(request!.DryRun);
+        Assert.True(request.AllowRealCadExecution);
+        Assert.Equal("plate_basic_4holes", request.ModelSpec!.ModelType);
+        Assert.Equal("200", request.ModelSpec.Parameters["length_mm"]);
+        Assert.Equal("90", request.ModelSpec.Parameters["width_mm"]);
+        Assert.Equal("14", request.ModelSpec.Parameters["thickness_mm"]);
+        Assert.Equal("12", request.ModelSpec.Parameters["hole_diameter_mm"]);
+    }
+
+    [Fact]
+    public async Task SolidWorksMainWorkflowRunnerFailsClosedWhenWorkerFails()
+    {
+        var projectRoot = FindProjectRoot();
+        var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+        platform.WorkerRegistry.Register(new FailingSolidWorksWorker());
+        var outputBase = Path.Combine(projectRoot, "output", "solidworks", $"main-workflow-failure-test-{Guid.NewGuid():N}");
+
+        try
+        {
+            var runner = new SolidWorksMainWorkflowRunner(
+                platform.SkillRegistry,
+                platform.WorkerRegistry,
+                platform.AuditLog,
+                platform.WorkflowEngine,
+                () => SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>()));
+
+            var result = await runner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                $"request-{Guid.NewGuid():N}",
+                $"task-{Guid.NewGuid():N}",
+                projectRoot,
+                outputBase,
+                DryRun: true,
+                AllowRealCadExecution: false));
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal("Failed", result.QualityGateDecision);
+            Assert.False(result.QualityGatePassed);
+            Assert.False(result.RealCadExecuted);
+            Assert.Equal("worker_execution_failed", result.FailureStage);
+            Assert.Contains(result.Issues, issue => issue.Contains("intentional_worker_failure", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(result.WorkflowResult.FailureReport);
+            Assert.Equal("solidworks-worker-execution", result.WorkflowResult.FailureReport!.FailedStepId);
+            Assert.Contains(result.WorkflowResult.Steps, step =>
+                step.StepId == "solidworks-worker-execution" &&
+                step.Status == WorkflowStepStatus.Failed);
+            Assert.DoesNotContain(result.WorkflowResult.Steps, step => step.StepId == "solidworks-artifact-quality-gate");
+        }
+        finally
+        {
+            if (Directory.Exists(outputBase))
+            {
+                Directory.Delete(outputBase, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ChiefEngineerOrchestratorInvokesSolidWorksMainWorkflowForPlateRequest()
+    {
+        var projectRoot = FindProjectRoot();
+        var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+        var outputBase = Path.Combine(projectRoot, "output", "solidworks", $"chief-main-workflow-test-{Guid.NewGuid():N}");
+        try
+        {
+            var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")!;
+            var input = new AgentInput(
+                "test",
+                "test-channel",
+                $"conversation-{Guid.NewGuid():N}",
+                "user",
+                "Run SolidWorks plate_basic_4holes main workflow.",
+                Array.Empty<string>(),
+                new Dictionary<string, string>
+                {
+                    ["project_root"] = projectRoot,
+                    ["solidworks_output_directory"] = outputBase
+                });
+
+            var output = await chiefEngineer.ExecuteAsync(new AgentContext(
+                $"task-{Guid.NewGuid():N}",
+                input,
+                new Dictionary<string, object?>(),
+                DateTimeOffset.UtcNow));
+
+            Assert.Equal(AgentOutputStatus.Completed, output.Status);
+            Assert.Contains("real_cad_executed=False", output.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("quality_gate_passed=True", output.Message, StringComparison.OrdinalIgnoreCase);
+            var reportArtifact = Assert.Single(output.Artifacts, artifact =>
+                artifact.Name.Equals("solidworks-main-workflow-report", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal("False", reportArtifact.Metadata!["real_cad_executed"]);
+            Assert.Equal("True", reportArtifact.Metadata!["quality_gate_passed"]);
+            Assert.Contains(output.Artifacts, artifact => artifact.Path.StartsWith(outputBase, StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_after_solidworks_main_workflow");
+        }
+        finally
+        {
+            if (Directory.Exists(outputBase))
+            {
+                Directory.Delete(outputBase, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task SolidWorksArtifactValidatorRejectsArtifactsOutsideConfiguredOutputRoot()
     {
         var root = Path.Combine(Path.GetTempPath(), "solidworks_artifact_path_test", Guid.NewGuid().ToString("N"));
@@ -888,6 +1105,182 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public void SolidWorksReleasePackageSchemasSerializeExpectedFields()
+    {
+        var manifest = new SolidWorksReleaseManifest
+        {
+            SourceRoot = @"C:\temp\project",
+            OutputDirectory = @"C:\temp\project\output\solidworks\release\plate_basic_4holes\run",
+            FinalStatus = "Passed"
+        };
+        manifest.Artifacts.Add(new SolidWorksReleaseManifestItem
+        {
+            Name = "plate_basic_4holes.SLDPRT",
+            Kind = "Artifact",
+            SourcePath = @"C:\temp\source\plate_basic_4holes.SLDPRT",
+            PackagePath = @"C:\temp\project\output\solidworks\release\plate_basic_4holes\run\artifacts\plate_basic_4holes.SLDPRT",
+            Exists = true,
+            SizeBytes = 10,
+            Sha256 = "abc"
+        });
+        manifest.Reports.Add(new SolidWorksReleaseManifestItem
+        {
+            Name = "build_report.json",
+            Kind = "Report",
+            Exists = true,
+            SizeBytes = 10,
+            FinalStatus = "Passed"
+        });
+        var quality = new SolidWorksPackageQualityReport
+        {
+            OutputDirectory = manifest.OutputDirectory,
+            ManifestExists = true,
+            ReleaseSummaryExists = true,
+            ArtifactsCollected = true,
+            ReportsCollected = true,
+            PdfExists = true,
+            PathsUnderReleaseDirectory = true,
+            FileSizesValid = true,
+            ReportsFinalStatusChecked = true,
+            FailureStagesChecked = true,
+            PackageBuildStatus = "Passed",
+            SourceReportsChecked = true,
+            AllSourceReportsPassed = true,
+            DeliverableStatus = "Deliverable",
+            FinalStatus = "Passed"
+        };
+        quality.Checks.Add(new SolidWorksPackageQualityCheck("artifacts_collected", "Passed", null, "ok"));
+
+        var json = JsonSerializer.Serialize(new { manifest, quality }, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        });
+
+        Assert.Contains("release_id", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("artifacts", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("reports", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("quality_report_id", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("reports_final_status_checked", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("failure_stages_checked", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("package_build_status", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("all_source_reports_passed", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("source_reports_checked", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("source_report_failures", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("source_report_warnings", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("deliverable_status", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task SolidWorksReleasePackageBuilderCollectsControlledSources()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_release_package_success", Guid.NewGuid().ToString("N"));
+        try
+        {
+            await WriteReleasePackageFixtureAsync(root);
+            var releaseRoot = Path.Combine(root, "output", "solidworks", "release", "plate_basic_4holes");
+
+            var result = await new SolidWorksReleasePackageBuilder().BuildAsync(root, releaseRoot);
+
+            Assert.Equal("Completed", result.Status);
+            Assert.Null(result.FailureStage);
+            Assert.True(result.ArtifactsCollected);
+            Assert.True(result.ReportsCollected);
+            Assert.True(File.Exists(result.ManifestPath));
+            Assert.True(File.Exists(result.QualityReportPath));
+            Assert.True(File.Exists(result.SummaryPath));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "artifacts", "plate_basic_4holes.SLDPRT")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "artifacts", "plate_basic_4holes.STEP")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "artifacts", "plate_basic_4holes.SLDDRW")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "artifacts", "plate_basic_4holes.pdf")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "reports", "build_report.json")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "reports", "diagnostic_report.json")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "reports", "drawing_report.json")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "reports", "dimension_report.json")));
+            Assert.True(File.Exists(Path.Combine(result.OutputDirectory, "reports", "title_block_report.json")));
+
+            using var qualityJson = JsonDocument.Parse(await File.ReadAllTextAsync(result.QualityReportPath!));
+            Assert.Equal("Passed", qualityJson.RootElement.GetProperty("final_status").GetString());
+            Assert.Equal("Passed", qualityJson.RootElement.GetProperty("package_build_status").GetString());
+            Assert.True(qualityJson.RootElement.GetProperty("all_source_reports_passed").GetBoolean());
+            Assert.Equal("Deliverable", qualityJson.RootElement.GetProperty("deliverable_status").GetString());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SolidWorksReleasePackageBuilderBlocksDeliverableWhenSourceReportFailed()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_release_package_failed_source", Guid.NewGuid().ToString("N"));
+        try
+        {
+            await WriteReleasePackageFixtureAsync(root, failedReportName: "dimension_report.json");
+            var releaseRoot = Path.Combine(root, "output", "solidworks", "release", "plate_basic_4holes");
+
+            var result = await new SolidWorksReleasePackageBuilder().BuildAsync(root, releaseRoot);
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal("source_report_failed", result.FailureStage);
+            Assert.True(result.ArtifactsCollected);
+            Assert.True(result.ReportsCollected);
+
+            using var qualityJson = JsonDocument.Parse(await File.ReadAllTextAsync(result.QualityReportPath!));
+            var rootElement = qualityJson.RootElement;
+            Assert.Equal("Passed", rootElement.GetProperty("package_build_status").GetString());
+            Assert.False(rootElement.GetProperty("all_source_reports_passed").GetBoolean());
+            Assert.Equal("NotDeliverable", rootElement.GetProperty("deliverable_status").GetString());
+            Assert.Equal("Failed", rootElement.GetProperty("final_status").GetString());
+            Assert.Contains(rootElement.GetProperty("source_report_failures").EnumerateArray(), failure =>
+                failure.GetProperty("name").GetString() == "dimension_report.json" &&
+                failure.GetProperty("final_status").GetString() == "Failed");
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SolidWorksReleasePackageBuilderReportsMissingSourcesWithActionableFailureStage()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_release_package_missing", Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(root);
+            var releaseRoot = Path.Combine(root, "output", "solidworks", "release", "plate_basic_4holes");
+
+            var result = await new SolidWorksReleasePackageBuilder().BuildAsync(root, releaseRoot);
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal("source_artifacts_missing", result.FailureStage);
+            Assert.False(result.ArtifactsCollected);
+            Assert.False(result.ReportsCollected);
+            Assert.True(File.Exists(result.ManifestPath));
+            Assert.True(File.Exists(result.QualityReportPath));
+            Assert.True(File.Exists(result.SummaryPath));
+
+            using var qualityJson = JsonDocument.Parse(await File.ReadAllTextAsync(result.QualityReportPath!));
+            Assert.Equal("Failed", qualityJson.RootElement.GetProperty("final_status").GetString());
+            Assert.Equal("source_artifacts_missing", qualityJson.RootElement.GetProperty("failure_stage").GetString());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void SolidWorksDrawingBuilderAndSmokeRunnerAreAvailable()
     {
         Assert.NotNull(typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(nameof(LateBoundSolidWorksDrawingBuilder.CreateBasicViewsDrawingAsync)));
@@ -902,6 +1295,8 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.Equal("custom_property_write_failed", LateBoundSolidWorksDrawingTitleBlockBuilder.MapDrawingTitleBlockFailureStage("CustomPropertyManager Add3 failed"));
         Assert.Equal("drawing_title_block_api_evidence_insufficient", LateBoundSolidWorksDrawingTitleBlockBuilder.MapDrawingTitleBlockFailureStage("unknown title block api"));
         Assert.True(File.Exists(Path.Combine(FindProjectRoot(), "tools", "SolidWorksDrawingTitleBlockSmokeRunner", "SolidWorksDrawingTitleBlockSmokeRunner.csproj")));
+        Assert.NotNull(typeof(SolidWorksReleasePackageBuilder).GetMethod(nameof(SolidWorksReleasePackageBuilder.BuildAsync)));
+        Assert.NotNull(typeof(SolidWorksReleasePackageValidator).GetMethod(nameof(SolidWorksReleasePackageValidator.Validate)));
     }
 
     [Fact]
@@ -924,6 +1319,82 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.Equal("Failed", property.Status);
         Assert.Equal("custom_property_write_failed", property.FailureStage);
         Assert.Contains("wrong-part-name", property.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SolidWorksDrawingBuilderSaveDrawingRejectsEmptySlddrwFile()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_drawing_empty_save_test", Guid.NewGuid().ToString("N"));
+        var drawingPath = Path.Combine(root, "plate_basic_4holes.SLDDRW");
+        var saveDrawing = typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(
+            "SaveDrawing",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(saveDrawing);
+        var report = new SolidWorksDrawingReport
+        {
+            SlddrwPath = drawingPath
+        };
+        var logs = new List<string>();
+
+        try
+        {
+            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
+                null,
+                new object[] { new FakeTitleBlockDrawingDocument(), drawingPath, report, logs }));
+
+            Assert.IsType<IOException>(exception.GetBaseException());
+            Assert.Contains("slddrw_save_failed", exception.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+            Assert.True(File.Exists(drawingPath));
+            Assert.Equal(0, new FileInfo(drawingPath).Length);
+            Assert.True(report.SlddrwExists);
+            Assert.Equal(0, report.SlddrwSizeBytes);
+            Assert.DoesNotContain("slddrw_save_success", report.Operations);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SolidWorksDrawingDimensionBuilderSaveDrawingRejectsEmptySlddrwFile()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_dimension_empty_save_test", Guid.NewGuid().ToString("N"));
+        var drawingPath = Path.Combine(root, "plate_basic_4holes_dimensioned.SLDDRW");
+        var saveDrawing = typeof(LateBoundSolidWorksDrawingDimensionBuilder).GetMethod(
+            "SaveDrawing",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(saveDrawing);
+        var report = new SolidWorksDrawingDimensionReport
+        {
+            SlddrwPath = drawingPath
+        };
+        var logs = new List<string>();
+
+        try
+        {
+            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
+                null,
+                new object[] { new FakeTitleBlockDrawingDocument(), drawingPath, report, logs }));
+
+            Assert.IsType<IOException>(exception.GetBaseException());
+            Assert.Contains("dimension_save_failed", exception.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+            Assert.True(File.Exists(drawingPath));
+            Assert.Equal(0, new FileInfo(drawingPath).Length);
+            Assert.True(report.SlddrwExists);
+            Assert.Equal(0, report.SlddrwSizeBytes);
+            Assert.DoesNotContain("dimension_save_success", report.Operations);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -1669,6 +2140,34 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksDrawingTitleBlockReviewChecklistUpdated);
             Assert.Equal("custom_properties_only", report.SolidWorksDrawingTitleBlockPopulationStrategy);
             Assert.False(report.SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat);
+            Assert.True(report.SolidWorksReleasePackageImplemented);
+            Assert.True(report.SolidWorksReleasePackageDefaultNoCadExecution);
+            Assert.True(report.SolidWorksReleaseManifestGenerated);
+            Assert.True(report.SolidWorksPackageQualityReportGenerated);
+            Assert.True(report.SolidWorksReleaseSummaryGenerated);
+            Assert.True(report.SolidWorksReleasePackageFailureStageActionable);
+            Assert.NotNull(report.SolidWorksReleaseManifestPath);
+            Assert.NotNull(report.SolidWorksPackageQualityReportPath);
+            Assert.NotNull(report.SolidWorksReleaseSummaryPath);
+            Assert.True(File.Exists(report.SolidWorksReleaseManifestPath));
+            Assert.True(File.Exists(report.SolidWorksPackageQualityReportPath));
+            Assert.True(File.Exists(report.SolidWorksReleaseSummaryPath));
+            Assert.True(report.V14VersionStageDocumented);
+            Assert.True(report.SolidWorksReleasePackageFailureRepairDocumented);
+            Assert.True(report.SolidWorksReleasePackageReviewChecklistUpdated);
+            Assert.True(report.RealCadWorkerIntegratedIntoMainWorkflow);
+            Assert.True(report.ChiefEngineerOrchestratorInvokesCadWorkflow);
+            Assert.True(report.WorkflowEngineCanRouteToSolidWorksWorker);
+            Assert.True(report.RealCadMainWorkflowDefaultDisabled);
+            Assert.True(report.RealCadMainWorkflowRequiresRequestFlag);
+            Assert.True(report.RealCadMainWorkflowRequiresEnvFlag);
+            Assert.True(report.RealCadMainWorkflowPassesQualityGate);
+            Assert.True(report.GatewayDoesNotCallWorkerDirectly);
+            Assert.True(report.LlmDoesNotCallWorkerDirectly);
+            Assert.True(report.ReleasePackageAllSourceReportsPassedFieldExists);
+            Assert.True(report.ReleasePackageDeliverableStatusFieldExists);
+            Assert.True(report.ReleasePackageFailedSourceReportsBlockDeliverable);
+            Assert.True(report.V15VersionStageDocumented);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }
@@ -2675,6 +3174,99 @@ public sealed class SolidWorksModuleSkeletonTests
         {
             ReleasedApplications++;
             Interlocked.Decrement(ref _activeApplications);
+        }
+    }
+
+    private static async Task WriteReleasePackageFixtureAsync(string root, string? failedReportName = null)
+    {
+        var timestamp = "20260702_030717_684_fixture";
+        var plateRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes", timestamp);
+        var drawingRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes_drawing", timestamp);
+        var dimensionRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes_drawing_dimensions", timestamp);
+        var titleBlockRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes_title_block", timestamp);
+        var diagnosticRoot = Path.Combine(root, "output", "solidworks", "diagnostics", "plate_basic_4holes", timestamp);
+
+        await WriteFileAsync(Path.Combine(plateRoot, "plate_basic_4holes.SLDPRT"), "fake sldprt bytes");
+        await WriteFileAsync(Path.Combine(plateRoot, "plate_basic_4holes.STEP"), "fake step bytes");
+        await WriteReportAsync(Path.Combine(plateRoot, "build_report.json"), StatusFor("build_report.json", failedReportName), FailureStageFor("build_report.json", failedReportName));
+        await WriteFileAsync(Path.Combine(drawingRoot, "plate_basic_4holes.SLDDRW"), "fake drawing bytes");
+        await WriteFileAsync(Path.Combine(drawingRoot, "plate_basic_4holes.pdf"), "fake drawing pdf bytes");
+        await WriteReportAsync(Path.Combine(drawingRoot, "drawing_report.json"), StatusFor("drawing_report.json", failedReportName), FailureStageFor("drawing_report.json", failedReportName));
+        await WriteFileAsync(Path.Combine(dimensionRoot, "plate_basic_4holes_dimensioned.SLDDRW"), "fake dimensioned drawing bytes");
+        await WriteFileAsync(Path.Combine(dimensionRoot, "plate_basic_4holes_dimensioned.pdf"), "fake dimensioned pdf bytes");
+        await WriteReportAsync(Path.Combine(dimensionRoot, "dimension_report.json"), StatusFor("dimension_report.json", failedReportName), FailureStageFor("dimension_report.json", failedReportName));
+        await WriteFileAsync(Path.Combine(titleBlockRoot, "plate_basic_4holes_title_block.SLDDRW"), "fake title block drawing bytes");
+        await WriteFileAsync(Path.Combine(titleBlockRoot, "plate_basic_4holes_title_block.pdf"), "fake title block pdf bytes");
+        await WriteReportAsync(Path.Combine(titleBlockRoot, "title_block_report.json"), StatusFor("title_block_report.json", failedReportName), FailureStageFor("title_block_report.json", failedReportName));
+        await WriteReportAsync(Path.Combine(diagnosticRoot, "diagnostic_report.json"), StatusFor("diagnostic_report.json", failedReportName), FailureStageFor("diagnostic_report.json", failedReportName));
+    }
+
+    private static string StatusFor(string reportName, string? failedReportName) =>
+        string.Equals(reportName, failedReportName, StringComparison.OrdinalIgnoreCase) ? "Failed" : "Passed";
+
+    private static string? FailureStageFor(string reportName, string? failedReportName) =>
+        string.Equals(reportName, failedReportName, StringComparison.OrdinalIgnoreCase) ? "source_report_failed_probe" : null;
+
+    private static async Task WriteFileAsync(string path, string content)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        await File.WriteAllTextAsync(path, content);
+    }
+
+    private static async Task WriteReportAsync(string path, string finalStatus, string? failureStage)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var payload = new Dictionary<string, string?>
+        {
+            ["final_status"] = finalStatus,
+            ["failure_stage"] = failureStage
+        };
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(payload));
+    }
+
+    private sealed class FailingSolidWorksWorker : ISolidWorksWorker
+    {
+        public string Name => nameof(FakeSolidWorksWorker);
+
+        public string TargetSystem => "SolidWorks";
+
+        public Task<SolidWorksWorkerResult> ExecuteAsync(
+            SolidWorksWorkerRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new SolidWorksWorkerResult(
+                request.RequestId,
+                "Failed",
+                Array.Empty<SolidWorksArtifact>(),
+                new[] { "FailingSolidWorksWorker returned a controlled failed result for main workflow regression coverage." },
+                new[] { "intentional_worker_failure: controlled worker failure for main workflow fail-closed coverage." },
+                ExecutionMode: "FakeFailure",
+                RealCadExecuted: false,
+                RealCadConnected: false,
+                PreflightReport: null));
+        }
+
+        public Task<WorkerOutput> ExecuteAsync(WorkerInput input) =>
+            ExecuteAsync(input, CancellationToken.None);
+
+        public async Task<WorkerOutput> ExecuteAsync(WorkerInput input, CancellationToken cancellationToken)
+        {
+            if (input.Payload is not SolidWorksWorkerRequest request)
+            {
+                return new WorkerOutput(
+                    WorkerOutputStatus.Rejected,
+                    Array.Empty<ArtifactInfo>(),
+                    "FailingSolidWorksWorker requires SolidWorksWorkerRequest payload.",
+                    new[] { "payload must be SolidWorksWorkerRequest." });
+            }
+
+            var result = await ExecuteAsync(request, cancellationToken);
+            return new WorkerOutput(
+                WorkerOutputStatus.Rejected,
+                Array.Empty<ArtifactInfo>(),
+                string.Join(Environment.NewLine, result.Logs),
+                result.Issues);
         }
     }
 

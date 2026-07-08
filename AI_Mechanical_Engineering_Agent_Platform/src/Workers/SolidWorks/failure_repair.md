@@ -123,3 +123,34 @@ V1.3 标题栏失败必须先读取 `title_block_report.json`，再判断 `failu
 | `drawing_title_block_api_evidence_insufficient` | 当前标题栏 API 证据不足 | `title_block_report.json`、官方 API Help、宏录制 | 停止盲改，补充官方证据或最小宏录制后再继续 |
 
 V1.3 只允许写入最小标题栏/图纸属性信息。不得借修复失败扩展到 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4。
+
+## V1.4 工程发布包与质量检查失败
+
+V1.4 发布包失败必须先读取 `package_quality_report.json` 和 `release_manifest.json`，再判断 `failure_stage`。本阶段不启动 SolidWorks，不修复 CAD 几何，不做 PDF 视觉识别。
+
+| failure_stage | 可能原因 | 首先读取 | 处理方式 |
+|---|---|---|---|
+| `source_artifacts_missing` | V1.0-B 到 V1.3 的 SLDPRT、STEP、SLDDRW 或 PDF 缺失 | `release_manifest.json`、`package_quality_report.json` | 回到对应阶段生成真实输出，不在 V1.4 伪造 CAD 文件 |
+| `source_report_missing` | `build_report.json`、`diagnostic_report.json`、`drawing_report.json`、`dimension_report.json` 或 `title_block_report.json` 缺失 | `reports/`、manifest 中的 report 项 | 回到对应阶段补报告或重新运行 smoke test |
+| `source_report_failed` | 至少一个源报告 `final_status=Failed`，发布包不能作为可交付物 | `package_quality_report.json` 的 `source_report_failures`、对应源报告 | 回到失败报告所属阶段修复，不把 `package_build_status=Passed` 解释为交付通过 |
+| `artifact_copy_failed` | 文件被占用、路径权限不足或复制目标不可写 | Builder 日志、manifest 错误 | 修复文件权限和输出目录后重新生成发布包 |
+| `manifest_write_failed` | `release_manifest.json` 写出失败 | 输出目录权限 | 先修复目录和权限，不进入 CAD API 调试 |
+| `quality_report_write_failed` | `package_quality_report.json` 写出失败 | 输出目录权限 | 先修复目录和权限，再重新运行 self-check |
+| `release_summary_write_failed` | `release_summary.md` 写出失败 | 输出目录权限 | 先修复目录和权限，再重新生成摘要 |
+| `package_validation_failed` | 包内路径、文件大小、报告状态字段或失败阶段校验不通过 | `package_quality_report.json` 的 checks | 按失败 check 修复，不扩展到复杂图纸审查 |
+
+V1.4 只做发布包收集与最小质量检查。不得借修复失败扩展到 BOM、装配图、批量出图、国标模板美化、复杂图纸审查、几何 OCR、PDF 视觉识别或 V1.5。
+
+## V1.5 主工作流失败修复
+
+V1.5 主工作流失败必须先读取 `AgentOutput` 中的 `solidworks-main-workflow-report` 元数据、`WorkflowExecutionResult` 步骤和 `QualityGate` 决策。不要让 Agent、Gateway 或 LLM 绕过 `SolidWorksMainWorkflowRunner` 直接调用 Worker。
+
+| failure_stage | 可能原因 | 首先读取 | 处理方式 |
+|---|---|---|---|
+| `build_plan_generation_failed` | `SolidWorksBuildPlanSkill` 未生成结构化计划 | 主流程步骤日志、Skill 输出 | 修复 Skill 或输入 spec，不进入 Worker |
+| `build_plan_validation_failed` | `SolidWorksBuildPlanValidator` 或 Reviewer 拒绝计划 | validation/review issues | 修正计划参数或受控场景，不调用真实 CAD |
+| `worker_execution_failed` | Worker 返回 Failed 或 Rejected | Worker result、preflight report、build report | 按 Worker 层 failure_stage 修复，保持双开关 |
+| `quality_gate_failed` | ArtifactValidator 或最终 Review 未通过 | QualityGate 决策、artifact validation issues | 修复产物或报告，不绕过 QualityGate |
+| `main_workflow_failed` | 未分类主流程失败 | workflow failure report | 保持默认 fake 路径，补充可行动阶段后再继续 |
+
+真实执行仍必须同时满足请求级 `allow_real_cad_execution=true`、`dry_run=false` 和环境变量 `SW_ENABLE_REAL_EXECUTION=true`。缺任一开关时，修复目标是保持 fake / dry-run 主流程可用，而不是启动 SolidWorks。

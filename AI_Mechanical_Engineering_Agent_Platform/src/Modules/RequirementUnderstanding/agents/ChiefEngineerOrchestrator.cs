@@ -18,17 +18,23 @@ public sealed class ChiefEngineerOrchestrator
     private readonly AgentRegistry _agentRegistry;
     private readonly InMemoryAuditLog _auditLog;
     private readonly SequentialWorkflowEngine _workflowEngine;
+    private readonly SolidWorksMainWorkflowRunner? _solidWorksMainWorkflowRunner;
+    private readonly SolidWorksWorkflowRouter _solidWorksWorkflowRouter;
 
     public ChiefEngineerOrchestrator(
         InternalAgentRouter router,
         AgentRegistry agentRegistry,
         InMemoryAuditLog auditLog,
-        SequentialWorkflowEngine? workflowEngine = null)
+        SequentialWorkflowEngine? workflowEngine = null,
+        SolidWorksMainWorkflowRunner? solidWorksMainWorkflowRunner = null,
+        SolidWorksWorkflowRouter? solidWorksWorkflowRouter = null)
     {
         _router = router;
         _agentRegistry = agentRegistry;
         _auditLog = auditLog;
         _workflowEngine = workflowEngine ?? new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), auditLog);
+        _solidWorksMainWorkflowRunner = solidWorksMainWorkflowRunner;
+        _solidWorksWorkflowRouter = solidWorksWorkflowRouter ?? new SolidWorksWorkflowRouter();
     }
 
     public async Task<AgentOutput> ExecuteAsync(AgentContext context, string rootAgentId, string rootAgentName)
@@ -46,6 +52,11 @@ public sealed class ChiefEngineerOrchestrator
             }));
 
         var report = BuildReport(context, rootAgentId, workflowResult);
+        var solidWorksMainWorkflowResult = await TryRunSolidWorksMainWorkflowAsync(context, workflowResult);
+        if (solidWorksMainWorkflowResult is not null)
+        {
+            report = EnrichReportWithSolidWorksMainWorkflow(report, solidWorksMainWorkflowResult);
+        }
         _auditLog.Record("agent", rootAgentId, "collaboration_report_created", $"Internal workflow-backed collaboration report created for {context.Input.ConversationId}.");
 
         var artifact = new ArtifactInfo(
@@ -63,13 +74,19 @@ public sealed class ChiefEngineerOrchestrator
             WorkflowStatus.Rejected => AgentOutputStatus.Rejected,
             _ => AgentOutputStatus.Failed
         };
+        if (solidWorksMainWorkflowResult is not null && !solidWorksMainWorkflowResult.QualityGatePassed)
+        {
+            status = AgentOutputStatus.Failed;
+        }
 
         return new AgentOutput(
             status,
-            $"{rootAgentName} completed workflow-backed internal multi-agent routing with status {workflowResult.Status}.",
+            BuildOutputMessage(rootAgentName, workflowResult, solidWorksMainWorkflowResult),
             new[] { artifact }.Concat(report.Artifacts).ToArray(),
             report.Issues,
-            new[] { "Chief engineer orchestrated internal agents through SequentialWorkflowEngine and QualityGate." },
+            new[] { "Chief engineer orchestrated internal agents through SequentialWorkflowEngine and QualityGate." }
+                .Concat(solidWorksMainWorkflowResult?.Logs ?? Array.Empty<string>())
+                .ToArray(),
             report.CalledAgents.LastOrDefault()?.NextRecommendedAgentId,
             report,
             ResolveFinalReviewReport(workflowResult));
@@ -155,7 +172,7 @@ public sealed class ChiefEngineerOrchestrator
         };
         var recommendation = workflowResult.Status switch
         {
-            WorkflowStatus.Passed => "Proceed to Gateway QualityGate; do not call CAD workers in V0.6.",
+            WorkflowStatus.Passed => "Proceed through the platform workflow boundary before any CAD Worker execution.",
             WorkflowStatus.WaitingForHumanApproval => "Pause automatic execution until human approval is recorded.",
             WorkflowStatus.Failed => "Route to error-diagnosis before any downstream work.",
             WorkflowStatus.Rejected => "Review RejectReport and retry policy before continuing.",
@@ -187,4 +204,68 @@ public sealed class ChiefEngineerOrchestrator
         stepId.StartsWith("internal-agent:", StringComparison.OrdinalIgnoreCase)
             ? stepId["internal-agent:".Length..]
             : stepId;
+
+    private async Task<SolidWorksMainWorkflowResult?> TryRunSolidWorksMainWorkflowAsync(
+        AgentContext context,
+        WorkflowExecutionResult internalWorkflowResult)
+    {
+        if (_solidWorksMainWorkflowRunner is null ||
+            internalWorkflowResult.Status != WorkflowStatus.Passed)
+        {
+            return null;
+        }
+
+        var request = _solidWorksWorkflowRouter.TryBuildRequest(context);
+        if (request is null)
+        {
+            return null;
+        }
+
+        var result = await _solidWorksMainWorkflowRunner.ExecuteAsync(request);
+
+        _auditLog.Record(
+            "workflow",
+            "solidworks-main-workflow",
+            "solidworks_main_workflow_completed",
+            $"SolidWorks main workflow completed with status {result.Status}, real_cad_executed={result.RealCadExecuted}, quality_gate_passed={result.QualityGatePassed}.");
+        return result;
+    }
+
+    private static InternalCollaborationReport EnrichReportWithSolidWorksMainWorkflow(
+        InternalCollaborationReport report,
+        SolidWorksMainWorkflowResult result)
+    {
+        var summary = $"{report.Summary} SolidWorks main CAD workflow status: {result.Status}.";
+        var recommendation = result.QualityGatePassed
+            ? $"{report.FinalRecommendation} SolidWorks artifacts passed the main workflow QualityGate."
+            : $"{report.FinalRecommendation} Stop before delivery because the SolidWorks main workflow QualityGate did not pass.";
+
+        return report with
+        {
+            Issues = report.Issues
+                .Concat(result.Issues)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            Artifacts = report.Artifacts
+                .Concat(result.Artifacts)
+                .ToArray(),
+            Summary = summary,
+            FinalRecommendation = recommendation
+        };
+    }
+
+    private static string BuildOutputMessage(
+        string rootAgentName,
+        WorkflowExecutionResult workflowResult,
+        SolidWorksMainWorkflowResult? solidWorksResult)
+    {
+        var message = $"{rootAgentName} completed workflow-backed internal multi-agent routing with status {workflowResult.Status}.";
+        if (solidWorksResult is null)
+        {
+            return message;
+        }
+
+        return $"{message} SolidWorks main workflow status {solidWorksResult.Status}; real_cad_executed={solidWorksResult.RealCadExecuted}; quality_gate_passed={solidWorksResult.QualityGatePassed}.";
+    }
+
 }

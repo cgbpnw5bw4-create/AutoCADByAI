@@ -25,6 +25,15 @@
 - 是否严格模式只由 `SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST=true` 启用。
 - 是否工程图标题栏通过 `SolidWorksDrawingTitleBlockBuilder` 封装，而不是堆在 `RealSolidWorksWorker`。
 - 是否 V1.3 只写入 `plate_basic_4holes`、`PLATE-BASIC-4HOLES`、材料、比例、日期、版本 `A` 等最小标题栏信息，没有越界实现 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4。
+- 是否 V1.4 发布包通过 `SolidWorksReleasePackageBuilder` 和 `SolidWorksReleasePackageValidator` 完成，只收集已有真实输出，不启动 SolidWorks。
+- 是否生成 `release_manifest.json`、`package_quality_report.json` 和 `release_summary.md`。
+- 是否 `solidworks_release_package_*` self-check 字段齐全，并且源文件缺失时返回可行动 `failure_stage`。
+- 是否只检查文件存在、大小、路径、PDF 存在、`final_status` 和 `failure_stage`，没有越界做几何 OCR、PDF 视觉识别、BOM、装配图、批量出图、复杂图纸审查或 V1.5。
+- 是否 V1.5 已把 `plate_basic_4holes` 真实 CAD 能力接入 `ChiefEngineerOrchestrator` → `SolidWorksWorkflowRouter` → `SequentialWorkflowEngine` → `SolidWorksMainWorkflowRunner` 主流程，而不是只停留在 self-check / smoke test。
+- 是否泛化提到 `SolidWorks` 不会单独触发 CAD 主流程，只有显式 `solidworks_main_workflow`、结构化 `cad_model_type=plate_basic_4holes` 或具体 `plate_basic_4holes` 请求才触发。
+- 是否 V1.5 主流程默认仍使用 `FakeSolidWorksWorker`，并且只有请求级 `allow_real_cad_execution=true`、`dry_run=false` 与环境变量 `SW_ENABLE_REAL_EXECUTION=true` 同时满足时才允许选择 `RealSolidWorksWorker`。
+- 是否 V1.5 主流程经过 `SolidWorksBuildPlanValidator`、`SolidWorksArtifactValidator`、`SolidWorksBuildPlanReviewer` 和 `QualityGate`，并返回 `real_cad_executed`、`quality_gate_passed` 与 artifact 路径。
+- 是否发布包新增 `package_build_status`、`all_source_reports_passed`、`source_reports_checked`、`source_report_failures`、`source_report_warnings` 和 `deliverable_status`，且源报告失败时 `deliverable_status=NotDeliverable`。
 - 是否没有 Agent、Gateway、LLM 直接调用 Worker。
 - 是否没有 COM 类型泄漏到 Contracts。
 - 是否没有复制第三方 scripts。
@@ -49,6 +58,10 @@ V1.1 进入 Claude 审查前，还必须确认 `solidworks_real_drawing_basic_vi
 V1.2 进入 Claude 审查前，还必须确认 `solidworks_real_drawing_dimensions_implemented`、`solidworks_real_drawing_dimensions_default_disabled`、`solidworks_real_drawing_dimensions_requires_env_flag`、`solidworks_real_drawing_dimensions_not_called_in_default_self_check`、`solidworks_drawing_dimension_report_generated`、`solidworks_drawing_dimension_failure_stage_actionable`、`v1_2_version_stage_documented`、`solidworks_drawing_dimension_failure_repair_documented`、`solidworks_drawing_dimension_api_evidence_documented` 和 `solidworks_drawing_dimension_review_checklist_updated` 已写入 self-check 报告。
 
 V1.3 进入 Claude 审查前，还必须确认 `solidworks_real_drawing_title_block_implemented`、`solidworks_real_drawing_title_block_default_disabled`、`solidworks_real_drawing_title_block_requires_env_flag`、`solidworks_real_drawing_title_block_not_called_in_default_self_check`、`solidworks_drawing_title_block_report_generated`、`solidworks_drawing_title_block_failure_stage_actionable`、`v1_3_version_stage_documented`、`solidworks_drawing_title_block_failure_repair_documented`、`solidworks_drawing_title_block_api_evidence_documented` 和 `solidworks_drawing_title_block_review_checklist_updated` 已写入 self-check 报告。
+
+V1.4 进入 Claude 审查前，还必须确认 `solidworks_release_package_implemented`、`solidworks_release_package_default_no_cad_execution`、`solidworks_release_manifest_generated`、`solidworks_package_quality_report_generated`、`solidworks_release_summary_generated`、`solidworks_release_package_failure_stage_actionable`、`v1_4_version_stage_documented`、`solidworks_release_package_failure_repair_documented` 和 `solidworks_release_package_review_checklist_updated` 已写入 self-check 报告。若当前工作区缺少 V1.1/V1.2/V1.3 真实输出，可以进入实现审查，但不能把发布包标记为完整交付。
+
+V1.5 进入 Claude 审查前，还必须确认 `real_cad_worker_integrated_into_main_workflow`、`chief_engineer_orchestrator_invokes_cad_workflow`、`workflow_engine_can_route_to_solidworks_worker`、`real_cad_main_workflow_default_disabled`、`real_cad_main_workflow_requires_request_flag`、`real_cad_main_workflow_requires_env_flag`、`real_cad_main_workflow_passes_quality_gate`、`release_package_all_source_reports_passed_field_exists`、`release_package_deliverable_status_field_exists`、`release_package_failed_source_reports_block_deliverable` 和 `v1_5_version_stage_documented` 已写入 self-check 报告。
 
 ## V1.1 Claude Improvements Backlog
 

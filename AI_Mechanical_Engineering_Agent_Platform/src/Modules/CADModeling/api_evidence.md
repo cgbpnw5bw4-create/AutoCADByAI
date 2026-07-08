@@ -114,3 +114,9 @@ V1.3 工程图标题栏只允许最小标题栏/图纸属性信息。当前候�
 官方证据已覆盖 `CustomPropertyManager`、`Add3`、`Set2`、`Get6`、`GetCurrentSheet`、`GetProperties2`、`EditTemplate` 和标题栏数据输入说明。详细 URL 记录在 `src/Workers/SolidWorks/api_evidence.md`。
 
 当前主路径拒绝复杂国标模板几何编辑、BOM、明细栏、公差系统和宏生产路径。任何标题栏属性写入、图纸属性读取、刷新、保存或 PDF 导出失败，都必须先生成 `title_block_report.json`，再依据官方 API 或宏录制证据修复。
+
+## V1.4 工程发布包证据边界
+
+V1.4 只整理已经存在的 SLDPRT、STEP、SLDDRW、PDF 和 JSON 报告，并生成 `release_manifest.json`、`package_quality_report.json` 和 `release_summary.md`。本阶段默认不需要新增 SolidWorks API 证据，也不查几何、OCR 或 PDF 视觉内容。
+
+若发现报告字段缺失、导出格式异常或路径语义无法判断，先读取对应阶段的 `build_report.json`、`drawing_report.json`、`dimension_report.json`、`title_block_report.json` 和 `package_quality_report.json`。只有确认问题来自 V1.1 到 V1.3 的 SolidWorks API 调用时，才回到相应阶段补 API evidence。

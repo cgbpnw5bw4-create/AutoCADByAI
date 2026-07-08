@@ -184,3 +184,9 @@ V1.3 只做带尺寸工程图上的最小标题栏/图纸属性信息。当前�
 - `SLDDRW`、`PDF` 和 `title_block_report.json` 的保存路径、存在状态和大小。
 
 如果 `CustomPropertyManager`、`Add3`、`Set2`、`Get6`、`GetCurrentSheet`、`GetProperties2`、保存或 PDF 导出失败，先在 `SolidWorksDrawingTitleBlockSmokeRunner` 中复现并生成 `title_block_report.json`，再回填 `SolidWorksDrawingTitleBlockBuilder`。
+
+## V1.4 工程发布包 API 证据边界
+
+V1.4 只做已有真实输出的发布包收集和最小质量检查，不新增 SolidWorks API 调用，不启动 SolidWorks，不调用 COM，也不读取 PDF 视觉内容。因此本阶段默认不需要新的官方 SolidWorks API 证据。
+
+本阶段证据来自文件系统和既有阶段报告：`build_report.json`、`diagnostic_report.json`、`drawing_report.json`、`dimension_report.json`、`title_block_report.json`、`release_manifest.json` 和 `package_quality_report.json`。若这些报告显示某个上游阶段的导出或保存 API 失败，必须回到对应 V1.0-B、V1.1、V1.2 或 V1.3 API evidence 流程处理，不在 V1.4 直接修复 CAD API。

@@ -23,6 +23,13 @@ description: "用于项目质量审查，检查架构边界、self-check 字段�
 - V1.3 工程图标题栏 smoke test 是否默认关闭，并且只在 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST=true` 时执行。
 - V1.3 是否只做标题栏基础信息，并且 `title_block_report.json`、failure_stage、self-check 字段和 Markdown 中文检查齐全。
 - V1.3 是否没有越界实现 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4。
+- V1.4 是否只做工程发布包与最小质量检查，并且 `release_manifest.json`、`package_quality_report.json`、`release_summary.md`、failure_stage、self-check 字段和 Markdown 中文检查齐全。
+- V1.4 是否默认不启动 SolidWorks、不做几何 OCR、不做 PDF 视觉识别、不做 BOM、装配图、批量出图、复杂图纸审查或 V1.5。
+- V1.5 是否只做真实 CAD 主工作流集成，不新增 BOM、新 CAD 子功能、更多工程图能力、装配体或 V1.6。
+- V1.5 是否通过 `ChiefEngineerOrchestrator`、`SequentialWorkflowEngine`、`SolidWorksMainWorkflowRunner`、Worker、Validator、Reviewer 和 QualityGate 串接主流程。
+- V1.5 默认是否仍走 `FakeSolidWorksWorker`，并且真实执行是否同时要求请求级 `allow_real_cad_execution=true`、`dry_run=false` 和环境变量 `SW_ENABLE_REAL_EXECUTION=true`。
+- V1.5 发布包是否区分 `package_build_status`、`all_source_reports_passed` 和 `deliverable_status`，并且源报告失败时 `deliverable_status=NotDeliverable`。
+- V1.5 self-check 是否包含 `real_cad_worker_integrated_into_main_workflow`、`chief_engineer_orchestrator_invokes_cad_workflow`、`workflow_engine_can_route_to_solidworks_worker`、`real_cad_main_workflow_default_disabled`、`release_package_all_source_reports_passed_field_exists`、`release_package_deliverable_status_field_exists`、`release_package_failed_source_reports_block_deliverable` 和 `v1_5_version_stage_documented`。
 - Markdown 中文检查是否通过。
 
 ## 输出格式

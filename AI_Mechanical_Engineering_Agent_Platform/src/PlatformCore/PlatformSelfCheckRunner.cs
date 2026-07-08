@@ -367,6 +367,28 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFailureRepairDocumented &&
             solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockApiEvidenceDocumented &&
             solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockReviewChecklistUpdated &&
+            solidWorksSkeletonChecks.SolidWorksReleasePackageImplemented &&
+            solidWorksSkeletonChecks.SolidWorksReleasePackageDefaultNoCadExecution &&
+            solidWorksSkeletonChecks.SolidWorksReleaseManifestGenerated &&
+            solidWorksSkeletonChecks.SolidWorksPackageQualityReportGenerated &&
+            solidWorksSkeletonChecks.SolidWorksReleaseSummaryGenerated &&
+            solidWorksSkeletonChecks.SolidWorksReleasePackageFailureStageActionable &&
+            solidWorksSkeletonChecks.V14VersionStageDocumented &&
+            solidWorksSkeletonChecks.SolidWorksReleasePackageFailureRepairDocumented &&
+            solidWorksSkeletonChecks.SolidWorksReleasePackageReviewChecklistUpdated &&
+            solidWorksSkeletonChecks.RealCadWorkerIntegratedIntoMainWorkflow &&
+            solidWorksSkeletonChecks.ChiefEngineerOrchestratorInvokesCadWorkflow &&
+            solidWorksSkeletonChecks.WorkflowEngineCanRouteToSolidWorksWorker &&
+            solidWorksSkeletonChecks.RealCadMainWorkflowDefaultDisabled &&
+            solidWorksSkeletonChecks.RealCadMainWorkflowRequiresRequestFlag &&
+            solidWorksSkeletonChecks.RealCadMainWorkflowRequiresEnvFlag &&
+            solidWorksSkeletonChecks.RealCadMainWorkflowPassesQualityGate &&
+            solidWorksSkeletonChecks.GatewayDoesNotCallWorkerDirectly &&
+            solidWorksSkeletonChecks.LlmDoesNotCallWorkerDirectly &&
+            solidWorksSkeletonChecks.ReleasePackageAllSourceReportsPassedFieldExists &&
+            solidWorksSkeletonChecks.ReleasePackageDeliverableStatusFieldExists &&
+            solidWorksSkeletonChecks.ReleasePackageFailedSourceReportsBlockDeliverable &&
+            solidWorksSkeletonChecks.V15VersionStageDocumented &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -588,6 +610,21 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockReviewChecklistUpdated,
             solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockPopulationStrategy,
             solidWorksSkeletonChecks.SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat,
+            solidWorksSkeletonChecks.SolidWorksReleasePackageImplemented,
+            solidWorksSkeletonChecks.SolidWorksReleasePackageDefaultNoCadExecution,
+            solidWorksSkeletonChecks.SolidWorksReleaseManifestGenerated,
+            solidWorksSkeletonChecks.SolidWorksPackageQualityReportGenerated,
+            solidWorksSkeletonChecks.SolidWorksReleaseSummaryGenerated,
+            solidWorksSkeletonChecks.SolidWorksReleaseArtifactsCollected,
+            solidWorksSkeletonChecks.SolidWorksReleaseReportsCollected,
+            solidWorksSkeletonChecks.SolidWorksReleasePackageFailureStage,
+            solidWorksSkeletonChecks.SolidWorksReleasePackageFailureStageActionable,
+            solidWorksSkeletonChecks.SolidWorksReleaseManifestPath,
+            solidWorksSkeletonChecks.SolidWorksPackageQualityReportPath,
+            solidWorksSkeletonChecks.SolidWorksReleaseSummaryPath,
+            solidWorksSkeletonChecks.V14VersionStageDocumented,
+            solidWorksSkeletonChecks.SolidWorksReleasePackageFailureRepairDocumented,
+            solidWorksSkeletonChecks.SolidWorksReleasePackageReviewChecklistUpdated,
             executableDocsChecks.ExecutableDocsLayerEnabled,
             executableDocsChecks.DocsIndexExists,
             executableDocsChecks.ProjectExecutionStandardExists,
@@ -629,6 +666,19 @@ public static class PlatformSelfCheckRunner
             executableDocsChecks.SolidWorksWorkerFailureRepairDocExists,
             executableDocsChecks.SolidWorksWorkerApiEvidenceDocExists,
             executableDocsChecks.SolidWorksWorkerReviewChecklistExists,
+            solidWorksSkeletonChecks.RealCadWorkerIntegratedIntoMainWorkflow,
+            solidWorksSkeletonChecks.ChiefEngineerOrchestratorInvokesCadWorkflow,
+            solidWorksSkeletonChecks.WorkflowEngineCanRouteToSolidWorksWorker,
+            solidWorksSkeletonChecks.RealCadMainWorkflowDefaultDisabled,
+            solidWorksSkeletonChecks.RealCadMainWorkflowRequiresRequestFlag,
+            solidWorksSkeletonChecks.RealCadMainWorkflowRequiresEnvFlag,
+            solidWorksSkeletonChecks.RealCadMainWorkflowPassesQualityGate,
+            solidWorksSkeletonChecks.GatewayDoesNotCallWorkerDirectly,
+            solidWorksSkeletonChecks.LlmDoesNotCallWorkerDirectly,
+            solidWorksSkeletonChecks.ReleasePackageAllSourceReportsPassedFieldExists,
+            solidWorksSkeletonChecks.ReleasePackageDeliverableStatusFieldExists,
+            solidWorksSkeletonChecks.ReleasePackageFailedSourceReportsBlockDeliverable,
+            solidWorksSkeletonChecks.V15VersionStageDocumented,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -947,14 +997,21 @@ public static class PlatformSelfCheckRunner
         if (testScenario is not null)
         {
             inputContext["test_scenario"] = testScenario;
+            if (string.Equals(testScenario, "solidworks_main_workflow", StringComparison.OrdinalIgnoreCase))
+            {
+                inputContext["solidworks_main_workflow"] = "true";
+            }
         }
 
+        var message = string.Equals(testScenario, "solidworks_main_workflow", StringComparison.OrdinalIgnoreCase)
+            ? "Run SolidWorks plate_basic_4holes main workflow self-check."
+            : "Run internal routing self-check.";
         var input = new AgentContracts.AgentInput(
             "self-check",
             "self-check",
             testScenario is null ? "self-check-conversation" : $"self-check-{testScenario}",
             "self-check",
-            "Run internal routing self-check.",
+            message,
             Array.Empty<string>(),
             inputContext);
         var context = new AgentContracts.AgentContext(
@@ -1244,6 +1301,103 @@ public static class PlatformSelfCheckRunner
             var solidWorksDrawingTitleBlockFailureStageActionable = true;
             string? realDrawingTitleBlockOutputDirectory = null;
             string? realDrawingTitleBlockLatestReportPath = null;
+            var solidWorksReleasePackageImplemented = Type.GetType("SolidWorksWorker.SolidWorksReleasePackageBuilder, SolidWorksWorker") is not null &&
+                File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksReleasePackageBuilder.cs"));
+            var solidWorksReleasePackageDefaultNoCadExecution = solidWorksReleasePackageImplemented;
+            var solidWorksReleaseManifestGenerated = false;
+            var solidWorksPackageQualityReportGenerated = false;
+            var solidWorksReleaseSummaryGenerated = false;
+            var solidWorksReleaseArtifactsCollected = false;
+            var solidWorksReleaseReportsCollected = false;
+            string? solidWorksReleasePackageFailureStage = null;
+            var solidWorksReleasePackageFailureStageActionable = false;
+            string? solidWorksReleaseManifestPath = null;
+            string? solidWorksPackageQualityReportPath = null;
+            string? solidWorksReleaseSummaryPath = null;
+            var realCadWorkerIntegratedIntoMainWorkflow = false;
+            var chiefEngineerOrchestratorInvokesCadWorkflow = false;
+            var workflowEngineCanRouteToSolidWorksWorker = false;
+            var realCadMainWorkflowDefaultDisabled = false;
+            var realCadMainWorkflowRequiresRequestFlag = false;
+            var realCadMainWorkflowRequiresEnvFlag = false;
+            var realCadMainWorkflowPassesQualityGate = false;
+            var llmDoesNotCallWorkerDirectly = false;
+            var releasePackageAllSourceReportsPassedFieldExists =
+                typeof(SolidWorksPackageQualityReport).GetProperty(nameof(SolidWorksPackageQualityReport.AllSourceReportsPassed)) is not null;
+            var releasePackageDeliverableStatusFieldExists =
+                typeof(SolidWorksPackageQualityReport).GetProperty(nameof(SolidWorksPackageQualityReport.DeliverableStatus)) is not null;
+            var releasePackageFailedSourceReportsBlockDeliverable = false;
+            if (plan is not null && fakeSolidWorksWorkerRegistered)
+            {
+                var mainWorkflowRunner = new SolidWorksMainWorkflowRunner(
+                    platform.SkillRegistry,
+                    platform.WorkerRegistry,
+                    platform.AuditLog,
+                    platform.WorkflowEngine,
+                    () => defaultRuntimeOptions);
+                var defaultMainWorkflowResult = await mainWorkflowRunner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                    $"self-check-main-workflow-{Guid.NewGuid():N}",
+                    $"task-{Guid.NewGuid():N}",
+                    projectRoot,
+                    Path.Combine(projectRoot, "output", "solidworks", "self-check", "main-workflow-default"),
+                    DryRun: true,
+                    AllowRealCadExecution: false),
+                    cancellationToken);
+                var envEnabledRequestFlagMissingResult = await new SolidWorksMainWorkflowRunner(
+                    platform.SkillRegistry,
+                    platform.WorkerRegistry,
+                    platform.AuditLog,
+                    platform.WorkflowEngine,
+                    () => defaultRuntimeOptions with { EnableRealExecution = true })
+                    .ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                        $"self-check-main-workflow-request-flag-{Guid.NewGuid():N}",
+                        $"task-{Guid.NewGuid():N}",
+                        projectRoot,
+                        Path.Combine(projectRoot, "output", "solidworks", "self-check", "main-workflow-request-flag"),
+                        DryRun: false,
+                        AllowRealCadExecution: false),
+                        cancellationToken);
+                var requestFlagEnvMissingResult = await mainWorkflowRunner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
+                    $"self-check-main-workflow-env-flag-{Guid.NewGuid():N}",
+                    $"task-{Guid.NewGuid():N}",
+                    projectRoot,
+                    Path.Combine(projectRoot, "output", "solidworks", "self-check", "main-workflow-env-flag"),
+                    DryRun: false,
+                    AllowRealCadExecution: true),
+                    cancellationToken);
+                var chiefEngineerCadOutput = await InvokeChiefEngineerForSelfCheck(
+                    platform,
+                    "solidworks_main_workflow");
+
+                realCadWorkerIntegratedIntoMainWorkflow =
+                    defaultMainWorkflowResult.Status == "Completed" &&
+                    defaultMainWorkflowResult.Artifacts.Count > 0 &&
+                    defaultMainWorkflowResult.ArtifactPaths.Count > 0;
+                chiefEngineerOrchestratorInvokesCadWorkflow =
+                    chiefEngineerCadOutput.Logs.Any(log => log.Contains("SolidWorks main workflow", StringComparison.OrdinalIgnoreCase)) &&
+                    chiefEngineerCadOutput.Artifacts.Any(artifact =>
+                        artifact.Name.Equals("solidworks-main-workflow-report", StringComparison.OrdinalIgnoreCase) &&
+                        artifact.Metadata?.TryGetValue("real_cad_executed", out var realCadExecuted) == true &&
+                        string.Equals(realCadExecuted, bool.FalseString, StringComparison.OrdinalIgnoreCase));
+                workflowEngineCanRouteToSolidWorksWorker =
+                    defaultMainWorkflowResult.WorkflowResult.Steps.Any(step => step.StepId == "solidworks-worker-execution") &&
+                    defaultMainWorkflowResult.WorkflowResult.Status == WorkflowStatus.Passed;
+                realCadMainWorkflowDefaultDisabled =
+                    !defaultMainWorkflowResult.RealCadExecuted &&
+                    defaultMainWorkflowResult.ExecutionMode == "Fake";
+                realCadMainWorkflowRequiresRequestFlag =
+                    !envEnabledRequestFlagMissingResult.RealCadExecuted &&
+                    envEnabledRequestFlagMissingResult.ExecutionMode == "Fake";
+                realCadMainWorkflowRequiresEnvFlag =
+                    !requestFlagEnvMissingResult.RealCadExecuted &&
+                    requestFlagEnvMissingResult.ExecutionMode == "Fake";
+                realCadMainWorkflowPassesQualityGate = defaultMainWorkflowResult.QualityGatePassed;
+                llmDoesNotCallWorkerDirectly =
+                    solidWorksAgentDoesNotCallWorkerDirectly &&
+                    gatewayDoesNotCallSolidWorksWorker;
+                releasePackageFailedSourceReportsBlockDeliverable = await ReleasePackageFailedSourceReportsBlockDeliverableAsync(
+                    cancellationToken);
+            }
             var swEnableRealExecutionEnvValue = Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION");
             var swRealBuildSmokeTestEnvValue = Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST");
             var swStrictRealBuildTestEnvValue = Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST");
@@ -1716,12 +1870,45 @@ public static class PlatformSelfCheckRunner
                 }
             }
 
+            if (solidWorksReleasePackageImplemented)
+            {
+                try
+                {
+                    var releasePackageResult = await InvokeSolidWorksReleasePackageBuilderAsync(
+                        projectRoot,
+                        cancellationToken);
+                    solidWorksReleaseManifestPath = releasePackageResult.ManifestPath;
+                    solidWorksPackageQualityReportPath = releasePackageResult.QualityReportPath;
+                    solidWorksReleaseSummaryPath = releasePackageResult.SummaryPath;
+                    solidWorksReleaseManifestGenerated = ExistingNonEmpty(solidWorksReleaseManifestPath);
+                    solidWorksPackageQualityReportGenerated = ExistingNonEmpty(solidWorksPackageQualityReportPath);
+                    solidWorksReleaseSummaryGenerated = ExistingNonEmpty(solidWorksReleaseSummaryPath);
+                    solidWorksReleaseArtifactsCollected = releasePackageResult.ArtifactsCollected;
+                    solidWorksReleaseReportsCollected = releasePackageResult.ReportsCollected;
+                    solidWorksReleasePackageFailureStage = releasePackageResult.FailureStage;
+                    solidWorksReleasePackageFailureStageActionable = IsActionableReleasePackageFailureStage(
+                        solidWorksReleasePackageFailureStage,
+                        releasePackageResult.Issues);
+                }
+                catch (Exception ex) when (ex is TargetInvocationException or InvalidOperationException or IOException or MissingMethodException or TypeLoadException)
+                {
+                    solidWorksReleasePackageFailureStage = "package_validation_failed";
+                    solidWorksReleasePackageFailureStageActionable = IsActionableReleasePackageFailureStage(
+                        solidWorksReleasePackageFailureStage,
+                        new[] { ex.GetBaseException().Message });
+                }
+            }
+
             var v11VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
                 .Contains("V1.1", StringComparison.OrdinalIgnoreCase);
             var v12VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
                 .Contains("V1.2", StringComparison.OrdinalIgnoreCase);
             var v13VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
                 .Contains("V1.3", StringComparison.OrdinalIgnoreCase);
+            var v14VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
+                .Contains("V1.4", StringComparison.OrdinalIgnoreCase);
+            var v15VersionStageDocumented = File.ReadAllText(Path.Combine(projectRoot, "docs", "version_stage_index.md"))
+                .Contains("V1.5", StringComparison.OrdinalIgnoreCase);
             var workerFailureRepairDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "failure_repair.md"));
             var workerApiEvidenceDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "api_evidence.md"));
             var workerReviewChecklistDoc = File.ReadAllText(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "review_checklist.md"));
@@ -1752,6 +1939,12 @@ public static class PlatformSelfCheckRunner
                 workerReviewChecklistDoc.Contains("title_block_report", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("title_block_population_strategy", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("title_block_fields_verified_in_sheet_format", StringComparison.OrdinalIgnoreCase);
+            var solidWorksReleasePackageFailureRepairDocumented =
+                ReleasePackageFailureStages.All(stage => workerFailureRepairDoc.Contains(stage, StringComparison.OrdinalIgnoreCase));
+            var solidWorksReleasePackageReviewChecklistUpdated =
+                workerReviewChecklistDoc.Contains("release_manifest", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("package_quality_report", StringComparison.OrdinalIgnoreCase) &&
+                workerReviewChecklistDoc.Contains("solidworks_release_package", StringComparison.OrdinalIgnoreCase);
 
             return new SolidWorksSkeletonSelfCheckResult(
                 solidWorksModuleSkeletonEnabled,
@@ -1882,7 +2075,35 @@ public static class PlatformSelfCheckRunner
                 solidWorksDrawingTitleBlockApiEvidenceDocumented,
                 solidWorksDrawingTitleBlockReviewChecklistUpdated,
                 "custom_properties_only",
-                false);
+                false,
+                solidWorksReleasePackageImplemented,
+                solidWorksReleasePackageDefaultNoCadExecution,
+                solidWorksReleaseManifestGenerated,
+                solidWorksPackageQualityReportGenerated,
+                solidWorksReleaseSummaryGenerated,
+                solidWorksReleaseArtifactsCollected,
+                solidWorksReleaseReportsCollected,
+                solidWorksReleasePackageFailureStage,
+                solidWorksReleasePackageFailureStageActionable,
+                solidWorksReleaseManifestPath,
+                solidWorksPackageQualityReportPath,
+                solidWorksReleaseSummaryPath,
+                v14VersionStageDocumented,
+                solidWorksReleasePackageFailureRepairDocumented,
+                solidWorksReleasePackageReviewChecklistUpdated,
+                realCadWorkerIntegratedIntoMainWorkflow,
+                chiefEngineerOrchestratorInvokesCadWorkflow,
+                workflowEngineCanRouteToSolidWorksWorker,
+                realCadMainWorkflowDefaultDisabled,
+                realCadMainWorkflowRequiresRequestFlag,
+                realCadMainWorkflowRequiresEnvFlag,
+                realCadMainWorkflowPassesQualityGate,
+                gatewayDoesNotCallSolidWorksWorker,
+                llmDoesNotCallWorkerDirectly,
+                releasePackageAllSourceReportsPassedFieldExists,
+                releasePackageDeliverableStatusFieldExists,
+                releasePackageFailedSourceReportsBlockDeliverable,
+                v15VersionStageDocumented);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or MissingMethodException or TargetInvocationException or FileNotFoundException or FileLoadException or BadImageFormatException)
         {
@@ -2017,7 +2238,35 @@ public static class PlatformSelfCheckRunner
                 SolidWorksDrawingTitleBlockApiEvidenceDocumented: false,
                 SolidWorksDrawingTitleBlockReviewChecklistUpdated: false,
                 SolidWorksDrawingTitleBlockPopulationStrategy: "custom_properties_only",
-                SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat: false);
+                SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat: false,
+                SolidWorksReleasePackageImplemented: File.Exists(Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksReleasePackageBuilder.cs")),
+                SolidWorksReleasePackageDefaultNoCadExecution: false,
+                SolidWorksReleaseManifestGenerated: false,
+                SolidWorksPackageQualityReportGenerated: false,
+                SolidWorksReleaseSummaryGenerated: false,
+                SolidWorksReleaseArtifactsCollected: false,
+                SolidWorksReleaseReportsCollected: false,
+                SolidWorksReleasePackageFailureStage: "package_validation_failed",
+                SolidWorksReleasePackageFailureStageActionable: true,
+                SolidWorksReleaseManifestPath: null,
+                SolidWorksPackageQualityReportPath: null,
+                SolidWorksReleaseSummaryPath: null,
+                V14VersionStageDocumented: false,
+                SolidWorksReleasePackageFailureRepairDocumented: false,
+                SolidWorksReleasePackageReviewChecklistUpdated: false,
+                RealCadWorkerIntegratedIntoMainWorkflow: false,
+                ChiefEngineerOrchestratorInvokesCadWorkflow: false,
+                WorkflowEngineCanRouteToSolidWorksWorker: false,
+                RealCadMainWorkflowDefaultDisabled: false,
+                RealCadMainWorkflowRequiresRequestFlag: false,
+                RealCadMainWorkflowRequiresEnvFlag: false,
+                RealCadMainWorkflowPassesQualityGate: false,
+                GatewayDoesNotCallWorkerDirectly: false,
+                LlmDoesNotCallWorkerDirectly: false,
+                ReleasePackageAllSourceReportsPassedFieldExists: typeof(SolidWorksPackageQualityReport).GetProperty(nameof(SolidWorksPackageQualityReport.AllSourceReportsPassed)) is not null,
+                ReleasePackageDeliverableStatusFieldExists: typeof(SolidWorksPackageQualityReport).GetProperty(nameof(SolidWorksPackageQualityReport.DeliverableStatus)) is not null,
+                ReleasePackageFailedSourceReportsBlockDeliverable: false,
+                V15VersionStageDocumented: false);
         }
     }
 
@@ -2037,6 +2286,157 @@ public static class PlatformSelfCheckRunner
         var task = (Task<SolidWorksWorkerResult>)method.Invoke(worker, new object?[] { request, cancellationToken })!;
         return await task;
     }
+
+    private static async Task<SolidWorksReleasePackageReflectionResult> InvokeSolidWorksReleasePackageBuilderAsync(
+        string projectRoot,
+        CancellationToken cancellationToken)
+    {
+        var builderType = Type.GetType("SolidWorksWorker.SolidWorksReleasePackageBuilder, SolidWorksWorker")
+            ?? throw new TypeLoadException("SolidWorksReleasePackageBuilder was not found.");
+        var builder = Activator.CreateInstance(builderType)
+            ?? throw new InvalidOperationException("Could not create SolidWorksReleasePackageBuilder.");
+        var method = builderType.GetMethods()
+            .Single(method =>
+                method.Name == "BuildAsync" &&
+                method.GetParameters().Length == 3 &&
+                method.GetParameters()[0].ParameterType == typeof(string) &&
+                method.GetParameters()[2].ParameterType == typeof(CancellationToken));
+        var task = method.Invoke(builder, new object?[] { projectRoot, null, cancellationToken }) as Task
+            ?? throw new MissingMethodException("SolidWorksReleasePackageBuilder.BuildAsync did not return a Task.");
+        await task;
+        var result = task.GetType().GetProperty("Result")?.GetValue(task)
+            ?? throw new InvalidOperationException("SolidWorksReleasePackageBuilder.BuildAsync returned null.");
+
+        return new SolidWorksReleasePackageReflectionResult(
+            ReadStringProperty(result, "Status") ?? "Failed",
+            ReadStringProperty(result, "OutputDirectory") ?? string.Empty,
+            ReadStringProperty(result, "ManifestPath"),
+            ReadStringProperty(result, "QualityReportPath"),
+            ReadStringProperty(result, "SummaryPath"),
+            ReadStringProperty(result, "FailureStage"),
+            ReadBoolProperty(result, "ArtifactsCollected"),
+            ReadBoolProperty(result, "ReportsCollected"),
+            ReadStringListProperty(result, "Issues"));
+    }
+
+    private static async Task<bool> ReleasePackageFailedSourceReportsBlockDeliverableAsync(CancellationToken cancellationToken)
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "solidworks_release_failed_source_self_check",
+            Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            await WriteReleasePackageSourceFixtureAsync(root, "dimension_report.json", cancellationToken);
+            var result = await InvokeSolidWorksReleasePackageBuilderAsync(root, cancellationToken);
+            if (!ExistingNonEmpty(result.QualityReportPath))
+            {
+                return false;
+            }
+
+            using var document = JsonDocument.Parse(await File.ReadAllTextAsync(result.QualityReportPath!, cancellationToken));
+            var rootElement = document.RootElement;
+            var packageBuildStatus = rootElement.GetProperty("package_build_status").GetString();
+            var allSourceReportsPassed = rootElement.GetProperty("all_source_reports_passed").GetBoolean();
+            var deliverableStatus = rootElement.GetProperty("deliverable_status").GetString();
+            var finalStatus = rootElement.GetProperty("final_status").GetString();
+            var failures = rootElement.GetProperty("source_report_failures")
+                .EnumerateArray()
+                .Select(element => element.GetProperty("name").GetString())
+                .ToArray();
+
+            return string.Equals(packageBuildStatus, "Passed", StringComparison.OrdinalIgnoreCase) &&
+                   !allSourceReportsPassed &&
+                   string.Equals(deliverableStatus, "NotDeliverable", StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(finalStatus, "Failed", StringComparison.OrdinalIgnoreCase) &&
+                   failures.Contains("dimension_report.json", StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or MissingMethodException or TypeLoadException)
+        {
+            return false;
+        }
+        finally
+        {
+            var fullRoot = Path.GetFullPath(root);
+            var expectedBase = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "solidworks_release_failed_source_self_check"));
+            if (fullRoot.StartsWith(expectedBase, StringComparison.OrdinalIgnoreCase) && Directory.Exists(fullRoot))
+            {
+                Directory.Delete(fullRoot, recursive: true);
+            }
+        }
+    }
+
+    private static async Task WriteReleasePackageSourceFixtureAsync(
+        string root,
+        string failedReportName,
+        CancellationToken cancellationToken)
+    {
+        var timestamp = "20260706_000000_000_self_check";
+        var plateRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes", timestamp);
+        var drawingRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes_drawing", timestamp);
+        var dimensionRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes_drawing_dimensions", timestamp);
+        var titleBlockRoot = Path.Combine(root, "output", "solidworks", "real", "plate_basic_4holes_title_block", timestamp);
+        var diagnosticRoot = Path.Combine(root, "output", "solidworks", "diagnostics", "plate_basic_4holes", timestamp);
+
+        await WriteTextFixtureFileAsync(Path.Combine(plateRoot, "plate_basic_4holes.SLDPRT"), "fake sldprt bytes", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(plateRoot, "plate_basic_4holes.STEP"), "fake step bytes", cancellationToken);
+        await WriteJsonFixtureReportAsync(Path.Combine(plateRoot, "build_report.json"), failedReportName, "build_report.json", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(drawingRoot, "plate_basic_4holes.SLDDRW"), "fake drawing bytes", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(drawingRoot, "plate_basic_4holes.pdf"), "fake drawing pdf bytes", cancellationToken);
+        await WriteJsonFixtureReportAsync(Path.Combine(drawingRoot, "drawing_report.json"), failedReportName, "drawing_report.json", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(dimensionRoot, "plate_basic_4holes_dimensioned.SLDDRW"), "fake dimensioned drawing bytes", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(dimensionRoot, "plate_basic_4holes_dimensioned.pdf"), "fake dimensioned pdf bytes", cancellationToken);
+        await WriteJsonFixtureReportAsync(Path.Combine(dimensionRoot, "dimension_report.json"), failedReportName, "dimension_report.json", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(titleBlockRoot, "plate_basic_4holes_title_block.SLDDRW"), "fake title block drawing bytes", cancellationToken);
+        await WriteTextFixtureFileAsync(Path.Combine(titleBlockRoot, "plate_basic_4holes_title_block.pdf"), "fake title block pdf bytes", cancellationToken);
+        await WriteJsonFixtureReportAsync(Path.Combine(titleBlockRoot, "title_block_report.json"), failedReportName, "title_block_report.json", cancellationToken);
+        await WriteJsonFixtureReportAsync(Path.Combine(diagnosticRoot, "diagnostic_report.json"), failedReportName, "diagnostic_report.json", cancellationToken);
+    }
+
+    private static async Task WriteTextFixtureFileAsync(
+        string path,
+        string content,
+        CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        await File.WriteAllTextAsync(path, content, cancellationToken);
+    }
+
+    private static async Task WriteJsonFixtureReportAsync(
+        string path,
+        string failedReportName,
+        string reportName,
+        CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var failed = string.Equals(reportName, failedReportName, StringComparison.OrdinalIgnoreCase);
+        var payload = new Dictionary<string, string?>
+        {
+            ["final_status"] = failed ? "Failed" : "Passed",
+            ["failure_stage"] = failed ? "source_report_failed_probe" : null
+        };
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(payload, JsonOptions()), cancellationToken);
+    }
+
+    private static string? ReadStringProperty(object instance, string propertyName) =>
+        instance.GetType().GetProperty(propertyName)?.GetValue(instance) as string;
+
+    private static bool ReadBoolProperty(object instance, string propertyName) =>
+        instance.GetType().GetProperty(propertyName)?.GetValue(instance) is true;
+
+    private static IReadOnlyList<string> ReadStringListProperty(object instance, string propertyName)
+    {
+        var value = instance.GetType().GetProperty(propertyName)?.GetValue(instance);
+        return value is IEnumerable<string> strings
+            ? strings.ToArray()
+            : Array.Empty<string>();
+    }
+
+    private static bool ExistingNonEmpty(string? path) =>
+        !string.IsNullOrWhiteSpace(path) &&
+        File.Exists(path) &&
+        new FileInfo(path).Length > 0;
 
     private static bool RealSolidWorksSmokeTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
@@ -2519,6 +2919,13 @@ public static class PlatformSelfCheckRunner
         DrawingTitleBlockFailureStages.Contains(failureStage, StringComparer.OrdinalIgnoreCase) ||
         !string.IsNullOrWhiteSpace(error);
 
+    private static bool IsActionableReleasePackageFailureStage(
+        string? failureStage,
+        IReadOnlyList<string> issues) =>
+        failureStage is null ||
+        ReleasePackageFailureStages.Contains(failureStage, StringComparer.OrdinalIgnoreCase) ||
+        issues.Count > 0;
+
     private static readonly string[] DrawingFailureStages =
     {
         "source_part_missing",
@@ -2565,6 +2972,18 @@ public static class PlatformSelfCheckRunner
         "title_block_pdf_export_failed",
         "title_block_report_write_failed",
         "drawing_title_block_api_evidence_insufficient"
+    };
+
+    private static readonly string[] ReleasePackageFailureStages =
+    {
+        "source_artifacts_missing",
+        "source_report_missing",
+        "source_report_failed",
+        "artifact_copy_failed",
+        "manifest_write_failed",
+        "quality_report_write_failed",
+        "release_summary_write_failed",
+        "package_validation_failed"
     };
 
     private static bool IsActionableFailureStage(string? failureStage, string? error) =>
@@ -3754,7 +4173,46 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksDrawingTitleBlockApiEvidenceDocumented,
         bool SolidWorksDrawingTitleBlockReviewChecklistUpdated,
         string SolidWorksDrawingTitleBlockPopulationStrategy,
-        bool SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat);
+        bool SolidWorksDrawingTitleBlockFieldsVerifiedInSheetFormat,
+        bool SolidWorksReleasePackageImplemented,
+        bool SolidWorksReleasePackageDefaultNoCadExecution,
+        bool SolidWorksReleaseManifestGenerated,
+        bool SolidWorksPackageQualityReportGenerated,
+        bool SolidWorksReleaseSummaryGenerated,
+        bool SolidWorksReleaseArtifactsCollected,
+        bool SolidWorksReleaseReportsCollected,
+        string? SolidWorksReleasePackageFailureStage,
+        bool SolidWorksReleasePackageFailureStageActionable,
+        string? SolidWorksReleaseManifestPath,
+        string? SolidWorksPackageQualityReportPath,
+        string? SolidWorksReleaseSummaryPath,
+        bool V14VersionStageDocumented,
+        bool SolidWorksReleasePackageFailureRepairDocumented,
+        bool SolidWorksReleasePackageReviewChecklistUpdated,
+        bool RealCadWorkerIntegratedIntoMainWorkflow,
+        bool ChiefEngineerOrchestratorInvokesCadWorkflow,
+        bool WorkflowEngineCanRouteToSolidWorksWorker,
+        bool RealCadMainWorkflowDefaultDisabled,
+        bool RealCadMainWorkflowRequiresRequestFlag,
+        bool RealCadMainWorkflowRequiresEnvFlag,
+        bool RealCadMainWorkflowPassesQualityGate,
+        bool GatewayDoesNotCallWorkerDirectly,
+        bool LlmDoesNotCallWorkerDirectly,
+        bool ReleasePackageAllSourceReportsPassedFieldExists,
+        bool ReleasePackageDeliverableStatusFieldExists,
+        bool ReleasePackageFailedSourceReportsBlockDeliverable,
+        bool V15VersionStageDocumented);
+
+    private sealed record SolidWorksReleasePackageReflectionResult(
+        string Status,
+        string OutputDirectory,
+        string? ManifestPath,
+        string? QualityReportPath,
+        string? SummaryPath,
+        string? FailureStage,
+        bool ArtifactsCollected,
+        bool ReportsCollected,
+        IReadOnlyList<string> Issues);
 
     private sealed record ExecutableDocsLayerSelfCheckResult(
         bool ExecutableDocsLayerEnabled,

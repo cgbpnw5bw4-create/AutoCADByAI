@@ -9,6 +9,8 @@ capabilities:
   - solidworks_real_preflight
   - solidworks_connection_smoke_test
   - solidworks_real_plate_basic_4holes_build
+  - solidworks_main_workflow_integration
+  - solidworks_release_package_deliverable_status
 agents:
   - cad-modeler
 skills:
@@ -35,3 +37,4 @@ schemas:
   - SolidWorksArtifact
   - SolidWorksRuntimeOptions
   - SolidWorksPreflightReport
+  - SolidWorksPackageQualityReport
