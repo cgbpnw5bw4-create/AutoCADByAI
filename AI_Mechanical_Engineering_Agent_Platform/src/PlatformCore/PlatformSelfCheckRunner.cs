@@ -15,6 +15,8 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
+    private const string SelfCheckSchemaVersion = "1.6";
+    private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
     [
@@ -86,6 +88,10 @@ public static class PlatformSelfCheckRunner
     {
         Directory.CreateDirectory(Path.Combine(outputRoot, "reports"));
         var root = projectRoot ?? PlatformPathResolver.FindProjectRoot();
+        var runMetadata = new SelfCheckRunMetadata(
+            $"platform-self-check-{Guid.NewGuid():N}",
+            DateTimeOffset.UtcNow,
+            ResolveSourceRevision(root));
 
         var task = platform.TaskStore.Create("Platform self-check");
         platform.TaskStore.UpdateStatus(task.Id, PlatformTaskStatus.Running);
@@ -173,6 +179,17 @@ public static class PlatformSelfCheckRunner
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var solidWorksSkeletonChecks = await RunSolidWorksSkeletonChecks(root, platform, outputRoot, cancellationToken);
         var executableDocsChecks = RunExecutableDocsLayerChecks(root);
+        var realAcceptanceOutputs = WriteRealAcceptanceOutputs(root, runMetadata);
+        var versionStageText = File.Exists(Path.Combine(root, "docs", "version_stage_index.md"))
+            ? File.ReadAllText(Path.Combine(root, "docs", "version_stage_index.md"))
+            : string.Empty;
+        var realAcceptanceProtocolPath = Path.Combine(root, "docs", "solidworks_real_acceptance_protocol.md");
+        var solidWorksComFacadeInjectionSupported = SolidWorksComFacadeInjectionSeamsAreAvailable();
+        var solidWorksRealAcceptanceProtocolExists = File.Exists(realAcceptanceProtocolPath);
+        var solidWorksLatestRealOutputsReportSupported = realAcceptanceOutputs.IsValid;
+        var v16TestADocumented =
+            versionStageText.Contains("V1.6-TEST-A", StringComparison.OrdinalIgnoreCase) &&
+            solidWorksRealAcceptanceProtocolExists;
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -389,6 +406,10 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.ReleasePackageDeliverableStatusFieldExists &&
             solidWorksSkeletonChecks.ReleasePackageFailedSourceReportsBlockDeliverable &&
             solidWorksSkeletonChecks.V15VersionStageDocumented &&
+            solidWorksComFacadeInjectionSupported &&
+            solidWorksRealAcceptanceProtocolExists &&
+            solidWorksLatestRealOutputsReportSupported &&
+            v16TestADocumented &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -398,6 +419,10 @@ public static class PlatformSelfCheckRunner
         platform.AuditLog.Record("self-check", "quality-gate", finalStatus.ToLowerInvariant(), $"Self-check final status: {finalStatus}.");
 
         var report = new PlatformSelfCheckReport(
+            SelfCheckSchemaVersion,
+            runMetadata.RunId,
+            runMetadata.GeneratedAt,
+            runMetadata.SourceRevision,
             platform.ModuleRegistry.GetAll().Select(module => new ModuleSummary(module.Name, module.Version, module.Description)).ToArray(),
             platform.AgentRegistry.GetAll().Select(ToAgentSummary).ToArray(),
             platform.AgentRegistry.GetPublicAgents().Select(ToAgentSummary).ToArray(),
@@ -679,6 +704,10 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.ReleasePackageDeliverableStatusFieldExists,
             solidWorksSkeletonChecks.ReleasePackageFailedSourceReportsBlockDeliverable,
             solidWorksSkeletonChecks.V15VersionStageDocumented,
+            solidWorksComFacadeInjectionSupported,
+            solidWorksRealAcceptanceProtocolExists,
+            solidWorksLatestRealOutputsReportSupported,
+            v16TestADocumented,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -2438,6 +2467,283 @@ public static class PlatformSelfCheckRunner
         File.Exists(path) &&
         new FileInfo(path).Length > 0;
 
+    private static bool SolidWorksComFacadeInjectionSeamsAreAvailable()
+    {
+        try
+        {
+            var facade = Type.GetType("SolidWorksWorker.ISolidWorksComFacade, SolidWorksWorker", throwOnError: false);
+            var verifier = Type.GetType("SolidWorksWorker.ISolidWorksFileVerifier, SolidWorksWorker", throwOnError: false);
+            var propertyReader = Type.GetType("SolidWorksWorker.ISolidWorksPropertyReader, SolidWorksWorker", throwOnError: false);
+            var featureBuilder = Type.GetType("SolidWorksWorker.SolidWorksPlateFeatureBuilder, SolidWorksWorker", throwOnError: false);
+            var plateBuilder = Type.GetType("SolidWorksWorker.LateBoundSolidWorksPlateBuilder, SolidWorksWorker", throwOnError: false);
+            var drawingBuilder = Type.GetType("SolidWorksWorker.LateBoundSolidWorksDrawingBuilder, SolidWorksWorker", throwOnError: false);
+            var dimensionBuilder = Type.GetType("SolidWorksWorker.LateBoundSolidWorksDrawingDimensionBuilder, SolidWorksWorker", throwOnError: false);
+            var titleBlockBuilder = Type.GetType("SolidWorksWorker.LateBoundSolidWorksDrawingTitleBlockBuilder, SolidWorksWorker", throwOnError: false);
+
+            return facade?.IsInterface == true &&
+                   verifier?.IsInterface == true &&
+                   propertyReader?.IsInterface == true &&
+                   featureBuilder is not null &&
+                   plateBuilder?.GetConstructor([facade, verifier, featureBuilder]) is not null &&
+                   drawingBuilder?.GetConstructor([facade, verifier]) is not null &&
+                   dimensionBuilder?.GetConstructor([facade, verifier]) is not null &&
+                   titleBlockBuilder?.GetConstructor([facade, verifier, propertyReader]) is not null;
+        }
+        catch (FileLoadException)
+        {
+            return false;
+        }
+        catch (FileNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    private static string ResolveSourceRevision(string projectRoot)
+    {
+        var commit = RunGit(projectRoot, "rev-parse", "--verify", "HEAD");
+        if (string.IsNullOrWhiteSpace(commit))
+        {
+            return "unknown";
+        }
+
+        var trackedChanges = RunGit(projectRoot, "status", "--porcelain", "--untracked-files=no");
+        return string.IsNullOrWhiteSpace(trackedChanges)
+            ? commit
+            : $"{commit}-dirty";
+    }
+
+    private static string? RunGit(string projectRoot, params string[] arguments)
+    {
+        try
+        {
+            var startInfo = new ProcessStartInfo("git")
+            {
+                WorkingDirectory = projectRoot,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            foreach (var argument in arguments)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+
+            using var process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return null;
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            if (!process.WaitForExit(5_000))
+            {
+                process.Kill(entireProcessTree: true);
+                return null;
+            }
+
+            return process.ExitCode == 0 ? output.Trim() : null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return null;
+        }
+    }
+
+    private static RealAcceptanceOutputPaths WriteRealAcceptanceOutputs(
+        string projectRoot,
+        SelfCheckRunMetadata runMetadata)
+    {
+        lock (RealAcceptanceOutputLock)
+        {
+            return WriteRealAcceptanceOutputsCore(projectRoot, runMetadata);
+        }
+    }
+
+    private static RealAcceptanceOutputPaths WriteRealAcceptanceOutputsCore(
+        string projectRoot,
+        SelfCheckRunMetadata runMetadata)
+    {
+        var outputDirectory = Path.Combine(projectRoot, "output", "solidworks", "real_acceptance");
+        Directory.CreateDirectory(outputDirectory);
+        var reportPath = Path.Combine(outputDirectory, "real_acceptance_report.json");
+        var markdownPath = Path.Combine(outputDirectory, "latest_real_outputs.md");
+
+        var latestSldprtPath = FindLatestRealPlatePartPath(projectRoot);
+        var latestStepPath = FindLatestRealPlateStepPath(projectRoot);
+        var latestSlddrwPath =
+            FindLatestTitleBlockDrawingPath(projectRoot) ??
+            FindLatestDimensionedDrawingPath(projectRoot) ??
+            FindLatestRealDrawingPath(projectRoot);
+        var latestPdfPath =
+            FindLatestTitleBlockPdfPath(projectRoot) ??
+            FindLatestDimensionedPdfPath(projectRoot) ??
+            FindLatestRealDrawingPdfPath(projectRoot);
+        var buildReportPath = FindLatestBuildReportPath(Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes"));
+        var drawingReportPath = FindLatestDrawingReportPath(Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_drawing"));
+        var dimensionReportPath = FindLatestDimensionReportPath(Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_drawing_dimensions"));
+        var titleBlockReportPath = FindLatestTitleBlockReportPath(Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_title_block"));
+        var packageQualityReportPath = FindLatestPackageQualityReportPath(projectRoot);
+        var sourceReportStatuses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["build_report"] = NormalizeEvidenceStatus(ReadJsonString(buildReportPath, "final_status")),
+            ["drawing_report"] = NormalizeEvidenceStatus(ReadJsonString(drawingReportPath, "final_status")),
+            ["dimension_report"] = NormalizeEvidenceStatus(ReadJsonString(dimensionReportPath, "final_status")),
+            ["title_block_report"] = NormalizeEvidenceStatus(ReadJsonString(titleBlockReportPath, "final_status")),
+            ["package_quality_report"] = NormalizeEvidenceStatus(ReadJsonString(packageQualityReportPath, "final_status"))
+        };
+        var packageReportsPassed = ReadJsonBool(packageQualityReportPath, "all_source_reports_passed");
+        var packageDeliverableStatus = ReadJsonString(packageQualityReportPath, "deliverable_status");
+        var allSourceReportsPassed = packageReportsPassed is true &&
+                                     sourceReportStatuses.Values.All(status =>
+                                         string.Equals(status, "Passed", StringComparison.OrdinalIgnoreCase));
+        var deliverableBlockedBy = sourceReportStatuses
+            .Where(item => !string.Equals(item.Value, "Passed", StringComparison.OrdinalIgnoreCase))
+            .Select(item => $"{item.Key}.final_status={item.Value}")
+            .ToList();
+        var artifacts = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["sldprt"] = latestSldprtPath,
+            ["step"] = latestStepPath,
+            ["slddrw"] = latestSlddrwPath,
+            ["pdf"] = latestPdfPath
+        };
+        deliverableBlockedBy.AddRange(artifacts
+            .Where(item => !ExistingNonEmpty(item.Value))
+            .Select(item => $"{item.Key}_artifact_missing_or_empty"));
+        if (packageReportsPassed is not true)
+        {
+            deliverableBlockedBy.Add("package_quality_report.all_source_reports_passed!=true");
+        }
+
+        if (!string.Equals(packageDeliverableStatus, "Deliverable", StringComparison.OrdinalIgnoreCase))
+        {
+            deliverableBlockedBy.Add("package_quality_report.deliverable_status!=Deliverable");
+        }
+
+        deliverableBlockedBy = deliverableBlockedBy.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var deliverableStatus = allSourceReportsPassed &&
+                                artifacts.Values.All(ExistingNonEmpty) &&
+                                string.Equals(packageDeliverableStatus, "Deliverable", StringComparison.OrdinalIgnoreCase)
+            ? "Deliverable"
+            : "NotDeliverable";
+        var payload = new
+        {
+            schema_version = SelfCheckSchemaVersion,
+            run_id = runMetadata.RunId,
+            generated_at = runMetadata.GeneratedAt,
+            source_revision = runMetadata.SourceRevision,
+            latest_sldprt_path = latestSldprtPath,
+            latest_step_path = latestStepPath,
+            latest_slddrw_path = latestSlddrwPath,
+            latest_pdf_path = latestPdfPath,
+            build_report_path = buildReportPath,
+            drawing_report_path = drawingReportPath,
+            dimension_report_path = dimensionReportPath,
+            title_block_report_path = titleBlockReportPath,
+            package_quality_report_path = packageQualityReportPath,
+            source_report_final_status = sourceReportStatuses,
+            all_source_reports_passed = allSourceReportsPassed,
+            deliverable_status = deliverableStatus,
+            deliverable_blocked_by = deliverableBlockedBy
+        };
+
+        File.WriteAllText(reportPath, JsonSerializer.Serialize(payload, JsonOptions()));
+        File.WriteAllText(
+            markdownPath,
+            string.Join(
+                Environment.NewLine,
+                new[]
+                {
+                    "# 最新真实 SolidWorks 输出",
+                    "",
+                    $"运行标识：{runMetadata.RunId}",
+                    $"生成时间：{runMetadata.GeneratedAt:O}",
+                    $"源码版本：{runMetadata.SourceRevision}",
+                    "",
+                    "| 项目 | 路径或状态 |",
+                    "|---|---|",
+                    $"| 最新 SLDPRT 路径 | {DisplayPath(latestSldprtPath)} |",
+                    $"| 最新 STEP 路径 | {DisplayPath(latestStepPath)} |",
+                    $"| 最新 SLDDRW 路径 | {DisplayPath(latestSlddrwPath)} |",
+                    $"| 最新 PDF 路径 | {DisplayPath(latestPdfPath)} |",
+                    $"| 最新 build_report 路径 | {DisplayPath(buildReportPath)} |",
+                    $"| 最新 drawing_report 路径 | {DisplayPath(drawingReportPath)} |",
+                    $"| 最新 dimension_report 路径 | {DisplayPath(dimensionReportPath)} |",
+                    $"| 最新 title_block_report 路径 | {DisplayPath(titleBlockReportPath)} |",
+                    $"| 最新 package_quality_report 路径 | {DisplayPath(packageQualityReportPath)} |",
+                    $"| build_report final_status | {DisplayStatus(sourceReportStatuses["build_report"])} |",
+                    $"| drawing_report final_status | {DisplayStatus(sourceReportStatuses["drawing_report"])} |",
+                    $"| dimension_report final_status | {DisplayStatus(sourceReportStatuses["dimension_report"])} |",
+                    $"| title_block_report final_status | {DisplayStatus(sourceReportStatuses["title_block_report"])} |",
+                    $"| package_quality_report final_status | {DisplayStatus(sourceReportStatuses["package_quality_report"])} |",
+                    $"| all_source_reports_passed | {allSourceReportsPassed.ToString().ToLowerInvariant()} |",
+                    $"| deliverable_status | {deliverableStatus} |",
+                    $"| deliverable_blocked_by | {string.Join("；", deliverableBlockedBy)} |"
+                }) + Environment.NewLine);
+
+        var isValid = ValidateRealAcceptanceReport(reportPath) && ExistingNonEmpty(markdownPath);
+        return new RealAcceptanceOutputPaths(reportPath, markdownPath, isValid);
+    }
+
+    private static string NormalizeEvidenceStatus(string? status) =>
+        string.IsNullOrWhiteSpace(status) ? "MissingOrInvalid" : status;
+
+    private static bool ValidateRealAcceptanceReport(string reportPath)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = document.RootElement;
+            if (!root.TryGetProperty("schema_version", out var schemaVersion) ||
+                !string.Equals(schemaVersion.GetString(), SelfCheckSchemaVersion, StringComparison.Ordinal) ||
+                !root.TryGetProperty("run_id", out var runId) ||
+                string.IsNullOrWhiteSpace(runId.GetString()) ||
+                !root.TryGetProperty("source_revision", out var sourceRevision) ||
+                string.IsNullOrWhiteSpace(sourceRevision.GetString()) ||
+                !root.TryGetProperty("source_report_final_status", out var sourceStatuses) ||
+                sourceStatuses.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("all_source_reports_passed", out var allSourceReportsPassed) ||
+                allSourceReportsPassed.ValueKind is not (JsonValueKind.True or JsonValueKind.False) ||
+                !root.TryGetProperty("deliverable_status", out var deliverableStatus) ||
+                !root.TryGetProperty("deliverable_blocked_by", out var blockedBy) ||
+                blockedBy.ValueKind != JsonValueKind.Array)
+            {
+                return false;
+            }
+
+            var status = deliverableStatus.GetString();
+            var isDeliverable = string.Equals(status, "Deliverable", StringComparison.Ordinal);
+            var isNotDeliverable = string.Equals(status, "NotDeliverable", StringComparison.Ordinal);
+            return (isDeliverable || isNotDeliverable) &&
+                   (!isDeliverable || (allSourceReportsPassed.GetBoolean() && blockedBy.GetArrayLength() == 0)) &&
+                   (!isNotDeliverable || blockedBy.GetArrayLength() > 0);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    private static string DisplayPath(string? path) =>
+        string.IsNullOrWhiteSpace(path) ? "未找到" : Path.GetFullPath(path);
+
+    private static string DisplayStatus(string? status) =>
+        string.IsNullOrWhiteSpace(status) ? "未找到" : status;
+
     private static bool RealSolidWorksSmokeTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
         string.Equals(Environment.GetEnvironmentVariable("SW_REAL_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
@@ -2569,6 +2875,67 @@ public static class PlatformSelfCheckRunner
             ?.FullName;
     }
 
+    private static string? FindLatestRealPlateStepPath(string projectRoot) =>
+        FindLatestNonEmptyFile(
+            Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes"),
+            "plate_basic_4holes.STEP");
+
+    private static string? FindLatestTitleBlockDrawingPath(string projectRoot) =>
+        FindLatestNonEmptyFile(
+            Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_title_block"),
+            "plate_basic_4holes_title_block.SLDDRW");
+
+    private static string? FindLatestTitleBlockPdfPath(string projectRoot) =>
+        FindLatestNonEmptyFile(
+            Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_title_block"),
+            "plate_basic_4holes_title_block.pdf");
+
+    private static string? FindLatestDimensionedPdfPath(string projectRoot) =>
+        FindLatestNonEmptyFile(
+            Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_drawing_dimensions"),
+            "plate_basic_4holes_dimensioned.pdf");
+
+    private static string? FindLatestRealDrawingPdfPath(string projectRoot) =>
+        FindLatestNonEmptyFile(
+            Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes_drawing"),
+            "plate_basic_4holes.pdf");
+
+    private static string? FindLatestPackageQualityReportPath(string projectRoot) =>
+        FindLatestFile(
+            Path.Combine(projectRoot, "output", "solidworks", "release"),
+            "package_quality_report.json");
+
+    private static string? FindLatestNonEmptyFile(string root, string fileName)
+    {
+        if (!Directory.Exists(root))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(root, fileName, SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .Where(file => file.Length > 0)
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
+    private static string? FindLatestFile(string root, string fileName)
+    {
+        if (!Directory.Exists(root))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(root, fileName, SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault()
+            ?.FullName;
+    }
+
     private static string? FindLatestRealPlatePartPath(string projectRoot)
     {
         var realPlateRoot = Path.Combine(projectRoot, "output", "solidworks", "real", "plate_basic_4holes");
@@ -2661,6 +3028,71 @@ public static class PlatformSelfCheckRunner
         catch (UnauthorizedAccessException)
         {
             return "Unreadable";
+        }
+    }
+
+    private static string? ReadJsonString(string? reportPath, string propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(reportPath) || !File.Exists(reportPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            return document.RootElement.TryGetProperty(propertyName, out var value) &&
+                   value.ValueKind == JsonValueKind.String
+                ? value.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static bool? ReadJsonBool(string? reportPath, string propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(reportPath) || !File.Exists(reportPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            if (!document.RootElement.TryGetProperty(propertyName, out var value))
+            {
+                return null;
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                _ => null
+            };
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
         }
     }
 
@@ -4256,6 +4688,16 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksWorkerFailureRepairDocExists,
         bool SolidWorksWorkerApiEvidenceDocExists,
         bool SolidWorksWorkerReviewChecklistExists);
+
+    private sealed record SelfCheckRunMetadata(
+        string RunId,
+        DateTimeOffset GeneratedAt,
+        string SourceRevision);
+
+    private sealed record RealAcceptanceOutputPaths(
+        string RealAcceptanceReportPath,
+        string LatestRealOutputsPath,
+        bool IsValid);
 
     private static JsonSerializerOptions JsonOptions()
     {

@@ -117,6 +117,7 @@ public static class SolidWorksDrawingDimensionReportWriter
         SolidWorksDrawingDimensionReport report,
         CancellationToken cancellationToken = default)
     {
+        SolidWorksFakeSuccessGuard.NormalizeDimensionReport(report);
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -131,6 +132,7 @@ public static class SolidWorksDrawingDimensionReportWriter
 
     public static void Write(string reportPath, SolidWorksDrawingDimensionReport report)
     {
+        SolidWorksFakeSuccessGuard.NormalizeDimensionReport(report);
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -151,6 +153,16 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
 {
     private const double MmToMeters = 0.001d;
     private const double DimensionTextHeightMeters = 0.0035d;
+    private readonly ISolidWorksComFacade _comFacade;
+    private readonly ISolidWorksFileVerifier _fileVerifier;
+
+    public LateBoundSolidWorksDrawingDimensionBuilder(
+        ISolidWorksComFacade? comFacade = null,
+        ISolidWorksFileVerifier? fileVerifier = null)
+    {
+        _comFacade = comFacade ?? new LateBoundSolidWorksComFacade();
+        _fileVerifier = fileVerifier ?? new SolidWorksFileVerifier();
+    }
 
     public Task<SolidWorksDrawingDimensionBuildResult> CreateDimensionedDrawingAsync(
         object application,
@@ -166,7 +178,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
             cancellationToken);
     }
 
-    private static SolidWorksDrawingDimensionBuildResult CreateCore(
+    private SolidWorksDrawingDimensionBuildResult CreateCore(
         object application,
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options,
@@ -267,6 +279,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
             AddRequiredDimensions(drawingDocument, report);
             SaveDrawing(drawingDocument, drawingPath, report, logs);
             ExportPdf(application, drawingDocument, pdfPath, report, logs);
+            SolidWorksFakeSuccessGuard.RequireDimensionCanPass(report);
 
             report.FinalStatus = "Passed";
             report.CompletedAt = DateTimeOffset.UtcNow;
@@ -298,7 +311,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         }
     }
 
-    private static void AddRequiredDimensions(object drawingDocument, SolidWorksDrawingDimensionReport report)
+    private void AddRequiredDimensions(object drawingDocument, SolidWorksDrawingDimensionReport report)
     {
         report.Operations.Add("length_dimension_started");
         if (!TryAddLinearDimension(
@@ -404,7 +417,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         report.Warnings.Add("hole_position_dimension_strategy: 使用 CreateLinearDim4 非关联中心距，后续可在 V1.3 之后补充可关联孔中心选取。");
     }
 
-    private static bool TryAddLinearDimension(
+    private bool TryAddLinearDimension(
         object drawingDocument,
         SolidWorksDrawingDimensionReport report,
         string name,
@@ -429,18 +442,22 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
             DimensionTextHeightMeters);
 
         var status = displayDimension is null ? "Failed" : "Passed";
+        var success = displayDimension is not null;
         report.Dimensions.Add(new SolidWorksDrawingDimensionResult(
             name,
             expectedValueMm,
             status,
             failureStage,
             "IDrawingDoc.CreateLinearDim4_non_associative",
-            displayDimension is null ? "CreateLinearDim4 returned null." : "CreateLinearDim4 returned a display dimension."));
+            displayDimension is null ? "CreateLinearDim4 returned null." : "CreateLinearDim4 returned a display dimension.",
+            Attempted: true,
+            Success: success,
+            FailureReason: success ? null : "CreateLinearDim4 returned null."));
 
-        return displayDimension is not null;
+        return success;
     }
 
-    private static bool TryAddDiameterDimension(
+    private bool TryAddDiameterDimension(
         object drawingDocument,
         SolidWorksDrawingDimensionReport report,
         string name,
@@ -473,18 +490,22 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
                 DimensionTextHeightMeters);
 
         var status = displayDimension is null ? "Failed" : "Passed";
+        var success = displayDimension is not null;
         report.Dimensions.Add(new SolidWorksDrawingDimensionResult(
             name,
             expectedValueMm,
             status,
             failureStage,
             "IDrawingDoc.ICreateDiamDim4_non_associative",
-            displayDimension is null ? "ICreateDiamDim4 returned null." : "ICreateDiamDim4 returned a display dimension."));
+            displayDimension is null ? "ICreateDiamDim4 returned null." : "ICreateDiamDim4 returned a display dimension.",
+            Attempted: true,
+            Success: success,
+            FailureReason: success ? null : "ICreateDiamDim4 returned null."));
 
-        return displayDimension is not null;
+        return success;
     }
 
-    private static List<ConfirmedDrawingView> ConfirmRequiredViews(
+    private List<ConfirmedDrawingView> ConfirmRequiredViews(
         object drawingDocument,
         SolidWorksDrawingDimensionReport report)
     {
@@ -507,6 +528,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
 
         if (confirmed.Count < expectedViews.Length && discovered.Count >= expectedViews.Length)
         {
+            report.ViewsConfirmedByPositionFallback = true;
             report.Warnings.Add("drawing_view_name_fallback: 视图名称或方向名不可完全读取，按 V1.1 创建顺序确认 Front/Top/Right/Isometric。");
             confirmed.Clear();
             report.ViewsConfirmed.Clear();
@@ -523,7 +545,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         return confirmed;
     }
 
-    private static List<ConfirmedDrawingView> DiscoverModelViews(object drawingDocument)
+    private List<ConfirmedDrawingView> DiscoverModelViews(object drawingDocument)
     {
         var result = new List<ConfirmedDrawingView>();
         object? view = TryInvoke(drawingDocument, "GetFirstView");
@@ -561,7 +583,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
             value.Contains($"*{expected}", StringComparison.OrdinalIgnoreCase));
     }
 
-    private static bool ActivateDrawingView(object drawingDocument, ConfirmedDrawingView view)
+    private bool ActivateDrawingView(object drawingDocument, ConfirmedDrawingView view)
     {
         if (!string.IsNullOrWhiteSpace(view.ViewName) &&
             TryInvokeBool(drawingDocument, "ActivateView", view.ViewName))
@@ -572,7 +594,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         return TryInvokeBool(view.ViewObject, "Select2", false, 0);
     }
 
-    private static void SaveDrawing(
+    private void SaveDrawing(
         object drawingDocument,
         string drawingPath,
         SolidWorksDrawingDimensionReport report,
@@ -583,7 +605,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         var errors = new List<string>();
         var warnings = new List<string>();
         TryInvoke(drawingDocument, "ForceRebuild3", false);
-        var saved = TryExtensionSaveAs(drawingDocument, drawingPath, null, errors, warnings) ||
+        var saved = _comFacade.TryExtensionSaveAs(drawingDocument, drawingPath, null, errors, warnings) ||
                     TryInvokeBool(drawingDocument, "SaveAs3", drawingPath, 0, 1) ||
                     TryInvokeBool(drawingDocument, "SaveAs", drawingPath);
 
@@ -591,6 +613,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         {
             report.Errors.AddRange(errors.DefaultIfEmpty("dimension_save_failed: SaveAs returned false."));
             report.Warnings.AddRange(warnings);
+            throw new IOException($"dimension_save_failed: {drawingPath}");
         }
 
         RefreshFileState(report);
@@ -603,7 +626,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         logs.Add($"Saved dimensioned SolidWorks drawing: {drawingPath}.");
     }
 
-    private static void ExportPdf(
+    private void ExportPdf(
         object application,
         object drawingDocument,
         string pdfPath,
@@ -618,8 +641,8 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         var errors = new List<string>();
         var warnings = new List<string>();
         var pdfData = TryGetPdfExportData(application, warnings);
-        var exported = TryExtensionSaveAs(drawingDocument, pdfPath, pdfData, errors, warnings) ||
-                       TryExtensionSaveAs(drawingDocument, pdfPath, null, errors, warnings) ||
+        var exported = _comFacade.TryExtensionSaveAs(drawingDocument, pdfPath, pdfData, errors, warnings) ||
+                       _comFacade.TryExtensionSaveAs(drawingDocument, pdfPath, null, errors, warnings) ||
                        TryInvokeBool(drawingDocument, "SaveAs3", pdfPath, 0, 1) ||
                        TryInvokeBool(drawingDocument, "SaveAs", pdfPath);
 
@@ -627,6 +650,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         {
             report.Errors.AddRange(errors.DefaultIfEmpty("dimension_pdf_export_failed: SaveAs returned false."));
             report.Warnings.AddRange(warnings);
+            throw new IOException($"dimension_pdf_export_failed: {pdfPath}");
         }
 
         RefreshFileState(report);
@@ -639,7 +663,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         logs.Add($"Exported dimensioned drawing PDF: {pdfPath}.");
     }
 
-    private static object? OpenDrawing(object application, string sourceDrawingPath)
+    private object? OpenDrawing(object application, string sourceDrawingPath)
     {
         const int swDocDrawing = 3;
         const int swOpenDocOptionsSilent = 1;
@@ -648,7 +672,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
                TryGetProperty(application, "ActiveDoc");
     }
 
-    private static bool ActivateDocument(object application, object document)
+    private bool ActivateDocument(object application, object document)
     {
         var title = TryInvoke(document, "GetTitle")?.ToString();
         if (!string.IsNullOrWhiteSpace(title))
@@ -671,7 +695,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         return string.Equals(activeTitle, title, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static object? TryGetPdfExportData(object application, List<string> warnings)
+    private object? TryGetPdfExportData(object application, List<string> warnings)
     {
         try
         {
@@ -693,7 +717,7 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         }
     }
 
-    private static SolidWorksDrawingDimensionBuildResult FailWithReport(
+    private SolidWorksDrawingDimensionBuildResult FailWithReport(
         SolidWorksDrawingDimensionReport report,
         string reportPath,
         IReadOnlyList<string> logs,
@@ -741,20 +765,22 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
             generatedArtifacts);
     }
 
-    private static void RefreshFileState(SolidWorksDrawingDimensionReport report)
+    private void RefreshFileState(SolidWorksDrawingDimensionReport report)
     {
         if (!string.IsNullOrWhiteSpace(report.SlddrwPath))
         {
-            report.SlddrwPath = Path.GetFullPath(report.SlddrwPath);
-            report.SlddrwExists = File.Exists(report.SlddrwPath);
-            report.SlddrwSizeBytes = report.SlddrwExists ? new FileInfo(report.SlddrwPath).Length : 0;
+            var state = _fileVerifier.GetState(report.SlddrwPath);
+            report.SlddrwPath = state.Path;
+            report.SlddrwExists = state.Exists;
+            report.SlddrwSizeBytes = state.SizeBytes;
         }
 
         if (!string.IsNullOrWhiteSpace(report.PdfPath))
         {
-            report.PdfPath = Path.GetFullPath(report.PdfPath);
-            report.PdfExists = File.Exists(report.PdfPath);
-            report.PdfSizeBytes = report.PdfExists ? new FileInfo(report.PdfPath).Length : 0;
+            var state = _fileVerifier.GetState(report.PdfPath);
+            report.PdfPath = state.Path;
+            report.PdfExists = state.Exists;
+            report.PdfSizeBytes = state.SizeBytes;
         }
     }
 
@@ -832,100 +858,21 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
         return "drawing_dimension_api_evidence_insufficient";
     }
 
-    private static bool TryExtensionSaveAs(
-        object model,
-        string path,
-        object? exportData,
-        List<string> errors,
-        List<string> warnings)
-    {
-        try
-        {
-            var extension = GetProperty(model, "Extension");
-            var args = new object?[] { path, 0, 1, exportData, 0, 0 };
-            var result = Invoke(extension, "SaveAs", args);
-            if (args[4] is not null && Convert.ToInt32(args[4], CultureInfo.InvariantCulture) != 0)
-            {
-                errors.Add($"save_as_errors: {args[4]}");
-            }
+    private object GetProperty(object target, string name) => _comFacade.GetProperty(target, name);
 
-            if (args[5] is not null && Convert.ToInt32(args[5], CultureInfo.InvariantCulture) != 0)
-            {
-                warnings.Add($"save_as_warnings: {args[5]}");
-            }
+    private object? TryGetProperty(object? target, string name) => _comFacade.TryGetProperty(target, name);
 
-            return result is bool value && value;
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            errors.Add($"save_as_exception: {ex.GetBaseException().Message}");
-            return false;
-        }
-    }
+    private object? Invoke(object target, string name, params object?[] args) => _comFacade.Invoke(target, name, args);
 
-    private static object GetProperty(object target, string name) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.GetProperty,
-            binder: null,
-            target,
-            [])
-        ?? throw new InvalidOperationException($"solidworks_property_missing: {name}.");
+    private object? TryInvoke(object? target, string name, params object?[] args) => _comFacade.TryInvoke(target, name, args);
 
-    private static object? TryGetProperty(object target, string name)
-    {
-        try
-        {
-            return GetProperty(target, name);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static object? Invoke(object target, string name, params object?[] args) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.InvokeMethod,
-            binder: null,
-            target,
-            args);
-
-    private static object? TryInvoke(object target, string name, params object?[] args)
-    {
-        try
-        {
-            return Invoke(target, name, args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static bool TryInvokeBool(object target, string name, params object?[] args)
-    {
-        var value = TryInvoke(target, name, args);
-        return value is bool boolean && boolean;
-    }
+    private bool TryInvokeBool(object? target, string name, params object?[] args) => _comFacade.TryInvokeBool(target, name, args);
 
     private static double[] Point(DrawingPoint point) => [point.X, point.Y, point.Z];
 
     private static double[] Point(double x, double y, double z) => [x, y, z];
 
-    private static void ReleaseComObject(object value)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        if (Marshal.IsComObject(value))
-        {
-            Marshal.FinalReleaseComObject(value);
-        }
-    }
+    private void ReleaseComObject(object value) => _comFacade.ReleaseComObject(value);
 
     private sealed record ConfirmedDrawingView(
         string ExpectedName,

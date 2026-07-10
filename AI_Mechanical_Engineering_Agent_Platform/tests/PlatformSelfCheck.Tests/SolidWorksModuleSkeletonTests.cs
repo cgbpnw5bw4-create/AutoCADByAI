@@ -248,8 +248,35 @@ public sealed class SolidWorksModuleSkeletonTests
                 }),
             new Dictionary<string, object?>(),
             DateTimeOffset.UtcNow);
+        var unsupportedSharedSpec = new AgentContext(
+            $"task-{Guid.NewGuid():N}",
+            new AgentInput(
+                "test",
+                "test-channel",
+                $"conversation-{Guid.NewGuid():N}",
+                "user",
+                "Run the explicit SolidWorks main workflow.",
+                Array.Empty<string>(),
+                new Dictionary<string, string>
+                {
+                    ["project_root"] = projectRoot,
+                    ["solidworks_main_workflow"] = "true"
+                }),
+            new Dictionary<string, object?>
+            {
+                ["cad_model_spec"] = new CADModelSpec(
+                    "unsupported-model",
+                    "unsupported_model_type",
+                    "unsupported_model_type",
+                    "Unsupported model must not fall back.",
+                    new Dictionary<string, string>(),
+                    Array.Empty<string>(),
+                    Array.Empty<string>())
+            },
+            DateTimeOffset.UtcNow);
 
         Assert.Null(router.TryBuildRequest(genericMention));
+        Assert.Null(router.TryBuildRequest(unsupportedSharedSpec));
         var request = router.TryBuildRequest(structuredRequest);
 
         Assert.NotNull(request);
@@ -346,6 +373,54 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.Equal("True", reportArtifact.Metadata!["quality_gate_passed"]);
             Assert.Contains(output.Artifacts, artifact => artifact.Path.StartsWith(outputBase, StringComparison.OrdinalIgnoreCase));
             Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_after_solidworks_main_workflow");
+        }
+        finally
+        {
+            if (Directory.Exists(outputBase))
+            {
+                Directory.Delete(outputBase, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ChiefEngineerOrchestratorPropagatesSolidWorksWorkerFailure()
+    {
+        var projectRoot = FindProjectRoot();
+        var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+        platform.WorkerRegistry.Register(new FailingSolidWorksWorker());
+        var outputBase = Path.Combine(projectRoot, "output", "solidworks", $"chief-main-workflow-failure-test-{Guid.NewGuid():N}");
+        try
+        {
+            var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")!;
+            var input = new AgentInput(
+                "test",
+                "test-channel",
+                $"conversation-{Guid.NewGuid():N}",
+                "user",
+                "Run SolidWorks plate_basic_4holes main workflow.",
+                Array.Empty<string>(),
+                new Dictionary<string, string>
+                {
+                    ["project_root"] = projectRoot,
+                    ["solidworks_output_directory"] = outputBase
+                });
+
+            var output = await chiefEngineer.ExecuteAsync(new AgentContext(
+                $"task-{Guid.NewGuid():N}",
+                input,
+                new Dictionary<string, object?>(),
+                DateTimeOffset.UtcNow));
+
+            Assert.Equal(AgentOutputStatus.Failed, output.Status);
+            Assert.Contains(output.Issues, issue => issue.Contains("intentional_worker_failure", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains("quality_gate_passed=False", output.Message, StringComparison.OrdinalIgnoreCase);
+            var reportArtifact = Assert.Single(output.Artifacts, artifact =>
+                artifact.Name.Equals("solidworks-main-workflow-report", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal("False", reportArtifact.Metadata!["quality_gate_passed"]);
+            Assert.Contains(platform.AuditLog.GetEntries(), entry =>
+                entry.Action == "solidworks_main_workflow_completed" &&
+                entry.Message.Contains("status Failed", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {
@@ -1037,7 +1112,10 @@ public sealed class SolidWorksModuleSkeletonTests
             "Passed",
             "length_dimension_failed",
             "IDrawingDoc.CreateLinearDim4_non_associative",
-            "CreateLinearDim4 returned a display dimension."));
+            "CreateLinearDim4 returned a display dimension.",
+            Attempted: true,
+            Success: true,
+            FailureReason: null));
 
         var json = JsonSerializer.Serialize(report, new JsonSerializerOptions
         {
@@ -1304,11 +1382,12 @@ public sealed class SolidWorksModuleSkeletonTests
     {
         var writeProperty = typeof(LateBoundSolidWorksDrawingTitleBlockBuilder).GetMethod(
             "WriteProperty",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(writeProperty);
+        var builder = new LateBoundSolidWorksDrawingTitleBlockBuilder();
 
         var property = Assert.IsType<SolidWorksDrawingTitleBlockProperty>(writeProperty.Invoke(
-            null,
+            builder,
             new object[]
             {
                 new FakeTitleBlockCustomPropertyManager("wrong-part-name"),
@@ -1328,8 +1407,9 @@ public sealed class SolidWorksModuleSkeletonTests
         var drawingPath = Path.Combine(root, "plate_basic_4holes.SLDDRW");
         var saveDrawing = typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(
             "SaveDrawing",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(saveDrawing);
+        var builder = new LateBoundSolidWorksDrawingBuilder();
         var report = new SolidWorksDrawingReport
         {
             SlddrwPath = drawingPath
@@ -1339,7 +1419,7 @@ public sealed class SolidWorksModuleSkeletonTests
         try
         {
             var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
-                null,
+                builder,
                 new object[] { new FakeTitleBlockDrawingDocument(), drawingPath, report, logs }));
 
             Assert.IsType<IOException>(exception.GetBaseException());
@@ -1366,8 +1446,9 @@ public sealed class SolidWorksModuleSkeletonTests
         var drawingPath = Path.Combine(root, "plate_basic_4holes_dimensioned.SLDDRW");
         var saveDrawing = typeof(LateBoundSolidWorksDrawingDimensionBuilder).GetMethod(
             "SaveDrawing",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(saveDrawing);
+        var builder = new LateBoundSolidWorksDrawingDimensionBuilder();
         var report = new SolidWorksDrawingDimensionReport
         {
             SlddrwPath = drawingPath
@@ -1377,7 +1458,7 @@ public sealed class SolidWorksModuleSkeletonTests
         try
         {
             var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
-                null,
+                builder,
                 new object[] { new FakeTitleBlockDrawingDocument(), drawingPath, report, logs }));
 
             Assert.IsType<IOException>(exception.GetBaseException());
@@ -1404,8 +1485,9 @@ public sealed class SolidWorksModuleSkeletonTests
         var drawingPath = Path.Combine(root, "plate_basic_4holes_title_block.SLDDRW");
         var saveDrawing = typeof(LateBoundSolidWorksDrawingTitleBlockBuilder).GetMethod(
             "SaveDrawing",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(saveDrawing);
+        var builder = new LateBoundSolidWorksDrawingTitleBlockBuilder();
         var report = new SolidWorksDrawingTitleBlockReport
         {
             SlddrwPath = drawingPath
@@ -1415,7 +1497,7 @@ public sealed class SolidWorksModuleSkeletonTests
         try
         {
             var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
-                null,
+                builder,
                 new object[] { new FakeTitleBlockDrawingDocument(), drawingPath, report, logs }));
 
             Assert.IsType<IOException>(exception.GetBaseException());
@@ -1433,6 +1515,346 @@ public sealed class SolidWorksModuleSkeletonTests
                 Directory.Delete(root, recursive: true);
             }
         }
+    }
+
+    [Fact]
+    public void SolidWorksComFacadeInjectionSeamsAreAvailable()
+    {
+        Assert.True(typeof(ISolidWorksComFacade).IsInterface);
+        Assert.True(typeof(ISolidWorksFileVerifier).IsInterface);
+        Assert.True(typeof(ISolidWorksPropertyReader).IsInterface);
+        Assert.NotNull(typeof(LateBoundSolidWorksPlateBuilder).GetConstructor(new[]
+        {
+            typeof(ISolidWorksComFacade),
+            typeof(ISolidWorksFileVerifier),
+            typeof(SolidWorksPlateFeatureBuilder)
+        }));
+        Assert.NotNull(typeof(LateBoundSolidWorksDrawingBuilder).GetConstructor(new[]
+        {
+            typeof(ISolidWorksComFacade),
+            typeof(ISolidWorksFileVerifier)
+        }));
+        Assert.NotNull(typeof(LateBoundSolidWorksDrawingDimensionBuilder).GetConstructor(new[]
+        {
+            typeof(ISolidWorksComFacade),
+            typeof(ISolidWorksFileVerifier)
+        }));
+        Assert.NotNull(typeof(LateBoundSolidWorksDrawingTitleBlockBuilder).GetConstructor(new[]
+        {
+            typeof(ISolidWorksComFacade),
+            typeof(ISolidWorksFileVerifier),
+            typeof(ISolidWorksPropertyReader)
+        }));
+    }
+
+    [Fact]
+    public void SolidWorksPlateFeatureBuilderRejectsFeatureCutNull()
+    {
+        var extension = new FakeSolidWorksModelExtension(new Dictionary<string, bool>
+        {
+            ["Top Plane"] = true
+        });
+        var model = new FakeSolidWorksModel(extension, firstFeature: null);
+        var builder = new SolidWorksPlateFeatureBuilder(new FakeSolidWorksComFacade(returnNullFor: ["FeatureCut4"]));
+        var diagnostics = new SolidWorksPlateBuildDiagnostics();
+        var logs = new List<string>();
+
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.CreateThroughHoles(
+            model,
+            new[] { (0.01d, 0.01d) },
+            0.005d,
+            0.024d,
+            diagnostics,
+            logs));
+
+        Assert.Contains("cut_holes_failed", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cut_holes_success", diagnostics.OperationsExecuted);
+        Assert.Contains(diagnostics.Issues, issue => issue.Contains("api_evidence_insufficient", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void SolidWorksDrawingBuilderRejectsViewNull()
+    {
+        var createView = typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(
+            "CreateView",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(createView);
+        var builder = new LateBoundSolidWorksDrawingBuilder(new FakeSolidWorksComFacade(returnNullFor: ["CreateDrawViewFromModelView3"]));
+        var report = new SolidWorksDrawingReport();
+        var logs = new List<string>();
+
+        var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => createView.Invoke(
+            builder,
+            new object[] { new object(), @"C:\temp\plate_basic_4holes.SLDPRT", "*Front", 0.10d, 0.20d, "front_view_create_failed", report, logs }));
+
+        Assert.IsType<InvalidOperationException>(exception.GetBaseException());
+        Assert.Contains("front_view_create_failed", exception.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(report.ViewsCreated);
+    }
+
+    [Fact]
+    public void SolidWorksDrawingBuilderRejectsComFalseEvenWhenFileVerifierSeesFile()
+    {
+        var saveDrawing = typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(
+            "SaveDrawing",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(saveDrawing);
+        var path = Path.Combine(Path.GetTempPath(), "solidworks_com_false_test", Guid.NewGuid().ToString("N"), "plate_basic_4holes.SLDDRW");
+        var builder = new LateBoundSolidWorksDrawingBuilder(
+            new FakeSolidWorksComFacade(extensionSaveAsResult: false),
+            new FixedSolidWorksFileVerifier(exists: true, sizeBytes: 64));
+        var report = new SolidWorksDrawingReport { SlddrwPath = path };
+
+        var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
+            builder,
+            new object[] { new object(), path, report, new List<string>() }));
+
+        Assert.IsType<IOException>(exception.GetBaseException());
+        Assert.Contains("slddrw_save_failed", exception.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(report.Errors, error => error.Contains("save_as_returned_false", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void SolidWorksDrawingBuilderRejectsSaveAsSuccessWhenArtifactMissing()
+    {
+        var saveDrawing = typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(
+            "SaveDrawing",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(saveDrawing);
+        var path = Path.Combine(Path.GetTempPath(), "solidworks_missing_artifact_test", Guid.NewGuid().ToString("N"), "plate_basic_4holes.SLDDRW");
+        var builder = new LateBoundSolidWorksDrawingBuilder(
+            new FakeSolidWorksComFacade(extensionSaveAsResult: true),
+            new FixedSolidWorksFileVerifier(exists: false, sizeBytes: 0));
+        var report = new SolidWorksDrawingReport { SlddrwPath = path };
+
+        var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => saveDrawing.Invoke(
+            builder,
+            new object[] { new object(), path, report, new List<string>() }));
+
+        Assert.IsType<IOException>(exception.GetBaseException());
+        Assert.Contains("slddrw_save_failed", exception.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(report.SlddrwExists);
+        Assert.Equal(0, report.SlddrwSizeBytes);
+    }
+
+    [Fact]
+    public void SolidWorksDrawingBuilderRejectsPdfExportSuccessWhenPdfMissing()
+    {
+        var exportPdf = typeof(LateBoundSolidWorksDrawingBuilder).GetMethod(
+            "ExportPdf",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(exportPdf);
+        var path = Path.Combine(Path.GetTempPath(), "solidworks_missing_pdf_test", Guid.NewGuid().ToString("N"), "plate_basic_4holes.pdf");
+        var builder = new LateBoundSolidWorksDrawingBuilder(
+            new FakeSolidWorksComFacade(extensionSaveAsResult: true),
+            new FixedSolidWorksFileVerifier(exists: false, sizeBytes: 0));
+        var report = new SolidWorksDrawingReport { PdfPath = path };
+
+        var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => exportPdf.Invoke(
+            builder,
+            new object[] { new object(), new object(), path, report, new List<string>() }));
+
+        Assert.IsType<IOException>(exception.GetBaseException());
+        Assert.Contains("pdf_export_failed", exception.GetBaseException().Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(report.PdfExists);
+    }
+
+    [Fact]
+    public async Task SolidWorksPlateBuildReportWriterRejectsPassedWhenStepArtifactMissing()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "solidworks_plate_report_guard", Guid.NewGuid().ToString("N"));
+        var reportPath = Path.Combine(root, "build_report.json");
+        var diagnostics = new SolidWorksPlateBuildDiagnostics
+        {
+            SldprtSaveAttempted = true,
+            SldprtSaveSuccess = true,
+            SldprtPath = Path.Combine(root, "plate_basic_4holes.SLDPRT"),
+            SldprtSizeBytes = 128,
+            StepExportAttempted = true,
+            StepExportSuccess = false,
+            StepPath = Path.Combine(root, "plate_basic_4holes.STEP"),
+            StepSizeBytes = 0
+        };
+        diagnostics.OperationsExecuted.Add("cut_holes_success");
+
+        try
+        {
+            SolidWorksPlateBuildReportWriter.Write(
+                reportPath,
+                new SolidWorksWorkerRequest("test-request", await CreatePlanAsync(), root),
+                SolidWorksPlateBuildOutput.ExecutionMode,
+                realCadExecuted: true,
+                realCadConnected: true,
+                solidWorksVersion: "test",
+                outputDirectory: root,
+                generatedArtifactPaths: Array.Empty<string>(),
+                diagnostics,
+                "Passed");
+
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            Assert.Equal("Failed", document.RootElement.GetProperty("final_status").GetString());
+            Assert.Contains("step_export_failed", document.RootElement.GetProperty("issues").ToString(), StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SolidWorksDrawingReportWriterRejectsPassedWhenViewMissing()
+    {
+        var report = new SolidWorksDrawingReport
+        {
+            DrawingCreated = true,
+            SlddrwExists = true,
+            SlddrwSizeBytes = 128,
+            PdfExists = true,
+            PdfSizeBytes = 64,
+            FinalStatus = "Passed"
+        };
+        report.ViewsCreated.AddRange(new[] { "Front", "Top", "Right" });
+
+        SolidWorksFakeSuccessGuard.NormalizeDrawingReport(report);
+
+        Assert.Equal("Failed", report.FinalStatus);
+        Assert.Equal("isometric_view_create_failed", report.FailureStage);
+    }
+
+    [Fact]
+    public void SolidWorksDrawingDimensionReportWriterRejectsPassedWhenAllRequiredDimensionsFail()
+    {
+        var report = new SolidWorksDrawingDimensionReport
+        {
+            DrawingOpened = true,
+            SlddrwExists = true,
+            SlddrwSizeBytes = 128,
+            PdfExists = true,
+            PdfSizeBytes = 64,
+            FinalStatus = "Passed"
+        };
+        report.ViewsConfirmed.AddRange(new[] { "Front", "Top", "Right", "Isometric" });
+        foreach (var name in new[] { "plate_length", "plate_width", "plate_thickness", "hole_diameter", "hole_center_distance_x", "hole_center_distance_y" })
+        {
+            report.Dimensions.Add(new SolidWorksDrawingDimensionResult(
+                name,
+                1,
+                "Failed",
+                "length_dimension_failed",
+                "test",
+                "failed",
+                Attempted: true,
+                Success: false,
+                FailureReason: "COM returned null."));
+        }
+
+        SolidWorksFakeSuccessGuard.NormalizeDimensionReport(report);
+
+        Assert.Equal("Failed", report.FinalStatus);
+        Assert.Contains(report.Errors, error => error.Contains("all required dimensions failed", StringComparison.OrdinalIgnoreCase));
+        Assert.All(report.Dimensions, dimension =>
+        {
+            Assert.True(dimension.Attempted);
+            Assert.False(dimension.Success);
+            Assert.False(string.IsNullOrWhiteSpace(dimension.FailureReason));
+        });
+    }
+
+    [Fact]
+    public void SolidWorksDrawingDimensionPositionFallbackCannotPassGuard()
+    {
+        var confirmRequiredViews = typeof(LateBoundSolidWorksDrawingDimensionBuilder).GetMethod(
+            "ConfirmRequiredViews",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(confirmRequiredViews);
+        var fourth = new FakeDimensionDrawingView("View-D", null);
+        var third = new FakeDimensionDrawingView("View-C", fourth);
+        var second = new FakeDimensionDrawingView("View-B", third);
+        var first = new FakeDimensionDrawingView("View-A", second);
+        var sheet = new FakeDimensionDrawingView("Sheet", first);
+        var drawing = new FakeDimensionDrawingDocument(sheet);
+        var report = new SolidWorksDrawingDimensionReport
+        {
+            DrawingOpened = true,
+            SlddrwExists = true,
+            SlddrwSizeBytes = 128,
+            PdfExists = true,
+            PdfSizeBytes = 64,
+            FinalStatus = "Passed"
+        };
+
+        var confirmed = Assert.IsAssignableFrom<System.Collections.ICollection>(confirmRequiredViews.Invoke(
+            new LateBoundSolidWorksDrawingDimensionBuilder(),
+            new object[] { drawing, report }));
+        SolidWorksFakeSuccessGuard.NormalizeDimensionReport(report);
+
+        Assert.Equal(4, confirmed.Count);
+        Assert.True(report.ViewsConfirmedByPositionFallback);
+        Assert.Equal("Failed", report.FinalStatus);
+        Assert.Contains(report.Errors, error => error.Contains("position fallback", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void SolidWorksDrawingDimensionFailureRequiresReason()
+    {
+        var report = new SolidWorksDrawingDimensionReport
+        {
+            DrawingOpened = true,
+            SlddrwExists = true,
+            SlddrwSizeBytes = 128,
+            PdfExists = true,
+            PdfSizeBytes = 64,
+            FinalStatus = "Passed"
+        };
+        report.ViewsConfirmed.AddRange(new[] { "Front", "Top", "Right", "Isometric" });
+        foreach (var name in new[] { "plate_length", "plate_width", "plate_thickness", "hole_diameter", "hole_center_distance_x", "hole_center_distance_y" })
+        {
+            report.Dimensions.Add(new SolidWorksDrawingDimensionResult(
+                name,
+                1,
+                "Failed",
+                "length_dimension_failed",
+                "test",
+                "failed",
+                Attempted: true,
+                Success: false,
+                FailureReason: null));
+        }
+
+        SolidWorksFakeSuccessGuard.NormalizeDimensionReport(report);
+
+        Assert.Equal("Failed", report.FinalStatus);
+        Assert.Contains(report.Errors, error => error.Contains("must provide failure_reason", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void SolidWorksTitleBlockReportWriterRejectsPassedWhenPropertyReadbackFailed()
+    {
+        var report = new SolidWorksDrawingTitleBlockReport
+        {
+            DrawingOpened = true,
+            CustomPropertiesWritten = true,
+            SlddrwExists = true,
+            SlddrwSizeBytes = 128,
+            PdfExists = true,
+            PdfSizeBytes = 64,
+            FinalStatus = "Passed"
+        };
+        report.Properties.Add(new SolidWorksDrawingTitleBlockProperty(
+            "PartName",
+            "plate_basic_4holes",
+            "Failed",
+            "custom_property_write_failed",
+            "test",
+            "readback mismatch"));
+
+        SolidWorksFakeSuccessGuard.NormalizeTitleBlockReport(report);
+
+        Assert.Equal("Failed", report.FinalStatus);
+        Assert.Equal("custom_property_write_failed", report.FailureStage);
     }
 
     [Fact]
@@ -2384,7 +2806,7 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.NotNull(typeof(SolidWorksPlateFeatureBuilder).GetMethod(nameof(SolidWorksPlateFeatureBuilder.CreateThroughHoles)));
         Assert.NotNull(typeof(SolidWorksPlateFeatureBuilder).GetMethod(
             "SelectSketchForFeatureCut",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
         Assert.Equal(1, SolidWorksDiagnosticRunner.MaxRepairAttempts);
     }
 
@@ -2828,6 +3250,139 @@ public sealed class SolidWorksModuleSkeletonTests
         }
     }
 
+    private sealed class FakeDimensionDrawingDocument
+    {
+        private readonly FakeDimensionDrawingView _sheet;
+
+        public FakeDimensionDrawingDocument(FakeDimensionDrawingView sheet)
+        {
+            _sheet = sheet;
+        }
+
+        public FakeDimensionDrawingView GetFirstView() => _sheet;
+    }
+
+    private sealed class FakeDimensionDrawingView
+    {
+        private readonly FakeDimensionDrawingView? _next;
+        private readonly string _name;
+
+        public FakeDimensionDrawingView(string name, FakeDimensionDrawingView? next)
+        {
+            _name = name;
+            _next = next;
+        }
+
+        public FakeDimensionDrawingView? GetNextView() => _next;
+
+        public string GetName2() => _name;
+
+        public string? GetOrientationName() => null;
+    }
+
+    private sealed class FixedSolidWorksFileVerifier : ISolidWorksFileVerifier
+    {
+        private readonly bool _exists;
+        private readonly long _sizeBytes;
+
+        public FixedSolidWorksFileVerifier(bool exists, long sizeBytes)
+        {
+            _exists = exists;
+            _sizeBytes = sizeBytes;
+        }
+
+        public SolidWorksFileState GetState(string path) =>
+            new(Path.GetFullPath(path), _exists, _exists ? _sizeBytes : 0);
+
+        public bool IsNonEmptyFile(string path) => _exists && _sizeBytes > 0;
+    }
+
+    private sealed class FakeSolidWorksComFacade : ISolidWorksComFacade
+    {
+        private readonly HashSet<string> _returnNullFor;
+        private readonly bool _extensionSaveAsResult;
+
+        public FakeSolidWorksComFacade(
+            IEnumerable<string>? returnNullFor = null,
+            bool extensionSaveAsResult = true)
+        {
+            _returnNullFor = new HashSet<string>(returnNullFor ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            _extensionSaveAsResult = extensionSaveAsResult;
+        }
+
+        public object GetProperty(object target, string name) =>
+            TryGetProperty(target, name) ?? new object();
+
+        public object? TryGetProperty(object? target, string name) =>
+            name.Equals("ActiveDoc", StringComparison.OrdinalIgnoreCase) ? new object() : new object();
+
+        public object? TryGetIndexedProperty(object target, string name, params object?[] args) =>
+            _returnNullFor.Contains(name) ? null : new object();
+
+        public object? Invoke(object target, string name, params object?[] args) =>
+            InvokeWithArgs(target, name, args);
+
+        public object? InvokeWithArgs(object target, string name, object?[] args)
+        {
+            if (_returnNullFor.Contains(name))
+            {
+                return null;
+            }
+
+            if (name is "GetTitle" or "GetName")
+            {
+                return "FakeSolidWorksDocument";
+            }
+
+            if (name is "ActivateDoc3" or "ClearSelection2" or "ForceRebuild3" or "EditRebuild3" or "SetSheets")
+            {
+                return true;
+            }
+
+            if (name is "SaveAs" or "SaveAs3" or "Select2" or "Select4" or "ActivateView")
+            {
+                return _extensionSaveAsResult;
+            }
+
+            if (name.Equals("GetProperties2", StringComparison.OrdinalIgnoreCase))
+            {
+                return new object[] { 0d, 0d, 1d, 1d };
+            }
+
+            return new object();
+        }
+
+        public object? TryInvoke(object? target, string name, params object?[] args) =>
+            target is null ? null : Invoke(target, name, args);
+
+        public object? TryInvokeWithArgs(object? target, string name, object?[] args) =>
+            target is null ? null : InvokeWithArgs(target, name, args);
+
+        public bool TryInvokeBool(object? target, string name, params object?[] args) =>
+            TryInvoke(target, name, args) is bool value && value;
+
+        public bool TrySetProperty(object target, string name, object? value) => true;
+
+        public bool TryExtensionSaveAs(
+            object model,
+            string path,
+            object? exportData,
+            List<string> errors,
+            List<string> warnings)
+        {
+            if (!_extensionSaveAsResult)
+            {
+                errors.Add("save_as_returned_false");
+            }
+
+            return _extensionSaveAsResult;
+        }
+
+        public void ReleaseComObject(object value)
+        {
+        }
+    }
+
     private sealed class TestSolidWorksPlateBuilder : ISolidWorksPlateBuilder
     {
         public int BuildAttempts { get; private set; }
@@ -3015,12 +3570,12 @@ public sealed class SolidWorksModuleSkeletonTests
             report.ViewsConfirmed.AddRange(new[] { "Front", "Top", "Right", "Isometric" });
             report.Dimensions.AddRange(new[]
             {
-                new SolidWorksDrawingDimensionResult("plate_length", 160, "Passed", "length_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added"),
-                new SolidWorksDrawingDimensionResult("plate_width", 80, "Passed", "width_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added"),
-                new SolidWorksDrawingDimensionResult("plate_thickness", 12, "Passed", "thickness_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added"),
-                new SolidWorksDrawingDimensionResult("hole_diameter", 10, "Passed", "hole_diameter_dimension_failed", "IDrawingDoc.ICreateDiamDim4_non_associative", "test dimension added"),
-                new SolidWorksDrawingDimensionResult("hole_center_distance_x", 120, "Passed", "hole_position_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added"),
-                new SolidWorksDrawingDimensionResult("hole_center_distance_y", 40, "Passed", "hole_position_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added")
+                new SolidWorksDrawingDimensionResult("plate_length", 160, "Passed", "length_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added", true, true, null),
+                new SolidWorksDrawingDimensionResult("plate_width", 80, "Passed", "width_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added", true, true, null),
+                new SolidWorksDrawingDimensionResult("plate_thickness", 12, "Passed", "thickness_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added", true, true, null),
+                new SolidWorksDrawingDimensionResult("hole_diameter", 10, "Passed", "hole_diameter_dimension_failed", "IDrawingDoc.ICreateDiamDim4_non_associative", "test dimension added", true, true, null),
+                new SolidWorksDrawingDimensionResult("hole_center_distance_x", 120, "Passed", "hole_position_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added", true, true, null),
+                new SolidWorksDrawingDimensionResult("hole_center_distance_y", 40, "Passed", "hole_position_dimension_failed", "IDrawingDoc.CreateLinearDim4_non_associative", "test dimension added", true, true, null)
             });
             report.Operations.AddRange(new[]
             {

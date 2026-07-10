@@ -307,6 +307,7 @@ public static class SolidWorksPlateBuildReportWriter
         SolidWorksPlateBuildDiagnostics diagnostics,
         string finalStatus)
     {
+        finalStatus = SolidWorksFakeSuccessGuard.NormalizePlateFinalStatus(diagnostics, finalStatus);
         var now = DateTimeOffset.UtcNow;
         var report = new
         {
@@ -353,6 +354,19 @@ public static class SolidWorksPlateBuildReportWriter
 public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
 {
     private const double MmToMeters = 0.001;
+    private readonly ISolidWorksComFacade _comFacade;
+    private readonly ISolidWorksFileVerifier _fileVerifier;
+    private readonly SolidWorksPlateFeatureBuilder _featureBuilder;
+
+    public LateBoundSolidWorksPlateBuilder(
+        ISolidWorksComFacade? comFacade = null,
+        ISolidWorksFileVerifier? fileVerifier = null,
+        SolidWorksPlateFeatureBuilder? featureBuilder = null)
+    {
+        _comFacade = comFacade ?? new LateBoundSolidWorksComFacade();
+        _fileVerifier = fileVerifier ?? new SolidWorksFileVerifier();
+        _featureBuilder = featureBuilder ?? new SolidWorksPlateFeatureBuilder(_comFacade, _fileVerifier);
+    }
 
     public Task<SolidWorksPlateBuildResult> BuildPlateBasicFourHolesAsync(
         object application,
@@ -368,7 +382,7 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
             cancellationToken);
     }
 
-    private static SolidWorksPlateBuildResult BuildCore(
+    private SolidWorksPlateBuildResult BuildCore(
         object application,
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options,
@@ -426,15 +440,14 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
 
             operations.Add("new_part_success");
 
-            var featureBuilder = new SolidWorksPlateFeatureBuilder();
-            featureBuilder.CreateBasePlate(
+            _featureBuilder.CreateBasePlate(
                 model,
                 dimensions.LengthMeters,
                 dimensions.WidthMeters,
                 dimensions.ThicknessMeters,
                 diagnostics,
                 logs);
-            featureBuilder.CreateThroughHoles(
+            _featureBuilder.CreateThroughHoles(
                 model,
                 dimensions.HoleCentersMeters().ToArray(),
                 dimensions.HoleRadiusMeters,
@@ -445,6 +458,7 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
             ForceRebuild(model, logs);
             SavePart(model, partPath, diagnostics, logs);
             ExportStep(application, model, stepPath, diagnostics, logs);
+            SolidWorksFakeSuccessGuard.RequirePlateArtifactsCanPass(diagnostics);
             operations.Add("build_report_started");
 
             SolidWorksPlateBuildReportWriter.Write(
@@ -547,13 +561,13 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         logs.Add($"Selected sketch plane: {result.SelectedPlaneName} using {result.SelectedPlaneStrategy}.");
     }
 
-    private static void EnterSketch(object model) =>
+    private void EnterSketch(object model) =>
         Invoke(GetProperty(model, "SketchManager"), "InsertSketch", true);
 
-    private static void ExitSketch(object model) =>
+    private void ExitSketch(object model) =>
         Invoke(GetProperty(model, "SketchManager"), "InsertSketch", true);
 
-    private static void ForceRebuild(object model, List<string> logs)
+    private void ForceRebuild(object model, List<string> logs)
     {
         if (TryInvokeBool(model, "ForceRebuild3", false))
         {
@@ -561,23 +575,27 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         }
     }
 
-    private static void SavePart(object model, string partPath, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
+    private void SavePart(object model, string partPath, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
     {
         diagnostics.OperationsExecuted.Add("save_sldprt_started");
         diagnostics.SldprtSaveAttempted = true;
         diagnostics.SldprtPath = Path.GetFullPath(partPath);
         Directory.CreateDirectory(Path.GetDirectoryName(partPath)!);
 
-        var saved = TryExtensionSaveAs(model, partPath, diagnostics.SldprtSaveErrors, diagnostics.SldprtSaveWarnings) ||
+        var saved = _comFacade.TryExtensionSaveAs(model, partPath, null, diagnostics.SldprtSaveErrors, diagnostics.SldprtSaveWarnings) ||
                     TryInvokeBool(model, "SaveAs3", partPath, 0, 1) ||
                     TryInvokeBool(model, "SaveAs", partPath);
 
         if (!saved)
         {
             diagnostics.SldprtSaveErrors.Add("sldprt_save_failed: SaveAs returned false.");
+            diagnostics.SldprtSaveSuccess = false;
+            diagnostics.Issues.Add("sldprt_save_failed: SaveAs returned false.");
+            throw new IOException($"sldprt_save_failed: {partPath}");
         }
 
-        if (!File.Exists(partPath) || new FileInfo(partPath).Length <= 0)
+        var fileState = _fileVerifier.GetState(partPath);
+        if (!fileState.Exists || fileState.SizeBytes <= 0)
         {
             diagnostics.SldprtSaveSuccess = false;
             diagnostics.SldprtSaveErrors.Add($"sldprt_save_failed: {partPath}");
@@ -586,12 +604,12 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         }
 
         diagnostics.SldprtSaveSuccess = true;
-        diagnostics.SldprtSizeBytes = new FileInfo(partPath).Length;
+        diagnostics.SldprtSizeBytes = fileState.SizeBytes;
         diagnostics.OperationsExecuted.Add("save_sldprt_success");
         logs.Add($"Saved SolidWorks part: {partPath}.");
     }
 
-    private static void ExportStep(object application, object model, string stepPath, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
+    private void ExportStep(object application, object model, string stepPath, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
     {
         diagnostics.OperationsExecuted.Add("export_step_started");
         diagnostics.StepExportAttempted = true;
@@ -603,16 +621,20 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         var activeDocument = TryGetProperty(application, "ActiveDoc") ?? model;
         TryInvoke(activeDocument, "ClearSelection2", true);
 
-        var exported = TryExtensionSaveAs(activeDocument, stepPath, diagnostics.StepExportErrors, diagnostics.StepExportWarnings) ||
+        var exported = _comFacade.TryExtensionSaveAs(activeDocument, stepPath, null, diagnostics.StepExportErrors, diagnostics.StepExportWarnings) ||
                        TryInvokeBool(activeDocument, "SaveAs3", stepPath, 0, 1) ||
                        TryInvokeBool(activeDocument, "SaveAs", stepPath);
 
         if (!exported)
         {
             diagnostics.StepExportErrors.Add("step_export_failed: SaveAs returned false.");
+            diagnostics.StepExportSuccess = false;
+            diagnostics.Issues.Add("step_export_failed: SaveAs returned false.");
+            throw new IOException($"step_export_failed: {stepPath}");
         }
 
-        if (!File.Exists(stepPath) || new FileInfo(stepPath).Length <= 0)
+        var fileState = _fileVerifier.GetState(stepPath);
+        if (!fileState.Exists || fileState.SizeBytes <= 0)
         {
             diagnostics.StepExportSuccess = false;
             diagnostics.StepExportErrors.Add($"step_export_failed: {stepPath}");
@@ -621,12 +643,12 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         }
 
         diagnostics.StepExportSuccess = true;
-        diagnostics.StepSizeBytes = new FileInfo(stepPath).Length;
+        diagnostics.StepSizeBytes = fileState.SizeBytes;
         diagnostics.OperationsExecuted.Add("export_step_success");
         logs.Add($"Exported STEP file: {stepPath}.");
     }
 
-    private static void ActivateDocument(object application, object model, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
+    private void ActivateDocument(object application, object model, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
     {
         var title = TryInvoke(model, "GetTitle")?.ToString();
         if (!string.IsNullOrWhiteSpace(title))
@@ -637,88 +659,21 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         }
     }
 
-    private static string? GetActiveDocumentTitle(object application)
+    private string? GetActiveDocumentTitle(object application)
     {
         var activeDocument = TryGetProperty(application, "ActiveDoc");
         return activeDocument is null ? null : TryInvoke(activeDocument, "GetTitle")?.ToString();
     }
 
-    private static bool TryExtensionSaveAs(
-        object model,
-        string path,
-        List<string> errors,
-        List<string> warnings)
-    {
-        try
-        {
-            var extension = GetProperty(model, "Extension");
-            var args = new object?[] { path, 0, 1, null, 0, 0 };
-            var result = Invoke(extension, "SaveAs", args);
-            if (args[4] is not null && Convert.ToInt32(args[4], CultureInfo.InvariantCulture) != 0)
-            {
-                errors.Add($"save_as_errors: {args[4]}");
-            }
+    private object GetProperty(object target, string name) => _comFacade.GetProperty(target, name);
 
-            if (args[5] is not null && Convert.ToInt32(args[5], CultureInfo.InvariantCulture) != 0)
-            {
-                warnings.Add($"save_as_warnings: {args[5]}");
-            }
+    private object? TryGetProperty(object? target, string name) => _comFacade.TryGetProperty(target, name);
 
-            return result is bool value && value;
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            errors.Add($"save_as_exception: {ex.GetBaseException().Message}");
-            return false;
-        }
-    }
+    private object? Invoke(object target, string name, params object?[] args) => _comFacade.Invoke(target, name, args);
 
-    private static object GetProperty(object target, string name) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.GetProperty,
-            binder: null,
-            target,
-            Array.Empty<object>())
-        ?? throw new InvalidOperationException($"solidworks_property_missing: {name}.");
+    private object? TryInvoke(object? target, string name, params object?[] args) => _comFacade.TryInvoke(target, name, args);
 
-    private static object? TryGetProperty(object target, string name)
-    {
-        try
-        {
-            return GetProperty(target, name);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static object? Invoke(object target, string name, params object?[] args) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.InvokeMethod,
-            binder: null,
-            target,
-            args);
-
-    private static object? TryInvoke(object target, string name, params object?[] args)
-    {
-        try
-        {
-            return Invoke(target, name, args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            return null;
-        }
-    }
-
-    private static bool TryInvokeBool(object target, string name, params object?[] args)
-    {
-        var value = TryInvoke(target, name, args);
-        return value is bool boolean && boolean;
-    }
+    private bool TryInvokeBool(object? target, string name, params object?[] args) => _comFacade.TryInvokeBool(target, name, args);
 
     private static void RequireComResult(object? value, string message)
     {
@@ -728,18 +683,7 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         }
     }
 
-    private static void ReleaseComObject(object value)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        if (Marshal.IsComObject(value))
-        {
-            Marshal.FinalReleaseComObject(value);
-        }
-    }
+    private void ReleaseComObject(object value) => _comFacade.ReleaseComObject(value);
 
     private sealed record SolidWorksPlateDimensions(
         double LengthMeters,

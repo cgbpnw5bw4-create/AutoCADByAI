@@ -172,6 +172,8 @@ public sealed class SolidWorksDrawingDimensionReport
 
     public List<string> ViewsConfirmed { get; } = [];
 
+    public bool ViewsConfirmedByPositionFallback { get; set; }
+
     public bool LengthDimensionAdded { get; set; }
 
     public bool WidthDimensionAdded { get; set; }
@@ -213,7 +215,10 @@ public sealed record SolidWorksDrawingDimensionResult(
     string Status,
     string FailureStage,
     string ApiStrategy,
-    string Message);
+    string Message,
+    bool Attempted,
+    bool Success,
+    string? FailureReason);
 
 public sealed class SolidWorksDrawingTitleBlockReport
 {

@@ -17,6 +17,10 @@ public sealed record ModuleStructureCheck(
     IReadOnlyList<string> MissingEntries);
 
 public sealed record PlatformSelfCheckReport(
+    [property: JsonPropertyName("schema_version")] string SchemaVersion,
+    [property: JsonPropertyName("run_id")] string RunId,
+    [property: JsonPropertyName("generated_at")] DateTimeOffset GeneratedAt,
+    [property: JsonPropertyName("source_revision")] string SourceRevision,
     IReadOnlyList<ModuleSummary> RegisteredModules,
     IReadOnlyList<AgentSummary> RegisteredAgents,
     IReadOnlyList<AgentSummary> PublicAgents,
@@ -298,4 +302,8 @@ public sealed record PlatformSelfCheckReport(
     [property: JsonPropertyName("release_package_deliverable_status_field_exists")] bool ReleasePackageDeliverableStatusFieldExists,
     [property: JsonPropertyName("release_package_failed_source_reports_block_deliverable")] bool ReleasePackageFailedSourceReportsBlockDeliverable,
     [property: JsonPropertyName("v1_5_version_stage_documented")] bool V15VersionStageDocumented,
+    [property: JsonPropertyName("solidworks_com_facade_injection_supported")] bool SolidWorksComFacadeInjectionSupported,
+    [property: JsonPropertyName("solidworks_real_acceptance_protocol_exists")] bool SolidWorksRealAcceptanceProtocolExists,
+    [property: JsonPropertyName("solidworks_latest_real_outputs_report_supported")] bool SolidWorksLatestRealOutputsReportSupported,
+    [property: JsonPropertyName("v1_6_test_a_documented")] bool V16TestADocumented,
     string FinalStatus);

@@ -117,6 +117,7 @@ public static class SolidWorksDrawingTitleBlockReportWriter
         SolidWorksDrawingTitleBlockReport report,
         CancellationToken cancellationToken = default)
     {
+        SolidWorksFakeSuccessGuard.NormalizeTitleBlockReport(report);
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -131,6 +132,7 @@ public static class SolidWorksDrawingTitleBlockReportWriter
 
     public static void Write(string reportPath, SolidWorksDrawingTitleBlockReport report)
     {
+        SolidWorksFakeSuccessGuard.NormalizeTitleBlockReport(report);
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -153,6 +155,19 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
     private const int SwOpenDocOptionsSilent = 1;
     private const int SwCustomInfoText = 30;
     private const int SwCustomPropertyReplaceValue = 2;
+    private readonly ISolidWorksComFacade _comFacade;
+    private readonly ISolidWorksFileVerifier _fileVerifier;
+    private readonly ISolidWorksPropertyReader _propertyReader;
+
+    public LateBoundSolidWorksDrawingTitleBlockBuilder(
+        ISolidWorksComFacade? comFacade = null,
+        ISolidWorksFileVerifier? fileVerifier = null,
+        ISolidWorksPropertyReader? propertyReader = null)
+    {
+        _comFacade = comFacade ?? new LateBoundSolidWorksComFacade();
+        _fileVerifier = fileVerifier ?? new SolidWorksFileVerifier();
+        _propertyReader = propertyReader ?? new SolidWorksCustomPropertyReader(_comFacade);
+    }
 
     public Task<SolidWorksDrawingTitleBlockBuildResult> ApplyTitleBlockAsync(
         object application,
@@ -168,7 +183,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
             cancellationToken);
     }
 
-    private static SolidWorksDrawingTitleBlockBuildResult ApplyCore(
+    private SolidWorksDrawingTitleBlockBuildResult ApplyCore(
         object application,
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options,
@@ -324,6 +339,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
 
             SaveDrawing(drawingDocument, drawingPath, report, logs);
             ExportPdf(application, drawingDocument, pdfPath, report, logs);
+            SolidWorksFakeSuccessGuard.RequireTitleBlockCanPass(report);
 
             report.FinalStatus = "Passed";
             report.CompletedAt = DateTimeOffset.UtcNow;
@@ -355,7 +371,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         }
     }
 
-    private static string? ReadSheetScale(object sheet, SolidWorksDrawingTitleBlockReport report)
+    private string? ReadSheetScale(object sheet, SolidWorksDrawingTitleBlockReport report)
     {
         report.Operations.Add("drawing_properties_read_started");
         var properties = TryInvoke(sheet, "GetProperties2");
@@ -401,7 +417,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         return string.IsNullOrWhiteSpace(material) ? "Q235" : material;
     }
 
-    private static void WriteRequiredProperties(
+    private void WriteRequiredProperties(
         object customPropertyManager,
         SolidWorksDrawingTitleBlockReport report)
     {
@@ -421,7 +437,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         yield return ("Revision", report.Revision);
     }
 
-    private static SolidWorksDrawingTitleBlockProperty WriteProperty(
+    private SolidWorksDrawingTitleBlockProperty WriteProperty(
         object customPropertyManager,
         string name,
         string value)
@@ -431,7 +447,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
             ? TryInvoke(customPropertyManager, "Set2", name, value)
             : addResult;
 
-        var verifiedValue = ReadCustomProperty(customPropertyManager, name);
+        var verifiedValue = _propertyReader.ReadCustomProperty(customPropertyManager, name);
         var verified = !string.IsNullOrWhiteSpace(verifiedValue) &&
                        string.Equals(verifiedValue, value, StringComparison.OrdinalIgnoreCase);
         var succeeded = ApiResultLooksSuccessful(setResult) && verified;
@@ -447,13 +463,6 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
                 : $"Custom property write failed or verification mismatch. Actual value: {verifiedValue ?? "<unavailable>"}.");
     }
 
-    private static string? ReadCustomProperty(object customPropertyManager, string name)
-    {
-        var args = new object?[] { name, false, string.Empty, string.Empty, false, false };
-        _ = TryInvokeWithArgs(customPropertyManager, "Get6", args);
-        return args[2]?.ToString();
-    }
-
     private static bool ApiResultLooksSuccessful(object? value) =>
         value switch
         {
@@ -465,11 +474,11 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
             _ => true
         };
 
-    private static bool UpdateTitleBlock(object drawingDocument) =>
+    private bool UpdateTitleBlock(object drawingDocument) =>
         TryInvokeBool(drawingDocument, "ForceRebuild3", false) ||
         TryInvokeBool(drawingDocument, "EditRebuild3");
 
-    private static void SaveDrawing(
+    private void SaveDrawing(
         object drawingDocument,
         string drawingPath,
         SolidWorksDrawingTitleBlockReport report,
@@ -479,7 +488,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         Directory.CreateDirectory(Path.GetDirectoryName(drawingPath)!);
         var errors = new List<string>();
         var warnings = new List<string>();
-        var saved = TryExtensionSaveAs(drawingDocument, drawingPath, null, errors, warnings) ||
+        var saved = _comFacade.TryExtensionSaveAs(drawingDocument, drawingPath, null, errors, warnings) ||
                     TryInvokeBool(drawingDocument, "SaveAs3", drawingPath, 0, 1) ||
                     TryInvokeBool(drawingDocument, "SaveAs", drawingPath);
 
@@ -487,6 +496,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         {
             report.Errors.AddRange(errors.DefaultIfEmpty("title_block_save_failed: SaveAs returned false."));
             report.Warnings.AddRange(warnings);
+            throw new IOException($"title_block_save_failed: {drawingPath}");
         }
 
         RefreshFileState(report);
@@ -499,7 +509,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         logs.Add($"Saved title block SolidWorks drawing: {drawingPath}.");
     }
 
-    private static void ExportPdf(
+    private void ExportPdf(
         object application,
         object drawingDocument,
         string pdfPath,
@@ -514,8 +524,8 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         var errors = new List<string>();
         var warnings = new List<string>();
         var pdfData = TryGetPdfExportData(application, warnings);
-        var exported = TryExtensionSaveAs(drawingDocument, pdfPath, pdfData, errors, warnings) ||
-                       TryExtensionSaveAs(drawingDocument, pdfPath, null, errors, warnings) ||
+        var exported = _comFacade.TryExtensionSaveAs(drawingDocument, pdfPath, pdfData, errors, warnings) ||
+                       _comFacade.TryExtensionSaveAs(drawingDocument, pdfPath, null, errors, warnings) ||
                        TryInvokeBool(drawingDocument, "SaveAs3", pdfPath, 0, 1) ||
                        TryInvokeBool(drawingDocument, "SaveAs", pdfPath);
 
@@ -523,6 +533,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         {
             report.Errors.AddRange(errors.DefaultIfEmpty("title_block_pdf_export_failed: SaveAs returned false."));
             report.Warnings.AddRange(warnings);
+            throw new IOException($"title_block_pdf_export_failed: {pdfPath}");
         }
 
         RefreshFileState(report);
@@ -535,12 +546,12 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         logs.Add($"Exported title block drawing PDF: {pdfPath}.");
     }
 
-    private static object? OpenDrawing(object application, string sourceDrawingPath) =>
+    private object? OpenDrawing(object application, string sourceDrawingPath) =>
         TryInvoke(application, "OpenDoc6", sourceDrawingPath, SwDocDrawing, SwOpenDocOptionsSilent, string.Empty, 0, 0) ??
         TryInvoke(application, "OpenDoc", sourceDrawingPath, SwDocDrawing) ??
         TryGetProperty(application, "ActiveDoc");
 
-    private static bool ActivateDocument(object application, object document)
+    private bool ActivateDocument(object application, object document)
     {
         var title = TryInvoke(document, "GetTitle")?.ToString();
         if (!string.IsNullOrWhiteSpace(title))
@@ -563,7 +574,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         return string.Equals(activeTitle, title, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static object? GetCustomPropertyManager(object drawingDocument)
+    private object? GetCustomPropertyManager(object drawingDocument)
     {
         var extension = TryGetProperty(drawingDocument, "Extension");
         return extension is null
@@ -572,7 +583,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
               TryGetIndexedProperty(extension, "CustomPropertyManager", string.Empty);
     }
 
-    private static object? TryGetPdfExportData(object application, List<string> warnings)
+    private object? TryGetPdfExportData(object application, List<string> warnings)
     {
         try
         {
@@ -594,7 +605,7 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         }
     }
 
-    private static SolidWorksDrawingTitleBlockBuildResult FailWithReport(
+    private SolidWorksDrawingTitleBlockBuildResult FailWithReport(
         SolidWorksDrawingTitleBlockReport report,
         string reportPath,
         IReadOnlyList<string> logs,
@@ -642,20 +653,22 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
             generatedArtifacts);
     }
 
-    private static void RefreshFileState(SolidWorksDrawingTitleBlockReport report)
+    private void RefreshFileState(SolidWorksDrawingTitleBlockReport report)
     {
         if (!string.IsNullOrWhiteSpace(report.SlddrwPath))
         {
-            report.SlddrwPath = Path.GetFullPath(report.SlddrwPath);
-            report.SlddrwExists = File.Exists(report.SlddrwPath);
-            report.SlddrwSizeBytes = report.SlddrwExists ? new FileInfo(report.SlddrwPath).Length : 0;
+            var state = _fileVerifier.GetState(report.SlddrwPath);
+            report.SlddrwPath = state.Path;
+            report.SlddrwExists = state.Exists;
+            report.SlddrwSizeBytes = state.SizeBytes;
         }
 
         if (!string.IsNullOrWhiteSpace(report.PdfPath))
         {
-            report.PdfPath = Path.GetFullPath(report.PdfPath);
-            report.PdfExists = File.Exists(report.PdfPath);
-            report.PdfSizeBytes = report.PdfExists ? new FileInfo(report.PdfPath).Length : 0;
+            var state = _fileVerifier.GetState(report.PdfPath);
+            report.PdfPath = state.Path;
+            report.PdfExists = state.Exists;
+            report.PdfSizeBytes = state.SizeBytes;
         }
     }
 
@@ -722,129 +735,19 @@ public sealed class LateBoundSolidWorksDrawingTitleBlockBuilder : ISolidWorksDra
         return "drawing_title_block_api_evidence_insufficient";
     }
 
-    private static bool TryExtensionSaveAs(
-        object model,
-        string path,
-        object? exportData,
-        List<string> errors,
-        List<string> warnings)
-    {
-        try
-        {
-            var extension = GetProperty(model, "Extension");
-            var args = new object?[] { path, 0, 1, exportData, 0, 0 };
-            var result = InvokeWithArgs(extension, "SaveAs", args);
-            if (args[4] is not null && Convert.ToInt32(args[4], CultureInfo.InvariantCulture) != 0)
-            {
-                errors.Add($"save_as_errors: {args[4]}");
-            }
-
-            if (args[5] is not null && Convert.ToInt32(args[5], CultureInfo.InvariantCulture) != 0)
-            {
-                warnings.Add($"save_as_warnings: {args[5]}");
-            }
-
-            return result is bool value && value;
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            errors.Add($"save_as_exception: {ex.GetBaseException().Message}");
-            return false;
-        }
-    }
-
     private static double ConvertToDouble(object? value) =>
         value is null ? 0d : Convert.ToDouble(value, CultureInfo.InvariantCulture);
 
-    private static object GetProperty(object target, string name) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.GetProperty,
-            binder: null,
-            target,
-            [])
-        ?? throw new InvalidOperationException($"solidworks_property_missing: {name}.");
+    private object GetProperty(object target, string name) => _comFacade.GetProperty(target, name);
 
-    private static object? TryGetProperty(object target, string name)
-    {
-        try
-        {
-            return GetProperty(target, name);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
+    private object? TryGetProperty(object? target, string name) => _comFacade.TryGetProperty(target, name);
 
-    private static object? TryGetIndexedProperty(object target, string name, params object?[] args)
-    {
-        try
-        {
-            return target.GetType().InvokeMember(
-                name,
-                BindingFlags.GetProperty,
-                binder: null,
-                target,
-                args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
+    private object? TryGetIndexedProperty(object target, string name, params object?[] args) =>
+        _comFacade.TryGetIndexedProperty(target, name, args);
 
-    private static object? Invoke(object target, string name, params object?[] args) =>
-        InvokeWithArgs(target, name, args);
+    private object? TryInvoke(object? target, string name, params object?[] args) => _comFacade.TryInvoke(target, name, args);
 
-    private static object? InvokeWithArgs(object target, string name, object?[] args) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.InvokeMethod,
-            binder: null,
-            target,
-            args);
+    private bool TryInvokeBool(object? target, string name, params object?[] args) => _comFacade.TryInvokeBool(target, name, args);
 
-    private static object? TryInvoke(object target, string name, params object?[] args)
-    {
-        try
-        {
-            return Invoke(target, name, args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static object? TryInvokeWithArgs(object target, string name, object?[] args)
-    {
-        try
-        {
-            return InvokeWithArgs(target, name, args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static bool TryInvokeBool(object target, string name, params object?[] args)
-    {
-        var value = TryInvoke(target, name, args);
-        return value is bool boolean && boolean;
-    }
-
-    private static void ReleaseComObject(object value)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        if (Marshal.IsComObject(value))
-        {
-            Marshal.FinalReleaseComObject(value);
-        }
-    }
+    private void ReleaseComObject(object value) => _comFacade.ReleaseComObject(value);
 }

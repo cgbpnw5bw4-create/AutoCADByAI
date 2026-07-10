@@ -9,6 +9,12 @@ public sealed class SolidWorksWorkflowRouter
 
     public SolidWorksMainWorkflowRequest? TryBuildRequest(AgentContext context)
     {
+        var sharedSpec = TryGetSharedStateModelSpec(context);
+        if (sharedSpec is not null && !IsSupportedModelType(sharedSpec.ModelType))
+        {
+            return null;
+        }
+
         if (!ShouldRun(context))
         {
             return null;

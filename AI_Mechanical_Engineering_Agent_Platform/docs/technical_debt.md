@@ -8,7 +8,7 @@ V1.1 Claude 审查未发现 Blockers，仅提出 Improvements。以下事项进�
 - 清理历史切孔候选中的死代码，降低后续 API 修复噪声。
 - 统一 `repair_log` 命名，避免报告字段语义分散。
 - 清理或归档旧 evidence JSON，保留当前阶段可复现证据。
-- 复查 V1.1 工程图报告写入路径，消除重复写入。
+- V1.6 已消除 V1.1 工程图报告的重复写入。
 - 后续抽取保存、导出、COM 释放等 SolidWorks 共享工具。
 
 处理规则：以上事项不得作为 V1.2 Blocker。若后续阶段触碰同一代码路径，应优先就近修复，并继续保持真实 SolidWorks 默认关闭。
@@ -27,6 +27,13 @@ V1.2 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers，仅提出 
 
 V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事项作为后续技术债登记，不阻塞当前最小标题栏链路：
 - 标题栏 `Passed` 目前表示自定义属性已写入并可回读，不表示图纸模板 Sheet Format 中的 note 已可见渲染。报告和 self-check 必须持续暴露 `title_block_population_strategy=custom_properties_only` 与 `title_block_fields_verified_in_sheet_format=false`，直到后续版本实现模板 note 链接校验。
-- 标题栏、尺寸、工程图 Builder 的 COM 调用层仍应后续抽象为可注入接口，以便纯单元测试覆盖属性回读不一致、保存空文件、PDF 导出空文件和 COM 返回 null 等内部失败分支。
+- V1.6 已把标题栏、尺寸、工程图和零件 Builder 的 COM 调用层抽象为可注入接口，并补充属性回读不一致、保存/导出缺失及 COM 返回空值等行为测试。
 - 旧工程图 report 双写、历史 evidence JSON 清理、共享保存/导出/COM 释放工具抽取继续按“触碰即就近修复”的规则处理。
 处理规则：`ExecuteWithApplicationAsync` 执行超时已在本轮从技术债提升为修复项；其余事项不得被误读为 V1.4 Blocker。真实 SolidWorks 默认仍保持关闭，只有显式 smoke 开关才允许启动 COM/CAD Runtime。
+
+## V1.6 后续整理
+
+- `SolidWorksFakeSuccessGuard` 当前仍与 COM facade 位于 `SolidWorksComInterop.cs`，后续可纯移动到独立文件，保持行为不变。
+- `InternalRoute` 仍是固定四步流程；动态化需要单独设计路由配置与回归测试，不在防假成功修复中顺带重构。
+- Router 对不受支持结构化类型的负路径仍需补专门测试，确保不会静默回退到受控零件类型。
+- 平台 self-check 已写入 `schema_version`、`run_id`、`generated_at` 和 `source_revision`；发布包各上游阶段报告的跨产物 provenance 仍需后续统一 schema，才能做完整的运行级交叉校验。

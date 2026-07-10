@@ -117,6 +117,7 @@ public static class SolidWorksDrawingReportWriter
         SolidWorksDrawingReport report,
         CancellationToken cancellationToken = default)
     {
+        SolidWorksFakeSuccessGuard.NormalizeDrawingReport(report);
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -131,6 +132,7 @@ public static class SolidWorksDrawingReportWriter
 
     public static void Write(string reportPath, SolidWorksDrawingReport report)
     {
+        SolidWorksFakeSuccessGuard.NormalizeDrawingReport(report);
         var directory = Path.GetDirectoryName(reportPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
@@ -149,6 +151,17 @@ public static class SolidWorksDrawingReportWriter
 
 public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilder
 {
+    private readonly ISolidWorksComFacade _comFacade;
+    private readonly ISolidWorksFileVerifier _fileVerifier;
+
+    public LateBoundSolidWorksDrawingBuilder(
+        ISolidWorksComFacade? comFacade = null,
+        ISolidWorksFileVerifier? fileVerifier = null)
+    {
+        _comFacade = comFacade ?? new LateBoundSolidWorksComFacade();
+        _fileVerifier = fileVerifier ?? new SolidWorksFileVerifier();
+    }
+
     public Task<SolidWorksDrawingBuildResult> CreateBasicViewsDrawingAsync(
         object application,
         SolidWorksWorkerRequest request,
@@ -163,7 +176,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
             cancellationToken);
     }
 
-    private static SolidWorksDrawingBuildResult CreateCore(
+    private SolidWorksDrawingBuildResult CreateCore(
         object application,
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options,
@@ -280,6 +293,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
 
             SaveDrawing(drawingDocument, drawingPath, report, logs);
             ExportPdf(application, drawingDocument, pdfPath, report, logs);
+            SolidWorksFakeSuccessGuard.RequireDrawingCanPass(report);
 
             report.FinalStatus = "Passed";
             report.CompletedAt = DateTimeOffset.UtcNow;
@@ -287,7 +301,6 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
             report.Operations.Add("drawing_report_write_started");
             SolidWorksDrawingReportWriter.Write(reportPath, report);
             report.Operations.Add("drawing_report_written");
-            SolidWorksDrawingReportWriter.Write(reportPath, report);
 
             return SolidWorksDrawingBuildResult.Completed(
                 new[]
@@ -317,7 +330,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         }
     }
 
-    private static void CreateView(
+    private void CreateView(
         object drawingDocument,
         string sourcePartPath,
         string viewName,
@@ -340,7 +353,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         logs.Add($"Created drawing view {viewName}.");
     }
 
-    private static void SaveDrawing(
+    private void SaveDrawing(
         object drawingDocument,
         string drawingPath,
         SolidWorksDrawingReport report,
@@ -350,7 +363,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         Directory.CreateDirectory(Path.GetDirectoryName(drawingPath)!);
         var errors = new List<string>();
         var warnings = new List<string>();
-        var saved = TryExtensionSaveAs(drawingDocument, drawingPath, null, errors, warnings) ||
+        var saved = _comFacade.TryExtensionSaveAs(drawingDocument, drawingPath, null, errors, warnings) ||
                     TryInvokeBool(drawingDocument, "SaveAs3", drawingPath, 0, 1) ||
                     TryInvokeBool(drawingDocument, "SaveAs", drawingPath);
 
@@ -358,6 +371,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         {
             report.Errors.AddRange(errors.DefaultIfEmpty("slddrw_save_failed: SaveAs returned false."));
             report.Warnings.AddRange(warnings);
+            throw new IOException($"slddrw_save_failed: {drawingPath}");
         }
 
         RefreshFileState(report);
@@ -370,7 +384,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         logs.Add($"Saved SolidWorks drawing: {drawingPath}.");
     }
 
-    private static void ExportPdf(
+    private void ExportPdf(
         object application,
         object drawingDocument,
         string pdfPath,
@@ -385,8 +399,8 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         var errors = new List<string>();
         var warnings = new List<string>();
         var pdfData = TryGetPdfExportData(application, warnings);
-        var exported = TryExtensionSaveAs(drawingDocument, pdfPath, pdfData, errors, warnings) ||
-                       TryExtensionSaveAs(drawingDocument, pdfPath, null, errors, warnings) ||
+        var exported = _comFacade.TryExtensionSaveAs(drawingDocument, pdfPath, pdfData, errors, warnings) ||
+                       _comFacade.TryExtensionSaveAs(drawingDocument, pdfPath, null, errors, warnings) ||
                        TryInvokeBool(drawingDocument, "SaveAs3", pdfPath, 0, 1) ||
                        TryInvokeBool(drawingDocument, "SaveAs", pdfPath);
 
@@ -394,6 +408,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         {
             report.Errors.AddRange(errors.DefaultIfEmpty("pdf_export_failed: SaveAs returned false."));
             report.Warnings.AddRange(warnings);
+            throw new IOException($"pdf_export_failed: {pdfPath}");
         }
 
         RefreshFileState(report);
@@ -406,7 +421,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         logs.Add($"Exported drawing PDF: {pdfPath}.");
     }
 
-    private static object? OpenPart(object application, string sourcePartPath)
+    private object? OpenPart(object application, string sourcePartPath)
     {
         const int swDocPart = 1;
         const int swOpenDocOptionsSilent = 1;
@@ -415,7 +430,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
                TryGetProperty(application, "ActiveDoc");
     }
 
-    private static bool ActivateDocument(object application, object document)
+    private bool ActivateDocument(object application, object document)
     {
         var title = TryInvoke(document, "GetTitle")?.ToString();
         if (!string.IsNullOrWhiteSpace(title))
@@ -465,7 +480,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
             .FirstOrDefault(File.Exists);
     }
 
-    private static object? TryGetPdfExportData(object application, List<string> warnings)
+    private object? TryGetPdfExportData(object application, List<string> warnings)
     {
         try
         {
@@ -487,7 +502,7 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         }
     }
 
-    private static SolidWorksDrawingBuildResult FailWithReport(
+    private SolidWorksDrawingBuildResult FailWithReport(
         SolidWorksWorkerRequest request,
         SolidWorksDrawingReport report,
         string reportPath,
@@ -537,20 +552,22 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
             generatedArtifacts);
     }
 
-    private static void RefreshFileState(SolidWorksDrawingReport report)
+    private void RefreshFileState(SolidWorksDrawingReport report)
     {
         if (!string.IsNullOrWhiteSpace(report.SlddrwPath))
         {
-            report.SlddrwPath = Path.GetFullPath(report.SlddrwPath);
-            report.SlddrwExists = File.Exists(report.SlddrwPath);
-            report.SlddrwSizeBytes = report.SlddrwExists ? new FileInfo(report.SlddrwPath).Length : 0;
+            var state = _fileVerifier.GetState(report.SlddrwPath);
+            report.SlddrwPath = state.Path;
+            report.SlddrwExists = state.Exists;
+            report.SlddrwSizeBytes = state.SizeBytes;
         }
 
         if (!string.IsNullOrWhiteSpace(report.PdfPath))
         {
-            report.PdfPath = Path.GetFullPath(report.PdfPath);
-            report.PdfExists = File.Exists(report.PdfPath);
-            report.PdfSizeBytes = report.PdfExists ? new FileInfo(report.PdfPath).Length : 0;
+            var state = _fileVerifier.GetState(report.PdfPath);
+            report.PdfPath = state.Path;
+            report.PdfExists = state.Exists;
+            report.PdfSizeBytes = state.SizeBytes;
         }
     }
 
@@ -622,94 +639,11 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         return "drawing_api_evidence_insufficient";
     }
 
-    private static bool TryExtensionSaveAs(
-        object model,
-        string path,
-        object? exportData,
-        List<string> errors,
-        List<string> warnings)
-    {
-        try
-        {
-            var extension = GetProperty(model, "Extension");
-            var args = new object?[] { path, 0, 1, exportData, 0, 0 };
-            var result = Invoke(extension, "SaveAs", args);
-            if (args[4] is not null && Convert.ToInt32(args[4], CultureInfo.InvariantCulture) != 0)
-            {
-                errors.Add($"save_as_errors: {args[4]}");
-            }
+    private object? TryGetProperty(object? target, string name) => _comFacade.TryGetProperty(target, name);
 
-            if (args[5] is not null && Convert.ToInt32(args[5], CultureInfo.InvariantCulture) != 0)
-            {
-                warnings.Add($"save_as_warnings: {args[5]}");
-            }
+    private object? TryInvoke(object? target, string name, params object?[] args) => _comFacade.TryInvoke(target, name, args);
 
-            return result is bool value && value;
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            errors.Add($"save_as_exception: {ex.GetBaseException().Message}");
-            return false;
-        }
-    }
+    private bool TryInvokeBool(object? target, string name, params object?[] args) => _comFacade.TryInvokeBool(target, name, args);
 
-    private static object GetProperty(object target, string name) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.GetProperty,
-            binder: null,
-            target,
-            Array.Empty<object>())
-        ?? throw new InvalidOperationException($"solidworks_property_missing: {name}.");
-
-    private static object? TryGetProperty(object target, string name)
-    {
-        try
-        {
-            return GetProperty(target, name);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static object? Invoke(object target, string name, params object?[] args) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.InvokeMethod,
-            binder: null,
-            target,
-            args);
-
-    private static object? TryInvoke(object target, string name, params object?[] args)
-    {
-        try
-        {
-            return Invoke(target, name, args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            return null;
-        }
-    }
-
-    private static bool TryInvokeBool(object target, string name, params object?[] args)
-    {
-        var value = TryInvoke(target, name, args);
-        return value is bool boolean && boolean;
-    }
-
-    private static void ReleaseComObject(object value)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        if (Marshal.IsComObject(value))
-        {
-            Marshal.FinalReleaseComObject(value);
-        }
-    }
+    private void ReleaseComObject(object value) => _comFacade.ReleaseComObject(value);
 }

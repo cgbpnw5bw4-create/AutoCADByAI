@@ -7,6 +7,17 @@ namespace SolidWorksWorker;
 
 public sealed class SolidWorksPlateFeatureBuilder
 {
+    private readonly ISolidWorksComFacade _comFacade;
+    private readonly ISolidWorksFileVerifier _fileVerifier;
+
+    public SolidWorksPlateFeatureBuilder(
+        ISolidWorksComFacade? comFacade = null,
+        ISolidWorksFileVerifier? fileVerifier = null)
+    {
+        _comFacade = comFacade ?? new LateBoundSolidWorksComFacade();
+        _fileVerifier = fileVerifier ?? new SolidWorksFileVerifier();
+    }
+
     public void CreateBasePlate(
         object model,
         double lengthMeters,
@@ -146,9 +157,13 @@ public sealed class SolidWorksPlateFeatureBuilder
         if (!saved)
         {
             diagnostics.SldprtSaveErrors.Add("sldprt_save_failed: SaveAs returned false.");
+            diagnostics.SldprtSaveSuccess = false;
+            diagnostics.Issues.Add("sldprt_save_failed: SaveAs returned false.");
+            throw new IOException($"sldprt_save_failed: {partPath}");
         }
 
-        if (!File.Exists(partPath) || new FileInfo(partPath).Length <= 0)
+        var fileState = _fileVerifier.GetState(partPath);
+        if (!fileState.Exists || fileState.SizeBytes <= 0)
         {
             diagnostics.SldprtSaveSuccess = false;
             diagnostics.SldprtSaveErrors.Add($"sldprt_save_failed: {partPath}");
@@ -157,7 +172,7 @@ public sealed class SolidWorksPlateFeatureBuilder
         }
 
         diagnostics.SldprtSaveSuccess = true;
-        diagnostics.SldprtSizeBytes = new FileInfo(partPath).Length;
+        diagnostics.SldprtSizeBytes = fileState.SizeBytes;
         diagnostics.OperationsExecuted.Add("save_sldprt_success");
         logs.Add($"Saved SolidWorks part: {partPath}.");
     }
@@ -275,7 +290,7 @@ public sealed class SolidWorksPlateFeatureBuilder
         logs.Add($"Selected sketch plane: {result.SelectedPlaneName} using {result.SelectedPlaneStrategy}.");
     }
 
-    private static SketchSelectionReference CaptureSketchReference(object model, string fallbackName)
+    private SketchSelectionReference CaptureSketchReference(object model, string fallbackName)
     {
         var sketch = TryInvoke(model, "GetActiveSketch2") ?? TryGetProperty(GetProperty(model, "SketchManager"), "ActiveSketch");
         var name = ReadComName(sketch) ?? fallbackName;
@@ -288,7 +303,7 @@ public sealed class SolidWorksPlateFeatureBuilder
             sketch is null ? null : TryInvoke(sketch, "GetSketchSegments"));
     }
 
-    private static bool SelectSketchForFeatureCut(
+    private bool SelectSketchForFeatureCut(
         object model,
         SketchSelectionReference sketchReference,
         SolidWorksPlateBuildDiagnostics diagnostics,
@@ -298,7 +313,7 @@ public sealed class SolidWorksPlateFeatureBuilder
         diagnostics.OperationsExecuted.Add($"cut_holes_sketch_selection_started:{candidateName}");
         TryInvoke(model, "ClearSelection2", true);
 
-        var refreshed = sketchReference.Refresh();
+        var refreshed = sketchReference.Refresh(_comFacade);
         var selectionAttempts = new (string Strategy, object? Objects)[]
         {
             ("sketch_feature_object", refreshed.Feature),
@@ -339,7 +354,7 @@ public sealed class SolidWorksPlateFeatureBuilder
         return false;
     }
 
-    private static string? TrySelectSketchFeatureByName(object model, string? sketchName)
+    private string? TrySelectSketchFeatureByName(object model, string? sketchName)
     {
         foreach (var name in SketchNameCandidates(sketchName))
         {
@@ -353,7 +368,7 @@ public sealed class SolidWorksPlateFeatureBuilder
         return null;
     }
 
-    private static bool TrySelectSketchById(object model, string? sketchName)
+    private bool TrySelectSketchById(object model, string? sketchName)
     {
         var extension = TryGetProperty(model, "Extension");
         if (extension is null)
@@ -393,7 +408,7 @@ public sealed class SolidWorksPlateFeatureBuilder
         }
     }
 
-    private static bool TrySelectAnyComObject(object? objects, bool append, int mark)
+    private bool TrySelectAnyComObject(object? objects, bool append, int mark)
     {
         var selected = false;
         foreach (var obj in ExpandComObjects(objects))
@@ -433,78 +448,31 @@ public sealed class SolidWorksPlateFeatureBuilder
         yield return objects;
     }
 
-    private static bool TrySelectComObject(object? obj, bool append, int mark) =>
+    private bool TrySelectComObject(object? obj, bool append, int mark) =>
         obj is not null &&
         (TryInvokeBool(obj, "Select2", append, mark) || TryInvokeBool(obj, "Select4", append, null!));
 
-    private static string? ReadComName(object? obj) =>
+    private string? ReadComName(object? obj) =>
         TryGetProperty(obj, "Name")?.ToString() ??
         (obj is null ? null : TryInvoke(obj, "GetName")?.ToString());
 
-    private static void EnterSketch(object model) =>
+    private void EnterSketch(object model) =>
         Invoke(GetProperty(model, "SketchManager"), "InsertSketch", true);
 
-    private static void ExitSketch(object model) =>
+    private void ExitSketch(object model) =>
         Invoke(GetProperty(model, "SketchManager"), "InsertSketch", true);
 
-    private static object GetProperty(object target, string name) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.GetProperty,
-            binder: null,
-            target,
-            Array.Empty<object>())
-        ?? throw new InvalidOperationException($"solidworks_property_missing: {name}.");
+    private object GetProperty(object target, string name) => _comFacade.GetProperty(target, name);
 
-    private static object? TryGetProperty(object? target, string name)
-    {
-        if (target is null)
-        {
-            return null;
-        }
+    private object? TryGetProperty(object? target, string name) => _comFacade.TryGetProperty(target, name);
 
-        try
-        {
-            return target.GetType().InvokeMember(
-                name,
-                BindingFlags.GetProperty,
-                binder: null,
-                target,
-                Array.Empty<object>());
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            return null;
-        }
-    }
+    private object? Invoke(object target, string name, params object?[] args) => _comFacade.Invoke(target, name, args);
 
-    private static object? Invoke(object target, string name, params object?[] args) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.InvokeMethod,
-            binder: null,
-            target,
-            args);
+    private object? TryInvoke(object? target, string name, params object?[] args) => _comFacade.TryInvoke(target, name, args);
 
-    private static object? TryInvoke(object target, string name, params object?[] args)
-    {
-        try
-        {
-            return Invoke(target, name, args);
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            return null;
-        }
-    }
+    private bool TryInvokeBool(object? target, string name, params object?[] args) => _comFacade.TryInvokeBool(target, name, args);
 
-    private static bool TryInvokeBool(object target, string name, params object?[] args)
-    {
-        var value = TryInvoke(target, name, args);
-        return value is bool boolean && boolean;
-    }
-
-    private static void TryDisableContourSelection(object model)
+    private void TryDisableContourSelection(object model)
     {
         var selectionManager = TryGetProperty(model, "SelectionManager");
         if (selectionManager is null)
@@ -515,23 +483,8 @@ public sealed class SolidWorksPlateFeatureBuilder
         TrySetProperty(selectionManager, "EnableContourSelection", false);
     }
 
-    private static bool TrySetProperty(object target, string name, object? value)
-    {
-        try
-        {
-            target.GetType().InvokeMember(
-                name,
-                BindingFlags.SetProperty,
-                binder: null,
-                target,
-                new[] { value });
-            return true;
-        }
-        catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or COMException)
-        {
-            return false;
-        }
-    }
+    private bool TrySetProperty(object target, string name, object? value) =>
+        _comFacade.TrySetProperty(target, name, value);
 
     private static void RequireComResult(object? value, string message)
     {
@@ -554,15 +507,15 @@ public sealed class SolidWorksPlateFeatureBuilder
         object? Regions,
         object? Segments)
     {
-        public SketchSelectionReference Refresh() =>
+        public SketchSelectionReference Refresh(ISolidWorksComFacade comFacade) =>
             Sketch is null
                 ? this
                 : this with
                 {
-                    Feature = TryInvoke(Sketch, "GetFeature") ?? Feature,
-                    Contours = TryInvoke(Sketch, "GetSketchContours") ?? Contours,
-                    Regions = TryInvoke(Sketch, "GetSketchRegions") ?? Regions,
-                    Segments = TryInvoke(Sketch, "GetSketchSegments") ?? Segments
+                    Feature = comFacade.TryInvoke(Sketch, "GetFeature") ?? Feature,
+                    Contours = comFacade.TryInvoke(Sketch, "GetSketchContours") ?? Contours,
+                    Regions = comFacade.TryInvoke(Sketch, "GetSketchRegions") ?? Regions,
+                    Segments = comFacade.TryInvoke(Sketch, "GetSketchSegments") ?? Segments
                 };
     }
 }

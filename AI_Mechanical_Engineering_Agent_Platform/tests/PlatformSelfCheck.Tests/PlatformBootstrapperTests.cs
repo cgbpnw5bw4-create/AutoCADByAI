@@ -70,6 +70,14 @@ public sealed class PlatformBootstrapperTests
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));
         Assert.Equal("Passed", report.FinalStatus);
+        Assert.Equal("1.6", report.SchemaVersion);
+        Assert.StartsWith("platform-self-check-", report.RunId, StringComparison.Ordinal);
+        Assert.NotEqual(default, report.GeneratedAt);
+        Assert.False(string.IsNullOrWhiteSpace(report.SourceRevision));
+        Assert.True(report.SolidWorksComFacadeInjectionSupported);
+        Assert.True(report.SolidWorksRealAcceptanceProtocolExists);
+        Assert.True(report.SolidWorksLatestRealOutputsReportSupported);
+        Assert.True(report.V16TestADocumented);
         Assert.Equal("chief-engineer", Assert.Single(report.PublicAgents).Id);
         Assert.Equal("chief-engineer", Assert.Single(report.GatewayVisibleAgents).Id);
         Assert.Contains(report.RegisteredWorkers, worker => worker.Name == "FakeSolidWorksWorker");
@@ -78,5 +86,8 @@ public sealed class PlatformBootstrapperTests
         using var stream = File.OpenRead(reportPath);
         using var document = await JsonDocument.ParseAsync(stream);
         Assert.Equal("Passed", document.RootElement.GetProperty("final_status").GetString());
+        Assert.Equal("1.6", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());
+        Assert.False(document.RootElement.TryGetProperty("solidworks_com_false_success_tests_added", out _));
     }
 }

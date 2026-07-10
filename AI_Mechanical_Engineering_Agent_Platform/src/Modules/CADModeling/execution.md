@@ -37,6 +37,10 @@ CADModelSpec
 
 真实 `SolidWorks` 执行默认关闭。只有请求中 `allow_real_cad_execution=true`、`dry_run=false`，并且环境变量 `SW_ENABLE_REAL_EXECUTION=true` 时，才允许进入真实连接路径。
 
+## 主流程触发输入
+
+CAD 主流程只接受显式 `solidworks_main_workflow`、结构化 `cad_model_type=plate_basic_4holes`，或明确包含 `plate_basic_4holes` 的受控零件请求。仅泛化提到 `SolidWorks` 不构成触发条件。无法识别或不受支持的 `CADModelSpec` 必须保持在普通内部协作路径，不得静默改写为 `plate_basic_4holes` 后启动真实 CAD。
+
 ## self-check 字段
 
 本模块至少关注：
