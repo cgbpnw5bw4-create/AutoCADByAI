@@ -68,6 +68,15 @@ CLI 必须经 Gateway 调用 `chief-engineer`，再由 `ChiefEngineerOrchestrato
 
 真实执行必须同时满足 `allow_real_cad_execution=true`、`dry_run=false`、`SW_ENABLE_REAL_EXECUTION=true` 与 `SW_REAL_MAIN_WORKFLOW_TEST=true`。缺少任一条件时，V1.7 必须写出 `e2e_execution_report.json`，以 `real_execution_confirmation_missing` 失败关闭；不得回退 Fake Worker 后返回通过。`SW_VISIBLE=true` 仅用于人工观察。
 
+操作者应在结构化输入中明确保留前两项请求确认，并在 PowerShell 中显式设置后两项环境确认：
+
+```powershell
+$env:SW_ENABLE_REAL_EXECUTION="true"
+$env:SW_REAL_MAIN_WORKFLOW_TEST="true"
+$env:SW_VISIBLE="true"
+dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json
+```
+
 本次运行依次使用已有 Build、Drawing、Dimension 和 TitleBlock Worker 能力。真实阶段源输出仍位于受控 `output/solidworks/real/` 根目录，以便沿用既有 ArtifactValidator；最终同次发布包位于 `output/solidworks/e2e/plate_basic_4holes/<timestamp>/`。发布包仅接收本次 `request_id` 的显式源路径，不扫描历史 latest，也不收集 SmokeRunner 诊断报告作为最终成功依据。
 
 成功包至少包含 `artifacts/plate_basic_4holes.SLDPRT`、`STEP`、`SLDDRW`、`pdf`，以及 `reports/e2e_execution_report.json`、四个阶段报告、`package_quality_report.json`、`release_manifest.json` 和 `latest_real_outputs.md`。任一阶段报告失败、缺失、产物为空、未证明 `real_cad_executed=true`、执行模式不匹配或总体 QualityGate 未通过时，必须令 `all_source_reports_passed=false` 与 `deliverable_status=NotDeliverable`。
@@ -80,7 +89,7 @@ CLI 必须经 Gateway 调用 `chief-engineer`，再由 `ChiefEngineerOrchestrato
 
 `run-cad-workflow` 只在项目根目录存在且启用 `config/solidworks.local.json` 时允许真实主流程。该文件必须声明 `real_execution_authorized=true` 与 `execution_authorization_source=LocalDevelopmentProfile`；文件已被 `.gitignore` 排除，参考字段见 `config/solidworks.local.example.json`。
 
-授权配置由 CLI 在创建平台前注入当前进程的 `SW_ENABLE_REAL_EXECUTION=true`、`SW_REAL_MAIN_WORKFLOW_TEST=true`、模板路径和 `SW_VISIBLE`（默认 `true`）。结构化输入不再重复携带 `allow_real_cad_execution` 或 `dry_run`；CLI 仅在有效本地配置下将其转换为真实执行请求。E2E Runner 会再次读取本地配置，单靠环境变量不能绕过该检查。
+授权配置由 CLI 在创建平台前仅注入模板路径、超时、授权审计字段，并仅在操作者未设置时提供 `SW_VISIBLE` 默认值；它不会设置 `SW_ENABLE_REAL_EXECUTION` 或 `SW_REAL_MAIN_WORKFLOW_TEST`。结构化输入必须明确携带 `allow_real_cad_execution=true` 与 `dry_run=false`，CLI 会原样传递这两个请求确认。E2E Runner 会再次读取本地配置，因此本地授权、结构化输入和操作者显式设置的两个核心环境变量缺一不可。
 
 默认 self-check、CI 和缺少本地授权文件的 CLI 均不得启动 SolidWorks。缺少或无效授权以 `local_execution_authorization_missing` 失败关闭；一旦授权已经通过，后续失败必须保留实际的 `failure_stage`，例如 `preflight_failed`、`solidworks_connection_failed` 或阶段报告中的失败，不能回退为确认缺失。
 

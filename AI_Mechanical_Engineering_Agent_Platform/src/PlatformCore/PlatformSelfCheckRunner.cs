@@ -91,7 +91,7 @@ public static class PlatformSelfCheckRunner
         var runMetadata = new SelfCheckRunMetadata(
             $"platform-self-check-{Guid.NewGuid():N}",
             DateTimeOffset.UtcNow,
-            ResolveSourceRevision(root));
+            await ResolveSourceRevisionAsync(root));
 
         var task = platform.TaskStore.Create("Platform self-check");
         platform.TaskStore.UpdateStatus(task.Id, PlatformTaskStatus.Running);
@@ -190,52 +190,26 @@ public static class PlatformSelfCheckRunner
         var v16TestADocumented =
             versionStageText.Contains("V1.6-TEST-A", StringComparison.OrdinalIgnoreCase) &&
             solidWorksRealAcceptanceProtocolExists;
-        var cliProgramPath = Path.Combine(root, "src", "Interfaces", "CliHost", "Program.cs");
-        var cliProgramText = File.Exists(cliProgramPath) ? File.ReadAllText(cliProgramPath) : string.Empty;
-        var routerPath = Path.Combine(root, "src", "PlatformCore", "SolidWorksWorkflowRouter.cs");
-        var routerText = File.Exists(routerPath) ? File.ReadAllText(routerPath) : string.Empty;
-        var e2eRunnerPath = Path.Combine(root, "src", "PlatformCore", "SolidWorksMainWorkflowRunner.E2E.cs");
-        var e2eRunnerText = File.Exists(e2eRunnerPath) ? File.ReadAllText(e2eRunnerPath) : string.Empty;
-        var e2eReleaseBuilderPath = Path.Combine(root, "src", "Workers", "SolidWorks", "SolidWorksE2EReleasePackageBuilder.cs");
-        var e2eReleaseBuilderText = File.Exists(e2eReleaseBuilderPath) ? File.ReadAllText(e2eReleaseBuilderPath) : string.Empty;
-        var realCadE2eCliEntryExists = File.Exists(cliProgramPath) && cliProgramText.Contains("run-cad-workflow", StringComparison.Ordinal);
-        var realCadE2eStructuredInputSupported =
-            File.Exists(Path.Combine(root, "examples", "real_cad_plate_request.json")) &&
-            routerText.Contains("build_complete_drawing_package", StringComparison.Ordinal) &&
-            routerText.Contains("part_type", StringComparison.Ordinal);
-        var realCadE2eUsesChiefEngineerOrchestrator =
-            typeof(global::PlatformCore.Modules.RequirementUnderstanding.Agents.ChiefEngineerOrchestrator).GetMethod("ExecuteAsync") is not null &&
-            realCadE2eStructuredInputSupported;
-        var realCadE2eUsesWorkflowEngine = e2eRunnerText.Contains("ExecuteSingleStageAsync", StringComparison.Ordinal) &&
-            typeof(SequentialWorkflowEngine).GetMethod(nameof(SequentialWorkflowEngine.ExecuteAsync)) is not null;
+        var v17E2eChecks = await V17RealCadE2eSelfCheck.RunAsync(root, cancellationToken);
+        var realCadE2eCliEntryExists = SolidWorksE2eCliContract.IsInvocation(
+            [SolidWorksE2eCliContract.CommandName, SolidWorksE2eCliContract.InputOption, "examples/real_cad_plate_request.json"]);
+        var realCadE2eStructuredInputSupported = v17E2eChecks.StructuredInputSupported;
+        var realCadE2eUsesChiefEngineerOrchestrator = v17E2eChecks.ChiefEngineerInvoked;
+        var realCadE2eUsesWorkflowEngine = v17E2eChecks.WorkflowEngineInvoked;
         var realCadE2eUsesSolidWorksRouter = realCadE2eStructuredInputSupported &&
-            typeof(SolidWorksWorkflowRouter).GetMethod(nameof(SolidWorksWorkflowRouter.TryBuildRequest)) is not null;
+            v17E2eChecks.SolidWorksRouterTriggered;
         var realCadE2eCanInvokeRealWorker =
             Type.GetType("SolidWorksWorker.RealSolidWorksWorker, SolidWorksWorker", throwOnError: false) is not null &&
             Type.GetType("SolidWorksWorker.SolidWorksE2EReleasePackageBuilder, SolidWorksWorker", throwOnError: false) is not null;
-        var realCadE2ePassesQualityGate = e2eRunnerText.Contains("DefaultGatekeeper", StringComparison.Ordinal) &&
-            e2eRunnerText.Contains("quality_gate_after_complete_drawing_package", StringComparison.Ordinal);
-        var realCadE2eDefaultDisabled = !SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>()).MainWorkflowExecutionEnabled;
-        var realCadE2eRequiresRequestConfirmation = e2eRunnerText.Contains("AllowRealCadExecution", StringComparison.Ordinal) &&
-            e2eRunnerText.Contains("request.DryRun", StringComparison.Ordinal);
-        var realCadE2eRequiresEnvConfirmation = e2eRunnerText.Contains("EnableRealExecution", StringComparison.Ordinal) &&
-            e2eRunnerText.Contains("MainWorkflowExecutionEnabled", StringComparison.Ordinal);
-        var realCadE2eReportSupported = e2eRunnerText.Contains("e2e_execution_report.json", StringComparison.Ordinal) &&
-            e2eRunnerText.Contains("latest_real_outputs.md", StringComparison.Ordinal);
-        var realCadE2eDeliverableSemanticsSupported =
-            typeof(SolidWorksReleaseManifest).GetProperty(nameof(SolidWorksReleaseManifest.AllSourceReportsPassed)) is not null &&
-            typeof(SolidWorksReleaseManifest).GetProperty(nameof(SolidWorksReleaseManifest.DeliverableStatus)) is not null &&
-            e2eReleaseBuilderText.Contains("real_execution_evidence_failed", StringComparison.Ordinal);
+        var realCadE2ePassesQualityGate = v17E2eChecks.QualityGateRejectsIncompleteExecution;
+        var realCadE2eDefaultDisabled = v17E2eChecks.DefaultExecutionDisabled;
+        var realCadE2eRequiresRequestConfirmation = v17E2eChecks.RequestConfirmationRequired;
+        var realCadE2eRequiresEnvConfirmation = v17E2eChecks.EnvironmentConfirmationRequired;
+        var realCadE2eReportSupported = v17E2eChecks.ReportSupported;
+        var realCadE2eDeliverableSemanticsSupported = v17E2eChecks.DeliverableSemanticsSupported;
         var v17VersionStageDocumented = versionStageText.Contains("V1.7", StringComparison.OrdinalIgnoreCase);
-        var localAuthorizationProfilePath = Path.Combine(root, "src", "PlatformCore", "SolidWorksLocalExecutionProfile.cs");
-        var localAuthorizationProfileText = File.Exists(localAuthorizationProfilePath) ? File.ReadAllText(localAuthorizationProfilePath) : string.Empty;
-        var realCadE2eLocalAuthorizationProfileSupported =
-            File.Exists(Path.Combine(root, "config", "solidworks.local.example.json")) &&
-            localAuthorizationProfileText.Contains("solidworks.local.json", StringComparison.Ordinal) &&
-            cliProgramText.Contains("SolidWorksLocalExecutionProfile.Load", StringComparison.Ordinal) &&
-            e2eRunnerText.Contains("LocalDevelopmentProfile authorization", StringComparison.Ordinal);
-        var realCadE2eLocalAuthorizationDefaultDisabled =
-            !SolidWorksLocalExecutionProfile.Load(Path.Combine(root, "_self_check_without_local_authorization")).IsAuthorized;
+        var realCadE2eLocalAuthorizationProfileSupported = v17E2eChecks.LocalAuthorizationProfileSupported;
+        var realCadE2eLocalAuthorizationDefaultDisabled = v17E2eChecks.LocalAuthorizationDefaultDisabled;
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -2575,21 +2549,21 @@ public static class PlatformSelfCheckRunner
         }
     }
 
-    private static string ResolveSourceRevision(string projectRoot)
+    private static async Task<string> ResolveSourceRevisionAsync(string projectRoot)
     {
-        var commit = RunGit(projectRoot, "rev-parse", "--verify", "HEAD");
+        var commit = await RunGitAsync(projectRoot, "rev-parse", "--verify", "HEAD");
         if (string.IsNullOrWhiteSpace(commit))
         {
             return "unknown";
         }
 
-        var trackedChanges = RunGit(projectRoot, "status", "--porcelain", "--untracked-files=no");
+        var trackedChanges = await RunGitAsync(projectRoot, "status", "--porcelain", "--untracked-files=no");
         return string.IsNullOrWhiteSpace(trackedChanges)
             ? commit
             : $"{commit}-dirty";
     }
 
-    private static string? RunGit(string projectRoot, params string[] arguments)
+    internal static async Task<string?> RunGitAsync(string projectRoot, params string[] arguments)
     {
         try
         {
@@ -2612,14 +2586,22 @@ public static class PlatformSelfCheckRunner
                 return null;
             }
 
-            var output = process.StandardOutput.ReadToEnd();
-            if (!process.WaitForExit(5_000))
+            var stdout = process.StandardOutput.ReadToEndAsync();
+            var stderr = process.StandardError.ReadToEndAsync();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token);
+            }
+            catch (OperationCanceledException)
             {
                 process.Kill(entireProcessTree: true);
+                await Task.WhenAll(stdout, stderr);
                 return null;
             }
 
-            return process.ExitCode == 0 ? output.Trim() : null;
+            await Task.WhenAll(stdout, stderr);
+            return process.ExitCode == 0 ? stdout.Result.Trim() : null;
         }
         catch (InvalidOperationException)
         {

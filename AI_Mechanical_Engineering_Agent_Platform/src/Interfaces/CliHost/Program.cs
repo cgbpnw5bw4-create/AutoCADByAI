@@ -24,7 +24,7 @@ if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.Ord
     return report.FinalStatus == "Passed" ? 0 : 2;
 }
 
-if (args.Length == 3 && string.Equals(args[0], "run-cad-workflow", StringComparison.OrdinalIgnoreCase) && string.Equals(args[1], "--input", StringComparison.OrdinalIgnoreCase))
+if (SolidWorksE2eCliContract.IsInvocation(args))
 {
     var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
     var localAuthorization = SolidWorksLocalExecutionProfile.Load(projectRoot);
@@ -147,8 +147,8 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
         ["thickness_mm"] = input.ThicknessMm!.Value.ToString(CultureInfo.InvariantCulture),
         ["hole_count"] = input.HoleCount!.Value.ToString(CultureInfo.InvariantCulture),
         ["hole_diameter_mm"] = input.HoleDiameterMm!.Value.ToString(CultureInfo.InvariantCulture),
-        ["allow_real_cad_execution"] = localAuthorization.IsAuthorized ? "true" : input.AllowRealCadExecution == true ? "true" : "false",
-        ["dry_run"] = localAuthorization.IsAuthorized ? "false" : input.DryRun == false ? "false" : "true",
+        ["allow_real_cad_execution"] = input.AllowRealCadExecution == true ? "true" : "false",
+        ["dry_run"] = input.DryRun == false ? "false" : "true",
         ["generate_drawing"] = "true",
         ["generate_dimensions"] = "true",
         ["generate_title_block"] = "true",

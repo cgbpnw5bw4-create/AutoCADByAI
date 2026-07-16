@@ -52,7 +52,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 localAuthorization.IsAuthorized
                     ? "real_execution_confirmation_missing"
                     : "local_execution_authorization_missing",
-                cancellationToken);
+                cancellationToken,
+                localAuthorization: localAuthorization);
         }
 
         var runSegment = ToSafePathSegment(request.RequestId);
@@ -174,7 +175,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
             finalIssues,
             failureStage,
             cancellationToken,
-            packageOutcome);
+            packageOutcome,
+            localAuthorization);
     }
 
     private async Task<SolidWorksMainWorkflowResult> WriteE2eResultAsync(
@@ -187,7 +189,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
         IReadOnlyList<string> issues,
         string? failureStage,
         CancellationToken cancellationToken,
-        E2ePackageOutcome? packageOutcome = null)
+        E2ePackageOutcome? packageOutcome = null,
+        SolidWorksLocalExecutionProfile? localAuthorization = null)
     {
         var reportsDirectory = Path.Combine(releaseDirectory, "reports");
         Directory.CreateDirectory(reportsDirectory);
@@ -240,8 +243,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
             request.ChiefEngineerInvoked,
             stageResults.Count > 0 || workflowResult.Steps.Count > 0,
             workflowSteps,
-            SolidWorksLocalExecutionProfile.Load(request.ProjectRoot).IsAuthorized,
-            SolidWorksLocalExecutionProfile.Load(request.ProjectRoot).ExecutionAuthorizationSource,
+            localAuthorization?.IsAuthorized ?? false,
+            localAuthorization?.ExecutionAuthorizationSource ?? SolidWorksLocalExecutionProfile.AuthorizationSource,
             request.SolidWorksRouterTriggered,
             stageResults.Any(item => item.Result.Logs.Contains("operation_executed: connection_started", StringComparer.OrdinalIgnoreCase)),
             stageResults.Any(item => item.Result.Logs.Contains("operation_executed: real_build_request_received", StringComparer.OrdinalIgnoreCase)),

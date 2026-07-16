@@ -79,9 +79,10 @@ public sealed record SolidWorksLocalExecutionProfile(
             return;
         }
 
-        Environment.SetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION", "true");
-        Environment.SetEnvironmentVariable("SW_REAL_MAIN_WORKFLOW_TEST", "true");
-        Environment.SetEnvironmentVariable("SW_VISIBLE", Visible ? "true" : "false");
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SW_VISIBLE")))
+        {
+            Environment.SetEnvironmentVariable("SW_VISIBLE", Visible ? "true" : "false");
+        }
         Environment.SetEnvironmentVariable("SW_LOCAL_DEVELOPMENT_PROFILE_ENABLED", "true");
         Environment.SetEnvironmentVariable("SW_EXECUTION_AUTHORIZATION_SOURCE", ExecutionAuthorizationSource);
         SetIfPresent("SW_TEMPLATE_PART_PATH", TemplatePartPath);

@@ -10,6 +10,17 @@ namespace PlatformSelfCheck.Tests;
 public sealed class V17RealCadE2eTests
 {
     [Fact]
+    public void CliContractAcceptsOnlyTheControlledInputSyntax()
+    {
+        Assert.True(SolidWorksE2eCliContract.IsInvocation(
+            ["run-cad-workflow", "--input", "examples/real_cad_plate_request.json"]));
+        Assert.False(SolidWorksE2eCliContract.IsInvocation(
+            ["run-cad-workflow", "--input"]));
+        Assert.False(SolidWorksE2eCliContract.IsInvocation(
+            ["run-cad-workflow", "--unexpected", "examples/real_cad_plate_request.json"]));
+    }
+
+    [Fact]
     public void RouterRecognizesOnlyTheControlledStructuredE2eOperation()
     {
         var router = new SolidWorksWorkflowRouter();
@@ -212,6 +223,82 @@ public sealed class V17RealCadE2eTests
         }
     }
 
+    [Fact]
+    public async Task LocalProfileCannotEnableTheTwoCoreRuntimeConfirmations()
+    {
+        var root = CreateTempDirectory();
+        var variables = new[]
+        {
+            "SW_ENABLE_REAL_EXECUTION",
+            "SW_REAL_MAIN_WORKFLOW_TEST",
+            "SW_VISIBLE",
+            "SW_LOCAL_DEVELOPMENT_PROFILE_ENABLED",
+            "SW_EXECUTION_AUTHORIZATION_SOURCE"
+        };
+        var previous = variables.ToDictionary(variable => variable, Environment.GetEnvironmentVariable);
+
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "config"));
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "config", "solidworks.local.json"),
+                "{\"real_execution_authorized\":true,\"execution_authorization_source\":\"LocalDevelopmentProfile\",\"visible\":false}");
+            foreach (var variable in variables)
+            {
+                Environment.SetEnvironmentVariable(variable, null);
+            }
+
+            SolidWorksLocalExecutionProfile.Load(root).ApplyToCurrentProcess();
+
+            Assert.Null(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"));
+            Assert.Null(Environment.GetEnvironmentVariable("SW_REAL_MAIN_WORKFLOW_TEST"));
+            Assert.Equal("false", Environment.GetEnvironmentVariable("SW_VISIBLE"));
+            Assert.Equal("true", Environment.GetEnvironmentVariable("SW_LOCAL_DEVELOPMENT_PROFILE_ENABLED"));
+
+            Environment.SetEnvironmentVariable("SW_VISIBLE", "true");
+            SolidWorksLocalExecutionProfile.Load(root).ApplyToCurrentProcess();
+            Assert.Equal("true", Environment.GetEnvironmentVariable("SW_VISIBLE"));
+        }
+        finally
+        {
+            foreach (var (variable, value) in previous)
+            {
+                Environment.SetEnvironmentVariable(variable, value);
+            }
+
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task RunGitAsyncReturnsNoRevisionWhenGitReportsAnError()
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var result = await PlatformSelfCheckRunner.RunGitAsync(root, "rev-parse", "--verify", "HEAD");
+
+            Assert.Null(result);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void V17SelfCheckUsesBehavioralEvidenceInsteadOfSourceTextMatches()
+    {
+        var sourcePath = Path.Combine(FindProjectRoot(), "src", "PlatformCore", "PlatformSelfCheckRunner.cs");
+        var source = File.ReadAllText(sourcePath);
+
+        Assert.DoesNotContain("cliProgramText", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("routerText", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("e2eRunnerText", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("e2eReleaseBuilderText", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("localAuthorizationProfileText", source, StringComparison.Ordinal);
+    }
+
     private static IReadOnlyList<SolidWorksReleaseExecutionEvidence> ExpectedEvidence(bool realCadExecuted) =>
     [
         new("build", "RealSolidWorksWorker", "RealBuildPlateBasic4Holes", realCadExecuted, true, true, realCadExecuted ? null : "fake_execution", null),
@@ -235,5 +322,21 @@ public sealed class V17RealCadE2eTests
         var path = Path.Combine(Path.GetTempPath(), "ai_me_v17_tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(path);
         return path;
+    }
+
+    private static string FindProjectRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "AI_Mechanical_Engineering_Agent_Platform.sln")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not locate the project root.");
     }
 }
