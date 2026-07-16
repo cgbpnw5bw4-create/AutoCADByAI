@@ -1,5 +1,6 @@
 using DomainSchemas;
 using WorkerContracts;
+using System.Reflection;
 
 namespace SolidWorksWorker;
 
@@ -226,15 +227,18 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 SolidWorksDrawingBuildResult drawingResult;
                 try
                 {
-                    drawingResult = await _sessionManager.ExecuteWithApplicationAsync(
+                    drawingResult = await ExecuteWithControlledDocumentCleanupAsync(
+                        _sessionManager,
+                        request,
+                        options,
+                        logs,
                         (application, token) => _drawingBuilder.CreateBasicViewsDrawingAsync(
                             application,
                             request,
                             options,
                             connection.SolidWorksVersion,
                             token),
-                        cancellationToken,
-                        options.ExecutionTimeoutSeconds);
+                        cancellationToken);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
                 {
@@ -281,15 +285,18 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 SolidWorksDrawingDimensionBuildResult dimensionResult;
                 try
                 {
-                    dimensionResult = await _sessionManager.ExecuteWithApplicationAsync(
+                    dimensionResult = await ExecuteWithControlledDocumentCleanupAsync(
+                        _sessionManager,
+                        request,
+                        options,
+                        logs,
                         (application, token) => _drawingDimensionBuilder.CreateDimensionedDrawingAsync(
                             application,
                             request,
                             options,
                             connection.SolidWorksVersion,
                             token),
-                        cancellationToken,
-                        options.ExecutionTimeoutSeconds);
+                        cancellationToken);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
                 {
@@ -336,15 +343,18 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 SolidWorksDrawingTitleBlockBuildResult titleBlockResult;
                 try
                 {
-                    titleBlockResult = await _sessionManager.ExecuteWithApplicationAsync(
+                    titleBlockResult = await ExecuteWithControlledDocumentCleanupAsync(
+                        _sessionManager,
+                        request,
+                        options,
+                        logs,
                         (application, token) => _drawingTitleBlockBuilder.ApplyTitleBlockAsync(
                             application,
                             request,
                             options,
                             connection.SolidWorksVersion,
                             token),
-                        cancellationToken,
-                        options.ExecutionTimeoutSeconds);
+                        cancellationToken);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
                 {
@@ -389,15 +399,18 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             SolidWorksPlateBuildResult buildResult;
             try
             {
-                buildResult = await _sessionManager.ExecuteWithApplicationAsync(
+                buildResult = await ExecuteWithControlledDocumentCleanupAsync(
+                    _sessionManager,
+                    request,
+                    options,
+                    logs,
                     (application, token) => _plateBuilder.BuildPlateBasicFourHolesAsync(
                         application,
                         request,
                         options,
                         connection.SolidWorksVersion,
                         token),
-                    cancellationToken,
-                    options.ExecutionTimeoutSeconds);
+                    cancellationToken);
             }
             catch (InvalidOperationException ex) when (ex.Message.StartsWith("solidworks_application_missing:", StringComparison.OrdinalIgnoreCase))
             {
@@ -564,6 +577,85 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options) =>
         SolidWorksPreflightEvaluator.Evaluate(request, options);
+
+    // Run cleanup within the same controlled application callback as the worker.
+    // A second callback would change timeout/connection semantics and would make
+    // test doubles appear to execute CAD twice.
+    private static async Task<T> ExecuteWithControlledDocumentCleanupAsync<T>(
+        ISolidWorksSessionManager sessionManager,
+        SolidWorksWorkerRequest request,
+        SolidWorksRuntimeOptions options,
+        List<string> logs,
+        Func<object, CancellationToken, Task<T>> action,
+        CancellationToken cancellationToken)
+    {
+        var result = await sessionManager.ExecuteWithApplicationAsync(
+            async (application, token) =>
+            {
+                try
+                {
+                    return await action(application, token);
+                }
+                finally
+                {
+                    CloseWorkflowDocuments(application, request, logs);
+                }
+            },
+            cancellationToken,
+            options.ExecutionTimeoutSeconds);
+
+        // Give SolidWorks a short opportunity to release the closed file handles
+        // before the next workflow stage copies validated artifacts.
+        await Task.Delay(TimeSpan.FromMilliseconds(250), CancellationToken.None);
+        return result;
+    }
+
+    // ISldWorks.CloseDoc(string) is the documented API for releasing a named document after save/export.
+    // Closing only the controlled workflow document names preserves a visible user-owned SOLIDWORKS session.
+    private static void CloseWorkflowDocuments(
+        object application,
+        SolidWorksWorkerRequest request,
+        List<string> logs)
+    {
+        var names = new[]
+        {
+            Path.GetFileName(request.SourcePartPath),
+            Path.GetFileName(request.SourceDrawingPath),
+            Path.GetFileName(request.SourceDimensionedDrawingPath),
+            request.DrawingSmokeTestOnly ? "plate_basic_4holes.SLDDRW" : null,
+            request.DrawingDimensionSmokeTestOnly ? "plate_basic_4holes_dimensioned.SLDDRW" : null,
+            request.DrawingTitleBlockSmokeTestOnly ? "plate_basic_4holes_title_block.SLDDRW" : null,
+            !request.DrawingSmokeTestOnly && !request.DrawingDimensionSmokeTestOnly && !request.DrawingTitleBlockSmokeTestOnly
+                ? "plate_basic_4holes.SLDPRT"
+                : null
+        }
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Cast<string>()
+        .ToArray();
+        if (names.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var name in names)
+        {
+            try
+            {
+                application.GetType().InvokeMember(
+                    "CloseDoc",
+                    BindingFlags.InvokeMethod,
+                    binder: null,
+                    target: application,
+                    args: new object[] { name });
+                logs.Add($"solidworks_document_closed: {name}");
+            }
+            catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or System.Runtime.InteropServices.COMException or InvalidOperationException)
+            {
+                logs.Add($"solidworks_document_close_warning: {name}: {ex.GetBaseException().Message}");
+            }
+        }
+    }
 
     private static async Task DisconnectWithTimeoutAsync(
         ISolidWorksSessionManager sessionManager,

@@ -286,10 +286,8 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
             report.DrawingCreated = true;
             report.Operations.Add("drawing_document_create_success");
 
-            CreateView(drawingDocument, sourcePartPath, "*Front", 0.10d, 0.20d, "front_view_create_failed", report, logs);
-            CreateView(drawingDocument, sourcePartPath, "*Top", 0.10d, 0.10d, "top_view_create_failed", report, logs);
-            CreateView(drawingDocument, sourcePartPath, "*Right", 0.22d, 0.20d, "right_view_create_failed", report, logs);
-            CreateView(drawingDocument, sourcePartPath, "*Isometric", 0.24d, 0.10d, "isometric_view_create_failed", report, logs);
+            var modelViews = ResolveModelViewNames(partDocument, report, logs);
+            CreateRequiredViews(drawingDocument, sourcePartPath, modelViews, report, logs);
 
             SaveDrawing(drawingDocument, drawingPath, report, logs);
             ExportPdf(application, drawingDocument, pdfPath, report, logs);
@@ -330,7 +328,81 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         }
     }
 
-    private void CreateView(
+    private void CreateRequiredViews(
+        object drawingDocument,
+        string sourcePartPath,
+        SolidWorksModelViewNames modelViews,
+        SolidWorksDrawingReport report,
+        List<string> logs)
+    {
+        if (TryCreateView(drawingDocument, sourcePartPath, modelViews.Front, 0.10d, 0.20d, "front_view_create_failed", report, logs))
+        {
+            CreateView(drawingDocument, sourcePartPath, modelViews.Top, 0.10d, 0.10d, "top_view_create_failed", report, logs);
+            CreateView(drawingDocument, sourcePartPath, modelViews.Right, 0.22d, 0.20d, "right_view_create_failed", report, logs);
+            CreateView(drawingDocument, sourcePartPath, modelViews.Isometric, 0.24d, 0.10d, "isometric_view_create_failed", report, logs);
+            return;
+        }
+
+        report.Warnings.Add("front_view_named_creation_failed: falling back to Create3rdAngleViews2 for the documented standard orthographic view API.");
+        report.Operations.Add("third_angle_views_create_started");
+        if (!TryInvokeBool(drawingDocument, "Create3rdAngleViews2", sourcePartPath))
+        {
+            throw new InvalidOperationException("front_view_create_failed: CreateDrawViewFromModelView3 returned null for *Front and Create3rdAngleViews2 returned false.");
+        }
+
+        report.ViewsCreated.AddRange(new[] { "Front", "Top", "Right" });
+        report.Operations.Add("third_angle_views_create_success");
+        logs.Add("Created Front, Top and Right views using Create3rdAngleViews2 fallback.");
+        CreateView(drawingDocument, sourcePartPath, modelViews.Isometric, 0.24d, 0.10d, "isometric_view_create_failed", report, logs);
+    }
+
+    private SolidWorksModelViewNames ResolveModelViewNames(
+        object partDocument,
+        SolidWorksDrawingReport report,
+        List<string> logs)
+    {
+        var available = new List<string>();
+        var rawViewNames = TryInvoke(partDocument, "GetModelViewNames");
+        if (rawViewNames is System.Collections.IEnumerable values)
+        {
+            foreach (var value in values)
+            {
+                if (value is string viewName && !string.IsNullOrWhiteSpace(viewName))
+                {
+                    available.Add(viewName);
+                }
+            }
+        }
+
+        if (available.Count == 0)
+        {
+            report.Warnings.Add("model_view_names_unavailable: GetModelViewNames did not return usable names; invariant English standard names will be attempted.");
+            return SolidWorksModelViewNames.InvariantEnglish;
+        }
+
+        report.Operations.Add("model_view_names_read");
+        logs.Add($"Read {available.Count} model view names from SolidWorks.");
+
+        return new SolidWorksModelViewNames(
+            ResolveAvailableModelViewName(available, "*Front", "*前视"),
+            ResolveAvailableModelViewName(available, "*Top", "*上视"),
+            ResolveAvailableModelViewName(available, "*Right", "*右视"),
+            ResolveAvailableModelViewName(available, "*Isometric", "*等轴测"));
+    }
+
+    private static string ResolveAvailableModelViewName(IReadOnlyList<string> available, params string[] candidates) =>
+        candidates.FirstOrDefault(candidate => available.Contains(candidate, StringComparer.OrdinalIgnoreCase)) ?? candidates[0];
+
+    private static string CanonicalizeViewName(string viewName) => viewName.TrimStart('*') switch
+    {
+        "前视" or "Front" => "Front",
+        "上视" or "Top" => "Top",
+        "右视" or "Right" => "Right",
+        "等轴测" or "Isometric" => "Isometric",
+        var name => name
+    };
+
+    private bool TryCreateView(
         object drawingDocument,
         string sourcePartPath,
         string viewName,
@@ -345,12 +417,31 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
         var view = TryInvoke(drawingDocument, "CreateDrawViewFromModelView3", sourcePartPath, viewName, x, y, 0d);
         if (view is null)
         {
-            throw new InvalidOperationException($"{failureStage}: CreateDrawViewFromModelView3 returned null for {viewName}.");
+            return false;
         }
 
-        report.ViewsCreated.Add(viewName.TrimStart('*'));
+        // The report uses canonical drawing semantics; the COM invocation above
+        // still used the exact localized name returned by this SolidWorks instance.
+        report.ViewsCreated.Add(CanonicalizeViewName(viewName));
         report.Operations.Add(failureStage.Replace("_failed", "_success", StringComparison.OrdinalIgnoreCase));
         logs.Add($"Created drawing view {viewName}.");
+        return true;
+    }
+
+    private void CreateView(
+        object drawingDocument,
+        string sourcePartPath,
+        string viewName,
+        double x,
+        double y,
+        string failureStage,
+        SolidWorksDrawingReport report,
+        List<string> logs)
+    {
+        if (!TryCreateView(drawingDocument, sourcePartPath, viewName, x, y, failureStage, report, logs))
+        {
+            throw new InvalidOperationException($"{failureStage}: CreateDrawViewFromModelView3 returned null for {viewName}.");
+        }
     }
 
     private void SaveDrawing(
@@ -646,4 +737,9 @@ public sealed class LateBoundSolidWorksDrawingBuilder : ISolidWorksDrawingBuilde
     private bool TryInvokeBool(object? target, string name, params object?[] args) => _comFacade.TryInvokeBool(target, name, args);
 
     private void ReleaseComObject(object value) => _comFacade.ReleaseComObject(value);
+
+    private sealed record SolidWorksModelViewNames(string Front, string Top, string Right, string Isometric)
+    {
+        public static SolidWorksModelViewNames InvariantEnglish { get; } = new("*Front", "*Top", "*Right", "*Isometric");
+    }
 }

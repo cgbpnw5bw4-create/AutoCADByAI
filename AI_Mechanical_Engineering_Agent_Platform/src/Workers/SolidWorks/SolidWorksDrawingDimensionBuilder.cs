@@ -578,9 +578,20 @@ public sealed class LateBoundSolidWorksDrawingDimensionBuilder : ISolidWorksDraw
     {
         var candidates = new[] { view.ViewName, view.OrientationName }
             .Where(value => !string.IsNullOrWhiteSpace(value));
+
+        var expectedNames = expected switch
+        {
+            "Front" => new[] { "Front", "前视" },
+            "Top" => new[] { "Top", "上视" },
+            "Right" => new[] { "Right", "右视" },
+            "Isometric" => new[] { "Isometric", "等轴测" },
+            _ => new[] { expected }
+        };
+
         return candidates.Any(value =>
-            value!.Contains(expected, StringComparison.OrdinalIgnoreCase) ||
-            value.Contains($"*{expected}", StringComparison.OrdinalIgnoreCase));
+            expectedNames.Any(expectedName =>
+                value!.Contains(expectedName, StringComparison.OrdinalIgnoreCase) ||
+                value.Contains($"*{expectedName}", StringComparison.OrdinalIgnoreCase)));
     }
 
     private bool ActivateDrawingView(object drawingDocument, ConfirmedDrawingView view)

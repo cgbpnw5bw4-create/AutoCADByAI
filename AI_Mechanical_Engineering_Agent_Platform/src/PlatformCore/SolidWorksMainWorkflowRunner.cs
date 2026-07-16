@@ -9,6 +9,20 @@ using WorkerContracts;
 
 namespace PlatformCore;
 
+public enum SolidWorksMainWorkflowStage
+{
+    BuildPlate,
+    CreateDrawing,
+    AddDrawingDimensions,
+    ApplyDrawingTitleBlock
+}
+
+public enum SolidWorksMainWorkflowOperation
+{
+    BuildPlate,
+    BuildCompleteDrawingPackage
+}
+
 public sealed record SolidWorksMainWorkflowRequest(
     string RequestId,
     string TaskId,
@@ -16,7 +30,20 @@ public sealed record SolidWorksMainWorkflowRequest(
     string OutputDirectory,
     bool DryRun = true,
     bool AllowRealCadExecution = false,
-    CADModelSpec? ModelSpec = null);
+    CADModelSpec? ModelSpec = null,
+    SolidWorksMainWorkflowStage Stage = SolidWorksMainWorkflowStage.BuildPlate,
+    string? SourcePartPath = null,
+    string? SourceDrawingPath = null,
+    string? SourceDimensionedDrawingPath = null,
+    SolidWorksMainWorkflowOperation Operation = SolidWorksMainWorkflowOperation.BuildPlate,
+    bool GenerateDrawing = false,
+    bool GenerateDimensions = false,
+    bool GenerateTitleBlock = false,
+    bool GenerateReleasePackage = false,
+    bool StructuredInputReceived = false,
+    bool ChiefEngineerInvoked = false,
+    bool GatewayInvoked = false,
+    bool SolidWorksRouterTriggered = false);
 
 public sealed record SolidWorksMainWorkflowResult(
     string RequestId,
@@ -26,6 +53,7 @@ public sealed record SolidWorksMainWorkflowResult(
     string ExecutionMode,
     bool RequestFlagEnabled,
     bool EnvironmentFlagEnabled,
+    bool MainWorkflowEnvironmentFlagEnabled,
     bool RealCadRequested,
     bool RealCadExecuted,
     bool RealCadConnected,
@@ -39,7 +67,7 @@ public sealed record SolidWorksMainWorkflowResult(
     string? FailureStage,
     WorkflowExecutionResult WorkflowResult);
 
-public sealed class SolidWorksMainWorkflowRunner
+public sealed partial class SolidWorksMainWorkflowRunner
 {
     private const string FakeWorkerName = "FakeSolidWorksWorker";
     private const string RealWorkerTypeName = "SolidWorksWorker.RealSolidWorksWorker, SolidWorksWorker";
@@ -64,7 +92,14 @@ public sealed class SolidWorksMainWorkflowRunner
         _runtimeOptionsProvider = runtimeOptionsProvider ?? (() => SolidWorksRuntimeOptions.FromEnvironment());
     }
 
-    public async Task<SolidWorksMainWorkflowResult> ExecuteAsync(
+    public Task<SolidWorksMainWorkflowResult> ExecuteAsync(
+        SolidWorksMainWorkflowRequest request,
+        CancellationToken cancellationToken = default) =>
+        request.Operation == SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage
+            ? ExecuteCompleteDrawingPackageAsync(request, cancellationToken)
+            : ExecuteSingleStageAsync(request, cancellationToken);
+
+    private async Task<SolidWorksMainWorkflowResult> ExecuteSingleStageAsync(
         SolidWorksMainWorkflowRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -81,7 +116,9 @@ public sealed class SolidWorksMainWorkflowRunner
         var issues = new List<string>();
         var runtimeOptions = _runtimeOptionsProvider();
         var requestAllowsReal = request.AllowRealCadExecution && !request.DryRun;
-        var realExecutionAllowed = requestAllowsReal && runtimeOptions.EnableRealExecution;
+        var realExecutionAllowed = requestAllowsReal &&
+            runtimeOptions.EnableRealExecution &&
+            runtimeOptions.MainWorkflowExecutionEnabled;
         var workerName = realExecutionAllowed ? "RealSolidWorksWorker" : FakeWorkerName;
         var workflowId = $"solidworks-main-workflow-{request.TaskId}";
         var outputDirectory = Path.GetFullPath(request.OutputDirectory);
@@ -135,12 +172,7 @@ public sealed class SolidWorksMainWorkflowRunner
                             fatal: true));
                     }
 
-                    workerRequest = new SolidWorksWorkerRequest(
-                        request.RequestId,
-                        plan,
-                        outputDirectory,
-                        DryRun: !realExecutionAllowed,
-                        AllowRealCadExecution: realExecutionAllowed);
+                    workerRequest = CreateWorkerRequest(request, plan, outputDirectory, realExecutionAllowed);
 
                     buildPlanValidation = new SolidWorksBuildPlanValidator().Validate(workerRequest);
                     buildPlanReview = new SolidWorksBuildPlanReviewer().Review(plan);
@@ -178,7 +210,7 @@ public sealed class SolidWorksMainWorkflowRunner
 
                     if (!realExecutionAllowed && requestAllowsReal)
                     {
-                        logs.Add("Real CAD request-level switch was present, but SW_ENABLE_REAL_EXECUTION was not true; main workflow stayed on FakeSolidWorksWorker.");
+                        logs.Add("Real CAD request-level switch was present, but SW_ENABLE_REAL_EXECUTION=true and SW_REAL_MAIN_WORKFLOW_TEST=true were not both present; main workflow stayed on FakeSolidWorksWorker.");
                     }
                     else if (!realExecutionAllowed)
                     {
@@ -253,8 +285,10 @@ public sealed class SolidWorksMainWorkflowRunner
             {
                 ["request_id"] = request.RequestId,
                 ["part_name"] = "plate_basic_4holes",
+                ["stage"] = request.Stage.ToString(),
                 ["real_cad_requested"] = requestAllowsReal,
-                ["real_cad_env_enabled"] = runtimeOptions.EnableRealExecution
+                ["real_cad_env_enabled"] = runtimeOptions.EnableRealExecution,
+                ["real_cad_main_workflow_env_enabled"] = runtimeOptions.MainWorkflowExecutionEnabled
             }),
             cancellationToken);
 
@@ -291,6 +325,7 @@ public sealed class SolidWorksMainWorkflowRunner
             workerResult?.ExecutionMode ?? (realExecutionAllowed ? "RealNotStarted" : "FakeNotStarted"),
             requestAllowsReal,
             runtimeOptions.EnableRealExecution,
+            runtimeOptions.MainWorkflowExecutionEnabled,
             requestAllowsReal,
             workerResult?.RealCadExecuted == true,
             workerResult?.RealCadConnected == true,
@@ -310,6 +345,24 @@ public sealed class SolidWorksMainWorkflowRunner
 
     private ISkill ResolveBuildPlanSkill() =>
         _skillRegistry.GetByName("solidworks-build-plan-skill") ?? new SolidWorksBuildPlanSkill();
+
+    private static SolidWorksWorkerRequest CreateWorkerRequest(
+        SolidWorksMainWorkflowRequest request,
+        SolidWorksBuildPlan plan,
+        string outputDirectory,
+        bool realExecutionAllowed) =>
+        new(
+            request.RequestId,
+            plan,
+            outputDirectory,
+            DryRun: !realExecutionAllowed,
+            AllowRealCadExecution: realExecutionAllowed,
+            DrawingSmokeTestOnly: request.Stage == SolidWorksMainWorkflowStage.CreateDrawing,
+            SourcePartPath: request.SourcePartPath,
+            DrawingDimensionSmokeTestOnly: request.Stage == SolidWorksMainWorkflowStage.AddDrawingDimensions,
+            SourceDrawingPath: request.SourceDrawingPath,
+            DrawingTitleBlockSmokeTestOnly: request.Stage == SolidWorksMainWorkflowStage.ApplyDrawingTitleBlock,
+            SourceDimensionedDrawingPath: request.SourceDimensionedDrawingPath);
 
     private async Task<SolidWorksWorkerResult> InvokeRegisteredFakeWorkerAsync(
         SolidWorksWorkerRequest request,
@@ -482,6 +535,7 @@ public sealed class SolidWorksMainWorkflowRunner
             {
                 ["workflow_id"] = workflowResult.WorkflowId,
                 ["worker_name"] = workerName,
+                ["stage"] = request.Stage.ToString(),
                 ["execution_mode"] = workerResult?.ExecutionMode ?? "NotStarted",
                 ["real_cad_requested"] = requestFlagEnabled.ToString(),
                 ["sw_enable_real_execution"] = environmentFlagEnabled.ToString(),

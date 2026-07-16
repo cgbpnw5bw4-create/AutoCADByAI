@@ -505,10 +505,15 @@ public sealed class SolidWorksReleasePackageValidator
         report.SourceReportFailures.AddRange(sourceReportStatuses.Where(SolidWorksReleasePackageBuilder.IsFailedSourceReport));
         report.SourceReportWarnings.Clear();
         report.SourceReportWarnings.AddRange(sourceReportStatuses.Where(SolidWorksReleasePackageBuilder.IsWarningSourceReport));
+        report.RequireRealExecutionEvidence = manifest.RequireRealExecutionEvidence;
+        report.SourceExecutionEvidence.Clear();
+        report.SourceExecutionEvidence.AddRange(manifest.SourceExecutionEvidence);
+        report.RealExecutionEvidencePassed = !manifest.RequireRealExecutionEvidence || HasCompleteRealExecutionEvidence(manifest.SourceExecutionEvidence);
         report.AllSourceReportsPassed =
             report.SourceReportsChecked &&
             manifest.Reports.Count > 0 &&
-            sourceReportStatuses.All(status => string.Equals(status.FinalStatus, "Passed", StringComparison.OrdinalIgnoreCase));
+            sourceReportStatuses.All(status => string.Equals(status.FinalStatus, "Passed", StringComparison.OrdinalIgnoreCase)) &&
+            report.RealExecutionEvidencePassed;
 
         AddCheck(report, "artifacts_collected", report.ArtifactsCollected, "source_artifacts_missing", "SLDPRT, STEP, SLDDRW and PDF must be collected.");
         AddCheck(report, "reports_collected", report.ReportsCollected, "source_report_missing", "build, diagnostic, drawing, dimension and title block reports must be collected.");
@@ -519,6 +524,12 @@ public sealed class SolidWorksReleasePackageValidator
         AddCheck(report, "failure_stages_checked", report.FailureStagesChecked, "package_validation_failed", "failed reports must expose failure_stage.");
         AddCheck(report, "source_reports_checked", report.SourceReportsChecked, "source_report_missing", "all source reports must expose final_status before deliverable evaluation.");
         AddCheck(report, "all_source_reports_passed", report.AllSourceReportsPassed, "source_report_failed", "all source reports must have final_status=Passed before deliverable_status can be Deliverable.");
+        AddCheck(
+            report,
+            "real_execution_evidence_passed",
+            report.RealExecutionEvidencePassed,
+            "real_execution_evidence_failed",
+            "V1.7 explicit release packages require all four stages to prove real worker execution and QualityGate passage.");
 
         foreach (var item in manifest.Artifacts.Where(item => !item.Exists || item.SizeBytes <= 0))
         {
@@ -547,7 +558,8 @@ public sealed class SolidWorksReleasePackageValidator
                 ? "Deliverable"
                 : "NotDeliverable";
         report.FailureStage = packageFailureStage ??
-            (report.AllSourceReportsPassed ? null : "source_report_failed");
+            (report.AllSourceReportsPassed ? null :
+                !report.RealExecutionEvidencePassed ? "real_execution_evidence_failed" : "source_report_failed");
         report.FinalStatus = report.DeliverableStatus == "Deliverable" ? "Passed" : "Failed";
         AddCheck(
             report,
@@ -585,6 +597,11 @@ public sealed class SolidWorksReleasePackageValidator
             return "package_validation_failed";
         }
 
+        if (!report.RealExecutionEvidencePassed)
+        {
+            return "real_execution_evidence_failed";
+        }
+
         return string.Equals(manifest.FailureStage, "source_report_failed", StringComparison.OrdinalIgnoreCase)
             ? null
             : manifest.FailureStage;
@@ -602,6 +619,26 @@ public sealed class SolidWorksReleasePackageValidator
             passed ? "Passed" : "Failed",
             passed ? null : failureStage,
             message));
+    }
+
+    private static bool HasCompleteRealExecutionEvidence(IReadOnlyList<SolidWorksReleaseExecutionEvidence> evidence)
+    {
+        var expectedModes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["build"] = "RealBuildPlateBasic4Holes",
+            ["drawing"] = "RealDrawingBasicViews",
+            ["dimension"] = "RealDrawingDimensions",
+            ["title_block"] = "RealDrawingTitleBlock"
+        };
+
+        return evidence.Count == expectedModes.Count && evidence.All(item =>
+            expectedModes.TryGetValue(item.Stage, out var expectedMode) &&
+            string.Equals(item.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(item.ExecutionMode, expectedMode, StringComparison.OrdinalIgnoreCase) &&
+            item.RealCadExecuted &&
+            item.RealCadConnected &&
+            item.QualityGatePassed &&
+            string.IsNullOrWhiteSpace(item.FailureStage));
     }
 
     private static bool ExistingNonEmpty(string path) =>

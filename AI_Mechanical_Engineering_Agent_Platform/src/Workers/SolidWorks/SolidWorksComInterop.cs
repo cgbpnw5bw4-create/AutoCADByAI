@@ -246,7 +246,16 @@ public sealed class SolidWorksCustomPropertyReader : ISolidWorksPropertyReader
     {
         var args = new object?[] { name, false, string.Empty, string.Empty, false, false };
         _ = _comFacade.TryInvokeWithArgs(customPropertyManager, "Get6", args);
-        return args[2]?.ToString();
+        var get6Value = args[2]?.ToString();
+        if (!string.IsNullOrWhiteSpace(get6Value))
+        {
+            return get6Value;
+        }
+
+        // Late-bound COM can fail to marshal Get6's six by-reference values even
+        // when Add3 has committed the property.  Keep Get6 as the preferred API,
+        // then use the direct-value Get method only to verify that exact write.
+        return _comFacade.TryInvoke(customPropertyManager, "Get", name)?.ToString();
     }
 }
 

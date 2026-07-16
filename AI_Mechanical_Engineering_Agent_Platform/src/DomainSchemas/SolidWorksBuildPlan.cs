@@ -61,7 +61,8 @@ public sealed record SolidWorksRuntimeOptions(
     string OutputDirectory,
     int ConnectTimeoutSeconds,
     int ExecutionTimeoutSeconds,
-    string? DrawingTemplatePath = null)
+    string? DrawingTemplatePath = null,
+    bool MainWorkflowExecutionEnabled = false)
 {
     public const int DefaultConnectTimeoutSeconds = 30;
     public const int MinimumConnectTimeoutSeconds = 1;
@@ -84,7 +85,8 @@ public sealed record SolidWorksRuntimeOptions(
             EmptyToNull(Get("SW_OUTPUT_DIRECTORY")) ?? DefaultOutputDirectory(),
             ParseTimeout(Get("SW_CONNECT_TIMEOUT_SECONDS")),
             ParseExecutionTimeout(Get("SW_EXECUTION_TIMEOUT_SECONDS")),
-            EmptyToNull(Get("SW_TEMPLATE_DRAWING_PATH")));
+            EmptyToNull(Get("SW_TEMPLATE_DRAWING_PATH")),
+            ParseBool(Get("SW_REAL_MAIN_WORKFLOW_TEST")));
     }
 
     private static string DefaultOutputDirectory() =>
@@ -325,6 +327,12 @@ public sealed class SolidWorksReleaseManifest
 
     public List<SolidWorksSourceReportStatus> SourceReportWarnings { get; } = [];
 
+    public bool RequireRealExecutionEvidence { get; set; }
+
+    public bool RealExecutionEvidencePassed { get; set; }
+
+    public List<SolidWorksReleaseExecutionEvidence> SourceExecutionEvidence { get; } = [];
+
     public string DeliverableStatus { get; set; } = "NotDeliverable";
 
     public string? FailureStage { get; set; }
@@ -393,6 +401,12 @@ public sealed class SolidWorksPackageQualityReport
 
     public List<SolidWorksSourceReportStatus> SourceReportWarnings { get; } = [];
 
+    public bool RequireRealExecutionEvidence { get; set; }
+
+    public bool RealExecutionEvidencePassed { get; set; }
+
+    public List<SolidWorksReleaseExecutionEvidence> SourceExecutionEvidence { get; } = [];
+
     public string DeliverableStatus { get; set; } = "NotDeliverable";
 
     public List<SolidWorksPackageQualityCheck> Checks { get; } = [];
@@ -413,6 +427,38 @@ public sealed record SolidWorksSourceReportStatus(
     string? SourcePath,
     string? PackagePath,
     string Message);
+
+/// <summary>
+/// Binds a V1.7 release package to the exact outputs produced by one controlled
+/// main-workflow run. This prevents a release package from combining unrelated
+/// historical "latest" artifacts.
+/// </summary>
+public sealed record SolidWorksReleasePackageSourceSet(
+    string? SldprtPath,
+    string? StepPath,
+    string? DrawingPath,
+    string? PdfPath,
+    string? BuildReportPath,
+    string? DrawingReportPath,
+    string? DimensionReportPath,
+    string? TitleBlockReportPath,
+    IReadOnlyList<SolidWorksReleaseExecutionEvidence> ExecutionEvidence,
+    IReadOnlyList<string>? Warnings = null,
+    bool RequireRealExecutionEvidence = true);
+
+/// <summary>
+/// Runtime evidence from a stage that was executed through the controlled
+/// main workflow. A source report alone cannot establish a real CAD result.
+/// </summary>
+public sealed record SolidWorksReleaseExecutionEvidence(
+    string Stage,
+    string WorkerName,
+    string ExecutionMode,
+    bool RealCadExecuted,
+    bool RealCadConnected,
+    bool QualityGatePassed,
+    string? FailureStage,
+    string? ReportPath);
 
 public sealed record SolidWorksPackageQualityCheck(
     string Name,

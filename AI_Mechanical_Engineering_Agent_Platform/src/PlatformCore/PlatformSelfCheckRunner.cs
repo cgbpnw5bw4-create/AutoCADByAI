@@ -15,7 +15,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "1.6";
+    private const string SelfCheckSchemaVersion = "1.7";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -190,6 +190,52 @@ public static class PlatformSelfCheckRunner
         var v16TestADocumented =
             versionStageText.Contains("V1.6-TEST-A", StringComparison.OrdinalIgnoreCase) &&
             solidWorksRealAcceptanceProtocolExists;
+        var cliProgramPath = Path.Combine(root, "src", "Interfaces", "CliHost", "Program.cs");
+        var cliProgramText = File.Exists(cliProgramPath) ? File.ReadAllText(cliProgramPath) : string.Empty;
+        var routerPath = Path.Combine(root, "src", "PlatformCore", "SolidWorksWorkflowRouter.cs");
+        var routerText = File.Exists(routerPath) ? File.ReadAllText(routerPath) : string.Empty;
+        var e2eRunnerPath = Path.Combine(root, "src", "PlatformCore", "SolidWorksMainWorkflowRunner.E2E.cs");
+        var e2eRunnerText = File.Exists(e2eRunnerPath) ? File.ReadAllText(e2eRunnerPath) : string.Empty;
+        var e2eReleaseBuilderPath = Path.Combine(root, "src", "Workers", "SolidWorks", "SolidWorksE2EReleasePackageBuilder.cs");
+        var e2eReleaseBuilderText = File.Exists(e2eReleaseBuilderPath) ? File.ReadAllText(e2eReleaseBuilderPath) : string.Empty;
+        var realCadE2eCliEntryExists = File.Exists(cliProgramPath) && cliProgramText.Contains("run-cad-workflow", StringComparison.Ordinal);
+        var realCadE2eStructuredInputSupported =
+            File.Exists(Path.Combine(root, "examples", "real_cad_plate_request.json")) &&
+            routerText.Contains("build_complete_drawing_package", StringComparison.Ordinal) &&
+            routerText.Contains("part_type", StringComparison.Ordinal);
+        var realCadE2eUsesChiefEngineerOrchestrator =
+            typeof(global::PlatformCore.Modules.RequirementUnderstanding.Agents.ChiefEngineerOrchestrator).GetMethod("ExecuteAsync") is not null &&
+            realCadE2eStructuredInputSupported;
+        var realCadE2eUsesWorkflowEngine = e2eRunnerText.Contains("ExecuteSingleStageAsync", StringComparison.Ordinal) &&
+            typeof(SequentialWorkflowEngine).GetMethod(nameof(SequentialWorkflowEngine.ExecuteAsync)) is not null;
+        var realCadE2eUsesSolidWorksRouter = realCadE2eStructuredInputSupported &&
+            typeof(SolidWorksWorkflowRouter).GetMethod(nameof(SolidWorksWorkflowRouter.TryBuildRequest)) is not null;
+        var realCadE2eCanInvokeRealWorker =
+            Type.GetType("SolidWorksWorker.RealSolidWorksWorker, SolidWorksWorker", throwOnError: false) is not null &&
+            Type.GetType("SolidWorksWorker.SolidWorksE2EReleasePackageBuilder, SolidWorksWorker", throwOnError: false) is not null;
+        var realCadE2ePassesQualityGate = e2eRunnerText.Contains("DefaultGatekeeper", StringComparison.Ordinal) &&
+            e2eRunnerText.Contains("quality_gate_after_complete_drawing_package", StringComparison.Ordinal);
+        var realCadE2eDefaultDisabled = !SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>()).MainWorkflowExecutionEnabled;
+        var realCadE2eRequiresRequestConfirmation = e2eRunnerText.Contains("AllowRealCadExecution", StringComparison.Ordinal) &&
+            e2eRunnerText.Contains("request.DryRun", StringComparison.Ordinal);
+        var realCadE2eRequiresEnvConfirmation = e2eRunnerText.Contains("EnableRealExecution", StringComparison.Ordinal) &&
+            e2eRunnerText.Contains("MainWorkflowExecutionEnabled", StringComparison.Ordinal);
+        var realCadE2eReportSupported = e2eRunnerText.Contains("e2e_execution_report.json", StringComparison.Ordinal) &&
+            e2eRunnerText.Contains("latest_real_outputs.md", StringComparison.Ordinal);
+        var realCadE2eDeliverableSemanticsSupported =
+            typeof(SolidWorksReleaseManifest).GetProperty(nameof(SolidWorksReleaseManifest.AllSourceReportsPassed)) is not null &&
+            typeof(SolidWorksReleaseManifest).GetProperty(nameof(SolidWorksReleaseManifest.DeliverableStatus)) is not null &&
+            e2eReleaseBuilderText.Contains("real_execution_evidence_failed", StringComparison.Ordinal);
+        var v17VersionStageDocumented = versionStageText.Contains("V1.7", StringComparison.OrdinalIgnoreCase);
+        var localAuthorizationProfilePath = Path.Combine(root, "src", "PlatformCore", "SolidWorksLocalExecutionProfile.cs");
+        var localAuthorizationProfileText = File.Exists(localAuthorizationProfilePath) ? File.ReadAllText(localAuthorizationProfilePath) : string.Empty;
+        var realCadE2eLocalAuthorizationProfileSupported =
+            File.Exists(Path.Combine(root, "config", "solidworks.local.example.json")) &&
+            localAuthorizationProfileText.Contains("solidworks.local.json", StringComparison.Ordinal) &&
+            cliProgramText.Contains("SolidWorksLocalExecutionProfile.Load", StringComparison.Ordinal) &&
+            e2eRunnerText.Contains("LocalDevelopmentProfile authorization", StringComparison.Ordinal);
+        var realCadE2eLocalAuthorizationDefaultDisabled =
+            !SolidWorksLocalExecutionProfile.Load(Path.Combine(root, "_self_check_without_local_authorization")).IsAuthorized;
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -408,9 +454,24 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.V15VersionStageDocumented &&
             solidWorksComFacadeInjectionSupported &&
             solidWorksRealAcceptanceProtocolExists &&
-            solidWorksLatestRealOutputsReportSupported &&
-            v16TestADocumented &&
-            executableDocsChecks.ExecutableDocsLayerEnabled &&
+             solidWorksLatestRealOutputsReportSupported &&
+             v16TestADocumented &&
+             realCadE2eCliEntryExists &&
+             realCadE2eStructuredInputSupported &&
+             realCadE2eUsesChiefEngineerOrchestrator &&
+             realCadE2eUsesWorkflowEngine &&
+             realCadE2eUsesSolidWorksRouter &&
+             realCadE2eCanInvokeRealWorker &&
+             realCadE2ePassesQualityGate &&
+             realCadE2eDefaultDisabled &&
+             realCadE2eRequiresRequestConfirmation &&
+             realCadE2eRequiresEnvConfirmation &&
+             realCadE2eReportSupported &&
+             realCadE2eDeliverableSemanticsSupported &&
+             v17VersionStageDocumented &&
+             realCadE2eLocalAuthorizationProfileSupported &&
+             realCadE2eLocalAuthorizationDefaultDisabled &&
+             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -708,6 +769,21 @@ public static class PlatformSelfCheckRunner
             solidWorksRealAcceptanceProtocolExists,
             solidWorksLatestRealOutputsReportSupported,
             v16TestADocumented,
+            realCadE2eCliEntryExists,
+            realCadE2eStructuredInputSupported,
+            realCadE2eUsesChiefEngineerOrchestrator,
+            realCadE2eUsesWorkflowEngine,
+            realCadE2eUsesSolidWorksRouter,
+            realCadE2eCanInvokeRealWorker,
+            realCadE2ePassesQualityGate,
+            realCadE2eDefaultDisabled,
+            realCadE2eRequiresRequestConfirmation,
+            realCadE2eRequiresEnvConfirmation,
+            realCadE2eReportSupported,
+            realCadE2eDeliverableSemanticsSupported,
+            v17VersionStageDocumented,
+            realCadE2eLocalAuthorizationProfileSupported,
+            realCadE2eLocalAuthorizationDefaultDisabled,
             finalStatus);
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");

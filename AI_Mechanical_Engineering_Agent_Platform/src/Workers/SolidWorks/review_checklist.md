@@ -38,6 +38,13 @@
 - 是否没有 COM 类型泄漏到 Contracts。
 - 是否没有复制第三方 scripts。
 - 是否没有破坏 `FakeSolidWorksWorker` dry-run。
+- 是否 V1.7 CLI 通过 `AgentMessageDispatcher` → `chief-engineer`，而非直接调用 Worker、Builder 或 SmokeRunner。
+- 是否 Router 仅接受结构化 `build_complete_drawing_package` 与 `part_type=plate_basic_4holes` 作为完整真实工作流触发条件。
+- 是否四重确认缺失时 E2E report 为 `real_execution_confirmation_missing`，且没有 Fake 成功、Deliverable 或真实执行标记。
+- 是否 Build、Drawing、Dimension、TitleBlock 使用同一 request 的绝对路径传递，阶段源输出仍在受信任 `output/solidworks/real/` 根内。
+- 是否 E2E 发布包只使用显式 source set，不扫描 latest，也不把 SmokeRunner 诊断报告作为成功来源。
+- 是否每个源报告 Passed、每个 real execution evidence 匹配 mode 且为真实执行，以及总体 QualityGate 通过后，才得到 `all_source_reports_passed=true`、`deliverable_status=Deliverable`。
+- 是否 `e2e_execution_report.json` 包含请求、Gateway、Chief、WorkflowEngine、Router、Worker、连接、QualityGate、源报告、失败阶段与最终状态。
 
 ## V1.3 标题栏语义边界
 
@@ -63,6 +70,8 @@ V1.4 进入 Claude 审查前，还必须确认 `solidworks_release_package_imple
 
 V1.5 进入 Claude 审查前，还必须确认 `real_cad_worker_integrated_into_main_workflow`、`chief_engineer_orchestrator_invokes_cad_workflow`、`workflow_engine_can_route_to_solidworks_worker`、`real_cad_main_workflow_default_disabled`、`real_cad_main_workflow_requires_request_flag`、`real_cad_main_workflow_requires_env_flag`、`real_cad_main_workflow_passes_quality_gate`、`release_package_all_source_reports_passed_field_exists`、`release_package_deliverable_status_field_exists`、`release_package_failed_source_reports_block_deliverable` 和 `v1_5_version_stage_documented` 已写入 self-check 报告。
 
+V1.7 进入 Claude stage-gate 审查前，必须通过 build、test、self-check，并在用户显式开启真实执行后获得同次 E2E report。若真实运行失败，必须保留 `failure_stage`、对应阶段报告与总体 QualityGate 的失败结论；不得声称可交付。
+
 ## V1.1 Claude Improvements Backlog
 
 V1.1 Claude 审查未发现 Blockers。以下 Improvements 已进入技术债，不阻塞 V1.2 主线：
@@ -80,3 +89,11 @@ V1.2 Claude 审查未发现 Blockers。以下 Improvements 已进入 `docs/techn
 - V1.2 尺寸标注为非关联、硬编码的最小策略，后续扩展必须继续暴露语义边界。
 - V1.2 尺寸 Builder 内部失败分支后续应补更细的纯单元测试。
 - 后续抽取工程图保存、PDF 导出、报告写入和 COM 释放共享工具。
+
+## V1.7-REAL-AUTH 本地授权审查
+
+- `config/solidworks.local.json` 必须被忽略，仓库只保留 `config/solidworks.local.example.json`。
+- 只有 `LocalDevelopmentProfile` 可让 CLI 自动形成真实请求；CI、默认 self-check 和缺失配置的 CLI 不得启动 SolidWorks。
+- `e2e_execution_report.json` 必须包含授权、启动尝试、连接、真实 Worker 调用和真实 CAD 执行字段。
+- 授权通过后若真实执行失败，`failure_stage` 必须来自实际预检、连接或阶段报告，不能重新解释为确认缺失。
+- Gateway、Agent、LLM 不得直接调用 Worker；不得用 SmokeRunner、Builder 或文件存在冒充主流程成功。

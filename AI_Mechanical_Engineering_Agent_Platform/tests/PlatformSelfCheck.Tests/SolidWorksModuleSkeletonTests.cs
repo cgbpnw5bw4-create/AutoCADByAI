@@ -1401,6 +1401,28 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
+    public void SolidWorksDrawingTitleBlockBuilderUsesDirectReadFallbackWhenLateBoundGet6DoesNotMarshalOutValues()
+    {
+        var writeProperty = typeof(LateBoundSolidWorksDrawingTitleBlockBuilder).GetMethod(
+            "WriteProperty",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(writeProperty);
+        var builder = new LateBoundSolidWorksDrawingTitleBlockBuilder();
+
+        var property = Assert.IsType<SolidWorksDrawingTitleBlockProperty>(writeProperty.Invoke(
+            builder,
+            new object[]
+            {
+                new FakeTitleBlockDirectReadPropertyManager("plate_basic_4holes"),
+                "PartName",
+                "plate_basic_4holes"
+            }));
+
+        Assert.Equal("Passed", property.Status);
+        Assert.Contains("accepted", property.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void SolidWorksDrawingBuilderSaveDrawingRejectsEmptySlddrwFile()
     {
         var root = Path.Combine(Path.GetTempPath(), "solidworks_drawing_empty_save_test", Guid.NewGuid().ToString("N"));
@@ -3227,6 +3249,20 @@ public sealed class SolidWorksModuleSkeletonTests
             linkToProperty = false;
             return 0;
         }
+    }
+
+    private sealed class FakeTitleBlockDirectReadPropertyManager
+    {
+        private readonly string _readBackValue;
+
+        public FakeTitleBlockDirectReadPropertyManager(string readBackValue)
+        {
+            _readBackValue = readBackValue;
+        }
+
+        public int Add3(string name, int type, string value, int options) => 0;
+
+        public string Get(string name) => _readBackValue;
     }
 
     private sealed class FakeTitleBlockDrawingDocument

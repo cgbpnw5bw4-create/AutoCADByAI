@@ -6,6 +6,7 @@ namespace PlatformCore;
 public sealed class SolidWorksWorkflowRouter
 {
     private const string PlateBasicFourHoles = "plate_basic_4holes";
+    private const string BuildCompleteDrawingPackage = "build_complete_drawing_package";
 
     public SolidWorksMainWorkflowRequest? TryBuildRequest(AgentContext context)
     {
@@ -25,6 +26,7 @@ public sealed class SolidWorksWorkflowRouter
         var requestAllowsReal = FlagEnabled(context, "allow_real_cad_execution") ||
             FlagEnabled(context, "solidworks_allow_real_cad_execution");
         var dryRun = !FlagDisabled(context, "dry_run");
+        var isCompleteDrawingPackage = ContextValueEquals(context, BuildCompleteDrawingPackage, "operation");
         var modelSpec = ResolveModelSpec(context) ??
             CreatePlateBasicFourHolesSpec(
                 id: "cad-model-spec-plate-basic-4holes-main-workflow",
@@ -39,11 +41,27 @@ public sealed class SolidWorksWorkflowRouter
             outputDirectory,
             dryRun,
             requestAllowsReal,
-            modelSpec);
+            modelSpec,
+            Operation: isCompleteDrawingPackage
+                ? SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage
+                : SolidWorksMainWorkflowOperation.BuildPlate,
+            GenerateDrawing: FlagEnabled(context, "generate_drawing"),
+            GenerateDimensions: FlagEnabled(context, "generate_dimensions"),
+            GenerateTitleBlock: FlagEnabled(context, "generate_title_block"),
+            GenerateReleasePackage: FlagEnabled(context, "generate_release_package"),
+            StructuredInputReceived: FlagEnabled(context, "structured_input_received"),
+            ChiefEngineerInvoked: true,
+            GatewayInvoked: FlagEnabled(context, "gateway_invoked"),
+            SolidWorksRouterTriggered: true);
     }
 
     public bool ShouldRun(AgentContext context)
     {
+        if (ContextValueEquals(context, BuildCompleteDrawingPackage, "operation"))
+        {
+            return ContextValueEquals(context, PlateBasicFourHoles, "part_type", "cad_model_type", "solidworks_model_type");
+        }
+
         if (FlagEnabled(context, "solidworks_main_workflow"))
         {
             return true;
@@ -55,7 +73,7 @@ public sealed class SolidWorksWorkflowRouter
             return true;
         }
 
-        return ContextValueEquals(context, PlateBasicFourHoles, "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name") ||
+        return ContextValueEquals(context, PlateBasicFourHoles, "part_type", "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name") ||
                context.Input.Message.Contains(PlateBasicFourHoles, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -93,7 +111,7 @@ public sealed class SolidWorksWorkflowRouter
             return sharedSpec;
         }
 
-        return ContextValueEquals(context, PlateBasicFourHoles, "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name")
+        return ContextValueEquals(context, PlateBasicFourHoles, "part_type", "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name")
             ? CreatePlateBasicFourHolesSpec(values: context.Input.Context)
             : null;
     }

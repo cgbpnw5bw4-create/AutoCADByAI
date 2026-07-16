@@ -171,3 +171,28 @@ ChiefEngineerOrchestrator
 默认主流程仍走 `FakeSolidWorksWorker`，不会启动 SolidWorks。只有请求上下文同时声明 `allow_real_cad_execution=true` 和 `dry_run=false`，并且环境变量 `SW_ENABLE_REAL_EXECUTION=true` 时，`SolidWorksMainWorkflowRunner` 才允许选择 `RealSolidWorksWorker`。`Agent`、`Gateway` 和 `LLM` 仍不能直接调用 Worker。
 
 V1.5 还修正发布包语义：`package_build_status` 只表示打包过程是否成功，`all_source_reports_passed` 表示所有源报告是否通过，`deliverable_status` 表示最终是否可交付。任一源报告 `final_status=Failed` 时，`source_report_failures` 必须列出失败报告，`all_source_reports_passed=false`，`deliverable_status=NotDeliverable`。
+
+## V1.7 主工作流端到端验收补充
+
+V1.7 只串联已有能力，不新增 CAD 功能。CLI 结构化输入的 `operation=build_complete_drawing_package` 与 `part_type=plate_basic_4holes` 由 Gateway 交给 `chief-engineer`。主链路为：
+
+```text
+Gateway
+→ ChiefEngineerOrchestrator
+→ SequentialWorkflowEngine
+→ SolidWorksWorkflowRouter
+→ RealSolidWorksWorker
+→ Build / Drawing / Dimension / TitleBlock
+→ ArtifactValidator / Reviewer / QualityGate
+→ 显式同次 source set
+→ ReleasePackage
+→ 总体 QualityGate
+```
+
+四阶段源文件必须使用同一 request 的精确绝对路径传递，不得从历史 latest 目录拼接。最终包写入 `output/solidworks/e2e/plate_basic_4holes/<timestamp>/`；阶段产物保持在既有 `output/solidworks/real/` 受信任根，以满足原有 Validator。明确请求真实执行但缺少任一四重确认时必须失败关闭，不能使用 Fake Worker 作为验收结果。
+
+## V1.7-REAL-AUTH 本地开发授权
+
+本地开发人员可在不提交的 `config/solidworks.local.json` 中显式启用 `LocalDevelopmentProfile`。CLI 读取有效配置后自动形成 `allow_real_cad_execution=true` 与 `dry_run=false` 的内部请求，并在平台创建前设置真实执行环境；结构化业务输入只描述零件和交付内容，不重复承担授权字段。
+
+该便利不改变产品边界：配置不存在或无效时真实 CAD 仍被禁止；Gateway、Agent 和 LLM 仍不能直接访问 Worker；完整流程仍必须穿过 WorkflowEngine、ArtifactValidator、Reviewer、QualityGate 与 ReleasePackage。默认 self-check 不读取或应用本地授权配置，因此不会启动 SolidWorks。

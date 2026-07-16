@@ -1,0 +1,9 @@
+{
+  "real_execution_authorized": false,
+  "execution_authorization_source": "LocalDevelopmentProfile",
+  "visible": true,
+  "template_part_path": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2025\\templates\\gb_part.prtdot",
+  "template_drawing_path": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2025\\templates\\gb_a3.drwdot",
+  "connect_timeout_seconds": 60,
+  "execution_timeout_seconds": 300
+}

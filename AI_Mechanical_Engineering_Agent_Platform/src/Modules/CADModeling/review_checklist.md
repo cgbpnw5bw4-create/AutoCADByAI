@@ -22,6 +22,11 @@
 - V1.5 主流程绕过 Validator、Reviewer 或 QualityGate。
 - V1.5 真实 CAD 只满足请求级或环境级单一开关时就启动 SolidWorks。
 - V1.5 发布包源报告失败时仍把 `deliverable_status` 标记为可交付。
+- V1.7 CLI 绕过 Gateway 或 `chief-engineer` 直接调用 Worker、Builder 或 SmokeRunner。
+- V1.7 未解析 `build_complete_drawing_package` 与 `part_type=plate_basic_4holes`，却用自然语言静默触发真实 CAD。
+- V1.7 任一真实确认缺失时回退 Fake Worker 后返回 Passed、Deliverable 或 `real_cad_executed=true`。
+- V1.7 发布包通过历史 latest 或 SmokeRunner 报告拼接不同运行的源文件。
+- V1.7 任一源报告失败、真实执行证据不足或总体 QualityGate 未通过时仍标记 Deliverable。
 - Markdown 中文检查失败。
 
 ## V1.3 标题栏语义边界
@@ -50,3 +55,5 @@ V1.3 还必须确认 `solidworks_real_drawing_title_block_implemented`、`solidw
 V1.4 还必须确认 `solidworks_release_package_implemented`、`solidworks_release_package_default_no_cad_execution`、`solidworks_release_manifest_generated`、`solidworks_package_quality_report_generated`、`solidworks_release_summary_generated`、`solidworks_release_package_failure_stage_actionable`、`solidworks_release_package_failure_repair_documented` 和 `v1_4_version_stage_documented` 为 true。
 
 V1.5 还必须确认 `real_cad_worker_integrated_into_main_workflow`、`chief_engineer_orchestrator_invokes_cad_workflow`、`workflow_engine_can_route_to_solidworks_worker`、`real_cad_main_workflow_default_disabled`、`real_cad_main_workflow_requires_request_flag`、`real_cad_main_workflow_requires_env_flag`、`real_cad_main_workflow_passes_quality_gate`、`release_package_all_source_reports_passed_field_exists`、`release_package_deliverable_status_field_exists`、`release_package_failed_source_reports_block_deliverable` 和 `v1_5_version_stage_documented` 为 true。
+
+V1.7 还必须确认全部 `real_cad_e2e_*` 字段、`v1_7_version_stage_documented` 与 `markdown_chinese_check_passed` 为 true。真实验收报告必须记录 Gateway、ChiefEngineerOrchestrator、WorkflowEngine、Router、RealWorker、连接、总体 QualityGate、源报告与可交付语义。标题栏只能表述为自定义属性写入、读回和刷新，不得声称 Sheet Format 可见渲染已验收。

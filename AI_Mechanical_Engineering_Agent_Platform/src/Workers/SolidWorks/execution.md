@@ -166,3 +166,28 @@ ChiefEngineerOrchestrator
 - 不复制第三方 Python COM 脚本。
 - 不把 COM 类型泄漏到平台 Contracts。
 - 不在诊断 Runner 未验证时回填主 Worker。
+
+## V1.7 真实主工作流端到端验收
+
+V1.7 使用 `SolidWorksMainWorkflowRunner` 的受控完整 operation 串联既有 Build、Drawing、Dimension、TitleBlock 与 ReleasePackage；不新增 SolidWorks API，也不直接调用 Builder。入口为：
+
+```powershell
+dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json
+```
+
+CLI 只经 Gateway 调用公开的 `chief-engineer`。`SolidWorksWorkflowRouter` 必须识别 `operation=build_complete_drawing_package` 和 `part_type=plate_basic_4holes`，并把请求、四个 generate flag 和输出路径传递给主工作流。真实路径必须同时满足请求 `allow_real_cad_execution=true`、`dry_run=false`，环境 `SW_ENABLE_REAL_EXECUTION=true`、`SW_REAL_MAIN_WORKFLOW_TEST=true`。缺少任何一项都必须写出 `e2e_execution_report.json` 并以 `real_execution_confirmation_missing` 失败；不得降级 Fake Worker 后作为验收通过。
+
+四阶段真实源输出继续写入 `output/solidworks/real/`。
+
+- 每一步仍经过 `SolidWorksArtifactValidator`、Reviewer 和 QualityGate。
+- ReleasePackage 写入 `output/solidworks/e2e/plate_basic_4holes/<timestamp>/`。
+- 发布包只复制当前 request 的显式源集合：四份阶段报告与最终 SLDPRT、STEP、SLDDRW、PDF。
+- 发布包不扫描历史最新目录，也不要求或引用 `SmokeRunner` 的 `diagnostic_report.json` 作为最终成功依据。
+
+最终包使用 `SolidWorksE2EReleasePackageBuilder` 写入 `artifacts/`、`reports/`、`release_manifest.json`、`package_quality_report.json`、`release_summary.md` 与 `latest_real_outputs.md`。只有四阶段报告均 Passed、四项真实执行证据均匹配期望 mode、全部产物非空且总体 QualityGate Passed 时，`all_source_reports_passed=true` 且 `deliverable_status=Deliverable`。文件创建或包复制成功本身不构成通过。
+
+## V1.7-REAL-AUTH 本地授权执行
+
+真实主流程的唯一授权文件为项目根目录下未提交的 `config/solidworks.local.json`。只有 `real_execution_authorized=true` 且来源为 `LocalDevelopmentProfile` 时，CLI 才自动设置真实执行、关闭 dry-run、应用零件/工程图模板并默认显示 SolidWorks。CLI 仍只经 Gateway、`chief-engineer`、WorkflowEngine 和 Router 进入 Worker，不能直接调用 Worker、Builder 或 SmokeRunner。
+
+Worker 仍按既有预检、COM 连接、产物校验、Reviewer 与 QualityGate 执行。报告中的 `solidworks_launch_attempted` 仅在 Worker 已开始连接时为真；`real_worker_invoked` 仅在真实 Worker 已收到请求时为真，二者都不能由文件存在替代。

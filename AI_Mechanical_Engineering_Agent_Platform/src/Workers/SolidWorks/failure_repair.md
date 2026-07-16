@@ -154,3 +154,29 @@ V1.5 主工作流失败必须先读取 `AgentOutput` 中的 `solidworks-main-wor
 | `main_workflow_failed` | 未分类主流程失败 | workflow failure report | 保持默认 fake 路径，补充可行动阶段后再继续 |
 
 真实执行仍必须同时满足请求级 `allow_real_cad_execution=true`、`dry_run=false` 和环境变量 `SW_ENABLE_REAL_EXECUTION=true`。缺任一开关时，修复目标是保持 fake / dry-run 主流程可用，而不是启动 SolidWorks。
+
+## V1.7 端到端主工作流失败修复
+
+V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录 `release_manifest.json` 和 `reports/package_quality_report.json`。不得使用历史 latest、SmokeRunner 或 Builder 结果替代本次主流程证据。
+
+| failure_stage | 首先检查 | 修复边界 |
+|---|---|---|
+| `real_execution_confirmation_missing` | 请求四字段和两个环境开关 | 补齐明确确认后重新由 CLI 运行，不能使用 Fake 回退。 |
+| `preflight_failed` | `build_report.json`、模板路径、环境 | 修复既有 `SW_TEMPLATE_PART_PATH` 或工程图模板配置，不新增 API。 |
+| `source_artifacts_missing` | manifest 的 SourcePath、阶段 report | 只重跑本次失败阶段，保持 request 绑定。 |
+| `source_report_missing` / `source_report_failed` | 四个复制后的 report | 回到对应 Build、Drawing、Dimension 或 TitleBlock 阶段。 |
+| `real_execution_evidence_failed` | manifest 的 `source_execution_evidence` | 确认 mode、连接、`real_cad_executed` 和阶段 QualityGate，文件存在不足以修复。 |
+| `quality_gate_failed` | E2E workflow steps 与总体 gate decision | 修正上游校验/复审失败，不能绕过总体 QualityGate。 |
+
+标题栏阶段仅修复自定义属性的写入、回读、重建、保存和 PDF 导出；不把 Sheet Format 可见渲染失败误当作本阶段已支持的功能。
+
+## V1.7-REAL-AUTH 本地授权后的失败分流
+
+| failure_stage | 首先检查 | 修复边界 |
+|---|---|---|
+| `local_execution_authorization_missing` | `config/solidworks.local.json` 是否存在、授权布尔值和来源 | 只修复本地授权配置；不得用环境变量、Fake Worker 或 SmokeRunner 绕过。 |
+| `preflight_failed` | `build_report.json`、`SW_TEMPLATE_PART_PATH`、`SW_TEMPLATE_DRAWING_PATH` | 修复既有模板路径或访问权限，再从 CLI 重跑同一主流程。 |
+| `solidworks_connection_failed` | `e2e_execution_report.json` 的启动尝试、连接日志和 COM 注册 | 修复本机 SolidWorks 可连接性；不得改为确认缺失或伪造连接成功。 |
+| 其他阶段 failure_stage | 同次阶段报告和 `package_quality_report.json` | 按原有 Build、Drawing、Dimension、TitleBlock 修复路径处理，并保留总体 QualityGate 失败。 |
+
+本地授权已经通过后，任何真实执行失败都必须保留实际 `failure_stage` 并进入上述既有修复路径；不得重新写成 `real_execution_confirmation_missing`。

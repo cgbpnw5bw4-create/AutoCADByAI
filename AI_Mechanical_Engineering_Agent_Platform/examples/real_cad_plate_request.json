@@ -1,0 +1,13 @@
+{
+  "operation": "build_complete_drawing_package",
+  "part_type": "plate_basic_4holes",
+  "length_mm": 160,
+  "width_mm": 80,
+  "thickness_mm": 12,
+  "hole_count": 4,
+  "hole_diameter_mm": 10,
+  "generate_drawing": true,
+  "generate_dimensions": true,
+  "generate_title_block": true,
+  "generate_release_package": true
+}

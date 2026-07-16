@@ -189,4 +189,22 @@ V1.3 只做带尺寸工程图上的最小标题栏/图纸属性信息。当前�
 
 V1.4 只做已有真实输出的发布包收集和最小质量检查，不新增 SolidWorks API 调用，不启动 SolidWorks，不调用 COM，也不读取 PDF 视觉内容。因此本阶段默认不需要新的官方 SolidWorks API 证据。
 
+## V1.7-REAL-AUTH 文档释放 API 证据
+
+API：`ISldWorks.CloseDoc(string Name)`。资料来源：SOLIDWORKS 2025 API Help 的 CloseDoc Method（ISldWorks）；签名为 `void CloseDoc(string Name)`，按文档名称关闭已打开文件，未打开名称无副作用。
+
+本轮仅在每个受控 Worker 阶段完成保存/导出后关闭 `plate_basic_4holes` 的受控零件或工程图名称，以释放发布包读取所需的文件锁。不会调用 `CloseAllDocuments`，避免关闭用户的其他可见文档；若释放失败，只记录 `solidworks_document_close_warning`，后续发布包必须以可行动的 `artifact_copy_failed` 失败，而不能伪造成功。
+
+## V1.7-REAL-AUTH 工程图视图回退 API 证据
+
+API：`IDrawingDoc.CreateDrawViewFromModelView3(string ModelName, string ViewName, double LocX, double LocY, double LocZ)` 与 `IDrawingDoc.Create3rdAngleViews2(string ModelName)`。资料来源：SOLIDWORKS 2025 API Help；前者要求模型完整路径和精确视图名称（标准视图保留 `*`），后者返回布尔值并创建第三角法的三个正交标准视图。
+
+本机 2025 中文环境中，`*Front` 的单视图调用返回空对象时，受控 Builder 仅回退到已验证的 `Create3rdAngleViews2`，然后仍显式创建 `*Isometric`。第三角法或等轴视图任一失败都必须保留对应 `failure_stage`，不能保存空工程图或把 API 回退解释为成功。
+
 本阶段证据来自文件系统和既有阶段报告：`build_report.json`、`diagnostic_report.json`、`drawing_report.json`、`dimension_report.json`、`title_block_report.json`、`release_manifest.json` 和 `package_quality_report.json`。若这些报告显示某个上游阶段的导出或保存 API 失败，必须回到对应 V1.0-B、V1.1、V1.2 或 V1.3 API evidence 流程处理，不在 V1.4 直接修复 CAD API。
+
+## V1.7-REAL-AUTH 标题栏属性回读兼容证据
+
+API：`ICustomPropertyManager.Add3`、`ICustomPropertyManager.Get6` 和 `ICustomPropertyManager.Get`。资料来源：SOLIDWORKS 2025 API Help。`Add3` 负责写入文档级自定义属性；`Get6` 是首选的带六个 by-reference 输出值的读取 API；`Get` 已被官方标记为旧 API，但仍返回指定属性的直接字符串值。
+
+本机真实执行验证：`Add3("PartName", 30, "plate_basic_4holes", 2)` 返回 `0`，紧接着 `Get("PartName")` 返回 `plate_basic_4holes`。在 late-bound .NET COM 反射下，`Get6` 的六个 out/ref 槽可能未回填到调用数组；因此生产路径仍先调用 `Get6`，仅当其回读为空时以 `Get` 进行同一属性、同一值的只读核验。该兼容回退不会把 API 调用成功当作通过：`Add3/Set2` 结果和精确回读值都必须通过，随后仍须经过保存、PDF 导出、Validator、Reviewer 和 QualityGate。

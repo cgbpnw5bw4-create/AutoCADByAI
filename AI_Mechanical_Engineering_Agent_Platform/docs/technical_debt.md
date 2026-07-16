@@ -37,3 +37,11 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 - `InternalRoute` 仍是固定四步流程；动态化需要单独设计路由配置与回归测试，不在防假成功修复中顺带重构。
 - Router 对不受支持结构化类型的负路径仍需补专门测试，确保不会静默回退到受控零件类型。
 - 平台 self-check 已写入 `schema_version`、`run_id`、`generated_at` 和 `source_revision`；发布包各上游阶段报告的跨产物 provenance 仍需后续统一 schema，才能做完整的运行级交叉校验。
+
+## V1.7 Improvements Backlog
+
+- 主工作流每个阶段仍各自建立和释放 COM 会话；后续可在不改变 Worker 边界和串行 COM 规则的前提下研究会话复用。
+- 标题栏仅验证自定义属性写入、回读和重建；Sheet Format note 的可见渲染校验需要独立 API 证据与模板兼容测试。
+- E2E source execution evidence 当前由受控主工作流内存结果写入 manifest；后续可将 request_id/provenance 写入全部阶段报告的统一 schema。
+
+处理规则：以上事项均为 Improvement，不阻塞 V1.7 主流程；不得借技术债实现新的 CAD 功能、BOM、装配体或复杂模板。
