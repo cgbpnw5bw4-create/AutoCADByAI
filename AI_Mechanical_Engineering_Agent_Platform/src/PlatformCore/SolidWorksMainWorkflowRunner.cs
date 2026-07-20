@@ -137,7 +137,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
                         new Dictionary<string, string>
                         {
                             ["workflow"] = "solidworks-main-workflow",
-                            ["part_name"] = "plate_basic_4holes"
+                            ["part_name"] = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type
                         }));
 
                     logs.AddRange(skillOutput.Logs);
@@ -284,7 +284,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
             new WorkflowContext(workflowId, new Dictionary<string, object?>
             {
                 ["request_id"] = request.RequestId,
-                ["part_name"] = "plate_basic_4holes",
+                ["part_name"] = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type,
                 ["stage"] = request.Stage.ToString(),
                 ["real_cad_requested"] = requestAllowsReal,
                 ["real_cad_env_enabled"] = runtimeOptions.EnableRealExecution,
@@ -339,7 +339,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 .ToArray(),
             distinctLogs,
             distinctIssues,
-            ResolveFailureStage(workflowResult, workerResult),
+            ResolveFailureStage(workflowResult, workerResult, artifactValidation),
             workflowResult);
     }
 
@@ -544,7 +544,10 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 ["output_directory"] = outputDirectory
             });
 
-    private static string? ResolveFailureStage(WorkflowExecutionResult workflowResult, SolidWorksWorkerResult? workerResult)
+    private static string? ResolveFailureStage(
+        WorkflowExecutionResult workflowResult,
+        SolidWorksWorkerResult? workerResult,
+        ReviewReport? artifactValidation)
     {
         if (workflowResult.Status == WorkflowStatus.Passed)
         {
@@ -554,6 +557,25 @@ public sealed partial class SolidWorksMainWorkflowRunner
         if (workerResult?.PreflightReport?.FinalStatus == "Failed")
         {
             return "preflight_failed";
+        }
+
+        if (!string.IsNullOrWhiteSpace(workerResult?.FailureStage))
+        {
+            return workerResult.FailureStage;
+        }
+
+        var preciseStage = workflowResult.Steps
+            .SelectMany(step => step.Issues)
+            .Select(TryReadPartFamilyFailureStage)
+            .FirstOrDefault(stage => stage is not null);
+        if (preciseStage is not null)
+        {
+            return preciseStage;
+        }
+
+        if (artifactValidation is { IsPassed: false })
+        {
+            return PartFamilyFailureStages.ArtifactValidationFailed;
         }
 
         if (workflowResult.FailureReport is not null)
@@ -569,6 +591,26 @@ public sealed partial class SolidWorksMainWorkflowRunner
         }
 
         return "main_workflow_failed";
+    }
+
+    private static string? TryReadPartFamilyFailureStage(string issue)
+    {
+        var stages = new[]
+        {
+            PartFamilyFailureStages.UnsupportedPartType,
+            PartFamilyFailureStages.MissingRequiredParameter,
+            PartFamilyFailureStages.InvalidParameterValue,
+            PartFamilyFailureStages.PartFamilyDefinitionMissing,
+            PartFamilyFailureStages.BuildPlanGenerationFailed,
+            PartFamilyFailureStages.PartFamilyBuilderMissing,
+            PartFamilyFailureStages.FlangeBuildFailed,
+            PartFamilyFailureStages.ShaftBuildFailed,
+            PartFamilyFailureStages.ArtifactValidationFailed
+        };
+
+        return stages.FirstOrDefault(stage =>
+            issue.Equals(stage, StringComparison.OrdinalIgnoreCase) ||
+            issue.StartsWith($"{stage}:", StringComparison.OrdinalIgnoreCase));
     }
 
     private static string InferMediaType(string extension) =>

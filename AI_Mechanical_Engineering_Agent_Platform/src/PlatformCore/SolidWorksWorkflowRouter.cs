@@ -5,34 +5,33 @@ namespace PlatformCore;
 
 public sealed class SolidWorksWorkflowRouter
 {
-    private const string PlateBasicFourHoles = "plate_basic_4holes";
     private const string BuildCompleteDrawingPackage = "build_complete_drawing_package";
+    private readonly PartTypeRegistry _partTypeRegistry;
+
+    public SolidWorksWorkflowRouter(PartTypeRegistry? partTypeRegistry = null)
+    {
+        _partTypeRegistry = partTypeRegistry ?? PartTypeRegistry.CreateDefault();
+    }
 
     public SolidWorksMainWorkflowRequest? TryBuildRequest(AgentContext context)
     {
-        var sharedSpec = TryGetSharedStateModelSpec(context);
-        if (sharedSpec is not null && !IsSupportedModelType(sharedSpec.ModelType))
-        {
-            return null;
-        }
-
         if (!ShouldRun(context))
         {
             return null;
         }
 
         var projectRoot = ResolveProjectRoot(context);
-        var outputDirectory = ResolveSolidWorksOutputDirectory(context, projectRoot);
-        var requestAllowsReal = FlagEnabled(context, "allow_real_cad_execution") ||
-            FlagEnabled(context, "solidworks_allow_real_cad_execution");
-        var dryRun = !FlagDisabled(context, "dry_run");
-        var isCompleteDrawingPackage = ContextValueEquals(context, BuildCompleteDrawingPackage, "operation");
         var modelSpec = ResolveModelSpec(context) ??
             CreatePlateBasicFourHolesSpec(
                 id: "cad-model-spec-plate-basic-4holes-main-workflow",
                 description: "Main workflow controlled SolidWorks plate_basic_4holes build.",
                 values: context.Input.Context,
                 constraints: ["main_workflow_controlled_real_cad_requires_request_and_environment_flags"]);
+        var outputDirectory = ResolveSolidWorksOutputDirectory(context, projectRoot, modelSpec.PartType);
+        var requestAllowsReal = FlagEnabled(context, "allow_real_cad_execution") ||
+            FlagEnabled(context, "solidworks_allow_real_cad_execution");
+        var dryRun = !FlagDisabled(context, "dry_run");
+        var isCompleteDrawingPackage = ContextValueEquals(context, BuildCompleteDrawingPackage, "operation");
 
         return new SolidWorksMainWorkflowRequest(
             $"solidworks-main-workflow-{context.TaskId}",
@@ -49,7 +48,7 @@ public sealed class SolidWorksWorkflowRouter
             GenerateDimensions: FlagEnabled(context, "generate_dimensions"),
             GenerateTitleBlock: FlagEnabled(context, "generate_title_block"),
             GenerateReleasePackage: FlagEnabled(context, "generate_release_package"),
-            StructuredInputReceived: FlagEnabled(context, "structured_input_received"),
+            StructuredInputReceived: FlagEnabled(context, "structured_input_received") || HasExplicitPartType(context),
             ChiefEngineerInvoked: true,
             GatewayInvoked: FlagEnabled(context, "gateway_invoked"),
             SolidWorksRouterTriggered: true);
@@ -59,7 +58,9 @@ public sealed class SolidWorksWorkflowRouter
     {
         if (ContextValueEquals(context, BuildCompleteDrawingPackage, "operation"))
         {
-            return ContextValueEquals(context, PlateBasicFourHoles, "part_type", "cad_model_type", "solidworks_model_type");
+            // Explicit structured CAD operations must enter the workflow so an
+            // unknown family returns unsupported_part_type instead of null.
+            return HasExplicitPartType(context) || TryGetSharedStateModelSpec(context) is not null;
         }
 
         if (FlagEnabled(context, "solidworks_main_workflow"))
@@ -67,14 +68,24 @@ public sealed class SolidWorksWorkflowRouter
             return true;
         }
 
-        if (TryGetSharedStateModelSpec(context) is { } sharedSpec &&
-            IsSupportedModelType(sharedSpec.ModelType))
+        if (TryGetSharedStateModelSpec(context) is not null)
         {
+            // Shared CADModelSpec is structured CAD intent even when its family
+            // is unknown. The validator owns the canonical rejection stage.
             return true;
         }
 
-        return ContextValueEquals(context, PlateBasicFourHoles, "part_type", "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name") ||
-               context.Input.Message.Contains(PlateBasicFourHoles, StringComparison.OrdinalIgnoreCase);
+        var explicitPartType = ReadExplicitPartType(context);
+        if (!string.IsNullOrWhiteSpace(explicitPartType))
+        {
+            // An explicit part_type is already a structured CAD intent. Route
+            // unknown values into the workflow so the validator can return the
+            // canonical unsupported_part_type failure before Worker dispatch.
+            return true;
+        }
+
+        return _partTypeRegistry.GetAll().Any(definition =>
+            context.Input.Message.Contains(definition.PartType, StringComparison.OrdinalIgnoreCase));
     }
 
     public static CADModelSpec CreatePlateBasicFourHolesSpec(
@@ -83,7 +94,7 @@ public sealed class SolidWorksWorkflowRouter
         IReadOnlyDictionary<string, string>? values = null,
         IReadOnlyList<string>? constraints = null)
     {
-        var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        var dimensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["length_mm"] = ValueOrDefault(values, "length_mm", "160"),
             ["width_mm"] = ValueOrDefault(values, "width_mm", "80"),
@@ -91,29 +102,116 @@ public sealed class SolidWorksWorkflowRouter
             ["hole_diameter_mm"] = ValueOrDefault(values, "hole_diameter_mm", "10"),
             ["hole_count"] = ValueOrDefault(values, "hole_count", "4")
         };
-        var material = FirstValue(values, "material", "solidworks_material") ?? "Q235";
 
-        return new CADModelSpec(
+        return CreateSpec(
             id,
-            PlateBasicFourHoles,
-            PlateBasicFourHoles,
+            PlateBasic4HolesDefinition.Type,
             description,
-            parameters,
-            [material],
+            dimensions,
+            values,
             constraints ?? ["main_workflow_controlled_plate_basic_4holes_only"]);
     }
 
-    private static CADModelSpec? ResolveModelSpec(AgentContext context)
+    public CADModelSpec CreatePartFamilySpec(
+        string partType,
+        IReadOnlyDictionary<string, string> values,
+        string? id = null,
+        string? description = null)
+    {
+        var dimensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (_partTypeRegistry.TryGetDefinition(partType, out var definition))
+        {
+            foreach (var parameter in definition.ParameterSchema)
+            {
+                var value = FirstValue(values, parameter.Name, $"solidworks_{parameter.Name}");
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    dimensions[parameter.Name] = value;
+                }
+            }
+        }
+        else
+        {
+            foreach (var parameter in values.Where(item => item.Key.EndsWith("_mm", StringComparison.OrdinalIgnoreCase) ||
+                                                          item.Key.Contains("count", StringComparison.OrdinalIgnoreCase)))
+            {
+                dimensions[parameter.Key] = parameter.Value;
+            }
+        }
+
+        return CreateSpec(
+            id ?? $"cad-model-spec-{partType}-{Guid.NewGuid():N}",
+            partType,
+            description ?? $"Structured {partType} CAD model request.",
+            dimensions,
+            values,
+            ["part_family_registry_dispatch_required"]);
+    }
+
+    private CADModelSpec? ResolveModelSpec(AgentContext context)
     {
         var sharedSpec = TryGetSharedStateModelSpec(context);
-        if (sharedSpec is not null && IsSupportedModelType(sharedSpec.ModelType))
+        if (sharedSpec is not null)
         {
             return sharedSpec;
         }
 
-        return ContextValueEquals(context, PlateBasicFourHoles, "part_type", "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name")
-            ? CreatePlateBasicFourHolesSpec(values: context.Input.Context)
-            : null;
+        var explicitPartType = ReadExplicitPartType(context);
+        if (!string.IsNullOrWhiteSpace(explicitPartType))
+        {
+            return string.Equals(explicitPartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase)
+                ? CreatePlateBasicFourHolesSpec(values: context.Input.Context)
+                : CreatePartFamilySpec(explicitPartType, context.Input.Context);
+        }
+
+        var messageFamily = _partTypeRegistry.GetAll().FirstOrDefault(definition =>
+            context.Input.Message.Contains(definition.PartType, StringComparison.OrdinalIgnoreCase));
+        return messageFamily is null
+            ? null
+            : string.Equals(messageFamily.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase)
+                ? CreatePlateBasicFourHolesSpec()
+                : CreatePartFamilySpec(messageFamily.PartType, context.Input.Context);
+    }
+
+    private static CADModelSpec CreateSpec(
+        string id,
+        string partType,
+        string description,
+        IReadOnlyDictionary<string, string> dimensions,
+        IReadOnlyDictionary<string, string>? values,
+        IReadOnlyList<string> constraints)
+    {
+        var material = FirstValue(values, "material", "solidworks_material") ?? "Q235";
+        var features = values is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : values.Where(item => item.Key.StartsWith("feature_", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
+        var drawing = values is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : values.Where(item => item.Key.StartsWith("drawing_", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
+        var execution = values is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : values.Where(item => item.Key is "dry_run" or "allow_real_cad_execution")
+                .ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
+        var outputs = SplitList(FirstValue(values, "output_requirements"));
+        if (outputs.Count == 0)
+        {
+            outputs = ["SLDPRT", "STEP", "build_report.json"];
+        }
+
+        return new CADModelSpec(
+            id,
+            partType,
+            dimensions,
+            features,
+            material,
+            outputs,
+            drawing,
+            execution,
+            title: partType,
+            description,
+            constraints);
     }
 
     private static CADModelSpec? TryGetSharedStateModelSpec(AgentContext context)
@@ -129,21 +227,21 @@ public sealed class SolidWorksWorkflowRouter
         return null;
     }
 
-    private static bool IsSupportedModelType(string modelType) =>
-        string.Equals(modelType, PlateBasicFourHoles, StringComparison.OrdinalIgnoreCase);
+    private static bool HasExplicitPartType(AgentContext context) =>
+        !string.IsNullOrWhiteSpace(ReadExplicitPartType(context));
+
+    private static string? ReadExplicitPartType(AgentContext context) =>
+        FirstValue(context.Input.Context, "part_type", "cad_model_type", "solidworks_model_type", "part_name", "solidworks_part_name", "cad_model_name");
 
     private static bool ContextValueEquals(AgentContext context, string expectedValue, params string[] keys) =>
-        keys.Any(key =>
-            context.Input.Context.TryGetValue(key, out var value) &&
-            string.Equals(value, expectedValue, StringComparison.OrdinalIgnoreCase));
+        keys.Any(key => context.Input.Context.TryGetValue(key, out var value) &&
+                        string.Equals(value, expectedValue, StringComparison.OrdinalIgnoreCase));
 
     private static bool FlagEnabled(AgentContext context, string key) =>
-        context.Input.Context.TryGetValue(key, out var value) &&
-        IsTrue(value);
+        context.Input.Context.TryGetValue(key, out var value) && IsTrue(value);
 
     private static bool FlagDisabled(AgentContext context, string key) =>
-        context.Input.Context.TryGetValue(key, out var value) &&
-        IsFalse(value);
+        context.Input.Context.TryGetValue(key, out var value) && IsFalse(value);
 
     private static bool IsTrue(string value) =>
         string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
@@ -156,15 +254,13 @@ public sealed class SolidWorksWorkflowRouter
         string.Equals(value, "no", StringComparison.OrdinalIgnoreCase);
 
     private static string ResolveProjectRoot(AgentContext context) =>
-        context.Input.Context.TryGetValue("project_root", out var projectRoot) &&
-        !string.IsNullOrWhiteSpace(projectRoot)
+        context.Input.Context.TryGetValue("project_root", out var projectRoot) && !string.IsNullOrWhiteSpace(projectRoot)
             ? Path.GetFullPath(projectRoot)
             : PlatformPathResolver.FindProjectRoot();
 
-    private static string ResolveSolidWorksOutputDirectory(AgentContext context, string projectRoot)
+    private static string ResolveSolidWorksOutputDirectory(AgentContext context, string projectRoot, string partType)
     {
-        if (context.Input.Context.TryGetValue("solidworks_output_directory", out var outputDirectory) &&
-            !string.IsNullOrWhiteSpace(outputDirectory))
+        if (context.Input.Context.TryGetValue("solidworks_output_directory", out var outputDirectory) && !string.IsNullOrWhiteSpace(outputDirectory))
         {
             return Path.GetFullPath(outputDirectory);
         }
@@ -174,9 +270,12 @@ public sealed class SolidWorksWorkflowRouter
             "output",
             "solidworks",
             "main_workflow",
-            PlateBasicFourHoles,
+            SanitizePathSegment(partType),
             $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
     }
+
+    private static string SanitizePathSegment(string value) =>
+        string.Concat(value.Select(character => Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
 
     private static string ValueOrDefault(IReadOnlyDictionary<string, string>? values, string key, string fallback) =>
         FirstValue(values, key, $"solidworks_{key}") ?? fallback;
@@ -198,4 +297,9 @@ public sealed class SolidWorksWorkflowRouter
 
         return null;
     }
+
+    private static IReadOnlyList<string> SplitList(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? Array.Empty<string>()
+            : value.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 }

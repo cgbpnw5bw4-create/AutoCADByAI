@@ -5,13 +5,14 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using SolidWorksWorker.Diagnostics;
 using SolidWorksWorker;
+using WorkerContracts;
 
 namespace SolidWorksSmokeRunner;
 
 public sealed class SolidWorksDiagnosticRunner
 {
     private const double MmToMeters = 0.001d;
-    public const int MaxRepairAttempts = 1;
+    public const int MaxRepairAttempts = SolidWorksApiRepairPolicy.MaxRepairAttempts;
 
     public SolidWorksDiagnosticReport Run(SolidWorksDiagnosticOptions options)
     {
@@ -134,8 +135,7 @@ public sealed class SolidWorksDiagnosticRunner
 
     private bool TryRepairCutHolesOnce(SolidWorksDiagnosticReport report, object model, SolidWorksDiagnosticOptions options)
     {
-        if (!string.Equals(report.FailureStage, "cut_holes_failed", StringComparison.OrdinalIgnoreCase) ||
-            report.ApiRepairAttempted)
+        if (!SolidWorksApiRepairPolicy.CanAttempt(report.FailureStage, report.ApiRepairAttempted))
         {
             return false;
         }

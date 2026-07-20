@@ -120,3 +120,30 @@ V1.3 工程图标题栏只允许最小标题栏/图纸属性信息。当前候�
 V1.4 只整理已经存在的 SLDPRT、STEP、SLDDRW、PDF 和 JSON 报告，并生成 `release_manifest.json`、`package_quality_report.json` 和 `release_summary.md`。本阶段默认不需要新增 SolidWorks API 证据，也不查几何、OCR 或 PDF 视觉内容。
 
 若发现报告字段缺失、导出格式异常或路径语义无法判断，先读取对应阶段的 `build_report.json`、`drawing_report.json`、`dimension_report.json`、`title_block_report.json` 和 `package_quality_report.json`。只有确认问题来自 V1.1 到 V1.3 的 SolidWorks API 调用时，才回到相应阶段补 API evidence。
+
+## V1.8 零件族 API 证据矩阵
+
+### 目标与适用范围
+
+本节记录三个零件族的 API 证据边界。Schema、Validator、Registry、BuildPlan 和 dry-run 不依赖 SolidWorks API；只有进入独立真实 smoke 前才必须完成对应族的诊断证据。
+
+### 输入与输出
+
+输入为零件族 BuildPlan、已查证官方 API、本地宏录制、诊断报告和返回值。输出为每族独立 `ApiEvidenceReport`，必须包含选定策略、拒绝策略、`failure_stage`、实际返回值、产物路径和回填条件。
+
+| 零件族 | 当前证据 | 允许的开发结论 | 进入真实验收前的缺口 |
+|---|---|---|---|
+| `plate_basic_4holes` | 最新 `diagnostic_report.json` 记录 `FeatureExtrusion2` 基体拉伸、活动孔草图 `FeatureCut4`、SLDPRT 保存和 STEP 导出均成功 | 保留已有 `SolidWorksPlateFeatureBuilder` 真实能力与回归测试 | V1.8 不改写已验证的切孔参数顺序；若回归失败，回到 plate 诊断 Runner。 |
+| `flange_basic` | 几何上可候选复用 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4` | 证据足以支持 BuildPlan 和 dry-run 语义，不足以声称真实 SolidWorks 验收 | 必须建立 `flange_basic` 独立 smoke 入口，验证同心圆、环形基体、中心孔、螺栓孔阵列、保存和导出的返回值与产物。 |
+| `shaft_basic` | 目标为用 `CreateLine`、`CreateCenterLine` 建立截面，再用 `FeatureRevolve2` 旋转 | 证据只足以定义候选 BuildPlan 和 dry-run，未证明真实旋转成功 | 必须有专用诊断 Runner，记录草图封闭状态、中心线构造线状态、`FeatureRevolve2` 完整参数与返回对象，再决定是否回填真实 Builder。 |
+
+### 执行步骤与验证标准
+
+1. 先通过相应零件族的参数 Validator 和 dry-run，确保 API 诊断不承担输入修正职责。
+2. 按“官方 API Help → 本地 SDK/宏录制 → 独立诊断报告→只读参考资料”的顺序补齐证据。
+3. 诊断 Runner 必须默认关闭，并保留独立安全开关、`failure_stage` 与非空产物校验。
+4. 只有独立 smoke 成功且证据可重现，才允许把 API 路径回填对应 `PartFamilyBuilder`，随后仍要通过 Worker、ArtifactValidator、Reviewer 和 QualityGate。
+
+### 常见失败与禁止事项
+
+`flange_build_failed` 必须指向具体的草图、拉伸、切除或阵列步骤；`shaft_build_failed` 必须指向截面、中心线、旋转或台阶映射步骤。证据不足时使用明确的 evidence-insufficient 原因停止，不得凭感觉修改 COM 长参数，不得复制第三方脚本，不得以 dry-run 或文件存在冒充真实验收。

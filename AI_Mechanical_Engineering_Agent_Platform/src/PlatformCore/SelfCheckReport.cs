@@ -321,4 +321,44 @@ public sealed record PlatformSelfCheckReport(
     [property: JsonPropertyName("v1_7_version_stage_documented")] bool V17VersionStageDocumented,
     [property: JsonPropertyName("real_cad_e2e_local_authorization_profile_supported")] bool RealCadE2eLocalAuthorizationProfileSupported,
     [property: JsonPropertyName("real_cad_e2e_local_authorization_default_disabled")] bool RealCadE2eLocalAuthorizationDefaultDisabled,
-    string FinalStatus);
+    string FinalStatus)
+{
+    [JsonPropertyName("generic_cad_model_spec_supported")]
+    public bool GenericCadModelSpecSupported { get; init; }
+
+    [JsonPropertyName("part_type_registry_exists")]
+    public bool PartTypeRegistryExists { get; init; }
+
+    [JsonPropertyName("plate_part_family_registered")]
+    public bool PlatePartFamilyRegistered { get; init; }
+
+    [JsonPropertyName("flange_part_family_registered")]
+    public bool FlangePartFamilyRegistered { get; init; }
+
+    [JsonPropertyName("shaft_part_family_registered")]
+    public bool ShaftPartFamilyRegistered { get; init; }
+
+    [JsonPropertyName("unsupported_part_type_rejected")]
+    public bool UnsupportedPartTypeRejected { get; init; }
+
+    [JsonPropertyName("invalid_part_parameters_rejected_before_worker")]
+    public bool InvalidPartParametersRejectedBeforeWorker { get; init; }
+
+    [JsonPropertyName("part_family_builders_do_not_use_large_switch")]
+    public bool PartFamilyBuildersDoNotUseLargeSwitch { get; init; }
+
+    [JsonPropertyName("plate_regression_passed")]
+    public bool PlateRegressionPassed { get; init; }
+
+    [JsonPropertyName("flange_dry_run_passed")]
+    public bool FlangeDryRunPassed { get; init; }
+
+    [JsonPropertyName("shaft_dry_run_passed")]
+    public bool ShaftDryRunPassed { get; init; }
+
+    [JsonPropertyName("real_cad_part_family_default_disabled")]
+    public bool RealCadPartFamilyDefaultDisabled { get; init; }
+
+    [JsonPropertyName("v1_8_version_stage_documented")]
+    public bool V18VersionStageDocumented { get; init; }
+}

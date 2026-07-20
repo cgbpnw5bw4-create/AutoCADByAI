@@ -17,6 +17,49 @@ public sealed partial class SolidWorksMainWorkflowRunner
         var reportsDirectory = Path.Combine(releaseDirectory, "reports");
         Directory.CreateDirectory(reportsDirectory);
 
+        var requestedPartType = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type;
+        if (!string.Equals(requestedPartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
+        {
+            var registered = PartTypeRegistry.CreateDefault().TryGetDefinition(requestedPartType, out _);
+            var eligibilityFailureStage = registered
+                ? PartFamilyFailureStages.PartFamilyBuilderMissing
+                : PartFamilyFailureStages.UnsupportedPartType;
+            var familyIssues = new[]
+            {
+                registered
+                    ? $"part_family_builder_missing: complete drawing and release execution is not enabled for {requestedPartType}; its real API path has not completed independent smoke validation."
+                    : $"unsupported_part_type: {requestedPartType} is not registered."
+            };
+            var failedWorkflow = await _workflowEngine.ExecuteAsync(
+                [
+                    new WorkflowStep(
+                        "V1.8 complete-package part-family eligibility",
+                        _ => Task.FromResult(StepFailed(
+                            "solidworks-e2e-part-family-eligibility",
+                            "The requested part family cannot enter the plate-only real drawing and release path.",
+                            familyIssues,
+                            fatal: true)),
+                        "solidworks-e2e-part-family-eligibility")
+                ],
+                new WorkflowContext($"solidworks-e2e-{request.TaskId}", new Dictionary<string, object?>
+                {
+                    ["request_id"] = request.RequestId,
+                    ["part_type"] = requestedPartType
+                }),
+                cancellationToken);
+
+            return await WriteE2eResultAsync(
+                request,
+                releaseDirectory,
+                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
+                package: null,
+                failedWorkflow,
+                new GateDecision($"gate-solidworks-e2e-family-{Guid.NewGuid():N}", GateDecisionResult.Failed, "Requested family is not eligible for the plate-only real package path."),
+                familyIssues,
+                eligibilityFailureStage,
+                cancellationToken);
+        }
+
         var runtimeOptions = _runtimeOptionsProvider();
         var localAuthorization = SolidWorksLocalExecutionProfile.Load(request.ProjectRoot);
         var confirmationIssues = GetE2eConfirmationIssues(request, runtimeOptions, localAuthorization);

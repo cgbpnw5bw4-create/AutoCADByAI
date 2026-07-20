@@ -276,7 +276,9 @@ public sealed class SolidWorksModuleSkeletonTests
             DateTimeOffset.UtcNow);
 
         Assert.Null(router.TryBuildRequest(genericMention));
-        Assert.Null(router.TryBuildRequest(unsupportedSharedSpec));
+        var unsupportedRequest = router.TryBuildRequest(unsupportedSharedSpec);
+        Assert.NotNull(unsupportedRequest);
+        Assert.Equal("unsupported_model_type", unsupportedRequest!.ModelSpec!.PartType);
         var request = router.TryBuildRequest(structuredRequest);
 
         Assert.NotNull(request);
@@ -2612,6 +2614,19 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.ReleasePackageDeliverableStatusFieldExists);
             Assert.True(report.ReleasePackageFailedSourceReportsBlockDeliverable);
             Assert.True(report.V15VersionStageDocumented);
+            Assert.True(report.GenericCadModelSpecSupported);
+            Assert.True(report.PartTypeRegistryExists);
+            Assert.True(report.PlatePartFamilyRegistered);
+            Assert.True(report.FlangePartFamilyRegistered);
+            Assert.True(report.ShaftPartFamilyRegistered);
+            Assert.True(report.UnsupportedPartTypeRejected);
+            Assert.True(report.InvalidPartParametersRejectedBeforeWorker);
+            Assert.True(report.PartFamilyBuildersDoNotUseLargeSwitch);
+            Assert.True(report.PlateRegressionPassed);
+            Assert.True(report.FlangeDryRunPassed);
+            Assert.True(report.ShaftDryRunPassed);
+            Assert.True(report.RealCadPartFamilyDefaultDisabled);
+            Assert.True(report.V18VersionStageDocumented);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
         }
@@ -2830,6 +2845,10 @@ public sealed class SolidWorksModuleSkeletonTests
             "SelectSketchForFeatureCut",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
         Assert.Equal(1, SolidWorksDiagnosticRunner.MaxRepairAttempts);
+        Assert.Equal(1, WorkerContracts.SolidWorksApiRepairPolicy.MaxRepairAttempts);
+        Assert.True(WorkerContracts.SolidWorksApiRepairPolicy.CanAttempt("cut_holes_failed", repairAlreadyAttempted: false));
+        Assert.False(WorkerContracts.SolidWorksApiRepairPolicy.CanAttempt("cut_holes_failed", repairAlreadyAttempted: true));
+        Assert.False(WorkerContracts.SolidWorksApiRepairPolicy.CanAttempt("save_sldprt_failed", repairAlreadyAttempted: false));
     }
 
     [Fact]

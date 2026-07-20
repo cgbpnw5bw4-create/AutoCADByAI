@@ -85,3 +85,33 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 - `preflight_failed`、`drawing_template_missing` 或 `title_block_template_missing`：保留 E2E report，检查已有模板环境变量和原阶段报告；不要为本轮新增 CAD API 或绕过模板预检。
 - `source_artifacts_missing`、`source_report_missing`、`source_report_failed` 或 `real_execution_evidence_failed`：读取同次 `release_manifest.json`、`package_quality_report.json` 与 `e2e_execution_report.json`。只修复该 request 的失败阶段，不读取历史 latest 或 SmokeRunner 作为最终通过证据。
 - `quality_gate_failed`：确认四阶段均已经过 ArtifactValidator、Reviewer 和 QualityGate；即使某一阶段失败，也必须保留总体 QualityGate 的拒绝/失败结论。
+
+## V1.8 零件族前置失败修复
+
+### 目标与适用范围
+
+本节处理结构化输入到 `PartFamilyBuilder` 之间的失败。未注册类型和非法参数属于 Worker 之前的可预期拒绝，修复时不得尝试连接 SolidWorks。
+
+### 输入与输出
+
+输入为原始 `CADModelSpec`、Registry 查找结果、零件族校验结果和 BuildPlan 生成结果。输出必须包含稳定 `failure_stage`、直接原因、证据来源、修复策略和下一步验证命令。
+
+| `failure_stage` | 直接原因 | 首先读取 | 修复与回填条件 |
+|---|---|---|---|
+| `unsupported_part_type` | `part_type` 未注册 | `CADModelSpec`、Registry 已注册键 | 更正输入，或在独立定义、测试和文档齐全后显式注册；不得默认回退为 `plate_basic_4holes`。 |
+| `missing_required_parameter` | 该族 Schema 中的必需字段缺失 | 零件族 Schema、validation issues | 补齐缺失字段；验证 Worker 调用计数仍为零。 |
+| `invalid_parameter_value` | 数值不是有限正数，或零件族内参数关系非法 | 具体参数名、原值、校验规则 | 修正输入并重跑纯校验测试；不得在 Worker 内强制截断或替换为默认值。 |
+| `part_family_definition_missing` | Registry 条目缺少 `IPartFamilyDefinition` | Registry 注册日志、组装根 | 恢复完整定义并补注册测试。 |
+| `build_plan_generation_failed` | 零件族定义无法把合法参数转为 BuildPlan | 定义输出、计划 operations 和 dependencies | 在该族定义内做最小修复，不向通用 Skill 增加类型分支。 |
+| `part_family_builder_missing` | BuildPlan 有定义但无对应 Builder | Registry 条目、Builder 注册表 | 补齐该族 Builder 与 dry-run 测试，不得使用通用 `switch(part_type)` 代执行。 |
+| `flange_build_failed` | `flange_basic` Builder 生成失败 | flange BuildPlan、Builder 日志、API evidence | dry-run 失败先修计划或 Builder；真实失败必须先进独立 smoke，再回填主 Worker。 |
+| `shaft_build_failed` | `shaft_basic` Builder 生成失败 | shaft BuildPlan、Builder 日志、旋转 API evidence | dry-run 失败先修复台阶数组映射；真实路径必须有专用诊断证据。 |
+| `artifact_validation_failed` | Worker 返回的文件、扩展名、大小或证据不合格 | ArtifactValidator issues、Worker report | 修复产物或报告，不得跳过 Validator 进入 Drawing 或 QualityGate。 |
+
+### 执行步骤与验证标准
+
+1. 确认 `failure_stage` 来自通用 Validator、Registry、零件族 Validator、BuildPlan 或 Builder 中的单一责任层。
+2. 用对应零件族的最小单元测试复现，并确认非法输入未调用 Worker。
+3. 修复后运行 build、test、self-check；对 `flange_basic` 和 `shaft_basic` 至少要求 dry-run 通过。
+
+禁止为修复单个失败而增加大型 `switch(part_type)`、绕过 Registry、启动默认真实 CAD，或扩展到装配体、BOM、键槽、螺纹、法兰密封面、批量队列与 V1.9。

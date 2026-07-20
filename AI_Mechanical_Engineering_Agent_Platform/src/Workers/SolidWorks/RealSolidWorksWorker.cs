@@ -119,7 +119,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             !string.Equals(request.BuildPlan.PartType, "plate_basic_4holes", StringComparison.OrdinalIgnoreCase))
         {
             logs.Add("COM connection was not attempted because the real build plan is unsupported.");
-            issues.Add("unsupported_real_build_plan: RealSolidWorksWorker V1.0-B only supports plate_basic_4holes.");
+            issues.Add($"part_family_builder_missing: {request.BuildPlan.PartType} has no independently smoke-tested real SolidWorks builder; only plate_basic_4holes is enabled.");
+            issues.Add("unsupported_real_build_plan: RealSolidWorksWorker only enables the independently validated plate_basic_4holes real path.");
             return Result(
                 request,
                 "Rejected",
@@ -127,7 +128,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 logs,
                 issues,
                 realCadConnected: false,
-                preflight);
+                preflight,
+                PartFamilyFailureStages.PartFamilyBuilderMissing);
         }
 
         if (!request.ConnectionSmokeTestOnly &&
@@ -505,7 +507,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         IReadOnlyList<string> logs,
         IReadOnlyList<string> issues,
         bool realCadConnected,
-        SolidWorksPreflightReport preflight) =>
+        SolidWorksPreflightReport preflight,
+        string? failureStage = null) =>
         new(
             request.RequestId,
             status,
@@ -515,7 +518,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             executionMode,
             RealCadExecuted: false,
             RealCadConnected: realCadConnected,
-            PreflightReport: preflight);
+            PreflightReport: preflight,
+            FailureStage: failureStage);
 
     private static SolidWorksWorkerResult RealBuildFailureResult(
         SolidWorksWorkerRequest request,

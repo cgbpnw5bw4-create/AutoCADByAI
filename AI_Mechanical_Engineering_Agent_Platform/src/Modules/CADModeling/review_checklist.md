@@ -57,3 +57,53 @@ V1.4 还必须确认 `solidworks_release_package_implemented`、`solidworks_rele
 V1.5 还必须确认 `real_cad_worker_integrated_into_main_workflow`、`chief_engineer_orchestrator_invokes_cad_workflow`、`workflow_engine_can_route_to_solidworks_worker`、`real_cad_main_workflow_default_disabled`、`real_cad_main_workflow_requires_request_flag`、`real_cad_main_workflow_requires_env_flag`、`real_cad_main_workflow_passes_quality_gate`、`release_package_all_source_reports_passed_field_exists`、`release_package_deliverable_status_field_exists`、`release_package_failed_source_reports_block_deliverable` 和 `v1_5_version_stage_documented` 为 true。
 
 V1.7 还必须确认全部 `real_cad_e2e_*` 字段、`v1_7_version_stage_documented` 与 `markdown_chinese_check_passed` 为 true。真实验收报告必须记录 Gateway、ChiefEngineerOrchestrator、WorkflowEngine、Router、RealWorker、连接、总体 QualityGate、源报告与可交付语义。标题栏只能表述为自定义属性写入、读回和刷新，不得声称 Sheet Format 可见渲染已验收。
+
+## V1.8 审查目标与适用范围
+
+V1.8 审查结构化输入到发布包的通用零件族执行链，以及 `plate_basic_4holes`、`flange_basic`、`shaft_basic` 三个独立定义。输入为源码、测试、self-check 报告和 API evidence；输出为 Blockers、Improvements、测试结果与是否可进入 Claude 审查的结论。
+
+## V1.8 必查执行链
+
+- 是否使用 `CADModelSpec` 的 `part_type`、`dimensions`、`features`、`material`、`output_requirements`、`drawing_requirements`、`execution_options` 通用边界。
+- 是否按 `CADModelSpec` → `PartTypeRegistry` →参数 Validator → BuildPlan → `PartFamilyBuilder` → Worker → ArtifactValidator → Drawing → QualityGate → ReleasePackage 执行。
+- 每个零件族是否独立包含 Schema、Validator、BuildPlan 生成逻辑、`PartFamilyBuilder`、`failure_stage`、API evidence 和测试。
+- 真实执行是否仍通过 `ChiefEngineerOrchestrator` → `WorkflowEngine` → Router → Worker → Validator → Reviewer → `QualityGate`，没有新增直连入口。
+- `unsupported_part_type`、`missing_required_parameter` 和 `invalid_parameter_value` 是否在 Worker 之前停止，并有未调用 Worker/未连接 SolidWorks 的行为测试。
+- 是否没有在 Router、Skill、Worker 或 Builder 中新增大型 `switch(part_type)`；零件族分发是否由 Registry 和多态定义完成。
+- `plate_basic_4holes` 已有真实建模、工程图、QualityGate 和发布包能力是否保持，旧回归测试是否全部通过。
+- `flange_basic` 是否覆盖六个必需参数及径向几何约束，`shaft_basic` 是否覆盖基本直径/长度和可选台阶数组成对约束。
+- `flange_basic` 与 `shaft_basic` 本轮是否只声称 dry-run 通过，没有把未完成的真实 smoke 说成真实验收。
+
+## V1.8 Blockers
+
+- 未注册 `part_type` 静默回退为 `plate_basic_4holes`。
+- 非法零件参数进入 Fake 或 Real Worker，或默认 self-check 启动 SolidWorks。
+- 用大型 `switch(part_type)` 或多处 `if (part_type == ...)` 替代 `PartTypeRegistry`。
+- 任一零件族缺少 Schema、Validator、BuildPlan、Builder、`failure_stage`、API evidence 或测试。
+- `plate_basic_4holes` 回归失败，或 `flange_basic` / `shaft_basic` dry-run 失败。
+- 以 `CreateCircle` / `FeatureExtrusion2` / `FeatureCut4` 候选或 `CreateLine` / `CreateCenterLine` / `FeatureRevolve2` 候选直接声称真实验收通过。
+- 越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。
+
+## V1.8 验证步骤与进入 Claude 审查条件
+
+1. 运行 `dotnet build AI_Mechanical_Engineering_Agent_Platform.sln`。
+2. 运行 `dotnet test`。
+3. 在未开启任何真实 CAD 环境开关时运行 `dotnet run --project src/Interfaces/CliHost -- self-check`。
+4. 确认以下 self-check 字段全部为 `true`：
+
+   - `generic_cad_model_spec_supported`
+   - `part_type_registry_exists`
+   - `plate_part_family_registered`
+   - `flange_part_family_registered`
+   - `shaft_part_family_registered`
+   - `unsupported_part_type_rejected`
+   - `invalid_part_parameters_rejected_before_worker`
+   - `part_family_builders_do_not_use_large_switch`
+   - `plate_regression_passed`
+   - `flange_dry_run_passed`
+   - `shaft_dry_run_passed`
+   - `real_cad_part_family_default_disabled`
+   - `v1_8_version_stage_documented`
+   - `markdown_chinese_check_passed`
+
+上述条件全部满足时可进入 Claude 实现审查。`flange_basic` 只有完成独立真实 smoke 后才可进入真实验收；`shaft_basic` 还必须先获得 `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 的专用诊断证据。本轮审查结论不得授权进入 V1.9。

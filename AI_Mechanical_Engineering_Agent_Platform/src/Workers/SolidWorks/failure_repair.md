@@ -180,3 +180,31 @@ V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录
 | 其他阶段 failure_stage | 同次阶段报告和 `package_quality_report.json` | 按原有 Build、Drawing、Dimension、TitleBlock 修复路径处理，并保留总体 QualityGate 失败。 |
 
 本地授权已经通过后，任何真实执行失败都必须保留实际 `failure_stage` 并进入上述既有修复路径；不得重新写成 `real_execution_confirmation_missing`。
+
+## V1.8 零件族 Worker 失败分流
+
+### 目标与适用范围
+
+本节处理已进入零件族执行边界的定义、BuildPlan、Builder 和产物失败。若 `CADModelSpec` 本身未注册或参数非法，应回到 `src/Modules/CADModeling/failure_repair.md` 的前置校验路径，不得进入本 Worker。
+
+### 输入与输出
+
+输入为已校验 BuildPlan、Registry 解析的 Builder、Worker 日志、`build_report.json` 和 API evidence。输出必须记录精确 `failure_stage`、零件族、失败 operation、证据路径、修复策略和下一步验证命令。
+
+| `failure_stage` | 首先检查 | 修复策略 | 回填条件 |
+|---|---|---|---|
+| `part_family_definition_missing` | Registry 键、定义实例、组装根 | 恢复明确注册，不增加 `switch(part_type)` 回退 | Registry 单元测试和三族注册 self-check 通过 |
+| `build_plan_generation_failed` | Definition 输出、operation 参数、dependencies | 在对应 Definition 中修复计划映射 | 该族计划快照和 dry-run 测试通过 |
+| `part_family_builder_missing` | `PartFamilyBuilderRegistry` 的 Builder 索引与组装注册 | 注册该族 Builder，不由 plate Builder 代执行 | 类型到 Builder 映射测试通过 |
+| `flange_build_failed` | 环形基体、中心孔、螺栓孔阵列的 operation 与日志 | dry-run 问题修 `FlangeFeatureBuilder`；真实 API 问题先进独立 flange smoke | dry-run 重现通过；真实回填还要求独立 smoke 及非空 SLDPRT / STEP |
+| `shaft_build_failed` | 截面线段、中心线、台阶列表和旋转 operation | dry-run 问题修 `ShaftFeatureBuilder`；真实 API 问题先进旋转专用诊断 Runner | `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 证据、返回对象和非空产物都验证通过 |
+| `artifact_validation_failed` | 产物绝对路径、扩展名、大小、零件族标识与报告状态 | 修复 Builder 或报告语义，不放宽 Validator 伪造通过 | ArtifactValidator、Reviewer 和 QualityGate 全部通过 |
+
+### 执行步骤与验证标准
+
+1. 先确认请求已通过 Registry 与参数 Validator；否则停在 Worker 之前。
+2. 用该族 dry-run 复现；`plate_basic_4holes` 还要运行现有回归测试。
+3. 涉及真实 API 时，按 API Evidence Driven Repair Loop 进入该族独立 Runner，成功后再回填 Builder。
+4. 运行 build、test、默认 self-check，确认修复过程不启动 SolidWorks。
+
+禁止用法兰或轴的 dry-run 报告代替真实诊断报告，禁止无独立 smoke 证据就改动主 Worker，禁止借修复扩展到装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。

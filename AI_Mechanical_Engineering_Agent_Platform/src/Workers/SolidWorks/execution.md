@@ -191,3 +191,57 @@ CLI 只经 Gateway 调用公开的 `chief-engineer`。`SolidWorksWorkflowRouter`
 真实主流程的唯一授权文件为项目根目录下未提交的 `config/solidworks.local.json`。只有 `real_execution_authorized=true` 且来源为 `LocalDevelopmentProfile` 时，CLI 才自动设置真实执行、关闭 dry-run、应用零件/工程图模板并默认显示 SolidWorks。CLI 仍只经 Gateway、`chief-engineer`、WorkflowEngine 和 Router 进入 Worker，不能直接调用 Worker、Builder 或 SmokeRunner。
 
 Worker 仍按既有预检、COM 连接、产物校验、Reviewer 与 QualityGate 执行。报告中的 `solidworks_launch_attempted` 仅在 Worker 已开始连接时为真；`real_worker_invoked` 仅在真实 Worker 已收到请求时为真，二者都不能由文件存在替代。
+
+## V1.8 零件族 Worker 执行
+
+### 目标与适用范围
+
+V1.8 将 Worker 从单一四孔板特判升级为可注册的零件族执行边界。`plate_basic_4holes` 继续使用已验证的真实 Builder；`flange_basic` 和 `shaft_basic` 本轮必须能生成专用 BuildPlan 并通过 dry-run，但不得仅凭候选 API 进入真实主流程。
+
+### 输入与输出
+
+输入是已通过通用和零件族 Validator 的 `CADModelSpec` 与 BuildPlan。输出是该族的 Worker result、SLDPRT / STEP 或 dry-run 占位产物、`build_report.json`、可行动 `failure_stage` 和 ArtifactValidator 结果。
+
+### 组件与参数
+
+- `PartTypeRegistry` 保存 `IPartFamilyDefinition` 映射，`PartFamilyBuilderRegistry` 保存 `IPartFamilyBuilder` 映射；重复键和缺失 Builder 必须在启动或计划阶段失败。
+- `PlateBasic4HolesDefinition` 处理 `length_mm`、`width_mm`、`thickness_mm`、`hole_count`、`hole_diameter_mm` 及孔位特征；`PlateBasic4HolesPartFamilyBuilder` 负责通用 dry-run，真实路径继续由 `RealSolidWorksWorker` 委托已验证的 plate Builder。
+- `FlangeBasicDefinition` 处理 `outer_diameter_mm`、`inner_diameter_mm`、`thickness_mm`、`bolt_hole_count`、`bolt_hole_diameter_mm`、`bolt_circle_diameter_mm`，对应 `FlangeFeatureBuilder` 的 dry-run 计划。
+- `ShaftBasicDefinition` 处理 `diameter_mm`、`length_mm`、`optional_step_diameters`、`optional_step_lengths`，对应 `ShaftFeatureBuilder` 的 dry-run 计划。
+
+每个 Definition 必须自带 Schema、Validator、BuildPlan 生成逻辑和失败语义；共享 Worker 只做调度和安全边界，不应识别每个零件族的几何细节。
+
+### 执行步骤
+
+```text
+结构化输入
+→ CADModelSpec
+→ PartTypeRegistry
+→ 零件族 Validator
+→ BuildPlan
+→ IPartFamilyBuilder
+→ FakeSolidWorksWorker 或 RealSolidWorksWorker
+→ SolidWorksArtifactValidator
+→ Drawing
+→ Reviewer
+→ QualityGate
+→ ReleasePackage
+```
+
+不受支持的类型以 `unsupported_part_type` 返回；缺少或非法参数以 `missing_required_parameter` 或 `invalid_parameter_value` 返回。这三类结果都不得创建 Worker request、调用 `ConnectAsync` 或启动 SolidWorks。
+
+真实执行仍只能由 `ChiefEngineerOrchestrator` → `WorkflowEngine` → Router → Worker → Validator → Reviewer → `QualityGate` 路径进入。工程图和发布包必须使用当次零件族产物的显式路径，不得扫描历史 latest。
+
+### 验证标准与常见失败
+
+- `plate_basic_4holes` 必须通过既有真实能力回归和默认 dry-run。
+- `flange_basic` 和 `shaft_basic` 必须分别通过 dry-run，并且产物名、BuildPlan operation 和报告不得被写死为 `plate_basic_4holes`。
+- 定义、计划和 Builder 缺失分别使用 `part_family_definition_missing`、`build_plan_generation_failed`、`part_family_builder_missing`。
+- 法兰和轴的 Builder 失败分别使用 `flange_build_failed` 和 `shaft_build_failed`；产物校验失败使用 `artifact_validation_failed`。
+- 默认 self-check 不连接 COM，`real_cad_part_family_default_disabled` 必须为 `true`。
+
+### 禁止事项
+
+- 不在 Worker 中增加大型 `switch(part_type)`，不使用分散字符串特判执行零件族几何。
+- 不把 `flange_basic` 或 `shaft_basic` dry-run 写成真实 SolidWorks 成功或可交付。
+- 不实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。

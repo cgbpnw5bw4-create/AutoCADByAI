@@ -35,3 +35,23 @@ description: "用于项目质量审查，检查架构边界、self-check 字段�
 ## 输出格式
 
 输出 Blockers、Improvements、测试结果和是否可以进入下一阶段。
+
+## V1.8 参数化零件族审查
+
+### 目标与适用范围
+
+审查通用 `CADModelSpec`、`PartTypeRegistry`、三个零件族的独立定义和构建器，以及执行器之前的参数拒绝。输入为源码、测试、自检报告和接口证据；输出为阻断项、改进项、模拟执行或回归结果和审查建议。
+
+### 执行步骤与验证标准
+
+1. 核对通用建模规格的七个字段，并确认零件类型注册表包含三个族。
+2. 确认每族都有参数模式、校验器、构建计划、构建器、`failure_stage`、接口证据和测试。
+3. 确认 `unsupported_part_type`、`missing_required_parameter`、`invalid_parameter_value` 在 Worker 之前停止。
+4. 检查不存在大型 `switch(part_type)`，并运行 plate 回归、flange dry-run、shaft dry-run。
+5. 运行 build、test 和默认 self-check，确认不启动 SolidWorks。
+
+通过标准是 `generic_cad_model_spec_supported`、`part_type_registry_exists`、`plate_part_family_registered`、`flange_part_family_registered`、`shaft_part_family_registered`、`unsupported_part_type_rejected`、`invalid_part_parameters_rejected_before_worker`、`part_family_builders_do_not_use_large_switch`、`plate_regression_passed`、`flange_dry_run_passed`、`shaft_dry_run_passed`、`real_cad_part_family_default_disabled`、`v1_8_version_stage_documented`、`markdown_chinese_check_passed` 全部为 `true`。
+
+### 常见失败与禁止事项
+
+未注册类型回退 plate、非法参数进入 Worker、大型类型 switch、plate 能力退化、flange / shaft dry-run 失败、默认启动 SolidWorks 或以候选 API 冒充真实验收，均为 Blocker。禁止越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。`flange_basic` 和 `shaft_basic` 本轮只可声称 dry-run 通过；真实验收分别等待独立 flange smoke 与 shaft 旋转专用证据。

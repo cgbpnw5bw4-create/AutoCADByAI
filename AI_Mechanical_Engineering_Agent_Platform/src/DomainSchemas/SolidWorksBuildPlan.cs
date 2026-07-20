@@ -9,7 +9,13 @@ public sealed record SolidWorksBuildPlan(
     IReadOnlyList<SolidWorksOperation> Operations,
     IReadOnlyList<SolidWorksArtifact> ExpectedArtifacts,
     IReadOnlyList<string> ValidationRules,
-    IReadOnlyList<string> RiskNotes);
+    IReadOnlyList<string> RiskNotes,
+    string Material = "",
+    IReadOnlyDictionary<string, string>? Features = null,
+    IReadOnlyList<string>? OutputRequirements = null,
+    IReadOnlyDictionary<string, string>? DrawingRequirements = null,
+    IReadOnlyDictionary<string, string>? ExecutionOptions = null,
+    IReadOnlyDictionary<string, string>? Dimensions = null);
 
 public sealed record SolidWorksOperation(
     string OperationId,
@@ -43,7 +49,8 @@ public sealed record SolidWorksWorkerResult(
     string ExecutionMode = "Fake",
     bool RealCadExecuted = false,
     bool RealCadConnected = false,
-    SolidWorksPreflightReport? PreflightReport = null);
+    SolidWorksPreflightReport? PreflightReport = null,
+    string? FailureStage = null);
 
 public sealed record SolidWorksArtifact(
     string ArtifactId,

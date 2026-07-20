@@ -45,3 +45,28 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 - E2E source execution evidence 当前由受控主工作流内存结果写入 manifest；后续可将 request_id/provenance 写入全部阶段报告的统一 schema。
 
 处理规则：以上事项均为 Improvement，不阻塞 V1.7 主流程；不得借技术债实现新的 CAD 功能、BOM、装配体或复杂模板。
+
+## V1.8 零件族技术债与边界
+
+### 目标与适用范围
+
+本节记录参数化零件族在完成首批三族后仍需要跟踪的事项。输入为 V1.8 实现、测试、self-check 与 API evidence；输出为后续 Improvement 列表，不得被解读为本轮可以省略的验收条件。
+
+### 完成 V1.8 前必须清理的事项
+
+- 主执行链中分散的 `plate_basic_4holes` 类型判断必须收口到 `PartTypeRegistry` 和对应 Definition / Builder。与旧版真实工程图、报告文件名和 plate 专用发布包相关的历史实现可以保留，但不得参与通用零件族分发。
+- 不得留下大型 `switch(part_type)`。self-check 中的 `part_family_builders_do_not_use_large_switch` 必须由结构检查和行为测试共同支撑，不能只检查某一个源文件字符串。
+- `unsupported_part_type`、`missing_required_parameter`、`invalid_parameter_value` 必须有未调用 Worker 的行为测试；否则不能降级为后续 Improvement。
+
+### 可以在 V1.8 完成后继续跟踪的 Improvement
+
+- `flange_basic` 真实路径可在独立 smoke 中验证 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4` 及螺栓孔布置；未完成该 evidence 时保持 dry-run-only。
+- `shaft_basic` 真实路径需要 `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 的专用诊断 Runner，包括台阶截面、中心线和旋转返回值证据。
+- 发布包、工程图名称和跨阶段 provenance 后续可进一步通用化，但必须保持 V1.7 `plate_basic_4holes` 真实可交付语义不回退。
+- COM 会话复用、动态 `InternalRoute` 和更丰富的零件族工程图仍需要独立设计与回归测试。
+
+### 验证步骤、常见失败和禁止事项
+
+完成实现后运行 build、test 和默认 self-check，确认 plate 回归、flange / shaft dry-run、Registry 和前置拒绝均通过。若法兰或轴的真实 API 证据不足，正确处理是保留 dry-run-only 并记录 evidence 缺口，不是盲改主 Worker。
+
+禁止借技术债越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9；本轮完成后就停在 V1.8 审查门。

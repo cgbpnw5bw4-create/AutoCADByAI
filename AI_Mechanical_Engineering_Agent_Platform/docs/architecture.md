@@ -1,6 +1,6 @@
 # 架构说明
 
-`AI_Mechanical_Engineering_Agent_Platform` 是面向机械工程自动化的长期可托管多 Agent 平台。当前重点是平台边界、运行时隔离、内部协作、质量门禁和可审计性，不接真实 CAD 软件。
+`AI_Mechanical_Engineering_Agent_Platform` 是面向机械工程自动化的长期可托管多 Agent 平台。当前重点是平台边界、运行时隔离、内部协作、质量门禁和可审计性。真实 SolidWorks 能力已经接入受控主工作流程，但默认仍关闭，不允许绕过 Worker、Validator、Reviewer 或 QualityGate。
 
 ## PlatformCore
 
@@ -108,3 +108,59 @@ V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPla
 - `AgentGatewayHost`：对外暴露 Public Agent Directory 和 Agent Message Endpoint。
 
 Gateway 只暴露 Public Agent，当前只有 `chief-engineer`。Runtime、Internal Agent、Worker 和 QualityGate 的边界不会因为外部入口变化而改变。
+
+## V1.8 参数化零件族架构
+
+### 目标与适用范围
+
+V1.8 将围绕 `plate_basic_4holes` 建立的单一零件路径抽象为通用 `CADModelSpec` 和可注册零件族。本轮注册 `plate_basic_4holes`、`flange_basic`、`shaft_basic`，不引入装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。
+
+### 输入与输出边界
+
+`CADModelSpec` 使用以下通用字段：
+
+- `part_type`
+- `dimensions`
+- `features`
+- `material`
+- `output_requirements`
+- `drawing_requirements`
+- `execution_options`
+
+该结构是领域输入，不携带任何组件对象。后续输出依次是已校验的构建计划、执行结果、产物校验报告、工程复审报告、质量门禁裁决和发布包清单。
+
+### Registry 与零件族责任
+
+`PartTypeRegistry` 以 `part_type` 映射独立 `IPartFamilyDefinition`，`PartFamilyBuilderRegistry` 以同一稳定键映射 `IPartFamilyBuilder`。定义负责 Schema、参数 Validator 和 BuildPlan 生成；Builder 负责把已校验计划转为零件族 dry-run 产物，并声明该族的真实执行支持与 API evidence。已验证的 plate 真实操作仍由 `RealSolidWorksWorker` 和现有 plate Builder 执行。公共 Router、Skill 和 Worker 不包含大型 `switch(part_type)`。
+
+| 定义 | 参数 | 执行边界 |
+|---|---|---|
+| `PlateBasic4HolesDefinition` | 长、宽、厚、四孔数量、孔径和孔位 | 复用已验证 plate Builder，保持真实能力与回归。 |
+| `FlangeBasicDefinition` | 外径、内径、厚度、螺栓孔数、螺栓孔径、分布圆径 | V1.8 保证 dry-run；真实入口需独立 flange smoke。 |
+| `ShaftBasicDefinition` | 直径、长度、可选台阶直径/长度列表 | V1.8 保证 dry-run；真实入口需旋转专用证据。 |
+
+### 执行步骤
+
+```text
+结构化输入
+→ CADModelSpec
+→ PartTypeRegistry
+→ 参数 Validator
+→ BuildPlan
+→ Router
+→ Worker
+  → PartFamilyBuilderRegistry
+  → 对应 PartFamilyBuilder
+→ ArtifactValidator
+→ Drawing
+→ QualityGate
+→ ReleasePackage
+```
+
+上述图中的 Worker 只能由 `ChiefEngineerOrchestrator` 经 `WorkflowEngine` 和 Router 调用，Worker 在内部解析对应 Builder，执行后仍必须经过产物 Validator、Reviewer 和 QualityGate。V1.8 的新 `PartFamilyBuilderRegistry` 承担三族 dry-run 分派；plate 真实路径继续使用已经验收的 `ISolidWorksPlateBuilder` 适配器，flange / shaft 在独立 smoke 通过前保持 fail-closed。默认 self-check 使用 dry-run 和可注入替身验证链路，不启动 SolidWorks。
+
+### 失败、验证与禁止事项
+
+`unsupported_part_type`、`missing_required_parameter`、`invalid_parameter_value` 必须在 Worker 之前返回。Registry、计划、Builder 和执行失败使用 `part_family_definition_missing`、`build_plan_generation_failed`、`part_family_builder_missing`、`flange_build_failed`、`shaft_build_failed`、`artifact_validation_failed`。验证必须包含三族注册、前置拒绝、plate 回归、flange / shaft dry-run、无大型 switch 与默认真实 CAD 关闭。
+
+禁止把 dry-run 、文件存在或候选 API 解释为真实验收成功；禁止为新增零件族破坏 Gateway、Agent、Worker 和 QualityGate 边界。

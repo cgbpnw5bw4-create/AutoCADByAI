@@ -1,6 +1,6 @@
 # SolidWorks Worker 说明
 
-本目录是 SolidWorks 执行层边界。V0.9-B 已提供 `FakeSolidWorksWorker` dry-run skeleton；V1.0-A 新增真实执行前的安全边界、环境预检、COM 会话封装和 `RealSolidWorksWorker` 骨架；V1.0-B 新增第一个受控真实建模场景 `plate_basic_4holes`；V1.1 新增基于该零件的真实工程图基础视图能力。
+本目录是 SolidWorks 执行层边界。V0.9-B 已提供 `FakeSolidWorksWorker` dry-run skeleton；V1.0 到 V1.7 建立了 `plate_basic_4holes` 的受控真实建模、工程图、质量门禁和发布包链路；V1.8 开始以 `PartTypeRegistry` 与独立 `PartFamilyBuilder` 扩展参数化零件族。
 
 当前仍然默认禁止真实 CAD 执行：
 
@@ -112,3 +112,40 @@ dotnet run --project tools/SolidWorksDrawingSmokeRunner -- --source-part "output
 - Worker 必须通过平台调度边界执行，并保留审计日志。
 - 真实 CAD 执行必须经过请求级开关、环境变量级开关和 QualityGate。
 - V1.0-B 的真实建模能力和 V1.1 的真实工程图能力都不改变 Agent、Gateway、LLM 的权限模型。
+
+## V1.8 参数化零件族
+
+### 目标与适用范围
+
+V1.8 通过 `PartTypeRegistry` 解析 `IPartFamilyDefinition`，再由 `PartFamilyBuilderRegistry` 解析对应 `IPartFamilyBuilder`，支持 `plate_basic_4holes`、`flange_basic`、`shaft_basic`。公共 Worker 只负责安全开关、调度、报告和产物边界，不承载大型 `switch(part_type)` 或每族几何细节。
+
+### 输入与输出
+
+输入为已经通过 `CADModelSpecValidator` 与零件族 Validator 的 BuildPlan。输出为 dry-run 或受控真实产物、`build_report.json`、`failure_stage`、ArtifactValidator 结果及后续 Drawing / ReleasePackage 所需的显式路径。
+
+| 零件族 | 参数边界 | V1.8 执行承诺 |
+|---|---|---|
+| `plate_basic_4holes` | 长、宽、厚、四孔数量、孔径与孔位特征 | 真实能力不回退，必须通过现有回归。 |
+| `flange_basic` | 外径、内径、厚度、螺栓孔数、螺栓孔径、分布圆径 | dry-run 必须通过；真实路径必须先有独立 flange smoke。 |
+| `shaft_basic` | 直径、长度、可选台阶直径列表与长度列表 | dry-run 必须通过；真实路径必须先有旋转专用诊断证据。 |
+
+### 执行步骤与验证标准
+
+Worker 只接收已注册且参数合法的零件族计划。`unsupported_part_type`、`missing_required_parameter`、`invalid_parameter_value` 必须在 Worker 之前返回。默认 self-check 验证注册、dry-run、失败语义和无大型 switch，不连接 COM 也不启动 SolidWorks。
+
+法兰真实路径可考虑 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4`，但首次进入主 Worker 前必须独立 smoke。轴的台阶轮廓需要 `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 的专用 Runner 证据。证据不足时保持 dry-run-only。
+
+### 常见失败与禁止事项
+
+零件族定义、构建计划、构建器、法兰、轴和产物失败分别使用下列阶段：
+
+```text
+part_family_definition_missing
+build_plan_generation_failed
+part_family_builder_missing
+flange_build_failed
+shaft_build_failed
+artifact_validation_failed
+```
+
+禁止默认启动 SolidWorks，禁止跳过总调度、工作流程、路由、校验、复审和质量门禁，禁止本轮扩展装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量队列或 V1.9。

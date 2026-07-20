@@ -15,7 +15,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "1.7";
+    private const string SelfCheckSchemaVersion = "1.8";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -210,6 +210,7 @@ public static class PlatformSelfCheckRunner
         var v17VersionStageDocumented = versionStageText.Contains("V1.7", StringComparison.OrdinalIgnoreCase);
         var realCadE2eLocalAuthorizationProfileSupported = v17E2eChecks.LocalAuthorizationProfileSupported;
         var realCadE2eLocalAuthorizationDefaultDisabled = v17E2eChecks.LocalAuthorizationDefaultDisabled;
+        var v18PartFamilyChecks = await RunV18PartFamilyChecksAsync(root, platform, outputRoot, versionStageText, cancellationToken);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -445,6 +446,7 @@ public static class PlatformSelfCheckRunner
              v17VersionStageDocumented &&
              realCadE2eLocalAuthorizationProfileSupported &&
              realCadE2eLocalAuthorizationDefaultDisabled &&
+             v18PartFamilyChecks.AllPassed &&
              executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -758,13 +760,177 @@ public static class PlatformSelfCheckRunner
             v17VersionStageDocumented,
             realCadE2eLocalAuthorizationProfileSupported,
             realCadE2eLocalAuthorizationDefaultDisabled,
-            finalStatus);
+            finalStatus) with
+        {
+            GenericCadModelSpecSupported = v18PartFamilyChecks.GenericCadModelSpecSupported,
+            PartTypeRegistryExists = v18PartFamilyChecks.PartTypeRegistryExists,
+            PlatePartFamilyRegistered = v18PartFamilyChecks.PlatePartFamilyRegistered,
+            FlangePartFamilyRegistered = v18PartFamilyChecks.FlangePartFamilyRegistered,
+            ShaftPartFamilyRegistered = v18PartFamilyChecks.ShaftPartFamilyRegistered,
+            UnsupportedPartTypeRejected = v18PartFamilyChecks.UnsupportedPartTypeRejected,
+            InvalidPartParametersRejectedBeforeWorker = v18PartFamilyChecks.InvalidPartParametersRejectedBeforeWorker,
+            PartFamilyBuildersDoNotUseLargeSwitch = v18PartFamilyChecks.PartFamilyBuildersDoNotUseLargeSwitch,
+            PlateRegressionPassed = v18PartFamilyChecks.PlateRegressionPassed,
+            FlangeDryRunPassed = v18PartFamilyChecks.FlangeDryRunPassed,
+            ShaftDryRunPassed = v18PartFamilyChecks.ShaftDryRunPassed,
+            RealCadPartFamilyDefaultDisabled = v18PartFamilyChecks.RealCadPartFamilyDefaultDisabled,
+            V18VersionStageDocumented = v18PartFamilyChecks.V18VersionStageDocumented
+        };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         await using var stream = File.Create(reportPath);
         await JsonSerializer.SerializeAsync(stream, report, JsonOptions());
 
         return report;
+    }
+
+    private static async Task<V18PartFamilySelfCheckResult> RunV18PartFamilyChecksAsync(
+        string projectRoot,
+        PlatformKernel platform,
+        string outputRoot,
+        string versionStageText,
+        CancellationToken cancellationToken)
+    {
+        var registry = PartTypeRegistry.CreateDefault();
+        var genericProperties = new[]
+        {
+            nameof(CADModelSpec.PartType),
+            nameof(CADModelSpec.Dimensions),
+            nameof(CADModelSpec.Features),
+            nameof(CADModelSpec.Material),
+            nameof(CADModelSpec.OutputRequirements),
+            nameof(CADModelSpec.DrawingRequirements),
+            nameof(CADModelSpec.ExecutionOptions)
+        };
+        var genericCadModelSpecSupported = genericProperties.All(name => typeof(CADModelSpec).GetProperty(name) is not null);
+        var partTypeRegistryExists = registry.GetAll().Count >= 3;
+        var platePartFamilyRegistered = registry.GetDefinition(PlateBasic4HolesDefinition.Type) is PlateBasic4HolesDefinition;
+        var flangePartFamilyRegistered = registry.GetDefinition(FlangeBasicDefinition.Type) is FlangeBasicDefinition;
+        var shaftPartFamilyRegistered = registry.GetDefinition(ShaftBasicDefinition.Type) is ShaftBasicDefinition;
+        var validator = new CADModelSpecValidator(registry);
+        var unsupported = validator.Validate(new CADModelSpec(
+            "self-check-unsupported",
+            "unsupported_self_check_family",
+            new Dictionary<string, string>()));
+        var unsupportedPartTypeRejected =
+            !unsupported.IsValid &&
+            string.Equals(unsupported.FailureStage, PartFamilyFailureStages.UnsupportedPartType, StringComparison.OrdinalIgnoreCase);
+        var invalidSpec = new CADModelSpec(
+            "self-check-invalid-flange",
+            FlangeBasicDefinition.Type,
+            new Dictionary<string, string> { ["outer_diameter_mm"] = "160" });
+        var invalidSkillOutput = await new SolidWorksBuildPlanSkill(registry).ExecuteAsync(new SkillContracts.SkillInput(
+            "self-check-v18-invalid",
+            nameof(CADModelSpec),
+            invalidSpec,
+            new Dictionary<string, string>()));
+        var invalidPartParametersRejectedBeforeWorker =
+            invalidSkillOutput.Status == SkillContracts.SkillOutputStatus.Rejected &&
+            invalidSkillOutput.Result is null &&
+            invalidSkillOutput.Issues.Any(issue => issue.StartsWith("missing_required_parameter:", StringComparison.OrdinalIgnoreCase));
+        var worker = platform.WorkerRegistry.GetByName("FakeSolidWorksWorker");
+        var definitionPartTypes = registry.GetAll()
+            .Select(definition => definition.PartType)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var builderRegistryType = worker?.GetType().Assembly.GetType(
+            "SolidWorksWorker.PartFamilyBuilderRegistry",
+            throwOnError: false);
+        var builderRegistry = builderRegistryType?
+            .GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static)?
+            .Invoke(null, null);
+        var registeredBuilders = builderRegistryType?
+            .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+            .Invoke(builderRegistry, null) as System.Collections.IEnumerable;
+        var builderPartTypes = registeredBuilders?
+            .Cast<object>()
+            .Select(builder => builder.GetType().GetProperty("PartType")?.GetValue(builder) as string)
+            .OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var partFamilyBuildersDoNotUseLargeSwitch =
+            builderRegistryType is not null &&
+            builderRegistryType.GetMethod("Register", BindingFlags.Public | BindingFlags.Instance) is not null &&
+            builderRegistryType.GetMethod("TryGetBuilder", BindingFlags.Public | BindingFlags.Instance) is not null &&
+            definitionPartTypes.Count == 3 &&
+            definitionPartTypes.SetEquals(builderPartTypes);
+
+        var workerMethod = worker?.GetType().GetMethods().SingleOrDefault(method =>
+            method.Name == "ExecuteAsync" &&
+            method.GetParameters().Length == 2 &&
+            method.GetParameters()[0].ParameterType == typeof(SolidWorksWorkerRequest));
+
+        async Task<bool> DryRunAsync(string partType, CADModelSpec spec)
+        {
+            if (worker is null || workerMethod is null)
+            {
+                return false;
+            }
+
+            var output = await new SolidWorksBuildPlanSkill(registry).ExecuteAsync(new SkillContracts.SkillInput(
+                $"self-check-v18-{partType}", nameof(CADModelSpec), spec, new Dictionary<string, string>()));
+            if (output.Result is not SolidWorksBuildPlan plan ||
+                output.Status != SkillContracts.SkillOutputStatus.Completed ||
+                !new SolidWorksBuildPlanReviewer(registry).Review(plan).IsPassed)
+            {
+                return false;
+            }
+
+            var request = new SolidWorksWorkerRequest(
+                $"self-check-v18-request-{partType}-{Guid.NewGuid():N}",
+                plan,
+                Path.Combine(projectRoot, "output", "solidworks", "self-check", "v1_8_part_families", partType),
+                DryRun: true,
+                AllowRealCadExecution: false);
+            var task = workerMethod.Invoke(worker, new object?[] { request, cancellationToken }) as Task<SolidWorksWorkerResult>;
+            if (task is null)
+            {
+                return false;
+            }
+
+            var result = await task;
+            return result.Status == "Completed" &&
+                   result.ExecutionMode == "Fake" &&
+                   !result.RealCadExecuted &&
+                   result.GeneratedArtifacts.Any(artifact => artifact.FilePath.EndsWith($"fake_{partType}.SLDPRT.txt", StringComparison.OrdinalIgnoreCase)) &&
+                   result.GeneratedArtifacts.Any(artifact => artifact.FilePath.EndsWith($"fake_{partType}.STEP.txt", StringComparison.OrdinalIgnoreCase));
+        }
+
+        var plateRegressionPassed = await DryRunAsync(
+            PlateBasic4HolesDefinition.Type,
+            SolidWorksWorkflowRouter.CreatePlateBasicFourHolesSpec());
+        var flangeDryRunPassed = await DryRunAsync(
+            FlangeBasicDefinition.Type,
+            new CADModelSpec("self-check-flange", FlangeBasicDefinition.Type, new Dictionary<string, string>
+            {
+                ["outer_diameter_mm"] = "160", ["inner_diameter_mm"] = "60", ["thickness_mm"] = "18",
+                ["bolt_hole_count"] = "6", ["bolt_hole_diameter_mm"] = "14", ["bolt_circle_diameter_mm"] = "115"
+            }));
+        var shaftDryRunPassed = await DryRunAsync(
+            ShaftBasicDefinition.Type,
+            new CADModelSpec("self-check-shaft", ShaftBasicDefinition.Type, new Dictionary<string, string>
+            {
+                ["diameter_mm"] = "40", ["length_mm"] = "180",
+                ["optional_step_diameters"] = "32,24", ["optional_step_lengths"] = "40,30"
+            }));
+        var runtimeDefaults = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
+        var realCadPartFamilyDefaultDisabled =
+            !runtimeDefaults.EnableRealExecution &&
+            !runtimeDefaults.MainWorkflowExecutionEnabled;
+        var v18VersionStageDocumented = versionStageText.Contains("V1.8", StringComparison.OrdinalIgnoreCase);
+
+        return new V18PartFamilySelfCheckResult(
+            genericCadModelSpecSupported,
+            partTypeRegistryExists,
+            platePartFamilyRegistered,
+            flangePartFamilyRegistered,
+            shaftPartFamilyRegistered,
+            unsupportedPartTypeRejected,
+            invalidPartParametersRejectedBeforeWorker,
+            partFamilyBuildersDoNotUseLargeSwitch,
+            plateRegressionPassed,
+            flangeDryRunPassed,
+            shaftDryRunPassed,
+            realCadPartFamilyDefaultDisabled,
+            v18VersionStageDocumented);
     }
 
     private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
@@ -1135,8 +1301,6 @@ public static class PlatformSelfCheckRunner
             var apiEvidenceCollectorText = File.Exists(apiEvidenceCollectorPath) ? File.ReadAllText(apiEvidenceCollectorPath) : string.Empty;
             var plateFeatureBuilderPath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "SolidWorksPlateFeatureBuilder.cs");
             var plateFeatureBuilderText = File.Exists(plateFeatureBuilderPath) ? File.ReadAllText(plateFeatureBuilderPath) : string.Empty;
-            var smokeRunnerPath = Path.Combine(projectRoot, "tools", "SolidWorksSmokeRunner", "SolidWorksDiagnosticRunner.cs");
-            var smokeRunnerText = File.Exists(smokeRunnerPath) ? File.ReadAllText(smokeRunnerPath) : string.Empty;
             var solidWorksApiFailureAnalyzerExists =
                 apiFailureAnalyzerText.Contains("SolidWorksApiFailureAnalyzer", StringComparison.Ordinal) &&
                 apiFailureAnalyzerText.Contains("cut_holes_failed", StringComparison.OrdinalIgnoreCase);
@@ -1159,9 +1323,10 @@ public static class PlatformSelfCheckRunner
                 !Directory.EnumerateFiles(Path.Combine(projectRoot, "src", "Workers", "SolidWorks"), "*.py", SearchOption.AllDirectories).Any() &&
                 !Directory.EnumerateFiles(Path.Combine(projectRoot, "tools", "SolidWorksSmokeRunner"), "*.py", SearchOption.AllDirectories).Any();
             var solidWorksApiRepairLoopAvailable =
-                smokeRunnerText.Contains("MaxRepairAttempts = 1", StringComparison.Ordinal) &&
-                smokeRunnerText.Contains("TryRepairCutHolesOnce", StringComparison.Ordinal) &&
-                smokeRunnerText.Contains("ApiRepairAttempted", StringComparison.Ordinal);
+                WorkerContracts.SolidWorksApiRepairPolicy.MaxRepairAttempts == 1 &&
+                WorkerContracts.SolidWorksApiRepairPolicy.CanAttempt("cut_holes_failed", repairAlreadyAttempted: false) &&
+                !WorkerContracts.SolidWorksApiRepairPolicy.CanAttempt("cut_holes_failed", repairAlreadyAttempted: true) &&
+                !WorkerContracts.SolidWorksApiRepairPolicy.CanAttempt("save_sldprt_failed", repairAlreadyAttempted: false);
             var solidWorksMacroRecordingRequestAvailable =
                 apiEvidenceCollectorText.Contains("macro_recording_request.md", StringComparison.Ordinal) &&
                 apiEvidenceCollectorText.Contains("SolidWorks 切孔宏录制请求", StringComparison.Ordinal);
@@ -4756,6 +4921,37 @@ public static class PlatformSelfCheckRunner
         string RealAcceptanceReportPath,
         string LatestRealOutputsPath,
         bool IsValid);
+
+    private sealed record V18PartFamilySelfCheckResult(
+        bool GenericCadModelSpecSupported,
+        bool PartTypeRegistryExists,
+        bool PlatePartFamilyRegistered,
+        bool FlangePartFamilyRegistered,
+        bool ShaftPartFamilyRegistered,
+        bool UnsupportedPartTypeRejected,
+        bool InvalidPartParametersRejectedBeforeWorker,
+        bool PartFamilyBuildersDoNotUseLargeSwitch,
+        bool PlateRegressionPassed,
+        bool FlangeDryRunPassed,
+        bool ShaftDryRunPassed,
+        bool RealCadPartFamilyDefaultDisabled,
+        bool V18VersionStageDocumented)
+    {
+        public bool AllPassed =>
+            GenericCadModelSpecSupported &&
+            PartTypeRegistryExists &&
+            PlatePartFamilyRegistered &&
+            FlangePartFamilyRegistered &&
+            ShaftPartFamilyRegistered &&
+            UnsupportedPartTypeRejected &&
+            InvalidPartParametersRejectedBeforeWorker &&
+            PartFamilyBuildersDoNotUseLargeSwitch &&
+            PlateRegressionPassed &&
+            FlangeDryRunPassed &&
+            ShaftDryRunPassed &&
+            RealCadPartFamilyDefaultDisabled &&
+            V18VersionStageDocumented;
+    }
 
     private static JsonSerializerOptions JsonOptions()
     {

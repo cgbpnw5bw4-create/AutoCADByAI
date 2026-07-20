@@ -208,3 +208,79 @@ API：`IDrawingDoc.CreateDrawViewFromModelView3(string ModelName, string ViewNam
 API：`ICustomPropertyManager.Add3`、`ICustomPropertyManager.Get6` 和 `ICustomPropertyManager.Get`。资料来源：SOLIDWORKS 2025 API Help。`Add3` 负责写入文档级自定义属性；`Get6` 是首选的带六个 by-reference 输出值的读取 API；`Get` 已被官方标记为旧 API，但仍返回指定属性的直接字符串值。
 
 本机真实执行验证：`Add3("PartName", 30, "plate_basic_4holes", 2)` 返回 `0`，紧接着 `Get("PartName")` 返回 `plate_basic_4holes`。在 late-bound .NET COM 反射下，`Get6` 的六个 out/ref 槽可能未回填到调用数组；因此生产路径仍先调用 `Get6`，仅当其回读为空时以 `Get` 进行同一属性、同一值的只读核验。该兼容回退不会把 API 调用成功当作通过：`Add3/Set2` 结果和精确回读值都必须通过，随后仍须经过保存、PDF 导出、Validator、Reviewer 和 QualityGate。
+
+## V1.8 零件族真实 API 证据边界
+
+### 目标与适用范围
+
+本节用于决定 `plate_basic_4holes`、`flange_basic` 和 `shaft_basic` 的 `PartFamilyBuilder` 是否可以进入真实 Worker。证据只支持已验证的几何操作，不会因 API 名称看似可用就授权生产路径。
+
+### 输入与输出
+
+输入必须包含官方 API 条目、完整参数、本地宏录制或 SDK 例程、诊断 Runner 运行日志和返回值。输出为独立 evidence report，至少记录 `part_type`、operation、API、参数策略、成功标志、失败阶段、SLDPRT / STEP 路径与大小。
+
+### 官方 API 来源
+
+- `ISketchManager.InsertSketch`：`https://help.solidworks.com/2025/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~InsertSketch.html`
+- `ISketchManager.CreateCircle`：`https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateCircle.html`
+- `IFeatureManager.FeatureExtrusion2`：`https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureExtrusion2.html`
+- `IFeatureManager.FeatureCut4`：`https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureCut4.html`
+- `ISketchManager.CreateLine`：`https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateLine.html`
+- `ISketchManager.CreateCenterLine`：`https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateCenterLine.html`
+- `IFeatureManager.FeatureRevolve2`：`https://help.solidworks.com/2021/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureRevolve2.html`
+- 官方整周旋转 C# 示例：`https://help.solidworks.com/2025/English/api/sldworksapi/Create_360-degree_Revolve_Feature_Example_CSharp.htm`
+
+`FeatureExtrusion2` 已被官方标记为旧 API，并指向 `FeatureExtrusion3`。但当前本机 plate 真实链路已验证 `FeatureExtrusion2`，V1.8 不同时做拉伸 API 迁移，避免引入无关回归风险。
+
+### 本地证据来源
+
+- `src/Modules/CADModeling/api_evidence.md`
+- `src/Workers/SolidWorks/api_evidence.md`
+- `src/Workers/SolidWorks/SolidWorksPlateFeatureBuilder.cs`
+- `output/solidworks/diagnostics/plate_basic_4holes/20260702_030612_336_6bb7588d5f4f4f10a426bc6d33fc9160/diagnostic_report.json`
+- `references/external/solidworks-automation-skill-analysis.md`
+
+历史 `cut_holes_failed_api_evidence_report.json` 中的“使用 `FeatureExtrusion2` 切孔”结论已被后续宏证据和真实成功诊断推翻，不得回填 V1.8。本轮没有使用第三方脚本作为 API 来源。
+
+### `plate_basic_4holes` 证据
+
+最新可用 `diagnostic_report.json` 在 SolidWorks `33.5.0` 上记录了连接、新建零件、`FeatureExtrusion2` 基体拉伸、活动孔草图 `FeatureCut4`、SLDPRT 保存和 STEP 导出成功，最终状态为 `Passed`。V1.8 应复用 `SolidWorksPlateFeatureBuilder`，不重新猜测切孔长参数，并用回归测试保护该真实能力。
+
+### `flange_basic` 候选证据
+
+法兰最小几何可候选复用：
+
+1. 选择标准基准面并进入草图。
+2. 用 `CreateCircle` 创建外圆，再复用已验证的 `FeatureExtrusion2` 参数创建圆盘。
+3. 在新的活动草图中创建中心孔和螺栓孔。螺栓孔中心按 `x = BCD / 2 * cos(angle)`、`y = BCD / 2 * sin(angle)` 展开，毫米输入在调用前转为米。
+4. 复用已验证的活动草图 `FeatureCut4` 参数，一次切除全部圆形轮廓。
+5. 进入既有保存、STEP 导出、ArtifactValidator 和 QualityGate 链路。
+
+上述组合以“官方闭合圆轮廓能力 + 本机已验证各组成调用”为依据，属于低风险推断，证据足以设计并进入默认关闭的独立 flange smoke 入口开发，但当前尚无该 Runner，也未完成真实验收。首次真实执行必须使用独立 flange smoke Runner，分步记录草图完整性、每个 API 返回值、螺栓孔数量、保存/导出结果和 `flange_build_failed` 的子阶段。在该 smoke 通过前，只能声称 flange dry-run 通过，不得接入默认真实主路径。
+
+### `shaft_basic` 候选证据
+
+无台阶圆柱可以复用 `CreateCircle` 和 `FeatureExtrusion2`，组成 API 证据充分；但完整 `shaft_basic` 还包含可选台阶，本轮不能只验收无台阶特例就声称整族真实能力完成。可选台阶的候选策略是：
+
+1. 用 `CreateLine` 构建半截面外轮廓和可选台阶轮廓。
+2. 用 `CreateCenterLine` 创建旋转轴线，并确认其为构造线。
+3. 用 `FeatureRevolve2` 执行整周旋转。
+
+当前未有足以支持生产回填的专用旋转诊断报告。进入真实验收前必须用 shaft 专用 Runner 验证草图封闭、台阶数组到轮廓的映射、中心线选择状态、`FeatureRevolve2` 完整参数和返回 Feature，并生成非空 SLDPRT / STEP。在证据齐全前，`shaft_basic` 只能运行 dry-run。
+
+### 拒绝策略
+
+- 不使用 `HoleWizard`，避免超出简单通孔范围并增加长参数风险。
+- 法兰螺栓孔不使用圆周阵列 API；直接计算孔中心并在一个草图中创建全部圆，可减少选择状态。
+- V1.8 不迁移到 `FeatureExtrusion3`，避免对 plate 已验证路径引入无关改动。
+- 轴不使用 `SelectByRay` 或逐个端面拉伸来生成台阶，因为端面选择脆弱，也难以稳定覆盖任意台阶序列。
+- 不把官方 `FeatureRevolve2` 示例直接复制为生产实现，必须先经专用诊断 Runner 验证。
+
+### 执行步骤、验证标准与禁止事项
+
+1. 先运行零件族 Validator 和 dry-run；输入非法时不得进入 API 诊断。
+2. 按官方 API、本地 SDK/宏录制、专用 Runner、只读参考资料顺序形成 evidence。
+3. 真实 smoke 必须默认关闭，显式开启后仍要经过 ArtifactValidator、Reviewer 和 QualityGate。
+4. 仅当专用 Runner 成功、报告可复现且产物非空时，才可将 API 路径回填该族 Builder。
+
+禁止用 plate 的 API 成功报告代替 flange 或 shaft 专用证据，禁止在 evidence 不足时盲改 COM 长参数，禁止自动执行宏或复制第三方脚本，禁止把文件存在当作真实几何成功。

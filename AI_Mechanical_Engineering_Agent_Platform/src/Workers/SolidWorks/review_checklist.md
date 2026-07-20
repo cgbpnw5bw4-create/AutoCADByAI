@@ -97,3 +97,40 @@ V1.2 Claude 审查未发现 Blockers。以下 Improvements 已进入 `docs/techn
 - `e2e_execution_report.json` 必须包含授权、启动尝试、连接、真实 Worker 调用和真实 CAD 执行字段。
 - 授权通过后若真实执行失败，`failure_stage` 必须来自实际预检、连接或阶段报告，不能重新解释为确认缺失。
 - Gateway、Agent、LLM 不得直接调用 Worker；不得用 SmokeRunner、Builder 或文件存在冒充主流程成功。
+
+## V1.8 零件族审查
+
+### 目标、适用范围与输入输出
+
+审查 `PartTypeRegistry`、三个零件族定义和构建器、执行分发、前置拒绝、模拟执行、接口证据和四孔板回归。输入为源码、测试、自检报告、执行报告和诊断证据；输出为阻断项、改进项、验证结果与真实验收建议。
+
+### 必查项
+
+- Registry 是否明确注册 `plate_basic_4holes`、`flange_basic`、`shaft_basic`，未注册键是否返回 `unsupported_part_type`。
+- 参数非法时是否返回 `missing_required_parameter` 或 `invalid_parameter_value`，并且 Worker 和 `SolidWorksSessionManager` 调用计数为零。
+- 每族是否有独立 Schema、Validator、BuildPlan 生成器、`IPartFamilyBuilder`、`failure_stage`、API evidence 和测试。
+- Worker 是否只通过 Registry 取得 Builder，而非堆叠大型 `switch(part_type)` 或多处零件族字符串分支。
+- `plate_basic_4holes` 是否仍使用已验证的 `SolidWorksPlateFeatureBuilder` 与原有真实主工作流程，且回归测试通过。
+- `flange_basic` 的 BuildPlan 是否包含外径、内径、厚度、螺栓孔数、螺栓孔直径和分布圆直径，并通过 dry-run。
+- `shaft_basic` 的 BuildPlan 是否包含直径、长度及成对的可选台阶直径/长度列表，并通过 dry-run。
+- `flange_basic` 真实入口前是否有 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4` 的独立 smoke 证据；没有时是否明确保持 dry-run-only。
+- `shaft_basic` 真实入口前是否有 `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 的专用诊断证据；没有时是否明确保持 dry-run-only。
+- 默认 self-check 是否不连接 COM、不启动 SolidWorks，并设置 `real_cad_part_family_default_disabled=true`。
+- 真实路径是否仍通过 `ChiefEngineerOrchestrator` → `WorkflowEngine` → Router → Worker → Validator → Reviewer → `QualityGate`，随后才进入 Drawing 与 ReleasePackage。
+
+### Blockers
+
+- 非法参数或未注册类型进入真实 Worker。
+- 使用大型 `switch(part_type)` 替代 Registry 与多态 Builder。
+- `plate_basic_4holes` 真实能力或回归测试退化。
+- `flange_basic` 或 `shaft_basic` dry-run 失败，或将 dry-run 表述为真实验收。
+- API evidence 不足时盲改主 Worker，或绕过 ArtifactValidator、Reviewer、QualityGate。
+- 默认启动 SolidWorks，或越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量队列、V1.9。
+
+### 验证步骤与通过标准
+
+1. 运行 build、test 和默认 self-check。
+2. 核对三族注册、两类前置拒绝、无大型 switch、plate 回归及 flange / shaft dry-run 字段。
+3. 确认 `generic_cad_model_spec_supported`、`part_type_registry_exists`、`plate_part_family_registered`、`flange_part_family_registered`、`shaft_part_family_registered`、`unsupported_part_type_rejected`、`invalid_part_parameters_rejected_before_worker`、`part_family_builders_do_not_use_large_switch`、`plate_regression_passed`、`flange_dry_run_passed`、`shaft_dry_run_passed`、`real_cad_part_family_default_disabled`、`v1_8_version_stage_documented`、`markdown_chinese_check_passed` 全部为 `true`。
+
+上述条件满足时可进入 Claude 实现审查。`flange_basic` 在独立 smoke 通过后才可进入真实验收；`shaft_basic` 在旋转专用证据和独立 smoke 通过后才可进入真实验收。本轮不进入 V1.9。
