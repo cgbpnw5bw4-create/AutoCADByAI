@@ -46,7 +46,7 @@
 
 ## 进入下一阶段条件
 
-必须通过 build、test、self-check。涉及真实 CAD 的能力必须有默认关闭开关、诊断 Runner、artifact validation 和 QualityGate 记录。
+必须通过 build、test、self-check。涉及真实 CAD 的能力必须支持 V2.0 统一禁用策略、诊断 Runner、artifact validation 和 QualityGate 记录。
 
 V1.2 还必须确认 `solidworks_real_drawing_dimensions_implemented`、`solidworks_real_drawing_dimensions_not_called_in_default_self_check`、`solidworks_drawing_dimension_failure_stage_actionable`、`solidworks_drawing_dimension_api_evidence_documented` 和 `solidworks_drawing_dimension_failure_repair_documented` 为 true。
 
@@ -118,7 +118,7 @@ V1.8 审查结构化输入到发布包的通用零件族执行链，以及 `plat
 
 - 最终路径是否严格经过 Gateway / `chief-engineer`、`ChiefEngineerOrchestrator`、`WorkflowEngine`、`SolidWorksWorkflowRouter`、两个 Registry、`RealSolidWorksWorker`、ArtifactValidator、Reviewer、QualityGate 和 build-only ReleasePackage。
 - flange / shaft 是否不自动生成 Drawing，plate 是否保持完整图包回归。
-- 是否同时要求请求授权、`LocalDevelopmentProfile` 本地授权和环境授权，默认 self-check 是否不连接 COM。
+- 是否使用 V2.0 统一执行策略，且 self-check、CI、单元测试和 dry-run 不连接 COM。
 - 真实 SolidWorks 是否全局串行，验收是否按 flange → shaft 顺序。
 - 两族包是否写入 `output/solidworks/e2e/<part_type>/<timestamp>/`，并包含 SLDPRT、STEP、`build_report.json`、`e2e_execution_report.json`、`release_manifest.json`。
 - 是否使用全部十二个专用 `failure_stage`，且 API evidence 不足时失败关闭。
@@ -130,7 +130,7 @@ V1.8 审查结构化输入到发布包的通用零件族执行链，以及 `plat
 ### Blockers
 
 - flange / shaft 自动进入工程图，或 plate 完整图包回归退化。
-- 三层授权缺任一层仍连接 COM，或真实任务并发。
+- 禁用策略生效后仍连接 COM，或真实任务并发。
 - 绕过 Gateway、Agent、WorkflowEngine、Registry、Worker、Validator、Reviewer 或 QualityGate。
 - 发布包缺少任一必需产物/报告，却被标记可交付。
 - API evidence 不足却声称真实建模已 `Passed`，或伪造 smoke 路径。

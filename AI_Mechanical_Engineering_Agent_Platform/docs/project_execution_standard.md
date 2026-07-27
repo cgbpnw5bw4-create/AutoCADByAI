@@ -11,8 +11,8 @@
 - `Agent` 不能直接调用 `Worker`。
 - `Gateway` 不能直接调用 `Worker`。
 - `LLM` 不能直接调用 `Worker`。
-- 真实 CAD 默认不能执行。
-- 真实 CAD 必须通过请求级安全开关和环境变量双重确认。
+- 本地交互式主流程默认执行真实 CAD，默认 `dry_run=false`、`SW_VISIBLE=true`。
+- `dry_run=true`、`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时必须使用 Fake Worker 或在连接前失败关闭。
 - 不允许复制第三方 `scripts` 源码。
 - 不允许 Markdown 英文说明泛滥。
 
@@ -30,7 +30,7 @@ dotnet test
 dotnet run --project src/Interfaces/CliHost -- self-check
 ```
 
-如果涉及真实 CAD，默认 self-check 仍不能启动 CAD。真实 smoke test 只能在用户显式设置安全环境变量后手动运行。
+如果涉及真实 CAD，self-check、CI 和单元测试仍不能启动 CAD；本地交互式 `run-cad-workflow` 主流程则按 V2.0 默认启用规则运行。
 
 ## 失败处理
 

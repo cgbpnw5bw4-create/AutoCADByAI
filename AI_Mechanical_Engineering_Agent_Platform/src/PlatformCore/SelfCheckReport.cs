@@ -151,11 +151,9 @@ public sealed record PlatformSelfCheckReport(
     [property: JsonPropertyName("solidworks_real_build_outputs_step")] bool SolidWorksRealBuildOutputsStep,
     [property: JsonPropertyName("solidworks_real_build_outputs_json_report")] bool SolidWorksRealBuildOutputsJsonReport,
     [property: JsonPropertyName("solidworks_real_build_not_called_in_default_self_check")] bool SolidWorksRealBuildNotCalledInDefaultSelfCheck,
-    [property: JsonPropertyName("sw_enable_real_execution_env_value")] string? SwEnableRealExecutionEnvValue,
     [property: JsonPropertyName("sw_real_build_smoke_test_env_value")] string? SwRealBuildSmokeTestEnvValue,
     [property: JsonPropertyName("sw_strict_real_build_test_env_value")] string? SwStrictRealBuildTestEnvValue,
     [property: JsonPropertyName("real_build_request_dry_run")] bool? RealBuildRequestDryRun,
-    [property: JsonPropertyName("real_build_request_allow_real_cad_execution")] bool? RealBuildRequestAllowRealCadExecution,
     [property: JsonPropertyName("real_build_execution_mode")] string? RealBuildExecutionMode,
     [property: JsonPropertyName("real_build_output_directory")] string? RealBuildOutputDirectory,
     [property: JsonPropertyName("real_build_latest_report_path")] string? RealBuildLatestReportPath,
@@ -403,4 +401,28 @@ public sealed record PlatformSelfCheckReport(
 
     [JsonPropertyName("v1_9_version_stage_documented")]
     public bool V19VersionStageDocumented { get; init; }
+
+    [JsonPropertyName("solidworks_local_interactive_default_enabled")]
+    public bool SolidWorksLocalInteractiveDefaultEnabled { get; init; }
+
+    [JsonPropertyName("solidworks_disable_env_supported")]
+    public bool SolidWorksDisableEnvSupported { get; init; }
+
+    [JsonPropertyName("solidworks_ci_execution_disabled")]
+    public bool SolidWorksCiExecutionDisabled { get; init; }
+
+    [JsonPropertyName("solidworks_unit_test_execution_disabled")]
+    public bool SolidWorksUnitTestExecutionDisabled { get; init; }
+
+    [JsonPropertyName("solidworks_dry_run_disables_real_execution")]
+    public bool SolidWorksDryRunDisablesRealExecution { get; init; }
+
+    [JsonPropertyName("solidworks_visible_default_true")]
+    public bool SolidWorksVisibleDefaultTrue { get; init; }
+
+    [JsonPropertyName("legacy_enable_flag_not_required")]
+    public bool LegacyEnableFlagNotRequired { get; init; }
+
+    [JsonPropertyName("legacy_request_confirmation_not_required")]
+    public bool LegacyRequestConfirmationNotRequired { get; init; }
 }

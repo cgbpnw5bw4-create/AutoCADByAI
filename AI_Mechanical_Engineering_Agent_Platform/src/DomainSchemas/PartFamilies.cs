@@ -24,7 +24,6 @@ public static class PartFamilyFailureStages
     public const string StepExportFailed = "step_export_failed";
     public const string ArtifactValidationFailed = "artifact_validation_failed";
     public const string QualityGateRejected = "quality_gate_rejected";
-    public const string LocalExecutionAuthorizationMissing = "local_execution_authorization_missing";
 }
 
 public static class PartFamilyExecutionModes

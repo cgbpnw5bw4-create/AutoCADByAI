@@ -19,7 +19,7 @@
 
 ## 执行顺序
 
-默认走 `FakeSolidWorksWorker`。真实执行必须先通过 `SolidWorksEnvironmentValidator`，再由 `SolidWorksSessionManager` 连接，最后由 `SolidWorksPlateFeatureBuilder` 执行受控建模步骤。
+本地交互式主流程默认走 `RealSolidWorksWorker`。真实执行先通过 `SolidWorksEnvironmentValidator`，再由 `SolidWorksSessionManager` 连接，最后由对应 PartFamilyBuilder 执行受控建模步骤；dry-run、CI、单元测试和显式禁用走 Fake Worker。
 
 ## V1.1 工程图基础视图链路
 
@@ -36,7 +36,7 @@ plate_basic_4holes.SLDPRT
 → SolidWorksArtifactValidator
 ```
 
-真实工程图默认关闭。只有 `SW_ENABLE_REAL_EXECUTION=true` 且 `SW_REAL_DRAWING_SMOKE_TEST=true` 时，self-check 才允许进入工程图 smoke test。严格模式需要额外设置 `SW_STRICT_REAL_DRAWING_TEST=true`。
+本地交互式真实工程图主流程遵循 V2.0 默认启用策略；self-check 不进入工程图 diagnostic，独立 Runner 不能作为最终验收。
 
 独立诊断命令：
 
@@ -61,7 +61,7 @@ plate_basic_4holes.SLDDRW
 → SolidWorksArtifactValidator
 ```
 
-真实尺寸标注默认关闭。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_DIMENSION_SMOKE_TEST=true` 时，self-check 才允许进入真实尺寸 smoke test。严格模式需要额外设置 `SW_STRICT_REAL_DRAWING_DIMENSION_TEST=true`。
+本地交互式真实尺寸主流程遵循 V2.0 默认启用策略；self-check 不进入尺寸 diagnostic，独立 Runner 不能作为最终验收。
 
 独立诊断命令：
 
@@ -87,7 +87,7 @@ plate_basic_4holes_dimensioned.SLDDRW
 → SolidWorksArtifactValidator
 ```
 
-真实标题栏测试默认关闭。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST=true` 时，self-check 才允许进入真实标题栏 smoke test。严格模式需要额外设置 `SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST=true`。
+本地交互式真实标题栏主流程遵循 V2.0 默认启用策略；self-check 不进入标题栏 diagnostic，独立 Runner 不能作为最终验收。
 
 独立诊断命令：
 
@@ -138,11 +138,12 @@ ChiefEngineerOrchestrator
 → QualityGate
 ```
 
-默认路径仍使用 `FakeSolidWorksWorker`，不会启动 SolidWorks。真实路径必须同时满足：
+本地交互式默认路径使用 `RealSolidWorksWorker`。以下任一条件成立时改用 `FakeSolidWorksWorker` 或在连接前拒绝：
 
-- 请求上下文包含 `allow_real_cad_execution=true`。
-- 请求上下文包含 `dry_run=false`。
-- 环境变量包含 `SW_ENABLE_REAL_EXECUTION=true`。
+- 请求上下文包含 `dry_run=true`。
+- 环境变量包含 `SW_DISABLE_REAL_EXECUTION=true`。
+- 当前为 CI 或单元测试环境。
+- 环境变量包含 `SW_FORCE_FAKE_WORKER=true`。
 
 若请求级开关或环境级开关任一缺失，主流程必须保持 fake / dry-run 路径，并在结果中记录 `real_cad_executed=false`。主流程返回的 artifact 元数据必须包含 `real_cad_executed`、`quality_gate_passed`、`execution_mode` 和输出目录。
 
@@ -175,7 +176,7 @@ V1.7 使用 `SolidWorksMainWorkflowRunner` 的受控完整 operation 串联既�
 dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json
 ```
 
-CLI 只经 Gateway 调用公开的 `chief-engineer`。`SolidWorksWorkflowRouter` 必须识别 `operation=build_complete_drawing_package` 和 `part_type=plate_basic_4holes`，并把请求、四个 generate flag 和输出路径传递给主工作流。真实路径必须同时满足请求 `allow_real_cad_execution=true`、`dry_run=false`，环境 `SW_ENABLE_REAL_EXECUTION=true`、`SW_REAL_MAIN_WORKFLOW_TEST=true`。缺少任何一项都必须写出 `e2e_execution_report.json` 并以 `real_execution_confirmation_missing` 失败；不得降级 Fake Worker 后作为验收通过。
+CLI 只经 Gateway 调用公开的 `chief-engineer`。`SolidWorksWorkflowRouter` 识别结构化 operation 和 part_type，并把请求、交付 flag 和输出路径传递给主工作流。V2.0 不再要求请求或环境启用确认；执行被 dry-run、显式禁用、CI、单元测试或强制 Fake Worker 关闭时，报告使用明确禁用原因，不得把 Fake 结果作为真实验收通过。
 
 四阶段真实源输出继续写入 `output/solidworks/real/`。
 
@@ -188,7 +189,7 @@ CLI 只经 Gateway 调用公开的 `chief-engineer`。`SolidWorksWorkflowRouter`
 
 ## V1.7-REAL-AUTH 本地授权执行
 
-真实主流程的唯一授权文件为项目根目录下未提交的 `config/solidworks.local.json`。只有 `real_execution_authorized=true` 且来源为 `LocalDevelopmentProfile` 时，CLI 才自动设置真实执行、关闭 dry-run、应用零件/工程图模板并默认显示 SolidWorks。CLI 仍只经 Gateway、`chief-engineer`、WorkflowEngine 和 Router 进入 Worker，不能直接调用 Worker、Builder 或 SmokeRunner。
+项目根目录下未提交的 `config/solidworks.local.json` 只提供可选模板、可见性和超时，不再承担授权。CLI 默认 `dry_run=false` 并显示 SolidWorks，仍只经 Gateway、`chief-engineer`、WorkflowEngine 和 Router 进入 Worker，不能直接调用 Worker、Builder 或 SmokeRunner。
 
 Worker 仍按既有预检、COM 连接、产物校验、Reviewer 与 QualityGate 执行。报告中的 `solidworks_launch_attempted` 仅在 Worker 已开始连接时为真；`real_worker_invoked` 仅在真实 Worker 已收到请求时为真，二者都不能由文件存在替代。
 
@@ -254,7 +255,7 @@ V1.8 将 Worker 从单一四孔板特判升级为可注册的零件族执行边�
 
 ### 输入与输出
 
-输入为已校验 BuildPlan、`PartFamilyBuildContext`、三层授权和对应 API evidence。输出 `PartFamilyBuildResult`、真实 SLDPRT / STEP、`build_report.json`、端到端报告、Validator / Reviewer / QualityGate 结果和 build-only 发布包。
+输入为已校验 BuildPlan、`PartFamilyBuildContext`、统一运行策略和对应 API evidence。输出 `PartFamilyBuildResult`、真实 SLDPRT / STEP、`build_report.json`、端到端报告、Validator / Reviewer / QualityGate 结果和 build-only 发布包。
 
 ### 执行链和安全边界
 
@@ -273,7 +274,7 @@ V1.8 将 Worker 从单一四孔板特判升级为可注册的零件族执行边�
 → build-only ReleasePackage
 ```
 
-三层授权为请求 `allow_real_cad_execution=true` / `dry_run=false`、`LocalDevelopmentProfile` 本地授权、以及 `SW_ENABLE_REAL_EXECUTION=true` / `SW_REAL_MAIN_WORKFLOW_TEST=true` 环境授权。默认 self-check 不连接 COM。
+V2.0 统一策略为本地交互式且 `dry_run=false` 时默认真实执行；dry-run、显式禁用、CI、单元测试或强制 Fake Worker 时不连接 COM。self-check 不连接 COM。
 
 真实 SolidWorks 操作全局串行，首次验收顺序为 flange → shaft。前一任务释放会话并写完报告后，才允许后一任务连接。
 

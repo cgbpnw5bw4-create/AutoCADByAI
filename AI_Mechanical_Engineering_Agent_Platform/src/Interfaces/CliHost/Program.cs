@@ -28,8 +28,8 @@ if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.Ord
 if (SolidWorksE2eCliContract.IsInvocation(args))
 {
     var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
-    var localAuthorization = SolidWorksLocalExecutionProfile.Load(projectRoot);
-    localAuthorization.ApplyToCurrentProcess();
+    var localProfile = SolidWorksLocalExecutionProfile.Load(projectRoot);
+    localProfile.ApplyToCurrentProcess();
     var inputPath = Path.GetFullPath(args[2]);
     if (!File.Exists(inputPath))
     {
@@ -66,7 +66,7 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
     var runId = $"cad-e2e-{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}-{Guid.NewGuid():N}";
     var partType = modelSpec!.PartType;
     var e2eOutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "e2e", ToSafePathSegment(partType), runId);
-    var context = ToGatewayContext(input!, modelSpec, localAuthorization, projectRoot, e2eOutputDirectory, runId);
+    var context = ToGatewayContext(input!, modelSpec, projectRoot, e2eOutputDirectory, runId);
     var platform = RuntimePlatformFactory.CreateDefault(projectRoot);
     var dispatcher = new AgentMessageDispatcher(platform);
     var response = await dispatcher.DispatchAsync("chief-engineer", new GatewayMessageRequest(
@@ -87,9 +87,10 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
     var reportPath = response.Artifacts
         .FirstOrDefault(artifact => string.Equals(artifact.Kind, "E2eExecutionReport", StringComparison.OrdinalIgnoreCase))
         ?.Path ?? Path.Combine(e2eOutputDirectory, "reports", "e2e_execution_report.json");
-    Console.WriteLine("SolidWorks V1.9 controlled workflow finished; inspect final status before treating it as accepted.");
-    Console.WriteLine($"Real execution authorized: {localAuthorization.IsAuthorized}");
-    Console.WriteLine($"Authorization source: {localAuthorization.ExecutionAuthorizationSource}");
+    var runtimeOptions = SolidWorksRuntimeOptions.FromEnvironment();
+    Console.WriteLine("SolidWorks controlled workflow finished; inspect final status before treating it as accepted.");
+    Console.WriteLine($"Real execution effective: {runtimeOptions.EnableRealExecution}");
+    Console.WriteLine($"Visible mode: {runtimeOptions.Visible}");
     Console.WriteLine($"Gateway status: {response.Status}");
     Console.WriteLine($"Output directory: {e2eOutputDirectory}");
     Console.WriteLine($"E2E report: {reportPath}");
@@ -166,7 +167,6 @@ static IReadOnlyList<string> Validate(CadWorkflowInput? input, CADModelSpec? mod
 static IReadOnlyDictionary<string, string> ToGatewayContext(
     CadWorkflowInput input,
     CADModelSpec modelSpec,
-    SolidWorksLocalExecutionProfile localAuthorization,
     string projectRoot,
     string outputDirectory,
     string runId) =>
@@ -176,16 +176,13 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
         ["operation"] = input.Operation!,
         ["part_type"] = modelSpec.PartType,
         ["cad_model_spec_json"] = JsonSerializer.Serialize(modelSpec, JsonOptions()),
-        ["allow_real_cad_execution"] = ResolveBooleanOption(input.AllowRealCadExecution, modelSpec.ExecutionOptions, "allow_real_cad_execution") ? "true" : "false",
-        ["dry_run"] = ResolveBooleanOption(input.DryRun, modelSpec.ExecutionOptions, "dry_run", defaultValue: true) ? "true" : "false",
+        ["dry_run"] = ResolveBooleanOption(input.DryRun, modelSpec.ExecutionOptions, "dry_run", defaultValue: false) ? "true" : "false",
         ["generate_drawing"] = ResolveBooleanOption(input.GenerateDrawing, modelSpec.DrawingRequirements, "generate_drawing") ? "true" : "false",
         ["generate_dimensions"] = ResolveBooleanOption(input.GenerateDimensions, modelSpec.DrawingRequirements, "generate_dimensions") ? "true" : "false",
         ["generate_title_block"] = ResolveBooleanOption(input.GenerateTitleBlock, modelSpec.DrawingRequirements, "generate_title_block") ? "true" : "false",
         ["generate_release_package"] = ResolveBooleanOption(input.GenerateReleasePackage, modelSpec.DrawingRequirements, "generate_release_package") ? "true" : "false",
         ["structured_input_received"] = "true",
         ["gateway_invoked"] = "true",
-        ["real_execution_authorized"] = localAuthorization.IsAuthorized ? "true" : "false",
-        ["execution_authorization_source"] = localAuthorization.ExecutionAuthorizationSource,
         ["project_root"] = projectRoot,
         ["solidworks_output_directory"] = outputDirectory
     };
@@ -291,7 +288,6 @@ internal sealed class CadWorkflowInput
     public decimal? ThicknessMm { get; init; }
     public int? HoleCount { get; init; }
     public decimal? HoleDiameterMm { get; init; }
-    public bool? AllowRealCadExecution { get; init; }
     public bool? DryRun { get; init; }
     public bool? GenerateDrawing { get; init; }
     public bool? GenerateDimensions { get; init; }

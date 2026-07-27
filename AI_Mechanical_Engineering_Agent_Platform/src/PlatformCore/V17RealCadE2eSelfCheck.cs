@@ -44,29 +44,13 @@ internal static class V17RealCadE2eSelfCheck
                 !ReadBoolean(reportRoot, "real_worker_invoked") &&
                 !ReadBoolean(reportRoot, "real_cad_executed");
 
-            var authorizationRoot = Path.Combine(root, "authorized-profile");
-            Directory.CreateDirectory(Path.Combine(authorizationRoot, "config"));
+            var profileRoot = Path.Combine(root, "local-profile");
+            Directory.CreateDirectory(Path.Combine(profileRoot, "config"));
             await File.WriteAllTextAsync(
-                Path.Combine(authorizationRoot, SolidWorksLocalExecutionProfile.ConfigurationRelativePath),
-                "{\"real_execution_authorized\":true,\"execution_authorization_source\":\"LocalDevelopmentProfile\",\"visible\":false}",
+                Path.Combine(profileRoot, SolidWorksLocalExecutionProfile.ConfigurationRelativePath),
+                "{\"visible\":false}",
                 cancellationToken);
-            var authorization = SolidWorksLocalExecutionProfile.Load(authorizationRoot);
-            var disabledOptions = new SolidWorksRuntimeOptions(false, false, null, authorizationRoot, 1, 1, null, false);
-            var confirmationRunner = new SolidWorksMainWorkflowRunner(
-                platform.SkillRegistry,
-                platform.WorkerRegistry,
-                platform.AuditLog,
-                platform.WorkflowEngine,
-                () => disabledOptions);
-
-            var requestConfirmationResult = await confirmationRunner.ExecuteAsync(
-                CreateRequest(authorizationRoot, Path.Combine(root, "request-confirmation"), allowRealCadExecution: false),
-                cancellationToken);
-            var environmentConfirmationResult = await confirmationRunner.ExecuteAsync(
-                CreateRequest(authorizationRoot, Path.Combine(root, "environment-confirmation"), allowRealCadExecution: true),
-                cancellationToken);
-            var requestIssues = await ReadReportErrorsAsync(requestConfirmationResult.OutputDirectory, cancellationToken);
-            var environmentIssues = await ReadReportErrorsAsync(environmentConfirmationResult.OutputDirectory, cancellationToken);
+            var profile = SolidWorksLocalExecutionProfile.Load(profileRoot);
 
             return new V17RealCadE2eSelfCheckResult(
                 StructuredInputSupported: ExampleRequestIsControlled(projectRoot) && ReadBoolean(reportRoot, "structured_input_received"),
@@ -75,10 +59,8 @@ internal static class V17RealCadE2eSelfCheck
                 SolidWorksRouterTriggered: ReadBoolean(reportRoot, "solidworks_router_triggered"),
                 QualityGateRejectsIncompleteExecution: string.Equals(ReadString(reportRoot, "quality_gate_decision"), "Failed", StringComparison.OrdinalIgnoreCase) && failedWithoutCom,
                 DefaultExecutionDisabled: failedWithoutCom,
-                RequestConfirmationRequired: requestIssues.Any(issue => issue.Contains("allow_real_cad_execution=true", StringComparison.Ordinal)),
-                EnvironmentConfirmationRequired:
-                    environmentIssues.Any(issue => issue.Contains("SW_ENABLE_REAL_EXECUTION=true", StringComparison.Ordinal)) &&
-                    environmentIssues.Any(issue => issue.Contains("SW_REAL_MAIN_WORKFLOW_TEST=true", StringComparison.Ordinal)),
+                RequestConfirmationRequired: false,
+                EnvironmentConfirmationRequired: false,
                 ReportSupported:
                     File.Exists(reportPath) && new FileInfo(reportPath).Length > 0 &&
                     File.Exists(Path.Combine(output, "latest_real_outputs.md")) &&
@@ -87,8 +69,10 @@ internal static class V17RealCadE2eSelfCheck
                     !ReadBoolean(reportRoot, "all_source_reports_passed") &&
                     string.Equals(ReadString(reportRoot, "deliverable_status"), "NotDeliverable", StringComparison.OrdinalIgnoreCase),
                 LocalAuthorizationProfileSupported:
-                    File.Exists(Path.Combine(projectRoot, "config", "solidworks.local.example.json")) && authorization.IsAuthorized,
-                LocalAuthorizationDefaultDisabled: !SolidWorksLocalExecutionProfile.Load(Path.Combine(root, "no-local-profile")).IsAuthorized);
+                    File.Exists(Path.Combine(projectRoot, "config", "solidworks.local.example.json")) &&
+                    profile.Issues.Count == 0 &&
+                    !profile.Visible,
+                LocalAuthorizationDefaultDisabled: false);
         }
         finally
         {
@@ -110,8 +94,7 @@ internal static class V17RealCadE2eSelfCheck
                 {
                     ["operation"] = "build_complete_drawing_package",
                     ["part_type"] = "plate_basic_4holes",
-                    ["allow_real_cad_execution"] = "true",
-                    ["dry_run"] = "false",
+                    ["dry_run"] = "true",
                     ["generate_drawing"] = "true",
                     ["generate_dimensions"] = "true",
                     ["generate_title_block"] = "true",
@@ -123,28 +106,6 @@ internal static class V17RealCadE2eSelfCheck
                 }),
             new Dictionary<string, object?>(),
             DateTimeOffset.UtcNow);
-
-    private static SolidWorksMainWorkflowRequest CreateRequest(
-        string projectRoot,
-        string outputDirectory,
-        bool allowRealCadExecution) =>
-        new(
-            $"v17-confirmation-{Guid.NewGuid():N}",
-            $"v17-confirmation-task-{Guid.NewGuid():N}",
-            projectRoot,
-            outputDirectory,
-            DryRun: false,
-            AllowRealCadExecution: allowRealCadExecution,
-            ModelSpec: SolidWorksWorkflowRouter.CreatePlateBasicFourHolesSpec(),
-            Operation: SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage,
-            GenerateDrawing: true,
-            GenerateDimensions: true,
-            GenerateTitleBlock: true,
-            GenerateReleasePackage: true,
-            StructuredInputReceived: true,
-            ChiefEngineerInvoked: true,
-            GatewayInvoked: true,
-            SolidWorksRouterTriggered: true);
 
     private static bool ExampleRequestIsControlled(string projectRoot)
     {
@@ -158,17 +119,7 @@ internal static class V17RealCadE2eSelfCheck
         var root = document.RootElement;
         return string.Equals(ReadString(root, "operation"), "build_complete_drawing_package", StringComparison.OrdinalIgnoreCase) &&
                string.Equals(ReadString(root, "part_type"), "plate_basic_4holes", StringComparison.OrdinalIgnoreCase) &&
-               ReadBoolean(root, "allow_real_cad_execution") &&
                !ReadBoolean(root, "dry_run");
-    }
-
-    private static async Task<IReadOnlyList<string>> ReadReportErrorsAsync(string outputDirectory, CancellationToken cancellationToken)
-    {
-        var reportPath = Path.Combine(outputDirectory, "reports", "e2e_execution_report.json");
-        using var report = JsonDocument.Parse(await File.ReadAllTextAsync(reportPath, cancellationToken));
-        return report.RootElement.TryGetProperty("errors", out var errors)
-            ? errors.EnumerateArray().Select(item => item.GetString() ?? string.Empty).ToArray()
-            : Array.Empty<string>();
     }
 
     private static bool ReadBoolean(JsonElement root, string propertyName) =>

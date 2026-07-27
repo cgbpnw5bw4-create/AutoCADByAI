@@ -26,11 +26,9 @@ public sealed class SolidWorksWorkflowRouter
                 id: "cad-model-spec-plate-basic-4holes-main-workflow",
                 description: "Main workflow controlled SolidWorks plate_basic_4holes build.",
                 values: context.Input.Context,
-                constraints: ["main_workflow_controlled_real_cad_requires_request_and_environment_flags"]);
+                constraints: ["main_workflow_controlled_real_cad_uses_default_on_runtime_policy"]);
         var outputDirectory = ResolveSolidWorksOutputDirectory(context, projectRoot, modelSpec.PartType);
-        var requestAllowsReal = FlagEnabled(context, "allow_real_cad_execution") ||
-            FlagEnabled(context, "solidworks_allow_real_cad_execution");
-        var dryRun = !FlagDisabled(context, "dry_run");
+        var dryRun = FlagEnabled(context, "dry_run");
         var isCompleteDrawingPackage = ContextValueEquals(
             context,
             SolidWorksE2eCliContract.CompleteDrawingPackageOperation,
@@ -46,8 +44,8 @@ public sealed class SolidWorksWorkflowRouter
             projectRoot,
             outputDirectory,
             dryRun,
-            requestAllowsReal,
-            modelSpec,
+            AllowRealCadExecution: !dryRun,
+            ModelSpec: modelSpec,
             Operation: isCompleteDrawingPackage
                 ? SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage
                 : isPartFamilyReleasePackage
@@ -237,7 +235,7 @@ public sealed class SolidWorksWorkflowRouter
                 .ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
         var execution = values is null
             ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            : values.Where(item => item.Key is "dry_run" or "allow_real_cad_execution")
+            : values.Where(item => item.Key is "dry_run")
                 .ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
         var outputs = SplitList(FirstValue(values, "output_requirements"));
         if (outputs.Count == 0)

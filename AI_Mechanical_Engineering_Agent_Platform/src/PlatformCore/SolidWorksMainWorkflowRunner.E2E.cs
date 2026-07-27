@@ -50,45 +50,6 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 cancellationToken);
         }
 
-        var runtimeOptions = _runtimeOptionsProvider();
-        var localAuthorization = SolidWorksLocalExecutionProfile.Load(request.ProjectRoot);
-        var confirmationIssues = GetE2eConfirmationIssues(request, runtimeOptions, localAuthorization);
-        if (confirmationIssues.Count > 0)
-        {
-            var failedWorkflow = await _workflowEngine.ExecuteAsync(
-                [
-                    new WorkflowStep(
-                        "V1.9 real part-family execution confirmation",
-                        _ => Task.FromResult(StepFailed(
-                            "solidworks-e2e-execution-confirmation",
-                            "V1.9 real part-family workflow was rejected because its required confirmations are incomplete.",
-                            confirmationIssues,
-                            fatal: true)),
-                        "solidworks-e2e-execution-confirmation")
-                ],
-                new WorkflowContext($"solidworks-e2e-{request.TaskId}", new Dictionary<string, object?>
-                {
-                    ["request_id"] = request.RequestId,
-                    ["part_type"] = partType,
-                    ["operation"] = request.Operation.ToString()
-                }),
-                cancellationToken);
-
-            return await WriteE2eResultAsync(
-                request,
-                releaseDirectory,
-                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
-                package: null,
-                failedWorkflow,
-                new GateDecision($"gate-solidworks-e2e-confirmation-{Guid.NewGuid():N}", GateDecisionResult.Failed, "Required real CAD confirmations are missing."),
-                confirmationIssues,
-                localAuthorization.IsAuthorized
-                    ? "real_execution_confirmation_missing"
-                    : "local_execution_authorization_missing",
-                cancellationToken,
-                localAuthorization: localAuthorization);
-        }
-
         var runSegment = ToSafePathSegment(request.RequestId);
         var build = await ExecuteSingleStageAsync(
             request with
@@ -160,8 +121,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
             finalIssues,
             failureStage,
             cancellationToken,
-            packageOutcome,
-            localAuthorization);
+            packageOutcome);
     }
 
     private async Task<SolidWorksMainWorkflowResult> ExecuteCompleteDrawingPackageAsync(
@@ -213,45 +173,6 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 familyIssues,
                 eligibilityFailureStage,
                 cancellationToken);
-        }
-
-        var runtimeOptions = _runtimeOptionsProvider();
-        var localAuthorization = SolidWorksLocalExecutionProfile.Load(request.ProjectRoot);
-        var confirmationIssues = GetE2eConfirmationIssues(request, runtimeOptions, localAuthorization);
-        if (confirmationIssues.Count > 0)
-        {
-            var failedWorkflow = await _workflowEngine.ExecuteAsync(
-                new[]
-                {
-                    new WorkflowStep(
-                        "V1.7 real CAD execution confirmation",
-                        _ => Task.FromResult(StepFailed(
-                            "solidworks-e2e-execution-confirmation",
-                            "V1.7 real CAD workflow was rejected because its required confirmations are incomplete.",
-                            confirmationIssues,
-                            fatal: true)),
-                        "solidworks-e2e-execution-confirmation")
-                },
-                new WorkflowContext($"solidworks-e2e-{request.TaskId}", new Dictionary<string, object?>
-                {
-                    ["request_id"] = request.RequestId,
-                    ["operation"] = request.Operation.ToString()
-                }),
-                cancellationToken);
-
-            return await WriteE2eResultAsync(
-                request,
-                releaseDirectory,
-                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
-                package: null,
-                failedWorkflow,
-                new GateDecision($"gate-solidworks-e2e-confirmation-{Guid.NewGuid():N}", GateDecisionResult.Failed, "Required real CAD confirmations are missing."),
-                confirmationIssues,
-                localAuthorization.IsAuthorized
-                    ? "real_execution_confirmation_missing"
-                    : "local_execution_authorization_missing",
-                cancellationToken,
-                localAuthorization: localAuthorization);
         }
 
         var runSegment = ToSafePathSegment(request.RequestId);
@@ -376,8 +297,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
             finalIssues,
             failureStage,
             cancellationToken,
-            packageOutcome,
-            localAuthorization);
+            packageOutcome);
     }
 
     private async Task<SolidWorksMainWorkflowResult> WriteE2eResultAsync(
@@ -390,8 +310,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
         IReadOnlyList<string> issues,
         string? failureStage,
         CancellationToken cancellationToken,
-        E2ePackageOutcome? packageOutcome = null,
-        SolidWorksLocalExecutionProfile? localAuthorization = null)
+        E2ePackageOutcome? packageOutcome = null)
     {
         var reportsDirectory = Path.Combine(releaseDirectory, "reports");
         Directory.CreateDirectory(reportsDirectory);
@@ -453,8 +372,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
             request.ChiefEngineerInvoked,
             stageResults.Count > 0 || workflowResult.Steps.Count > 0,
             workflowSteps,
-            localAuthorization?.IsAuthorized ?? false,
-            localAuthorization?.ExecutionAuthorizationSource ?? SolidWorksLocalExecutionProfile.AuthorizationSource,
+            stageResults.Any(item => string.Equals(item.Result.WorkerName, "RealSolidWorksWorker", StringComparison.Ordinal)),
+            "SolidWorksRuntimeOptions",
             request.SolidWorksRouterTriggered,
             stageResults.Any(item => item.Result.Logs.Contains("operation_executed: connection_started", StringComparer.OrdinalIgnoreCase)),
             stageResults.Any(item => item.Result.Logs.Contains("operation_executed: real_build_request_received", StringComparer.OrdinalIgnoreCase)),
@@ -485,16 +404,17 @@ public sealed partial class SolidWorksMainWorkflowRunner
             }.Where(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path)).Select(path => ToFileArtifact(path!, "ReleasePackageReport")))
             .ToArray();
         var resultStatus = finalStatus == "Passed" ? "Completed" : "Failed";
+        var runtimeOptions = _runtimeOptionsProvider();
         return new SolidWorksMainWorkflowResult(
             request.RequestId,
             $"solidworks-e2e-{request.TaskId}",
             resultStatus,
-            stageResults.Any(item => string.Equals(item.Result.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase)) ? "RealSolidWorksWorker" : "NotInvoked",
+            stageResults.LastOrDefault().Result?.WorkerName ?? "NotInvoked",
             stageResults.LastOrDefault().Result?.ExecutionMode ?? "RealNotStarted",
-            request.AllowRealCadExecution && !request.DryRun,
-            _runtimeOptionsProvider().EnableRealExecution,
-            _runtimeOptionsProvider().MainWorkflowExecutionEnabled,
-            request.AllowRealCadExecution && !request.DryRun,
+            !request.DryRun,
+            runtimeOptions.EnableRealExecution,
+            runtimeOptions.MainWorkflowExecutionEnabled,
+            !request.DryRun,
             report.RealCadExecuted,
             report.SolidWorksConnected,
             finalGate.Result == GateDecisionResult.Passed && finalStatus == "Passed",
@@ -541,35 +461,6 @@ public sealed partial class SolidWorksMainWorkflowRunner
         {
             return new E2eReleasePackageResult("Failed", null, null, null, "package_validation_failed", new[] { ex.GetBaseException().Message });
         }
-    }
-
-    private static List<string> GetE2eConfirmationIssues(
-        SolidWorksMainWorkflowRequest request,
-        SolidWorksRuntimeOptions options,
-        SolidWorksLocalExecutionProfile localAuthorization)
-    {
-        var issues = new List<string>();
-        var version = request.Operation == SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage ? "V1.9" : "V1.7";
-        if (!localAuthorization.IsAuthorized)
-        {
-            issues.AddRange(localAuthorization.Issues);
-            issues.Add($"LocalDevelopmentProfile authorization is required for {version} real CAD E2E execution.");
-        }
-        if (!request.AllowRealCadExecution) issues.Add($"allow_real_cad_execution=true is required for {version} real CAD E2E execution.");
-        if (request.DryRun) issues.Add($"dry_run=false is required for {version} real CAD E2E execution.");
-        if (!options.EnableRealExecution) issues.Add($"SW_ENABLE_REAL_EXECUTION=true is required for {version} real CAD E2E execution.");
-        if (!options.MainWorkflowExecutionEnabled) issues.Add($"SW_REAL_MAIN_WORKFLOW_TEST=true is required for {version} real CAD E2E execution.");
-        if (request.Operation == SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage &&
-            (!request.GenerateDrawing || !request.GenerateDimensions || !request.GenerateTitleBlock || !request.GenerateReleasePackage))
-        {
-            issues.Add("build_complete_drawing_package requires all generate_* flags to be true.");
-        }
-        if (request.Operation == SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage &&
-            (request.GenerateDrawing || request.GenerateDimensions || request.GenerateTitleBlock || !request.GenerateReleasePackage))
-        {
-            issues.Add("build_part_family_release_package requires drawing flags to be false and generate_release_package=true.");
-        }
-        return issues;
     }
 
     private static bool StagePassedForE2e(SolidWorksMainWorkflowResult result) =>
@@ -672,8 +563,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
         bool ChiefEngineerInvoked,
         bool WorkflowEngineInvoked,
         IReadOnlyList<E2eWorkflowStep> WorkflowSteps,
-        bool RealExecutionAuthorized,
-        string ExecutionAuthorizationSource,
+        bool RealExecutionPolicyEnabled,
+        string ExecutionPolicySource,
         [property: JsonPropertyName("solidworks_router_triggered")] bool SolidWorksRouterTriggered,
         [property: JsonPropertyName("solidworks_launch_attempted")] bool SolidWorksLaunchAttempted,
         bool RealWorkerInvoked,

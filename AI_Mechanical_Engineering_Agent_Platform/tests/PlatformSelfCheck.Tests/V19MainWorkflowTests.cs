@@ -46,7 +46,6 @@ public sealed class V19MainWorkflowTests
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
                     }),
-                    ["allow_real_cad_execution"] = "true",
                     ["dry_run"] = "false",
                     ["generate_release_package"] = "true"
                 }),
@@ -65,7 +64,7 @@ public sealed class V19MainWorkflowTests
     }
 
     [Fact]
-    public async Task BuildOnlyMainWorkflowFailsClosedBeforeCadWithoutAuthorization()
+    public async Task BuildOnlyMainWorkflowUsesFakeAndCannotDeliverWhenRuntimeDisablesRealCad()
     {
         var root = CreateTempDirectory();
         try
@@ -97,11 +96,13 @@ public sealed class V19MainWorkflowTests
                 Path.Combine(output, "reports", "e2e_execution_report.json")));
 
             Assert.Equal("Failed", result.Status);
-            Assert.Equal("local_execution_authorization_missing", result.FailureStage);
+            Assert.Equal("source_artifacts_missing", result.FailureStage);
+            Assert.Equal("FakeSolidWorksWorker", result.WorkerName);
             Assert.False(result.RealCadExecuted);
             Assert.Equal(FlangeBasicDefinition.Type, report.RootElement.GetProperty("part_type").GetString());
             Assert.Equal("BuildPartFamilyReleasePackage", report.RootElement.GetProperty("operation").GetString());
             Assert.False(report.RootElement.GetProperty("solidworks_launch_attempted").GetBoolean());
+            Assert.False(report.RootElement.GetProperty("real_execution_policy_enabled").GetBoolean());
             Assert.Equal("NotDeliverable", report.RootElement.GetProperty("deliverable_status").GetString());
         }
         finally
@@ -111,39 +112,49 @@ public sealed class V19MainWorkflowTests
     }
 
     [Fact]
-    public async Task SingleStageNonPlateRealRequestFailsBeforeWorkerWithoutLocalAuthorization()
+    public async Task SingleStageNonPlateDoesNotRequireLegacyRequestConfirmationWhenFakeIsForced()
     {
         var root = CreateTempDirectory();
         try
         {
-            var template = Write(root, "part.prtdot", "template");
             var platform = PlatformBootstrapper.CreateDefault(root);
             var runner = new SolidWorksMainWorkflowRunner(
                 platform.SkillRegistry,
                 platform.WorkerRegistry,
                 platform.AuditLog,
                 platform.WorkflowEngine,
-                () => new SolidWorksRuntimeOptions(true, false, template, root, 1, 1, MainWorkflowExecutionEnabled: true));
+                () => new SolidWorksRuntimeOptions(
+                    false,
+                    true,
+                    null,
+                    root,
+                    1,
+                    1,
+                    MainWorkflowExecutionEnabled: false,
+                    DisableRealExecution: false,
+                    IsUnitTestEnvironment: true,
+                    ForceFakeWorker: true));
             var result = await runner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
                 "request-v19-single-stage-fail-closed",
                 "task-v19-single-stage-fail-closed",
                 root,
-                Path.Combine(root, "output", FlangeBasicDefinition.Type),
+                Path.Combine(root, "output", "solidworks", FlangeBasicDefinition.Type),
                 DryRun: false,
-                AllowRealCadExecution: true,
+                AllowRealCadExecution: false,
                 ModelSpec: FlangeSpec(),
                 Stage: SolidWorksMainWorkflowStage.BuildPartFamily,
                 Operation: SolidWorksMainWorkflowOperation.BuildPlate));
 
-            Assert.Equal("Failed", result.Status);
-            Assert.Equal(PartFamilyFailureStages.LocalExecutionAuthorizationMissing, result.FailureStage);
-            Assert.Equal("RealSolidWorksWorker", result.WorkerName);
+            Assert.Equal("Completed", result.Status);
+            Assert.Null(result.FailureStage);
+            Assert.Equal("FakeSolidWorksWorker", result.WorkerName);
             Assert.False(result.RealCadConnected);
             Assert.False(result.RealCadExecuted);
-            Assert.Empty(result.ArtifactPaths);
+            Assert.NotEmpty(result.ArtifactPaths);
             Assert.Contains(result.WorkflowResult.Steps, step =>
-                step.StepId == "solidworks-local-execution-authorization" && step.Status == WorkflowStepStatus.Failed);
-            Assert.DoesNotContain(result.WorkflowResult.Steps, step => step.StepId == "solidworks-worker-execution");
+                step.StepId == "solidworks-worker-execution" && step.Status == WorkflowStepStatus.Passed);
+            Assert.Contains(result.WorkflowResult.Steps, step =>
+                step.StepId == "solidworks-artifact-quality-gate" && step.GateDecision?.Result == GateDecisionResult.Passed);
             Assert.DoesNotContain(result.Logs, log => log.Contains("connection_started", StringComparison.OrdinalIgnoreCase));
         }
         finally

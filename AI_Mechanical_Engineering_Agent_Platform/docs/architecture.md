@@ -76,13 +76,13 @@ Worker 是未来调用 SolidWorks、AutoCAD、API、SDK、COM 或 MCP 工业软�
 
 Agent 不允许直接调用 CAD API、COM 对象或外部进程。Agent 只能生成结构化计划并通过平台边界交给 Worker。
 
-V0.9-B 中，`CADModeling` 模块新增 SolidWorks dry-run skeleton。`SolidWorksBuildPlan` 是从 `CADModelSpec` 到 `SolidWorksWorkerRequest` 的中间层，`FakeSolidWorksWorker` 只生成文本形式的模拟产物和 `build_report.json`。`allow_real_cad_execution` 是未来真实 CAD 执行的安全开关，默认必须为 `false`。当前不得直接复用外部 Python COM 脚本绕过平台，也不得让 Agent、Gateway 或 LLM 直接调用 SolidWorks Worker。
+V0.9-B 中，`CADModeling` 模块新增 SolidWorks dry-run skeleton。`SolidWorksBuildPlan` 是从 `CADModelSpec` 到 `SolidWorksWorkerRequest` 的中间层，`FakeSolidWorksWorker` 只生成文本形式的模拟产物和 `build_report.json`。V2.0 已废弃请求级 `allow_real_cad_execution` 前置确认；当前仍不得直接复用外部 Python COM 脚本绕过平台，也不得让 Agent、Gateway 或 LLM 直接调用 SolidWorks Worker。
 
-V1.0-A 中，SolidWorks 能力新增真实执行前安全边界：`SolidWorksRuntimeOptions`、`SolidWorksPreflightReport`、`SolidWorksEnvironmentValidator`、`SolidWorksSessionManager` 和 `RealSolidWorksWorker` skeleton。默认 self-check 不连接 SolidWorks，不调用 COM，也不要求 CI 或开发机安装 SolidWorks。真实连接 smoke test 只有在 `SW_ENABLE_REAL_EXECUTION=true` 且 `SW_REAL_SMOKE_TEST=true` 时才允许尝试；严格失败模式需要额外设置 `SW_STRICT_REAL_SMOKE_TEST=true`。
+V1.0-A 中，SolidWorks 能力新增真实执行前安全边界：`SolidWorksRuntimeOptions`、`SolidWorksPreflightReport`、`SolidWorksEnvironmentValidator`、`SolidWorksSessionManager` 和 `RealSolidWorksWorker` skeleton。V2.0 继续保证 self-check、CI 和单元测试不连接 SolidWorks、不调用 COM；本地交互式主流程默认允许连接，独立 diagnostic 仍使用其专用入口。
 
-真实 CAD Worker 的权限由三层共同约束：请求中的 `AllowRealCadExecution`、请求中的 `DryRun`、以及环境变量 `SW_ENABLE_REAL_EXECUTION`。三者不同时满足时，只能进入 `RealPreflightOnly`，不得连接 COM。V1.0-A 不实现 `RealBuild`，也不生成真实 `.SLDPRT`、`.STEP` 或工程图。
+V2.0 的真实 CAD Worker 由统一运行策略约束：本地交互式且 `dry_run=false` 时默认允许；`dry_run=true`、`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时不得连接 COM。V1.0-A 的历史能力范围不变。
 
-V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPlateBasic4Holes`。该场景只接受 `BuildPlan.PartType = plate_basic_4holes`，用于生成 160 x 80 x 12 mm 板件、四个直径 10 mm 通孔，并输出真实 `.SLDPRT`、`.STEP` 和 `build_report.json`。默认 self-check 不调用该能力；只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_BUILD_SMOKE_TEST=true` 时才允许尝试真实建模，严格失败模式还需要 `SW_STRICT_REAL_BUILD_TEST=true`。
+V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPlateBasic4Holes`。该场景只接受 `BuildPlan.PartType = plate_basic_4holes`，用于生成 160 x 80 x 12 mm 板件、四个直径 10 mm 通孔，并输出真实 `.SLDPRT`、`.STEP` 和 `build_report.json`。V2.0 的本地交互式主流程默认调用该能力；self-check、CI、单元测试和 dry-run 不调用。
 
 真实构建链路必须保持为 `SolidWorksBuildPlan` → `SolidWorksWorkerRequest` → `RealSolidWorksWorker` → `SolidWorksArtifactValidator` → `SolidWorksBuildPlanReviewer` → `QualityGate`。它不改变 Agent 可见性，也不允许 Gateway、LLM 或 Agent 直接持有 COM 对象或直接调用 Worker。
 
@@ -169,7 +169,7 @@ V1.8 将围绕 `plate_basic_4holes` 建立的单一零件路径抽象为通用 `
 
 ### 目标与范围
 
-V1.9 Phase 1 在 V1.8 Registry 架构上为 `flange_basic` 和 `shaft_basic` 建立真实 SolidWorks build-only 主工作流程。输入是结构化 `CADModelSpec` 和三层授权，输出是真实 SLDPRT、STEP、执行报告、质量裁决和 build-only 发布包。
+V1.9 Phase 1 在 V1.8 Registry 架构上为 `flange_basic` 和 `shaft_basic` 建立真实 SolidWorks build-only 主工作流程。V2.0 输入只需结构化 `CADModelSpec`，运行权限由统一默认策略决定；输出仍是真实 SLDPRT、STEP、执行报告、质量裁决和 build-only 发布包。
 
 `flange_basic` 和 `shaft_basic` 不进入工程图、尺寸、标题栏或 PDF 链路。`plate_basic_4holes` 仍执行完整工程图包回归，不被降级为 build-only。
 
@@ -194,7 +194,7 @@ Registry 负责零件族和 Builder 映射；`RealSolidWorksWorker` 负责统一
 
 ### 安全与串行边界
 
-真实执行必须同时满足请求授权、`LocalDevelopmentProfile` 本地授权和环境授权。默认 self-check 不使用任何授权，不连接 COM。所有真实 SolidWorks 任务在全局范围串行；阶段验收按 `flange_basic` 再 `shaft_basic` 执行。
+本地交互式真实执行不再要求请求授权或 `LocalDevelopmentProfile`；可选本地配置只提供模板、可见性和超时。self-check、CI、单元测试和 dry-run 不连接 COM。所有真实 SolidWorks 任务在全局范围串行。
 
 ### 发布包与失败语义
 
@@ -204,4 +204,4 @@ V1.9 Phase 2 已完成两族独立 diagnostic、视觉复核和 CLI 真实主流
 
 ### 验证与禁止事项
 
-验证覆盖两族真实 Builder、两族主工作流程、默认关闭、API evidence、ArtifactValidator、plate 完整包回归、无大型类型 switch 和全族 Registry 分发。禁止 flange / shaft 自动工程图，禁止并发 COM，禁止跳过平台边界，禁止进入 V2.0。
+验证覆盖两族真实 Builder、两族主工作流程、V2.0 默认执行策略、API evidence、ArtifactValidator、plate 完整包回归、无大型类型 switch 和全族 Registry 分发。禁止 flange / shaft 自动工程图，禁止并发 COM，禁止跳过平台边界。

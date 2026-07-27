@@ -12,7 +12,7 @@
 - `Gateway` 不能直接调用 `Worker`。
 - `LLM` 不能直接调用 `Worker`。
 - `Worker` 执行后必须进入 `Validator`、`Reviewer` 和 `QualityGate`。
-- 真实 CAD 默认关闭，必须同时通过请求级开关和环境变量确认。
+- 本地交互式主流程默认启用真实 CAD；`dry_run=true`、`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时必须关闭真实执行。
 
 ## 三类 Agent
 

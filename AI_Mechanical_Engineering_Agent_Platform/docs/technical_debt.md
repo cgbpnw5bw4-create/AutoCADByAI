@@ -11,13 +11,13 @@ V1.1 Claude 审查未发现 Blockers，仅提出 Improvements。以下事项进�
 - V1.6 已消除 V1.1 工程图报告的重复写入。
 - 后续抽取保存、导出、COM 释放等 SolidWorks 共享工具。
 
-处理规则：以上事项不得作为 V1.2 Blocker。若后续阶段触碰同一代码路径，应优先就近修复，并继续保持真实 SolidWorks 默认关闭。
+处理规则：以上事项不得作为 V1.2 Blocker。若后续阶段触碰同一代码路径，应优先就近修复，并遵守 V2.0 的本地交互默认启用、CI/单测/dry-run 禁用规则。
 
 ## V1.2 Claude Improvements
 
 V1.2 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers，仅提出 Improvements。以下事项进入技术债，不阻塞 V1.3 主线：
 
-- `ExecuteWithApplicationAsync` 真实执行阶段仍缺少强制超时边界；V1.3 继续保持真实执行默认关闭，后续应在会话管理层补超时护栏。
+- `ExecuteWithApplicationAsync` 真实执行阶段仍缺少强制超时边界；V2.0 本地交互默认启用后，该超时护栏优先级提高，CI、单元测试和 dry-run 继续禁止真实执行。
 - V1.2 尺寸标注使用非关联、硬编码的最小尺寸策略；后续阶段若扩展语义标注，应在报告中继续暴露非关联边界并避免虚假成功。
 - V1.2 尺寸 Builder 的内部失败分支仍缺少更细的纯单元测试；后续补测试时优先覆盖 `source_drawing_missing`、视图缺失和保存/导出失败路径。
 - 后续抽取工程图保存、PDF 导出、报告写入和 COM 释放的共享工具，减少 V1.1/V1.2/V1.3 间重复实现。
@@ -81,7 +81,7 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 
 - 用源码文本搜索支撑“无大型 `switch(part_type)`”仍是辅助证据；后续可增加更精确的结构化分析，但 V1.9 必须已有 Registry 行为测试。
 - 动态 `InternalRoute` 仍需独立设计，本轮保持现有运行时路由边界。
-- `HumanApproval` 可在后续用于真实 CAD 人工批准挂起，但不代替当前三层授权。
+- `HumanApproval` 可在后续用于真实 CAD 人工批准挂起，但不代替 V2.0 的统一执行策略和 QualityGate。
 - 轴的偏移多段拉伸作为备选方案记入 backlog。V1.9 Phase 1 固定使用闭合轮廓、中心线和 `FeatureRevolve2` 360° 旋转，不混用偏移拉伸。
 
 ### 执行、验证和失败边界

@@ -319,7 +319,7 @@ public static class SolidWorksPlateBuildReportWriter
             part_type = request.BuildPlan.PartType,
             mode = "real",
             execution_mode = executionMode,
-            real_execution_requested = !request.DryRun && request.AllowRealCadExecution,
+            real_execution_requested = !request.DryRun,
             real_cad_executed = realCadExecuted,
             real_cad_connected = realCadConnected,
             solidworks_version = solidWorksVersion,

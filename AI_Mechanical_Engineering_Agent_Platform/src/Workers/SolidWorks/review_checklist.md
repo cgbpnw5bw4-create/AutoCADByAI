@@ -4,7 +4,7 @@
 
 - Worker 是否受请求级安全开关和环境变量保护。
 - Worker 是否只通过平台调用。
-- 真实执行是否默认关闭。
+- 本地交互式真实执行是否默认启用，CI、单元测试、dry-run 和显式禁用是否关闭。
 - 是否有 `build_report.json`。
 - 是否有 `diagnostic_report.json`。
 - 是否有可行动 `failure_stage`。
@@ -12,16 +12,16 @@
 - 是否有 API evidence。
 - 是否有 artifact validation。
 - 是否有 `drawing_report.json`，并且工程图失败时 `failure_stage` 可行动。
-- 是否 V1.1 工程图 smoke test 默认关闭，只在 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true` 时执行。
+- 工程图 diagnostic 是否与 CLI 主流程隔离，且 self-check 不执行真实工程图。
 - 是否工程图基础视图通过 `SolidWorksDrawingBuilder` 封装，而不是堆在 `RealSolidWorksWorker`。
 - 是否工程图只包含 Front、Top、Right、Isometric 基础视图，没有越界实现尺寸、标题栏、BOM 或装配体工程图。
 - 是否有 `dimension_report.json`，并且尺寸标注失败时 `failure_stage` 可行动。
-- 是否 V1.2 工程图尺寸 smoke test 默认关闭，只在 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_DIMENSION_SMOKE_TEST=true` 时执行。
+- 工程图尺寸 diagnostic 是否与 CLI 主流程隔离，且 self-check 不执行真实尺寸。
 - 是否严格模式只由 `SW_STRICT_REAL_DRAWING_DIMENSION_TEST=true` 启用。
 - 是否工程图尺寸通过 `SolidWorksDrawingDimensionBuilder` 封装，而不是堆在 `RealSolidWorksWorker`。
 - 是否 V1.2 只添加 160 mm 长度、80 mm 宽度、12 mm 厚度、Φ10 孔径和孔中心距，没有越界实现 BOM、标题栏、国标模板美化、自动全尺寸标注、复杂公差、表面粗糙度、装配图、钣金展开图或 V1.3。
 - 是否有 `title_block_report.json`，并且标题栏失败时 `failure_stage` 可行动。
-- 是否 V1.3 工程图标题栏 smoke test 默认关闭，只在 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST=true` 时执行。
+- 工程图标题栏 diagnostic 是否与 CLI 主流程隔离，且 self-check 不执行真实标题栏。
 - 是否严格模式只由 `SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST=true` 启用。
 - 是否工程图标题栏通过 `SolidWorksDrawingTitleBlockBuilder` 封装，而不是堆在 `RealSolidWorksWorker`。
 - 是否 V1.3 只写入 `plate_basic_4holes`、`PLATE-BASIC-4HOLES`、材料、比例、日期、版本 `A` 等最小标题栏信息，没有越界实现 BOM、装配图、明细栏、复杂国标模板、公差系统、形位公差、表面粗糙度、批量出图或 V1.4。
@@ -31,7 +31,7 @@
 - 是否只检查文件存在、大小、路径、PDF 存在、`final_status` 和 `failure_stage`，没有越界做几何 OCR、PDF 视觉识别、BOM、装配图、批量出图、复杂图纸审查或 V1.5。
 - 是否 V1.5 已把 `plate_basic_4holes` 真实 CAD 能力接入 `ChiefEngineerOrchestrator` → `SolidWorksWorkflowRouter` → `SequentialWorkflowEngine` → `SolidWorksMainWorkflowRunner` 主流程，而不是只停留在 self-check / smoke test。
 - 是否泛化提到 `SolidWorks` 不会单独触发 CAD 主流程，只有显式 `solidworks_main_workflow`、结构化 `cad_model_type=plate_basic_4holes` 或具体 `plate_basic_4holes` 请求才触发。
-- 是否 V1.5 主流程默认仍使用 `FakeSolidWorksWorker`，并且只有请求级 `allow_real_cad_execution=true`、`dry_run=false` 与环境变量 `SW_ENABLE_REAL_EXECUTION=true` 同时满足时才允许选择 `RealSolidWorksWorker`。
+- 是否 V2.0 本地交互式主流程默认选择 `RealSolidWorksWorker`，并在 dry-run、显式禁用、CI、单元测试或强制 Fake Worker 时选择 `FakeSolidWorksWorker`。
 - 是否 V1.5 主流程经过 `SolidWorksBuildPlanValidator`、`SolidWorksArtifactValidator`、`SolidWorksBuildPlanReviewer` 和 `QualityGate`，并返回 `real_cad_executed`、`quality_gate_passed` 与 artifact 路径。
 - 是否发布包新增 `package_build_status`、`all_source_reports_passed`、`source_reports_checked`、`source_report_failures`、`source_report_warnings` 和 `deliverable_status`，且源报告失败时 `deliverable_status=NotDeliverable`。
 - 是否没有 Agent、Gateway、LLM 直接调用 Worker。
@@ -40,7 +40,7 @@
 - 是否没有破坏 `FakeSolidWorksWorker` dry-run。
 - 是否 V1.7 CLI 通过 `AgentMessageDispatcher` → `chief-engineer`，而非直接调用 Worker、Builder 或 SmokeRunner。
 - 是否 Router 仅接受结构化 `build_complete_drawing_package` 与 `part_type=plate_basic_4holes` 作为完整真实工作流触发条件。
-- 是否四重确认缺失时 E2E report 为 `real_execution_confirmation_missing`，且没有 Fake 成功、Deliverable 或真实执行标记。
+- 是否执行策略禁用时 E2E report 使用明确禁用阶段，且没有 Fake 冒充 Deliverable 或真实执行标记。
 - 是否 Build、Drawing、Dimension、TitleBlock 使用同一 request 的绝对路径传递，阶段源输出仍在受信任 `output/solidworks/real/` 根内。
 - 是否 E2E 发布包只使用显式 source set，不扫描 latest，也不把 SmokeRunner 诊断报告作为成功来源。
 - 是否每个源报告 Passed、每个 real execution evidence 匹配 mode 且为真实执行，以及总体 QualityGate 通过后，才得到 `all_source_reports_passed=true`、`deliverable_status=Deliverable`。
@@ -90,10 +90,10 @@ V1.2 Claude 审查未发现 Blockers。以下 Improvements 已进入 `docs/techn
 - V1.2 尺寸 Builder 内部失败分支后续应补更细的纯单元测试。
 - 后续抽取工程图保存、PDF 导出、报告写入和 COM 释放共享工具。
 
-## V1.7-REAL-AUTH 本地授权审查
+## V2.0 本地可选配置审查
 
 - `config/solidworks.local.json` 必须被忽略，仓库只保留 `config/solidworks.local.example.json`。
-- 只有 `LocalDevelopmentProfile` 可让 CLI 自动形成真实请求；CI、默认 self-check 和缺失配置的 CLI 不得启动 SolidWorks。
+- 本地配置只提供模板、可见性和超时；缺失配置不阻止本地交互默认执行，CI、self-check 和单元测试不得启动 SolidWorks。
 - `e2e_execution_report.json` 必须包含授权、启动尝试、连接、真实 Worker 调用和真实 CAD 执行字段。
 - 授权通过后若真实执行失败，`failure_stage` 必须来自实际预检、连接或阶段报告，不能重新解释为确认缺失。
 - Gateway、Agent、LLM 不得直接调用 Worker；不得用 SmokeRunner、Builder 或文件存在冒充主流程成功。
@@ -145,7 +145,7 @@ V1.2 Claude 审查未发现 Blockers。以下 Improvements 已进入 `docs/techn
 
 - `PartFamilyBuilderRegistry` 是否解析 flange / shaft 真实 Builder，且无大型 `switch(part_type)`。
 - `RealSolidWorksWorker` 是否返回 `RealBuildFlangeBasic` / `RealBuildShaftBasic`，并统一记录保存、STEP 导出和 API evidence。
-- 是否使用请求、本地 profile、环境三层授权；默认 self-check 是否不连接 COM。
+- 是否使用 V2.0 统一运行策略；self-check、CI、单元测试和 dry-run 是否不连接 COM。
 - 真实 SolidWorks 是否全局串行，并按 flange → shaft 验收。
 - flange 是否分开外圆拉伸、中心孔切除和螺栓孔切除，是否拒绝 `HoleWizard` / 圆周阵列。
 - shaft 是否使用闭合线段轮廓、中心线 selection mark `16` 和 `FeatureRevolve2` 360°，是否拒绝本轮混用偏移多段拉伸。

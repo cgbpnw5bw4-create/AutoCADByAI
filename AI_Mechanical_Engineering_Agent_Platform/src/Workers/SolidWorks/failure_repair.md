@@ -2,7 +2,7 @@
 
 ## 连接失败
 
-检查 `SW_ENABLE_REAL_EXECUTION`、COM 注册、SolidWorks 是否安装和 `SolidWorksSessionManager` 日志。默认 self-check 不要求连接成功。
+检查 `SW_DISABLE_REAL_EXECUTION`、CI/单元测试标记、COM 注册、SolidWorks 是否安装和 `SolidWorksSessionManager` 日志。self-check 不要求连接成功，也不尝试连接。
 
 ## 新建 Part 失败
 
@@ -153,7 +153,7 @@ V1.5 主工作流失败必须先读取 `AgentOutput` 中的 `solidworks-main-wor
 | `quality_gate_failed` | ArtifactValidator 或最终 Review 未通过 | QualityGate 决策、artifact validation issues | 修复产物或报告，不绕过 QualityGate |
 | `main_workflow_failed` | 未分类主流程失败 | workflow failure report | 保持默认 fake 路径，补充可行动阶段后再继续 |
 
-真实执行仍必须同时满足请求级 `allow_real_cad_execution=true`、`dry_run=false` 和环境变量 `SW_ENABLE_REAL_EXECUTION=true`。缺任一开关时，修复目标是保持 fake / dry-run 主流程可用，而不是启动 SolidWorks。
+本地交互式且 `dry_run=false` 时默认真实执行；`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时保持 fake / dry-run 主流程可用。
 
 ## V1.7 端到端主工作流失败修复
 
@@ -161,7 +161,7 @@ V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录
 
 | failure_stage | 首先检查 | 修复边界 |
 |---|---|---|
-| `real_execution_confirmation_missing` | 请求四字段和两个环境开关 | 补齐明确确认后重新由 CLI 运行，不能使用 Fake 回退。 |
+| `real_execution_disabled` | dry-run、禁用变量、CI、单元测试、强制 Fake Worker | 确认禁用来源；需要真实执行时从本地交互式 CLI 重跑，不能使用 Fake 回退。 |
 | `preflight_failed` | `build_report.json`、模板路径、环境 | 修复既有 `SW_TEMPLATE_PART_PATH` 或工程图模板配置，不新增 API。 |
 | `source_artifacts_missing` | manifest 的 SourcePath、阶段 report | 只重跑本次失败阶段，保持 request 绑定。 |
 | `source_report_missing` / `source_report_failed` | 四个复制后的 report | 回到对应 Build、Drawing、Dimension 或 TitleBlock 阶段。 |
@@ -174,12 +174,12 @@ V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录
 
 | failure_stage | 首先检查 | 修复边界 |
 |---|---|---|
-| `local_execution_authorization_missing` | `config/solidworks.local.json` 是否存在、授权布尔值和来源 | 只修复本地授权配置；不得用环境变量、Fake Worker 或 SmokeRunner 绕过。 |
+| 本地配置无效 | `config/solidworks.local.json` 的模板、可见性和超时 | 修复可选配置；该文件不再承担授权。 |
 | `preflight_failed` | `build_report.json`、`SW_TEMPLATE_PART_PATH`、`SW_TEMPLATE_DRAWING_PATH` | 修复既有模板路径或访问权限，再从 CLI 重跑同一主流程。 |
 | `solidworks_connection_failed` | `e2e_execution_report.json` 的启动尝试、连接日志和 COM 注册 | 修复本机 SolidWorks 可连接性；不得改为确认缺失或伪造连接成功。 |
 | 其他阶段 failure_stage | 同次阶段报告和 `package_quality_report.json` | 按原有 Build、Drawing、Dimension、TitleBlock 修复路径处理，并保留总体 QualityGate 失败。 |
 
-本地授权已经通过后，任何真实执行失败都必须保留实际 `failure_stage` 并进入上述既有修复路径；不得重新写成 `real_execution_confirmation_missing`。
+任何真实执行失败都必须保留实际 `failure_stage` 并进入上述既有修复路径；不得改写为旧式确认缺失。
 
 ## V1.8 零件族 Worker 失败分流
 
@@ -234,7 +234,7 @@ V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录
 
 1. 从当次 `output/solidworks/e2e/<part_type>/<timestamp>/reports/e2e_execution_report.json` 开始，不扫描历史 latest。
 2. API 阶段失败先进该族 diagnostic；保存/导出在 Worker 边界修复；校验/门禁在对应层修复。
-3. 默认验证不启动 COM；需要真实重跑时重新确认三层授权，并以 flange → shaft 全局串行执行。
+3. self-check、CI、单元测试和 dry-run 不启动 COM；需要真实重跑时从本地交互式 CLI 按统一策略全局串行执行。
 
 禁止用直接 Builder / SmokeRunner 结果替换主工作流程报告，禁止为修复 flange / shaft 进入工程图，禁止跳过 QualityGate，禁止进入 V2.0。
 

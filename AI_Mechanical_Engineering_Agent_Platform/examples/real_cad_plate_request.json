@@ -6,7 +6,6 @@
   "thickness_mm": 12,
   "hole_count": 4,
   "hole_diameter_mm": 10,
-  "allow_real_cad_execution": true,
   "dry_run": false,
   "generate_drawing": true,
   "generate_dimensions": true,

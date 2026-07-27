@@ -70,7 +70,7 @@ public sealed class PlatformBootstrapperTests
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));
         Assert.Equal("Passed", report.FinalStatus);
-        Assert.Equal("1.9", report.SchemaVersion);
+        Assert.Equal("2.0", report.SchemaVersion);
         Assert.StartsWith("platform-self-check-", report.RunId, StringComparison.Ordinal);
         Assert.NotEqual(default, report.GeneratedAt);
         Assert.False(string.IsNullOrWhiteSpace(report.SourceRevision));
@@ -86,13 +86,21 @@ public sealed class PlatformBootstrapperTests
         Assert.True(report.RealCadE2eCanInvokeRealWorker);
         Assert.True(report.RealCadE2ePassesQualityGate);
         Assert.True(report.RealCadE2eDefaultDisabled);
-        Assert.True(report.RealCadE2eRequiresRequestConfirmation);
-        Assert.True(report.RealCadE2eRequiresEnvConfirmation);
+        Assert.False(report.RealCadE2eRequiresRequestConfirmation);
+        Assert.False(report.RealCadE2eRequiresEnvConfirmation);
         Assert.True(report.RealCadE2eReportSupported);
         Assert.True(report.RealCadE2eDeliverableSemanticsSupported);
         Assert.True(report.V17VersionStageDocumented);
         Assert.True(report.RealCadE2eLocalAuthorizationProfileSupported);
-        Assert.True(report.RealCadE2eLocalAuthorizationDefaultDisabled);
+        Assert.False(report.RealCadE2eLocalAuthorizationDefaultDisabled);
+        Assert.True(report.SolidWorksLocalInteractiveDefaultEnabled);
+        Assert.True(report.SolidWorksDisableEnvSupported);
+        Assert.True(report.SolidWorksCiExecutionDisabled);
+        Assert.True(report.SolidWorksUnitTestExecutionDisabled);
+        Assert.True(report.SolidWorksDryRunDisablesRealExecution);
+        Assert.True(report.SolidWorksVisibleDefaultTrue);
+        Assert.True(report.LegacyEnableFlagNotRequired);
+        Assert.True(report.LegacyRequestConfirmationNotRequired);
         Assert.Equal("chief-engineer", Assert.Single(report.PublicAgents).Id);
         Assert.Equal("chief-engineer", Assert.Single(report.GatewayVisibleAgents).Id);
         Assert.Contains(report.RegisteredWorkers, worker => worker.Name == "FakeSolidWorksWorker");
@@ -101,7 +109,7 @@ public sealed class PlatformBootstrapperTests
         using var stream = File.OpenRead(reportPath);
         using var document = await JsonDocument.ParseAsync(stream);
         Assert.Equal("Passed", document.RootElement.GetProperty("final_status").GetString());
-        Assert.Equal("1.9", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.Equal("2.0", document.RootElement.GetProperty("schema_version").GetString());
         Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());
         Assert.False(document.RootElement.TryGetProperty("solidworks_com_false_success_tests_added", out _));
     }

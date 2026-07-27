@@ -31,6 +31,7 @@ public sealed record SolidWorksMainWorkflowRequest(
     string ProjectRoot,
     string OutputDirectory,
     bool DryRun = true,
+    // Legacy wire-compatibility field. Runtime execution policy intentionally ignores it.
     bool AllowRealCadExecution = false,
     CADModelSpec? ModelSpec = null,
     SolidWorksMainWorkflowStage Stage = SolidWorksMainWorkflowStage.BuildPlate,
@@ -119,50 +120,14 @@ public sealed partial class SolidWorksMainWorkflowRunner
         var logs = new List<string>();
         var issues = new List<string>();
         var runtimeOptions = _runtimeOptionsProvider();
-        var requestAllowsReal = request.AllowRealCadExecution && !request.DryRun;
-        var realExecutionFlagsSatisfied = requestAllowsReal &&
-            runtimeOptions.EnableRealExecution &&
-            runtimeOptions.MainWorkflowExecutionEnabled;
-        var partType = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type;
-        var localAuthorizationRequired = realExecutionFlagsSatisfied &&
-            !string.Equals(partType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase);
-        var localAuthorization = localAuthorizationRequired
-            ? SolidWorksLocalExecutionProfile.Load(request.ProjectRoot)
-            : null;
-        var realExecutionAllowed = realExecutionFlagsSatisfied && localAuthorization?.IsAuthorized != false;
-        var workerName = realExecutionFlagsSatisfied ? "RealSolidWorksWorker" : FakeWorkerName;
+        var requestAllowsReal = !request.DryRun;
+        var realExecutionAllowed = runtimeOptions.ShouldUseRealWorker(request.DryRun);
+        var workerName = realExecutionAllowed ? "RealSolidWorksWorker" : FakeWorkerName;
         var workflowId = $"solidworks-main-workflow-{request.TaskId}";
         var outputDirectory = Path.GetFullPath(request.OutputDirectory);
 
-        var steps = new List<WorkflowStep>();
-        if (localAuthorizationRequired)
+        var steps = new List<WorkflowStep>
         {
-            steps.Add(new WorkflowStep(
-                "SolidWorks local execution authorization",
-                _ =>
-                {
-                    if (localAuthorization?.IsAuthorized == true)
-                    {
-                        return Task.FromResult(StepPassed(
-                            "solidworks-local-execution-authorization",
-                            "LocalDevelopmentProfile authorization passed for non-plate real execution."));
-                    }
-
-                    var authorizationIssues = (localAuthorization?.Issues ?? Array.Empty<string>())
-                        .Append($"{PartFamilyFailureStages.LocalExecutionAuthorizationMissing}: LocalDevelopmentProfile authorization is required for non-plate real builds.")
-                        .ToArray();
-                    issues.AddRange(authorizationIssues);
-                    return Task.FromResult(StepFailed(
-                        "solidworks-local-execution-authorization",
-                        "Non-plate real execution was rejected before worker invocation.",
-                        authorizationIssues,
-                        fatal: true));
-                },
-                "solidworks-local-execution-authorization"));
-        }
-
-        steps.AddRange(
-        [
             new WorkflowStep(
                 "SolidWorks build plan generation",
                 async _ =>
@@ -246,13 +211,13 @@ public sealed partial class SolidWorksMainWorkflowRunner
                             fatal: true);
                     }
 
-                    if (!realExecutionAllowed && requestAllowsReal)
+                    if (!realExecutionAllowed && request.DryRun)
                     {
-                        logs.Add("Real CAD request-level switch was present, but SW_ENABLE_REAL_EXECUTION=true and SW_REAL_MAIN_WORKFLOW_TEST=true were not both present; main workflow stayed on FakeSolidWorksWorker.");
+                        logs.Add("Main workflow used FakeSolidWorksWorker because dry_run=true.");
                     }
                     else if (!realExecutionAllowed)
                     {
-                        logs.Add("Main workflow used FakeSolidWorksWorker because real CAD execution was not requested.");
+                        logs.Add("Main workflow used FakeSolidWorksWorker because real execution was disabled by environment policy or explicitly forced fake-worker mode.");
                     }
 
                     workerResult = realExecutionAllowed
@@ -315,7 +280,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
                         Issues: stepIssues));
                 },
                 "solidworks-artifact-quality-gate")
-        ]);
+        };
 
         var workflowResult = await _workflowEngine.ExecuteAsync(
             steps,
@@ -326,7 +291,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 ["stage"] = request.Stage.ToString(),
                 ["real_cad_requested"] = requestAllowsReal,
                 ["real_cad_env_enabled"] = runtimeOptions.EnableRealExecution,
-                ["real_cad_main_workflow_env_enabled"] = runtimeOptions.MainWorkflowExecutionEnabled
+                ["real_execution_default_enabled"] = runtimeOptions.RealExecutionDefaultEnabled,
+                ["real_execution_disabled"] = !realExecutionAllowed
             }),
             cancellationToken);
 
@@ -576,7 +542,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 ["stage"] = request.Stage.ToString(),
                 ["execution_mode"] = workerResult?.ExecutionMode ?? "NotStarted",
                 ["real_cad_requested"] = requestFlagEnabled.ToString(),
-                ["sw_enable_real_execution"] = environmentFlagEnabled.ToString(),
+                ["real_execution_effective_enabled"] = environmentFlagEnabled.ToString(),
                 ["real_cad_executed"] = (workerResult?.RealCadExecuted == true).ToString(),
                 ["quality_gate_passed"] = (gate?.Decision.Result == GateDecisionResult.Passed && workflowResult.Status == WorkflowStatus.Passed).ToString(),
                 ["output_directory"] = outputDirectory
@@ -643,7 +609,6 @@ public sealed partial class SolidWorksMainWorkflowRunner
             PartFamilyFailureStages.PartFamilyBuilderMissing,
             PartFamilyFailureStages.FlangeBuildFailed,
             PartFamilyFailureStages.ShaftBuildFailed,
-            PartFamilyFailureStages.LocalExecutionAuthorizationMissing,
             PartFamilyFailureStages.ArtifactValidationFailed
         };
 

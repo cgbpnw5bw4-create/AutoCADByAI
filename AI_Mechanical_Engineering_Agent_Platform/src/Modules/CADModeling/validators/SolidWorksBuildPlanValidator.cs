@@ -42,18 +42,6 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
                 break;
             case SolidWorksWorkerRequest request:
                 plan = request.BuildPlan;
-                if (!request.DryRun &&
-                    !request.AllowRealCadExecution)
-                {
-                    issues.Add("allow_real_cad_execution must be true when dry_run=false.");
-                }
-
-                if (request.DryRun &&
-                    request.AllowRealCadExecution)
-                {
-                    issues.Add("allow_real_cad_execution must remain false while dry_run=true.");
-                }
-
                 break;
             default:
                 issues.Add("payload must be SolidWorksBuildPlan or SolidWorksWorkerRequest.");
@@ -115,7 +103,6 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
     }
 
     private static bool IsNonRetryable(string issue) =>
-        issue.StartsWith("allow_real_cad_execution ", StringComparison.OrdinalIgnoreCase) ||
         HasIssueMarker(issue, "non_retryable") ||
         HasIssueMarker(issue, "critical");
 

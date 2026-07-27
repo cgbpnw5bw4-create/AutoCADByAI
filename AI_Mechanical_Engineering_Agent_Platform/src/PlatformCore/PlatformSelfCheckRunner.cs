@@ -15,7 +15,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "1.9";
+    private const string SelfCheckSchemaVersion = "2.0";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -212,6 +212,7 @@ public static class PlatformSelfCheckRunner
         var realCadE2eLocalAuthorizationDefaultDisabled = v17E2eChecks.LocalAuthorizationDefaultDisabled;
         var v18PartFamilyChecks = await RunV18PartFamilyChecksAsync(root, platform, outputRoot, versionStageText, cancellationToken);
         var v19PartFamilyChecks = RunV19PartFamilyChecks(root, platform, versionStageText, v18PartFamilyChecks);
+        var v20SolidWorksDefaultOnChecks = RunV20SolidWorksDefaultOnChecks();
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -324,21 +325,15 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksEnvironmentValidatorExists &&
             solidWorksSkeletonChecks.SolidWorksPreflightReportGenerated &&
             solidWorksSkeletonChecks.SolidWorksSessionManagerExists &&
-            solidWorksSkeletonChecks.SolidWorksRealExecutionDefaultDisabled &&
-            solidWorksSkeletonChecks.SolidWorksRealExecutionRequiresRequestFlag &&
-            solidWorksSkeletonChecks.SolidWorksRealExecutionRequiresEnvFlag &&
             solidWorksSkeletonChecks.SolidWorksComNotCalledInDefaultSelfCheck &&
             (!solidWorksSkeletonChecks.SolidWorksStrictRealSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestPassed) &&
             solidWorksSkeletonChecks.SolidWorksRealCadNotExecutedByDefault &&
             solidWorksSkeletonChecks.SolidWorksRealPlateBuildImplemented &&
-            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresEnvFlag &&
-            solidWorksSkeletonChecks.SolidWorksRealBuildRequiresRequestFlag &&
             solidWorksSkeletonChecks.SolidWorksRealBuildRequiresDryRunFalse &&
             (!solidWorksSkeletonChecks.SolidWorksRealBuildSmokeTestAttempted ||
              (solidWorksSkeletonChecks.RealBuildRequestDryRun == false &&
-              solidWorksSkeletonChecks.RealBuildRequestAllowRealCadExecution == true &&
               solidWorksSkeletonChecks.RealBuildExecutionMode == "RealBuildPlateBasic4Holes" &&
               !string.IsNullOrWhiteSpace(solidWorksSkeletonChecks.RealBuildOutputDirectory) &&
               Path.IsPathFullyQualified(solidWorksSkeletonChecks.RealBuildOutputDirectory) &&
@@ -366,7 +361,6 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealDrawingBasicViewsImplemented &&
             (solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealDrawingDefaultDisabled) &&
-            solidWorksSkeletonChecks.SolidWorksRealDrawingRequiresEnvFlag &&
             (!solidWorksSkeletonChecks.SolidWorksStrictRealDrawingSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealDrawingSmokeTestPassed) &&
@@ -380,7 +374,6 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsImplemented &&
             (solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsDefaultDisabled) &&
-            solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsRequiresEnvFlag &&
             (!solidWorksSkeletonChecks.SolidWorksStrictRealDrawingDimensionSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealDrawingDimensionsSmokeTestPassed) &&
@@ -394,7 +387,6 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockImplemented &&
             (solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockDefaultDisabled) &&
-            solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockRequiresEnvFlag &&
             (!solidWorksSkeletonChecks.SolidWorksStrictRealDrawingTitleBlockSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealDrawingTitleBlockSmokeTestPassed) &&
@@ -417,9 +409,6 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.RealCadWorkerIntegratedIntoMainWorkflow &&
             solidWorksSkeletonChecks.ChiefEngineerOrchestratorInvokesCadWorkflow &&
             solidWorksSkeletonChecks.WorkflowEngineCanRouteToSolidWorksWorker &&
-            solidWorksSkeletonChecks.RealCadMainWorkflowDefaultDisabled &&
-            solidWorksSkeletonChecks.RealCadMainWorkflowRequiresRequestFlag &&
-            solidWorksSkeletonChecks.RealCadMainWorkflowRequiresEnvFlag &&
             solidWorksSkeletonChecks.RealCadMainWorkflowPassesQualityGate &&
             solidWorksSkeletonChecks.GatewayDoesNotCallWorkerDirectly &&
             solidWorksSkeletonChecks.LlmDoesNotCallWorkerDirectly &&
@@ -438,16 +427,12 @@ public static class PlatformSelfCheckRunner
              realCadE2eUsesSolidWorksRouter &&
              realCadE2eCanInvokeRealWorker &&
              realCadE2ePassesQualityGate &&
-             realCadE2eDefaultDisabled &&
-             realCadE2eRequiresRequestConfirmation &&
-             realCadE2eRequiresEnvConfirmation &&
              realCadE2eReportSupported &&
              realCadE2eDeliverableSemanticsSupported &&
              v17VersionStageDocumented &&
-             realCadE2eLocalAuthorizationProfileSupported &&
-             realCadE2eLocalAuthorizationDefaultDisabled &&
              v18PartFamilyChecks.AllPassed &&
              v19PartFamilyChecks.AllPassed &&
+             v20SolidWorksDefaultOnChecks.AllPassed &&
              executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -591,11 +576,9 @@ public static class PlatformSelfCheckRunner
             solidWorksSkeletonChecks.SolidWorksRealBuildOutputsStep,
             solidWorksSkeletonChecks.SolidWorksRealBuildOutputsJsonReport,
             solidWorksSkeletonChecks.SolidWorksRealBuildNotCalledInDefaultSelfCheck,
-            solidWorksSkeletonChecks.SwEnableRealExecutionEnvValue,
             solidWorksSkeletonChecks.SwRealBuildSmokeTestEnvValue,
             solidWorksSkeletonChecks.SwStrictRealBuildTestEnvValue,
             solidWorksSkeletonChecks.RealBuildRequestDryRun,
-            solidWorksSkeletonChecks.RealBuildRequestAllowRealCadExecution,
             solidWorksSkeletonChecks.RealBuildExecutionMode,
             solidWorksSkeletonChecks.RealBuildOutputDirectory,
             solidWorksSkeletonChecks.RealBuildLatestReportPath,
@@ -789,7 +772,15 @@ public static class PlatformSelfCheckRunner
             PlatePartFamilyRegressionPassed = v19PartFamilyChecks.PlatePartFamilyRegressionPassed,
             NoLargePartTypeSwitch = v19PartFamilyChecks.NoLargePartTypeSwitch,
             AllPartFamiliesUseRegistry = v19PartFamilyChecks.AllPartFamiliesUseRegistry,
-            V19VersionStageDocumented = v19PartFamilyChecks.V19VersionStageDocumented
+            V19VersionStageDocumented = v19PartFamilyChecks.V19VersionStageDocumented,
+            SolidWorksLocalInteractiveDefaultEnabled = v20SolidWorksDefaultOnChecks.LocalInteractiveDefaultEnabled,
+            SolidWorksDisableEnvSupported = v20SolidWorksDefaultOnChecks.DisableEnvironmentSupported,
+            SolidWorksCiExecutionDisabled = v20SolidWorksDefaultOnChecks.CiExecutionDisabled,
+            SolidWorksUnitTestExecutionDisabled = v20SolidWorksDefaultOnChecks.UnitTestExecutionDisabled,
+            SolidWorksDryRunDisablesRealExecution = v20SolidWorksDefaultOnChecks.DryRunDisablesRealExecution,
+            SolidWorksVisibleDefaultTrue = v20SolidWorksDefaultOnChecks.VisibleDefaultTrue,
+            LegacyEnableFlagNotRequired = v20SolidWorksDefaultOnChecks.LegacyEnableFlagNotRequired,
+            LegacyRequestConfirmationNotRequired = v20SolidWorksDefaultOnChecks.LegacyRequestConfirmationNotRequired
         };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -1053,6 +1044,83 @@ public static class PlatformSelfCheckRunner
             noLargePartTypeSwitch,
             allPartFamiliesUseRegistry,
             v19VersionStageDocumented);
+    }
+
+    private static V20SolidWorksDefaultOnSelfCheckResult RunV20SolidWorksDefaultOnChecks()
+    {
+        var emptyEnvironment = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var localInteractive = SolidWorksRuntimeOptions.FromEnvironment(emptyEnvironment, isUnitTestEnvironment: false);
+        var disabledByEnvironment = SolidWorksRuntimeOptions.FromEnvironment(
+            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["SW_DISABLE_REAL_EXECUTION"] = "true"
+            },
+            isUnitTestEnvironment: false);
+        var ciEnvironment = SolidWorksRuntimeOptions.FromEnvironment(
+            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["CI"] = "true"
+            },
+            isUnitTestEnvironment: false);
+        var unitTestEnvironment = SolidWorksRuntimeOptions.FromEnvironment(
+            emptyEnvironment,
+            isUnitTestEnvironment: true);
+        var validPlan = new SolidWorksBuildPlan(
+            "v2-default-on-plan",
+            "v2-default-on-spec",
+            "SolidWorks",
+            PlateBasic4HolesDefinition.Type,
+            "mm",
+            [
+                new SolidWorksOperation(
+                    "create-sketch",
+                    "CreateSketch",
+                    "Front Plane",
+                    new Dictionary<string, string>(),
+                    Array.Empty<string>(),
+                    "Sketch created.")
+            ],
+            [
+                new SolidWorksArtifact(
+                    "part",
+                    "PartModel",
+                    "plate_basic_4holes.SLDPRT",
+                    ".SLDPRT",
+                    false,
+                    0,
+                    "Expected part.")
+            ],
+            Array.Empty<string>(),
+            Array.Empty<string>());
+        var legacyRequestReview = new SolidWorksBuildPlanValidator().Validate(
+            new SolidWorksWorkerRequest(
+                "v2-default-on-request",
+                validPlan,
+                Path.GetTempPath(),
+                DryRun: false,
+                AllowRealCadExecution: false));
+
+        return new V20SolidWorksDefaultOnSelfCheckResult(
+            LocalInteractiveDefaultEnabled:
+                localInteractive.RealExecutionDefaultEnabled &&
+                localInteractive.EnableRealExecution &&
+                localInteractive.ShouldUseRealWorker(dryRun: false),
+            DisableEnvironmentSupported:
+                disabledByEnvironment.DisableRealExecution &&
+                !disabledByEnvironment.EnableRealExecution &&
+                !disabledByEnvironment.ShouldUseRealWorker(dryRun: false),
+            CiExecutionDisabled:
+                ciEnvironment.IsCiEnvironment &&
+                !ciEnvironment.EnableRealExecution &&
+                !ciEnvironment.ShouldUseRealWorker(dryRun: false),
+            UnitTestExecutionDisabled:
+                unitTestEnvironment.IsUnitTestEnvironment &&
+                !unitTestEnvironment.EnableRealExecution &&
+                !unitTestEnvironment.ShouldUseRealWorker(dryRun: false),
+            DryRunDisablesRealExecution: !localInteractive.ShouldUseRealWorker(dryRun: true),
+            VisibleDefaultTrue: localInteractive.VisibleModeDefault && localInteractive.Visible,
+            LegacyEnableFlagNotRequired: localInteractive.ShouldUseRealWorker(dryRun: false),
+            LegacyRequestConfirmationNotRequired: legacyRequestReview.IsPassed);
     }
 
     private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
@@ -1367,6 +1435,7 @@ public static class PlatformSelfCheckRunner
             if (string.Equals(testScenario, "solidworks_main_workflow", StringComparison.OrdinalIgnoreCase))
             {
                 inputContext["solidworks_main_workflow"] = "true";
+                inputContext["dry_run"] = "true";
             }
         }
 
@@ -1564,7 +1633,9 @@ public static class PlatformSelfCheckRunner
                 platform.AgentRegistry.GetById("RealSolidWorksWorker") is null &&
                 platform.AgentRegistry.GetPublicAgents().All(agent => agent.Id == "chief-engineer");
 
-            var defaultRuntimeOptions = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
+            var defaultRuntimeOptions = SolidWorksRuntimeOptions.FromEnvironment(
+                new Dictionary<string, string?>(),
+                isUnitTestEnvironment: true);
             var solidWorksRealExecutionDefaultDisabled =
                 !defaultRuntimeOptions.EnableRealExecution &&
                 !defaultRuntimeOptions.Visible &&
@@ -1585,7 +1656,8 @@ public static class PlatformSelfCheckRunner
                 typeof(SolidWorksEnvironmentValidator).GetMethod(nameof(SolidWorksEnvironmentValidator.ValidateEnvironment)) is not null;
             var solidWorksPreflightReportGenerated =
                 preflightReport is not null &&
-                preflightReport.FinalStatus == "Skipped" &&
+                preflightReport.FinalStatus is "Skipped" or "Failed" &&
+                preflightReport.Issues.Any(issue => issue.Contains("dry_run_mode_enabled", StringComparison.OrdinalIgnoreCase)) &&
                 !preflightReport.SolidWorksApplicationConnectable;
             var solidWorksRealWorkerSkeletonExists =
                 realSolidWorksWorkerType is not null &&
@@ -1600,7 +1672,8 @@ public static class PlatformSelfCheckRunner
             var solidWorksComNotCalledInDefaultSelfCheck = false;
             var solidWorksGenericRealBuildNotImplemented = false;
             var solidWorksRealCadNotExecutedByDefault = false;
-            var solidWorksRealConnectionSmokeTestAttempted = RealSolidWorksSmokeTestRequested();
+            var solidWorksRealConnectionSmokeTestAttempted =
+                !defaultRuntimeOptions.IsUnitTestEnvironment && RealSolidWorksSmokeTestRequested();
             var solidWorksRealConnectionSmokeTestPassed = false;
             string? solidWorksRealConnectionSmokeTestError = null;
             var solidWorksStrictRealSmokeTest = StrictRealSolidWorksSmokeTestRequested();
@@ -1608,8 +1681,9 @@ public static class PlatformSelfCheckRunner
             var solidWorksRealBuildRequiresEnvFlag = false;
             var solidWorksRealBuildRequiresRequestFlag = false;
             var solidWorksRealBuildRequiresDryRunFalse = false;
-            var solidWorksRealBuildDefaultDisabled = !RealSolidWorksBuildSmokeTestRequested();
-            var solidWorksRealBuildSmokeTestAttempted = RealSolidWorksBuildSmokeTestRequested();
+            var solidWorksRealBuildSmokeTestAttempted =
+                !defaultRuntimeOptions.IsUnitTestEnvironment && RealSolidWorksBuildSmokeTestRequested();
+            var solidWorksRealBuildDefaultDisabled = !solidWorksRealBuildSmokeTestAttempted;
             var solidWorksRealBuildSmokeTestPassed = false;
             string? solidWorksRealBuildSmokeTestError = null;
             var solidWorksStrictRealBuildSmokeTest = StrictRealSolidWorksBuildTestRequested();
@@ -1620,9 +1694,10 @@ public static class PlatformSelfCheckRunner
             var solidWorksRealBuildOutputsJsonReport = false;
             var solidWorksRealBuildNotCalledInDefaultSelfCheck = !solidWorksRealBuildSmokeTestAttempted;
             var solidWorksRealDrawingBasicViewsImplemented = false;
-            var solidWorksRealDrawingDefaultDisabled = !RealSolidWorksDrawingSmokeTestRequested();
+            var solidWorksRealDrawingSmokeTestAttempted =
+                !defaultRuntimeOptions.IsUnitTestEnvironment && RealSolidWorksDrawingSmokeTestRequested();
+            var solidWorksRealDrawingDefaultDisabled = !solidWorksRealDrawingSmokeTestAttempted;
             var solidWorksRealDrawingRequiresEnvFlag = false;
-            var solidWorksRealDrawingSmokeTestAttempted = RealSolidWorksDrawingSmokeTestRequested();
             var solidWorksRealDrawingSmokeTestPassed = false;
             string? solidWorksRealDrawingSmokeTestError = null;
             var solidWorksStrictRealDrawingSmokeTest = StrictRealSolidWorksDrawingTestRequested();
@@ -1636,9 +1711,10 @@ public static class PlatformSelfCheckRunner
             string? realDrawingOutputDirectory = null;
             string? realDrawingLatestReportPath = null;
             var solidWorksRealDrawingDimensionsImplemented = false;
-            var solidWorksRealDrawingDimensionsDefaultDisabled = !RealSolidWorksDrawingDimensionSmokeTestRequested();
+            var solidWorksRealDrawingDimensionsSmokeTestAttempted =
+                !defaultRuntimeOptions.IsUnitTestEnvironment && RealSolidWorksDrawingDimensionSmokeTestRequested();
+            var solidWorksRealDrawingDimensionsDefaultDisabled = !solidWorksRealDrawingDimensionsSmokeTestAttempted;
             var solidWorksRealDrawingDimensionsRequiresEnvFlag = false;
-            var solidWorksRealDrawingDimensionsSmokeTestAttempted = RealSolidWorksDrawingDimensionSmokeTestRequested();
             var solidWorksRealDrawingDimensionsSmokeTestPassed = false;
             string? solidWorksRealDrawingDimensionsSmokeTestError = null;
             var solidWorksStrictRealDrawingDimensionSmokeTest = StrictRealSolidWorksDrawingDimensionTestRequested();
@@ -1652,9 +1728,10 @@ public static class PlatformSelfCheckRunner
             string? realDrawingDimensionOutputDirectory = null;
             string? realDrawingDimensionLatestReportPath = null;
             var solidWorksRealDrawingTitleBlockImplemented = false;
-            var solidWorksRealDrawingTitleBlockDefaultDisabled = !RealSolidWorksDrawingTitleBlockSmokeTestRequested();
+            var solidWorksRealDrawingTitleBlockSmokeTestAttempted =
+                !defaultRuntimeOptions.IsUnitTestEnvironment && RealSolidWorksDrawingTitleBlockSmokeTestRequested();
+            var solidWorksRealDrawingTitleBlockDefaultDisabled = !solidWorksRealDrawingTitleBlockSmokeTestAttempted;
             var solidWorksRealDrawingTitleBlockRequiresEnvFlag = false;
-            var solidWorksRealDrawingTitleBlockSmokeTestAttempted = RealSolidWorksDrawingTitleBlockSmokeTestRequested();
             var solidWorksRealDrawingTitleBlockSmokeTestPassed = false;
             string? solidWorksRealDrawingTitleBlockSmokeTestError = null;
             var solidWorksStrictRealDrawingTitleBlockSmokeTest = StrictRealSolidWorksDrawingTitleBlockTestRequested();
@@ -1751,12 +1828,8 @@ public static class PlatformSelfCheckRunner
                 realCadMainWorkflowDefaultDisabled =
                     !defaultMainWorkflowResult.RealCadExecuted &&
                     defaultMainWorkflowResult.ExecutionMode == "Fake";
-                realCadMainWorkflowRequiresRequestFlag =
-                    !envEnabledRequestFlagMissingResult.RealCadExecuted &&
-                    envEnabledRequestFlagMissingResult.ExecutionMode == "Fake";
-                realCadMainWorkflowRequiresEnvFlag =
-                    !requestFlagEnvMissingResult.RealCadExecuted &&
-                    requestFlagEnvMissingResult.ExecutionMode == "Fake";
+                realCadMainWorkflowRequiresRequestFlag = false;
+                realCadMainWorkflowRequiresEnvFlag = false;
                 realCadMainWorkflowPassesQualityGate = defaultMainWorkflowResult.QualityGatePassed;
                 llmDoesNotCallWorkerDirectly =
                     solidWorksAgentDoesNotCallWorkerDirectly &&
@@ -1764,11 +1837,9 @@ public static class PlatformSelfCheckRunner
                 releasePackageFailedSourceReportsBlockDeliverable = await ReleasePackageFailedSourceReportsBlockDeliverableAsync(
                     cancellationToken);
             }
-            var swEnableRealExecutionEnvValue = Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION");
             var swRealBuildSmokeTestEnvValue = Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST");
             var swStrictRealBuildTestEnvValue = Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST");
             bool? realBuildRequestDryRun = null;
-            bool? realBuildRequestAllowRealCadExecution = null;
             string? realBuildExecutionMode = null;
             string? realBuildOutputDirectory = null;
             string? realBuildLatestReportPath = null;
@@ -1810,18 +1881,8 @@ public static class PlatformSelfCheckRunner
                     dryRunFlagProbe,
                     cancellationToken);
 
-                solidWorksRealExecutionRequiresRequestFlag =
-                    requestFlagResult.Status == "Rejected" &&
-                    requestFlagResult.ExecutionMode == "RealPreflightOnly" &&
-                    requestFlagResult.Issues.Any(issue => issue.Contains("real_cad_execution_not_enabled", StringComparison.OrdinalIgnoreCase)) &&
-                    !requestFlagResult.RealCadConnected &&
-                    !requestFlagResult.RealCadExecuted;
-                solidWorksRealExecutionRequiresEnvFlag =
-                    envFlagResult.Status == "Rejected" &&
-                    envFlagResult.ExecutionMode == "RealPreflightOnly" &&
-                    envFlagResult.Issues.Any(issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase)) &&
-                    !envFlagResult.RealCadConnected &&
-                    !envFlagResult.RealCadExecuted;
+                solidWorksRealExecutionRequiresRequestFlag = false;
+                solidWorksRealExecutionRequiresEnvFlag = false;
                 solidWorksComNotCalledInDefaultSelfCheck =
                     envFlagResult.Logs.Any(log => log.Contains("COM connection was not attempted", StringComparison.OrdinalIgnoreCase)) &&
                     !envFlagResult.RealCadConnected;
@@ -1909,7 +1970,6 @@ public static class PlatformSelfCheckRunner
                         ConnectionSmokeTestOnly = false
                     };
                     realBuildRequestDryRun = buildRequest.DryRun;
-                    realBuildRequestAllowRealCadExecution = buildRequest.AllowRealCadExecution;
                     realBuildExecutionMode = "RealBuildPlateBasic4Holes";
                     realBuildOutputDirectory = Path.GetFullPath(buildRequest.OutputDirectory);
 
@@ -2293,7 +2353,6 @@ public static class PlatformSelfCheckRunner
                 new[] { "CreateLinearDim4", "ICreateDiamDim4", "AddDimension2", "dimension_report" }
                     .All(api => workerApiEvidenceDoc.Contains(api, StringComparison.OrdinalIgnoreCase));
             var solidWorksDrawingDimensionReviewChecklistUpdated =
-                workerReviewChecklistDoc.Contains("SW_REAL_DRAWING_DIMENSION_SMOKE_TEST", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("dimension_report", StringComparison.OrdinalIgnoreCase);
             var solidWorksDrawingTitleBlockFailureRepairDocumented =
                 DrawingTitleBlockFailureStages.All(stage => workerFailureRepairDoc.Contains(stage, StringComparison.OrdinalIgnoreCase));
@@ -2301,7 +2360,6 @@ public static class PlatformSelfCheckRunner
                 new[] { "CustomPropertyManager", "Add3", "Set2", "Get6", "GetCurrentSheet", "GetProperties2", "title_block_report" }
                     .All(api => workerApiEvidenceDoc.Contains(api, StringComparison.OrdinalIgnoreCase));
             var solidWorksDrawingTitleBlockReviewChecklistUpdated =
-                workerReviewChecklistDoc.Contains("SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("title_block_report", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("title_block_population_strategy", StringComparison.OrdinalIgnoreCase) &&
                 workerReviewChecklistDoc.Contains("title_block_fields_verified_in_sheet_format", StringComparison.OrdinalIgnoreCase);
@@ -2357,11 +2415,9 @@ public static class PlatformSelfCheckRunner
                 solidWorksRealBuildOutputsStep,
                 solidWorksRealBuildOutputsJsonReport,
                 solidWorksRealBuildNotCalledInDefaultSelfCheck,
-                swEnableRealExecutionEnvValue,
                 swRealBuildSmokeTestEnvValue,
                 swStrictRealBuildTestEnvValue,
                 realBuildRequestDryRun,
-                realBuildRequestAllowRealCadExecution,
                 realBuildExecutionMode,
                 realBuildOutputDirectory,
                 realBuildLatestReportPath,
@@ -2520,11 +2576,9 @@ public static class PlatformSelfCheckRunner
                 SolidWorksRealBuildOutputsStep: false,
                 SolidWorksRealBuildOutputsJsonReport: false,
                 SolidWorksRealBuildNotCalledInDefaultSelfCheck: false,
-                SwEnableRealExecutionEnvValue: Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"),
                 SwRealBuildSmokeTestEnvValue: Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST"),
                 SwStrictRealBuildTestEnvValue: Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST"),
                 RealBuildRequestDryRun: null,
-                RealBuildRequestAllowRealCadExecution: null,
                 RealBuildExecutionMode: null,
                 RealBuildOutputDirectory: null,
                 RealBuildLatestReportPath: null,
@@ -3090,35 +3144,30 @@ public static class PlatformSelfCheckRunner
         string.IsNullOrWhiteSpace(status) ? "未找到" : status;
 
     private static bool RealSolidWorksSmokeTestRequested() =>
-        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
         string.Equals(Environment.GetEnvironmentVariable("SW_REAL_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool StrictRealSolidWorksSmokeTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool RealSolidWorksBuildSmokeTestRequested() =>
-        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
         string.Equals(Environment.GetEnvironmentVariable("SW_REAL_BUILD_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool StrictRealSolidWorksBuildTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_BUILD_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool RealSolidWorksDrawingSmokeTestRequested() =>
-        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
         string.Equals(Environment.GetEnvironmentVariable("SW_REAL_DRAWING_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool StrictRealSolidWorksDrawingTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_DRAWING_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool RealSolidWorksDrawingDimensionSmokeTestRequested() =>
-        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
         string.Equals(Environment.GetEnvironmentVariable("SW_REAL_DRAWING_DIMENSION_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool StrictRealSolidWorksDrawingDimensionTestRequested() =>
         string.Equals(Environment.GetEnvironmentVariable("SW_STRICT_REAL_DRAWING_DIMENSION_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool RealSolidWorksDrawingTitleBlockSmokeTestRequested() =>
-        string.Equals(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"), "true", StringComparison.OrdinalIgnoreCase) &&
         string.Equals(Environment.GetEnvironmentVariable("SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST"), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool StrictRealSolidWorksDrawingTitleBlockTestRequested() =>
@@ -4866,11 +4915,9 @@ public static class PlatformSelfCheckRunner
         bool SolidWorksRealBuildOutputsStep,
         bool SolidWorksRealBuildOutputsJsonReport,
         bool SolidWorksRealBuildNotCalledInDefaultSelfCheck,
-        string? SwEnableRealExecutionEnvValue,
         string? SwRealBuildSmokeTestEnvValue,
         string? SwStrictRealBuildTestEnvValue,
         bool? RealBuildRequestDryRun,
-        bool? RealBuildRequestAllowRealCadExecution,
         string? RealBuildExecutionMode,
         string? RealBuildOutputDirectory,
         string? RealBuildLatestReportPath,
@@ -5071,7 +5118,6 @@ public static class PlatformSelfCheckRunner
             PlateRegressionPassed &&
             FlangeDryRunPassed &&
             ShaftDryRunPassed &&
-            RealCadPartFamilyDefaultDisabled &&
             V18VersionStageDocumented;
     }
 
@@ -5096,8 +5142,6 @@ public static class PlatformSelfCheckRunner
             ShaftRealBuilderImplemented &&
             FlangeRealWorkflowSupported &&
             ShaftRealWorkflowSupported &&
-            FlangeRealWorkflowDefaultDisabled &&
-            ShaftRealWorkflowDefaultDisabled &&
             FlangeApiEvidenceDocumented &&
             ShaftApiEvidenceDocumented &&
             FlangeArtifactValidationSupported &&
@@ -5106,6 +5150,27 @@ public static class PlatformSelfCheckRunner
             NoLargePartTypeSwitch &&
             AllPartFamiliesUseRegistry &&
             V19VersionStageDocumented;
+    }
+
+    private sealed record V20SolidWorksDefaultOnSelfCheckResult(
+        bool LocalInteractiveDefaultEnabled,
+        bool DisableEnvironmentSupported,
+        bool CiExecutionDisabled,
+        bool UnitTestExecutionDisabled,
+        bool DryRunDisablesRealExecution,
+        bool VisibleDefaultTrue,
+        bool LegacyEnableFlagNotRequired,
+        bool LegacyRequestConfirmationNotRequired)
+    {
+        public bool AllPassed =>
+            LocalInteractiveDefaultEnabled &&
+            DisableEnvironmentSupported &&
+            CiExecutionDisabled &&
+            UnitTestExecutionDisabled &&
+            DryRunDisablesRealExecution &&
+            VisibleDefaultTrue &&
+            LegacyEnableFlagNotRequired &&
+            LegacyRequestConfirmationNotRequired;
     }
 
     private static JsonSerializerOptions JsonOptions()

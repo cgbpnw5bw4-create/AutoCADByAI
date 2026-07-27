@@ -4,7 +4,7 @@
 
 当前仍然默认禁止真实 CAD 执行：
 
-- 默认不启动 SolidWorks。
+- 本地交互式主流程默认启动或连接 SolidWorks；self-check、CI、单元测试和 dry-run 不启动。
 - 默认不调用 COM。
 - 默认不调用 `SldWorks.Application`。
 - 默认不生成真实 `.SLDPRT`、`.SLDDRW`、`.STEP` 或 PDF 文件。
@@ -27,11 +27,12 @@
 
 V1.0-A 的 `RealSolidWorksWorker` 只实现真实执行前边界和连接 smoke test。V1.0-B 在该边界内增加 `RealBuildPlateBasic4Holes`，只支持创建一个 160 x 80 x 12 mm 板件、四个直径 10 mm 通孔，并输出 `.SLDPRT`、`.STEP` 与 `build_report.json`。
 
-真实连接或真实建模必须同时满足三项条件：
+真实连接或真实建模由统一运行时策略决定：
 
-- `SolidWorksWorkerRequest.AllowRealCadExecution = true`
 - `SolidWorksWorkerRequest.DryRun = false`
-- 环境变量 `SW_ENABLE_REAL_EXECUTION=true`
+- 未设置 `SW_DISABLE_REAL_EXECUTION=true`，且不是 CI、单元测试或强制 Fake Worker
+
+旧字段 `SolidWorksWorkerRequest.AllowRealCadExecution` 仅为反序列化兼容保留，不参与执行授权。
 
 如果任一条件不满足，Worker 必须拒绝真实执行并返回结构化 issue：
 
@@ -59,7 +60,7 @@ V1.0-A 的 `RealSolidWorksWorker` 只实现真实执行前边界和连接 smoke 
 - 板件尺寸为 160 x 80 x 12 mm。
 - 四个通孔直径为 10 mm。
 - 输出目录默认在 `output/solidworks/real/plate_basic_4holes/`，如果已有文件则创建带时间戳的子目录。
-- 必须显式设置 `SW_ENABLE_REAL_EXECUTION=true`。
+- 本地交互式无需启用变量；需要关闭时设置 `SW_DISABLE_REAL_EXECUTION=true`。
 - 必须提供有效的 `SW_TEMPLATE_PART_PATH`，否则在连接 SolidWorks 前拒绝真实构建。
 - self-check 中真实建模 smoke test 还必须显式设置 `SW_REAL_BUILD_SMOKE_TEST=true`。
 - 严格模式需要额外设置 `SW_STRICT_REAL_BUILD_TEST=true`。
@@ -78,7 +79,7 @@ V1.1 的目标是最小真实工程图链路：
 - 导出 `plate_basic_4holes.pdf`。
 - 写出 `drawing_report.json`。
 
-默认 self-check 不执行真实工程图。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true` 时，才允许真实工程图 smoke test。严格模式需要额外设置 `SW_STRICT_REAL_DRAWING_TEST=true`。
+self-check 不执行真实工程图。独立工程图 diagnostic 使用专用 Runner，不能替代 CLI 主流程验收。
 
 手动诊断命令：
 
@@ -98,11 +99,11 @@ dotnet run --project tools/SolidWorksDrawingSmokeRunner -- --source-part "output
 - 在 `DisconnectAsync` 中释放 COM 对象。
 - 不在构造函数中连接 SolidWorks。
 
-默认 self-check 不会调用 `SolidWorksSessionManager.ConnectAsync`。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_SMOKE_TEST=true` 时，self-check 才允许尝试真实连接；如果还设置 `SW_STRICT_REAL_SMOKE_TEST=true`，连接失败才会导致 final_status 失败。
+self-check 不会调用 `SolidWorksSessionManager.ConnectAsync`。真实连接验证使用独立 Runner 或本地交互式 CLI 主流程。
 
-真实建模 smoke test 与连接 smoke test 分离。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_BUILD_SMOKE_TEST=true` 时，self-check 才允许调用 `RealBuildPlateBasic4Holes`；如果还设置 `SW_STRICT_REAL_BUILD_TEST=true`，真实建模失败才会导致 final_status 失败。
+真实建模 diagnostic 与连接 diagnostic 分离；它们不在 self-check 内运行，也不能替代 `RealBuildPlateBasic4Holes` 的主流程证据。
 
-真实工程图 smoke test 与真实建模 smoke test 也分离。只有同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true` 时，self-check 才允许调用 `RealDrawingBasicViews`；如果还设置 `SW_STRICT_REAL_DRAWING_TEST=true`，工程图失败才会导致 final_status 失败。
+真实工程图 diagnostic 与真实建模 diagnostic 分离；它们不在 self-check 内运行，最终验收必须经过 QualityGate。
 
 ## 平台边界
 
@@ -160,12 +161,12 @@ V1.9 Phase 1 为 `flange_basic` 和 `shaft_basic` 提供真实 Builder 契约，
 
 ### 执行步骤
 
-Worker 只能从 Gateway / `chief-engineer` 经总调度、工作流程、Router 和两个 Registry 进入。真实调用必须经请求、本地 profile 和环境三层授权，并在全局锁下串行执行。阶段真实验收顺序是 flange 再 shaft。
+Worker 只能从 Gateway / `chief-engineer` 经总调度、工作流程、Router 和两个 Registry 进入。真实调用由 V2.0 统一运行策略决定，并在全局锁下串行执行。
 
 成功产物经 ArtifactValidator、Reviewer 和 QualityGate 后，写入 `output/solidworks/e2e/<part_type>/<timestamp>/`。发布包必须包含两个产物、两份报告和 manifest。
 
 ### 验证、失败和禁止事项
 
-默认 self-check 只验证 Builder 存在、主工作流程支持、默认关闭、API evidence、ArtifactValidator、plate 回归和 Registry 结构，不连接 COM。失败必须使用 V1.9 专用阶段，不得只返回泛化 `flange_build_failed` / `shaft_build_failed`。
+self-check 只验证 Builder、主工作流程、V2.0 默认策略、API evidence、ArtifactValidator、plate 回归和 Registry 结构，不连接 COM。失败必须使用专用阶段，不得只返回泛化 `flange_build_failed` / `shaft_build_failed`。
 
 V1.9 Phase 2 已完成两族独立 diagnostic、视觉复核和 CLI 真实主流程回填。flange 与 shaft 均为 `Passed`、`Deliverable`、QualityGate `Passed`，最终报告路径见 `execution.md` 和 `api_evidence.md`。禁止 Builder / SmokeRunner 直接充当最终验收，禁止 flange / shaft 自动工程图，禁止进入 V2.0。

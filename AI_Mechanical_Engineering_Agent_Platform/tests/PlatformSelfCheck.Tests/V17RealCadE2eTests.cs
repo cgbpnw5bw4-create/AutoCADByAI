@@ -37,7 +37,6 @@ public sealed class V17RealCadE2eTests
                 {
                     ["operation"] = "build_complete_drawing_package",
                     ["part_type"] = "plate_basic_4holes",
-                    ["allow_real_cad_execution"] = "true",
                     ["dry_run"] = "false",
                     ["generate_drawing"] = "true",
                     ["generate_dimensions"] = "true",
@@ -59,7 +58,7 @@ public sealed class V17RealCadE2eTests
     }
 
     [Fact]
-    public async Task E2eFailsClosedWithoutAnyRealExecutionConfirmation()
+    public async Task E2eUsesFakeAndCannotDeliverWhenRuntimePolicyDisablesRealExecution()
     {
         var root = CreateTempDirectory();
         try
@@ -95,15 +94,16 @@ public sealed class V17RealCadE2eTests
             Assert.Equal("Failed", result.Status);
             Assert.False(result.RealCadExecuted);
             Assert.False(result.QualityGatePassed);
-            Assert.Equal("local_execution_authorization_missing", result.FailureStage);
+            Assert.Equal("source_artifacts_missing", result.FailureStage);
+            Assert.Equal("FakeSolidWorksWorker", result.WorkerName);
             Assert.Equal("Failed", report.RootElement.GetProperty("final_status").GetString());
-            Assert.False(report.RootElement.GetProperty("real_execution_authorized").GetBoolean());
-            Assert.Equal("LocalDevelopmentProfile", report.RootElement.GetProperty("execution_authorization_source").GetString());
+            Assert.False(report.RootElement.GetProperty("real_execution_policy_enabled").GetBoolean());
+            Assert.Equal("SolidWorksRuntimeOptions", report.RootElement.GetProperty("execution_policy_source").GetString());
             Assert.False(report.RootElement.GetProperty("solidworks_launch_attempted").GetBoolean());
             Assert.False(report.RootElement.GetProperty("real_worker_invoked").GetBoolean());
             Assert.False(report.RootElement.GetProperty("all_source_reports_passed").GetBoolean());
             Assert.Equal("NotDeliverable", report.RootElement.GetProperty("deliverable_status").GetString());
-            Assert.Equal("local_execution_authorization_missing", report.RootElement.GetProperty("failure_stage").GetString());
+            Assert.Equal("source_artifacts_missing", report.RootElement.GetProperty("failure_stage").GetString());
         }
         finally
         {
@@ -169,7 +169,6 @@ public sealed class V17RealCadE2eTests
                 {
                     ["operation"] = "build_complete_drawing_package",
                     ["part_type"] = "plate_basic_4holes",
-                    ["allow_real_cad_execution"] = "true",
                     ["dry_run"] = "false",
                     ["generate_drawing"] = "true",
                     ["generate_dimensions"] = "true",
@@ -194,7 +193,7 @@ public sealed class V17RealCadE2eTests
     }
 
     [Fact]
-    public async Task LocalDevelopmentProfileIsTheOnlyRecognizedV17AuthorizationSource()
+    public async Task LocalProfileOnlySuppliesOptionalRuntimeSettings()
     {
         var root = CreateTempDirectory();
         try
@@ -203,19 +202,17 @@ public sealed class V17RealCadE2eTests
             Directory.CreateDirectory(configurationDirectory);
             await File.WriteAllTextAsync(
                 Path.Combine(configurationDirectory, "solidworks.local.json"),
-                "{\"real_execution_authorized\":true,\"execution_authorization_source\":\"LocalDevelopmentProfile\",\"visible\":true}");
+                "{\"visible\":true}");
 
             var profile = SolidWorksLocalExecutionProfile.Load(root);
 
-            Assert.True(profile.IsAuthorized);
-            Assert.True(profile.RealExecutionAuthorized);
             Assert.True(profile.Visible);
-            Assert.Equal("LocalDevelopmentProfile", profile.ExecutionAuthorizationSource);
+            Assert.Empty(profile.Issues);
 
             await File.WriteAllTextAsync(
                 Path.Combine(configurationDirectory, "solidworks.local.json"),
-                "{\"real_execution_authorized\":true,\"execution_authorization_source\":\"UntrustedEnvironmentVariable\"}");
-            Assert.False(SolidWorksLocalExecutionProfile.Load(root).IsAuthorized);
+                "{\"visible\":false}");
+            Assert.False(SolidWorksLocalExecutionProfile.Load(root).Visible);
         }
         finally
         {
@@ -224,7 +221,7 @@ public sealed class V17RealCadE2eTests
     }
 
     [Fact]
-    public async Task LocalProfileCannotEnableTheTwoCoreRuntimeConfirmations()
+    public async Task LocalProfileDoesNotSetLegacyRuntimeConfirmationVariables()
     {
         var root = CreateTempDirectory();
         var variables = new[]
@@ -242,7 +239,7 @@ public sealed class V17RealCadE2eTests
             Directory.CreateDirectory(Path.Combine(root, "config"));
             await File.WriteAllTextAsync(
                 Path.Combine(root, "config", "solidworks.local.json"),
-                "{\"real_execution_authorized\":true,\"execution_authorization_source\":\"LocalDevelopmentProfile\",\"visible\":false}");
+                "{\"visible\":false}");
             foreach (var variable in variables)
             {
                 Environment.SetEnvironmentVariable(variable, null);
@@ -253,7 +250,8 @@ public sealed class V17RealCadE2eTests
             Assert.Null(Environment.GetEnvironmentVariable("SW_ENABLE_REAL_EXECUTION"));
             Assert.Null(Environment.GetEnvironmentVariable("SW_REAL_MAIN_WORKFLOW_TEST"));
             Assert.Equal("false", Environment.GetEnvironmentVariable("SW_VISIBLE"));
-            Assert.Equal("true", Environment.GetEnvironmentVariable("SW_LOCAL_DEVELOPMENT_PROFILE_ENABLED"));
+            Assert.Null(Environment.GetEnvironmentVariable("SW_LOCAL_DEVELOPMENT_PROFILE_ENABLED"));
+            Assert.Null(Environment.GetEnvironmentVariable("SW_EXECUTION_AUTHORIZATION_SOURCE"));
 
             Environment.SetEnvironmentVariable("SW_VISIBLE", "true");
             SolidWorksLocalExecutionProfile.Load(root).ApplyToCurrentProcess();

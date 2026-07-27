@@ -53,7 +53,7 @@ V1.9 Phase 1 使 `flange_basic` 和 `shaft_basic` 从 dry-run 定义进入受控
 
 最终验收必须经结构化输入、Gateway / `chief-engineer`、`ChiefEngineerOrchestrator`、`WorkflowEngine`、`SolidWorksWorkflowRouter`、两个 Registry、`RealSolidWorksWorker`、ArtifactValidator、Reviewer、QualityGate 和 build-only ReleasePackage。法兰和轴的发布包位于 `output/solidworks/e2e/<part_type>/<timestamp>/`，且必须包含零件、STEP、`build_report.json`、`e2e_execution_report.json` 和 `release_manifest.json`。
 
-默认 self-check 不启动 COM。真实验收按 flange 再 shaft 串行执行，并保留三层授权、产物校验和质量门禁证据。
+self-check、CI、单元测试和 dry-run 不启动 COM。本地交互式真实验收按统一默认策略执行，并保留产物校验和质量门禁证据。
 
 ### 常见失败和禁止事项
 

@@ -30,6 +30,7 @@ public sealed record SolidWorksWorkerRequest(
     SolidWorksBuildPlan BuildPlan,
     string OutputDirectory,
     bool DryRun = true,
+    // Legacy wire-compatibility field. Runtime execution policy intentionally ignores it.
     bool AllowRealCadExecution = false,
     bool ConnectionSmokeTestOnly = false,
     bool DrawingSmokeTestOnly = false,
@@ -69,7 +70,13 @@ public sealed record SolidWorksRuntimeOptions(
     int ConnectTimeoutSeconds,
     int ExecutionTimeoutSeconds,
     string? DrawingTemplatePath = null,
-    bool MainWorkflowExecutionEnabled = false)
+    bool MainWorkflowExecutionEnabled = false,
+    bool RealExecutionDefaultEnabled = true,
+    bool DisableRealExecution = false,
+    bool IsCiEnvironment = false,
+    bool IsUnitTestEnvironment = false,
+    bool VisibleModeDefault = true,
+    bool ForceFakeWorker = false)
 {
     public const int DefaultConnectTimeoutSeconds = 30;
     public const int MinimumConnectTimeoutSeconds = 1;
@@ -78,23 +85,56 @@ public sealed record SolidWorksRuntimeOptions(
     public const int MinimumExecutionTimeoutSeconds = 1;
     public const int MaximumExecutionTimeoutSeconds = 3_600;
 
-    public static SolidWorksRuntimeOptions FromEnvironment(IReadOnlyDictionary<string, string?>? environment = null)
+    public static SolidWorksRuntimeOptions FromEnvironment(
+        IReadOnlyDictionary<string, string?>? environment = null,
+        bool? isUnitTestEnvironment = null)
     {
         string? Get(string name) =>
             environment is null
                 ? Environment.GetEnvironmentVariable(name)
                 : environment.TryGetValue(name, out var value) ? value : null;
 
+        const bool realExecutionDefaultEnabled = true;
+        const bool visibleModeDefault = true;
+        var disableRealExecution = ParseBool(Get("SW_DISABLE_REAL_EXECUTION"));
+        var forceFakeWorker = ParseBool(Get("SW_FORCE_FAKE_WORKER"));
+        var isCi = IsCi(Get);
+        var isUnitTest = isUnitTestEnvironment ?? IsUnitTest(Get);
+        var enableRealExecution =
+            realExecutionDefaultEnabled &&
+            !disableRealExecution &&
+            !forceFakeWorker &&
+            !isCi &&
+            !isUnitTest;
+        var visible = string.IsNullOrWhiteSpace(Get("SW_VISIBLE"))
+            ? visibleModeDefault
+            : ParseBool(Get("SW_VISIBLE"));
+
         return new SolidWorksRuntimeOptions(
-            ParseBool(Get("SW_ENABLE_REAL_EXECUTION")),
-            ParseBool(Get("SW_VISIBLE")),
+            enableRealExecution,
+            visible,
             EmptyToNull(Get("SW_TEMPLATE_PART_PATH")),
             EmptyToNull(Get("SW_OUTPUT_DIRECTORY")) ?? DefaultOutputDirectory(),
             ParseTimeout(Get("SW_CONNECT_TIMEOUT_SECONDS")),
             ParseExecutionTimeout(Get("SW_EXECUTION_TIMEOUT_SECONDS")),
             EmptyToNull(Get("SW_TEMPLATE_DRAWING_PATH")),
-            ParseBool(Get("SW_REAL_MAIN_WORKFLOW_TEST")));
+            enableRealExecution,
+            realExecutionDefaultEnabled,
+            disableRealExecution,
+            isCi,
+            isUnitTest,
+            visibleModeDefault,
+            forceFakeWorker);
     }
+
+    public bool ShouldUseRealWorker(bool dryRun) =>
+        !dryRun &&
+        RealExecutionDefaultEnabled &&
+        EnableRealExecution &&
+        !DisableRealExecution &&
+        !IsCiEnvironment &&
+        !IsUnitTestEnvironment &&
+        !ForceFakeWorker;
 
     private static string DefaultOutputDirectory() =>
         Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "output", "solidworks", "real"));
@@ -103,6 +143,39 @@ public sealed record SolidWorksRuntimeOptions(
         string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(value, "1", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsCi(Func<string, string?> get) =>
+        ParseBool(get("CI")) ||
+        ParseBool(get("TF_BUILD")) ||
+        ParseBool(get("GITHUB_ACTIONS")) ||
+        ParseBool(get("GITLAB_CI")) ||
+        !string.IsNullOrWhiteSpace(get("JENKINS_URL")) ||
+        !string.IsNullOrWhiteSpace(get("TEAMCITY_VERSION")) ||
+        !string.IsNullOrWhiteSpace(get("BUILD_BUILDID"));
+
+    private static bool IsUnitTest(Func<string, string?> get)
+    {
+        if (ParseBool(get("SW_UNIT_TEST_MODE")) ||
+            ParseBool(get("DOTNET_RUNNING_IN_TEST")))
+        {
+            return true;
+        }
+
+        var processName = Path.GetFileNameWithoutExtension(Environment.ProcessPath) ?? string.Empty;
+        if (processName.Contains("testhost", StringComparison.OrdinalIgnoreCase) ||
+            processName.Contains("vstest", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Select(assembly => assembly.GetName().Name ?? string.Empty)
+            .Any(name =>
+                name.StartsWith("xunit", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("nunit", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("testhost", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("Microsoft.TestPlatform", StringComparison.OrdinalIgnoreCase));
+    }
 
     private static int ParseTimeout(string? value) =>
         int.TryParse(value, out var parsed)
@@ -529,14 +602,9 @@ public static class SolidWorksPreflightEvaluator
             issues.Add("dry_run_mode_enabled: RealSolidWorksWorker requires dry_run=false before connection smoke test.");
         }
 
-        if (!request.AllowRealCadExecution)
-        {
-            issues.Add("real_cad_execution_not_enabled: request.allow_real_cad_execution must be true before real connection.");
-        }
-
         if (!options.EnableRealExecution)
         {
-            issues.Add("missing_user_safety_confirmation: SW_ENABLE_REAL_EXECUTION=true is required before real connection.");
+            issues.Add("real_cad_execution_disabled: real execution is disabled by SW_DISABLE_REAL_EXECUTION, CI, unit-test mode, or an explicitly forced Fake worker.");
         }
 
         if (!osIsWindows)
@@ -552,7 +620,7 @@ public static class SolidWorksPreflightEvaluator
         }
 
         var solidWorksComAvailable = false;
-        if (allowComProbe && options.EnableRealExecution && osIsWindows)
+        if (allowComProbe && options.ShouldUseRealWorker(request.DryRun) && osIsWindows)
         {
             try
             {

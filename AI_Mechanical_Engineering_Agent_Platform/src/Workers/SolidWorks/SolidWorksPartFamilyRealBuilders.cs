@@ -95,7 +95,7 @@ public static class SolidWorksPartFamilyBuildReportWriter
             part_type = builder.PartType,
             mode = "real",
             execution_mode = builder.RealExecutionMode,
-            real_execution_requested = !context.Request.DryRun && context.Request.AllowRealCadExecution,
+            real_execution_requested = !context.Request.DryRun,
             real_cad_executed = diagnostics.RealCadExecuted,
             real_cad_connected = context.RealCadConnected,
             solidworks_version = context.SolidWorksVersion,

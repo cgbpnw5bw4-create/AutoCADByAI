@@ -34,6 +34,7 @@
 - `docs/project_execution_standard.md`
 - `docs/codex_execution_protocol.md`
 - `docs/version_stage_index.md`
+- `docs/v2_0_solidworks_default_on.md`
 - 当前模块的 `execution.md`
 - 当前模块的 `failure_repair.md`
 - 当前模块的 `api_evidence.md`，如果涉及 API

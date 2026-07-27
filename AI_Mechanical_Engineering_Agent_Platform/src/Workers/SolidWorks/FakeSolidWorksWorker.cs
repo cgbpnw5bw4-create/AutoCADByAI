@@ -38,11 +38,6 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
             issues.Add("FakeSolidWorksWorker only supports dry_run=true.");
         }
 
-        if (request.AllowRealCadExecution)
-        {
-            issues.Add("FakeSolidWorksWorker never allows real CAD execution.");
-        }
-
         if (!_partTypeRegistry.TryGetDefinition(request.BuildPlan.PartType, out var definition))
         {
             return Rejected(
@@ -119,7 +114,6 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
             execution_options = request.BuildPlan.ExecutionOptions,
             execution_mode = "Fake",
             dry_run = request.DryRun,
-            allow_real_cad_execution = request.AllowRealCadExecution,
             real_cad_executed = false,
             operations = request.BuildPlan.Operations.Select(operation => new
             {

@@ -81,7 +81,7 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 
 ## V1.7 主流程端到端失败修复
 
-- `real_execution_confirmation_missing`：检查请求 `allow_real_cad_execution=true`、`dry_run=false`，以及 `SW_ENABLE_REAL_EXECUTION=true`、`SW_REAL_MAIN_WORKFLOW_TEST=true`。不得把 Fake Worker 回退结果当作真实成功。
+- `real_execution_disabled`：检查 `dry_run`、`SW_DISABLE_REAL_EXECUTION`、CI、单元测试和 `SW_FORCE_FAKE_WORKER`。不得把 Fake Worker 回退结果当作真实成功。
 - `preflight_failed`、`drawing_template_missing` 或 `title_block_template_missing`：保留 E2E report，检查已有模板环境变量和原阶段报告；不要为本轮新增 CAD API 或绕过模板预检。
 - `source_artifacts_missing`、`source_report_missing`、`source_report_failed` 或 `real_execution_evidence_failed`：读取同次 `release_manifest.json`、`package_quality_report.json` 与 `e2e_execution_report.json`。只修复该 request 的失败阶段，不读取历史 latest 或 SmokeRunner 作为最终通过证据。
 - `quality_gate_failed`：确认四阶段均已经过 ArtifactValidator、Reviewer 和 QualityGate；即使某一阶段失败，也必须保留总体 QualityGate 的拒绝/失败结论。
@@ -141,7 +141,7 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 
 1. 只读取同次 `output/solidworks/e2e/<part_type>/<timestamp>/` 中的显式报告和 manifest。
 2. API 失败先进独立 diagnostic，其他失败在 Worker、Validator、Reviewer 或 QualityGate 对应层修复。
-3. 修复后先运行默认 build / test / self-check，再在三层授权下按 flange → shaft 串行重跑真实主工作流程。
+3. 修复后先运行 build / test / self-check，再按 V2.0 本地交互默认策略串行重跑真实主工作流程。
 
 禁止读取历史 latest 修补当次包，禁止用 Builder / SmokeRunner 结果冒充最终验收，禁止 flange / shaft 自动工程图，禁止进入 V2.0。
 

@@ -25,7 +25,6 @@ public sealed class V19PartFamilyRealBuilderTests
         Assert.Equal("step_export_failed", PartFamilyFailureStages.StepExportFailed);
         Assert.Equal("artifact_validation_failed", PartFamilyFailureStages.ArtifactValidationFailed);
         Assert.Equal("quality_gate_rejected", PartFamilyFailureStages.QualityGateRejected);
-        Assert.Equal("local_execution_authorization_missing", PartFamilyFailureStages.LocalExecutionAuthorizationMissing);
     }
 
     [Fact]
@@ -85,7 +84,6 @@ public sealed class V19PartFamilyRealBuilderTests
         Directory.CreateDirectory(root);
         var template = Path.Combine(root, "part.prtdot");
         await File.WriteAllTextAsync(template, "template");
-        await WriteLocalAuthorizationAsync(root);
         try
         {
             var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic);
@@ -112,7 +110,6 @@ public sealed class V19PartFamilyRealBuilderTests
         Directory.CreateDirectory(root);
         var template = Path.Combine(root, "part.prtdot");
         await File.WriteAllTextAsync(template, "template");
-        await WriteLocalAuthorizationAsync(root);
         try
         {
             var state = new CoordinatedSessionState();
@@ -137,7 +134,7 @@ public sealed class V19PartFamilyRealBuilderTests
     }
 
     [Fact]
-    public async Task RealWorkerRejectsNonPlateBeforeConnectionWithoutLocalAuthorization()
+    public async Task RealWorkerBuildsNonPlateWithoutLegacyLocalAuthorization()
     {
         var root = Path.Combine(Path.GetTempPath(), "ai_me_v19_worker_auth", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -155,13 +152,12 @@ public sealed class V19PartFamilyRealBuilderTests
 
             var result = await worker.ExecuteAsync(RealRequest(FlangePlan(), root));
 
-            Assert.Equal("Rejected", result.Status);
-            Assert.Equal(PartFamilyFailureStages.LocalExecutionAuthorizationMissing, result.FailureStage);
-            Assert.False(result.RealCadConnected);
-            Assert.False(result.RealCadExecuted);
-            Assert.Equal(0, sessionState.MaxConcurrentSessions);
-            Assert.Equal(0, builder.BuildCount);
-            AssertFailureReportTruth(result, PartFamilyFailureStages.LocalExecutionAuthorizationMissing);
+            Assert.Equal("Completed", result.Status);
+            Assert.Null(result.FailureStage);
+            Assert.True(result.RealCadConnected);
+            Assert.True(result.RealCadExecuted);
+            Assert.Equal(1, sessionState.MaxConcurrentSessions);
+            Assert.Equal(1, builder.BuildCount);
         }
         finally
         {
@@ -174,7 +170,6 @@ public sealed class V19PartFamilyRealBuilderTests
     {
         var root = Path.Combine(Path.GetTempPath(), "ai_me_v19_preflight_truth", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
-        await WriteLocalAuthorizationAsync(root);
         try
         {
             var missingTemplate = Path.Combine(root, "missing.prtdot");
@@ -208,7 +203,6 @@ public sealed class V19PartFamilyRealBuilderTests
         Directory.CreateDirectory(root);
         var template = Path.Combine(root, "part.prtdot");
         await File.WriteAllTextAsync(template, "template");
-        await WriteLocalAuthorizationAsync(root);
         try
         {
             var session = new FailingConnectionSessionManager();
@@ -356,15 +350,6 @@ public sealed class V19PartFamilyRealBuilderTests
         var path = Path.Combine(root, name);
         File.WriteAllText(path, content);
         return path;
-    }
-
-    private static async Task WriteLocalAuthorizationAsync(string root)
-    {
-        var configDirectory = Path.Combine(root, "config");
-        Directory.CreateDirectory(configDirectory);
-        await File.WriteAllTextAsync(
-            Path.Combine(configDirectory, "solidworks.local.json"),
-            "{\"real_execution_authorized\":true,\"execution_authorization_source\":\"LocalDevelopmentProfile\"}");
     }
 
     private static void AssertFailureReportTruth(SolidWorksWorkerResult result, string expectedFailureStage)

@@ -140,12 +140,17 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
-    public async Task SolidWorksMainWorkflowRunnerUsesFakeWorkerByDefaultAndRequiresBothRealFlags()
+    public async Task SolidWorksMainWorkflowUsesRealPolicyByDefaultAndFakeForDryRunOrDisable()
     {
         var projectRoot = FindProjectRoot();
         var platform = PlatformBootstrapper.CreateDefault(projectRoot);
         var outputBase = Path.Combine(projectRoot, "output", "solidworks", $"main-workflow-test-{Guid.NewGuid():N}");
-        var defaultOptions = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
+        var defaultOptions = SolidWorksRuntimeOptions.FromEnvironment(
+            new Dictionary<string, string?>(),
+            isUnitTestEnvironment: false);
+        var disabledOptions = SolidWorksRuntimeOptions.FromEnvironment(
+            new Dictionary<string, string?> { ["SW_DISABLE_REAL_EXECUTION"] = "true" },
+            isUnitTestEnvironment: false);
 
         try
         {
@@ -163,37 +168,30 @@ public sealed class SolidWorksModuleSkeletonTests
                 Path.Combine(outputBase, "default"),
                 DryRun: true,
                 AllowRealCadExecution: false));
-            var envOnlyResult = await new SolidWorksMainWorkflowRunner(
+            var disabledResult = await new SolidWorksMainWorkflowRunner(
                 platform.SkillRegistry,
                 platform.WorkerRegistry,
                 platform.AuditLog,
                 platform.WorkflowEngine,
-                () => defaultOptions with { EnableRealExecution = true })
+                () => disabledOptions)
                 .ExecuteAsync(new SolidWorksMainWorkflowRequest(
                     $"request-{Guid.NewGuid():N}",
                     $"task-{Guid.NewGuid():N}",
                     projectRoot,
-                    Path.Combine(outputBase, "env-only"),
+                    Path.Combine(outputBase, "disabled"),
                     DryRun: false,
                     AllowRealCadExecution: false));
-            var requestOnlyResult = await runner.ExecuteAsync(new SolidWorksMainWorkflowRequest(
-                $"request-{Guid.NewGuid():N}",
-                $"task-{Guid.NewGuid():N}",
-                projectRoot,
-                Path.Combine(outputBase, "request-only"),
-                DryRun: false,
-                AllowRealCadExecution: true));
 
+            Assert.True(defaultOptions.ShouldUseRealWorker(dryRun: false));
             Assert.Equal("Completed", defaultResult.Status);
             Assert.Equal("Fake", defaultResult.ExecutionMode);
             Assert.False(defaultResult.RealCadExecuted);
             Assert.True(defaultResult.QualityGatePassed);
             Assert.Contains(defaultResult.WorkflowResult.Steps, step => step.StepId == "solidworks-worker-execution");
             Assert.NotEmpty(defaultResult.ArtifactPaths);
-            Assert.Equal("Fake", envOnlyResult.ExecutionMode);
-            Assert.False(envOnlyResult.RealCadExecuted);
-            Assert.Equal("Fake", requestOnlyResult.ExecutionMode);
-            Assert.False(requestOnlyResult.RealCadExecuted);
+            Assert.Equal("Fake", disabledResult.ExecutionMode);
+            Assert.False(disabledResult.RealCadExecuted);
+            Assert.True(disabledResult.QualityGatePassed);
         }
         finally
         {
@@ -244,7 +242,6 @@ public sealed class SolidWorksModuleSkeletonTests
                     ["hole_diameter_mm"] = "12",
                     ["hole_count"] = "4",
                     ["dry_run"] = "false",
-                    ["allow_real_cad_execution"] = "true"
                 }),
             new Dictionary<string, object?>(),
             DateTimeOffset.UtcNow);
@@ -542,7 +539,7 @@ public sealed class SolidWorksModuleSkeletonTests
                     "Should be rejected without marking the issue fatal.")
             }
         });
-        var nonRetryable = validator.Validate(new SolidWorksWorkerRequest(
+        var legacyConfirmationCombination = validator.Validate(new SolidWorksWorkerRequest(
             $"request-{Guid.NewGuid():N}",
             plan,
             Path.Combine("output", "solidworks", "validator-test"),
@@ -551,8 +548,8 @@ public sealed class SolidWorksModuleSkeletonTests
 
         Assert.False(nonCritical.IsPassed);
         Assert.False(nonCritical.HasFatalError);
-        Assert.False(nonRetryable.IsPassed);
-        Assert.True(nonRetryable.HasFatalError);
+        Assert.True(legacyConfirmationCombination.IsPassed);
+        Assert.False(legacyConfirmationCombination.HasFatalError);
     }
 
     [Fact]
@@ -619,7 +616,7 @@ public sealed class SolidWorksModuleSkeletonTests
             outputRoot);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_DISABLE_REAL_EXECUTION"] = "true",
             ["SW_OUTPUT_DIRECTORY"] = outputRoot,
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
         });
@@ -631,7 +628,7 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.False(report.RealExecutionEnabled);
         Assert.False(report.SolidWorksApplicationConnectable);
         Assert.True(report.OutputDirectoryWritable);
-        Assert.Contains(report.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(report.Issues, issue => issue.Contains("real_cad_execution_disabled", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -639,10 +636,10 @@ public sealed class SolidWorksModuleSkeletonTests
     {
         var disabledOptions = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_DISABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
         });
-        var enabledOptions = disabledOptions with { EnableRealExecution = true };
+        var enabledOptions = disabledOptions with { EnableRealExecution = true, DisableRealExecution = false };
         var sessionManager = new CountingSolidWorksSessionManager();
         var workerWithDisabledEnvironment = new RealSolidWorksWorker(sessionManager, disabledOptions);
         var workerWithEnabledEnvironment = new RealSolidWorksWorker(sessionManager, enabledOptions);
@@ -664,10 +661,9 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.False(defaultResult.RealCadExecuted);
         Assert.False(defaultResult.RealCadConnected);
         Assert.Contains(defaultResult.Issues, issue => issue.Contains("dry_run_mode_enabled", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(defaultResult.Issues, issue => issue.Contains("real_cad_execution_not_enabled", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(defaultResult.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(missingRequestFlagResult.Issues, issue => issue.Contains("real_cad_execution_not_enabled", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(missingEnvironmentFlagResult.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(defaultResult.Issues, issue => issue.Contains("real_cad_execution_disabled", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(missingRequestFlagResult.Issues, issue => issue.Contains("allow_real_cad_execution", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(missingEnvironmentFlagResult.Issues, issue => issue.Contains("real_cad_execution_disabled", StringComparison.OrdinalIgnoreCase));
         Assert.Equal(0, sessionManager.ConnectAttempts);
     }
 
@@ -677,10 +673,9 @@ public sealed class SolidWorksModuleSkeletonTests
         var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "true",
             ["SW_VISIBLE"] = "false",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-        });
+        }, isUnitTestEnvironment: false);
         var worker = new RealSolidWorksWorker(sessionManager, options);
         var request = new SolidWorksWorkerRequest(
             $"request-{Guid.NewGuid():N}",
@@ -715,12 +710,11 @@ public sealed class SolidWorksModuleSkeletonTests
             var builder = new TestSolidWorksPlateBuilder();
             var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_VISIBLE"] = "false",
                 ["SW_TEMPLATE_PART_PATH"] = templatePath,
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-            });
+            }, isUnitTestEnvironment: false);
             var worker = new RealSolidWorksWorker(sessionManager, options, builder);
             var request = new SolidWorksWorkerRequest(
                 $"request-{Guid.NewGuid():N}",
@@ -774,11 +768,10 @@ public sealed class SolidWorksModuleSkeletonTests
             var drawingBuilder = new TestSolidWorksDrawingBuilder();
             var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_VISIBLE"] = "false",
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-            });
+            }, isUnitTestEnvironment: false);
             var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder(), drawingBuilder);
             var request = new SolidWorksWorkerRequest(
                 $"request-{Guid.NewGuid():N}",
@@ -826,7 +819,7 @@ public sealed class SolidWorksModuleSkeletonTests
         var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_DISABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
         });
         var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder(), new TestSolidWorksDrawingBuilder());
@@ -846,7 +839,7 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.False(result.RealCadConnected);
         Assert.False(result.RealCadExecuted);
         Assert.Equal(0, sessionManager.ConnectAttempts);
-        Assert.Contains(result.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Issues, issue => issue.Contains("real_cad_execution_disabled", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -862,11 +855,10 @@ public sealed class SolidWorksModuleSkeletonTests
             var dimensionBuilder = new TestSolidWorksDrawingDimensionBuilder();
             var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_VISIBLE"] = "false",
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-            });
+            }, isUnitTestEnvironment: false);
             var worker = new RealSolidWorksWorker(
                 sessionManager,
                 options,
@@ -919,7 +911,7 @@ public sealed class SolidWorksModuleSkeletonTests
         var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_DISABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
         });
         var worker = new RealSolidWorksWorker(
@@ -944,7 +936,7 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.False(result.RealCadConnected);
         Assert.False(result.RealCadExecuted);
         Assert.Equal(0, sessionManager.ConnectAttempts);
-        Assert.Contains(result.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Issues, issue => issue.Contains("real_cad_execution_disabled", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -960,11 +952,10 @@ public sealed class SolidWorksModuleSkeletonTests
             var titleBlockBuilder = new TestSolidWorksDrawingTitleBlockBuilder();
             var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_VISIBLE"] = "false",
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-            });
+            }, isUnitTestEnvironment: false);
             var worker = new RealSolidWorksWorker(
                 sessionManager,
                 options,
@@ -1022,7 +1013,7 @@ public sealed class SolidWorksModuleSkeletonTests
         var sessionManager = new CountingSolidWorksSessionManager(connectsSuccessfully: true);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "false",
+            ["SW_DISABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
         });
         var worker = new RealSolidWorksWorker(
@@ -1048,7 +1039,7 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.False(result.RealCadConnected);
         Assert.False(result.RealCadExecuted);
         Assert.Equal(0, sessionManager.ConnectAttempts);
-        Assert.Contains(result.Issues, issue => issue.Contains("missing_user_safety_confirmation", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Issues, issue => issue.Contains("real_cad_execution_disabled", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -1896,12 +1887,11 @@ public sealed class SolidWorksModuleSkeletonTests
             };
             var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_VISIBLE"] = "false",
                 ["SW_TEMPLATE_PART_PATH"] = templatePath,
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "1"
-            });
+            }, isUnitTestEnvironment: false);
             var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder());
             var request = new SolidWorksWorkerRequest(
                 $"request-{Guid.NewGuid():N}",
@@ -1941,13 +1931,12 @@ public sealed class SolidWorksModuleSkeletonTests
             };
             var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_VISIBLE"] = "false",
                 ["SW_TEMPLATE_PART_PATH"] = templatePath,
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5",
                 ["SW_EXECUTION_TIMEOUT_SECONDS"] = "1"
-            });
+            }, isUnitTestEnvironment: false);
             var worker = new RealSolidWorksWorker(sessionManager, options, new TestSolidWorksPlateBuilder());
             var request = new SolidWorksWorkerRequest(
                 $"request-{Guid.NewGuid():N}",
@@ -1983,9 +1972,8 @@ public sealed class SolidWorksModuleSkeletonTests
             sessionManager,
             SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
             {
-                ["SW_ENABLE_REAL_EXECUTION"] = "true",
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-            }),
+            }, isUnitTestEnvironment: false),
             builder);
         var unsupportedPlan = await CreatePlanAsync();
         var request = new SolidWorksWorkerRequest(
@@ -2017,10 +2005,9 @@ public sealed class SolidWorksModuleSkeletonTests
                 sessionManager,
                 SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
                 {
-                    ["SW_ENABLE_REAL_EXECUTION"] = "true",
                     ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                     ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
-                }));
+                }, isUnitTestEnvironment: false));
             var request = new SolidWorksWorkerRequest(
                 $"request-{Guid.NewGuid():N}",
                 await CreatePlanAsync(),
@@ -2072,7 +2059,6 @@ public sealed class SolidWorksModuleSkeletonTests
                     AllowRealCadExecution: true),
                 SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
                 {
-                    ["SW_ENABLE_REAL_EXECUTION"] = "true",
                     ["SW_OUTPUT_DIRECTORY"] = outputRoot
                 }),
                 "TestVersion",
@@ -2252,7 +2238,6 @@ public sealed class SolidWorksModuleSkeletonTests
         var manager = new SolidWorksSessionManager(comActivator);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "1"
         });
 
@@ -2274,7 +2259,6 @@ public sealed class SolidWorksModuleSkeletonTests
         var manager = new SolidWorksSessionManager(comActivator);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "1"
         });
         var started = DateTimeOffset.UtcNow;
@@ -2297,7 +2281,6 @@ public sealed class SolidWorksModuleSkeletonTests
         var manager = new SolidWorksSessionManager(comActivator);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5",
             ["SW_EXECUTION_TIMEOUT_SECONDS"] = "1"
         });
@@ -2335,7 +2318,6 @@ public sealed class SolidWorksModuleSkeletonTests
         var manager = new SolidWorksSessionManager(comActivator);
         var options = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "true",
             ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
         });
 
@@ -2481,9 +2463,9 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksEnvironmentValidatorExists);
             Assert.True(report.SolidWorksPreflightReportGenerated);
             Assert.True(report.SolidWorksSessionManagerExists);
-            Assert.True(report.SolidWorksRealExecutionDefaultDisabled);
-            Assert.True(report.SolidWorksRealExecutionRequiresRequestFlag);
-            Assert.True(report.SolidWorksRealExecutionRequiresEnvFlag);
+            Assert.False(report.SolidWorksRealExecutionDefaultDisabled);
+            Assert.False(report.SolidWorksRealExecutionRequiresRequestFlag);
+            Assert.False(report.SolidWorksRealExecutionRequiresEnvFlag);
             Assert.True(report.SolidWorksComNotCalledInDefaultSelfCheck);
             Assert.False(report.SolidWorksRealConnectionSmokeTestAttempted);
             Assert.False(report.SolidWorksRealConnectionSmokeTestPassed);
@@ -2491,8 +2473,8 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.False(report.SolidWorksGenericRealBuildNotImplemented);
             Assert.True(report.SolidWorksRealCadNotExecutedByDefault);
             Assert.True(report.SolidWorksRealPlateBuildImplemented);
-            Assert.True(report.SolidWorksRealBuildRequiresEnvFlag);
-            Assert.True(report.SolidWorksRealBuildRequiresRequestFlag);
+            Assert.False(report.SolidWorksRealBuildRequiresEnvFlag);
+            Assert.False(report.SolidWorksRealBuildRequiresRequestFlag);
             Assert.True(report.SolidWorksRealBuildRequiresDryRunFalse);
             Assert.True(report.SolidWorksRealBuildDefaultDisabled);
             Assert.False(report.SolidWorksRealBuildSmokeTestAttempted);
@@ -2531,7 +2513,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksPlateFeatureBuilderExists);
             Assert.True(report.SolidWorksRealDrawingBasicViewsImplemented);
             Assert.True(report.SolidWorksRealDrawingDefaultDisabled);
-            Assert.True(report.SolidWorksRealDrawingRequiresEnvFlag);
+            Assert.False(report.SolidWorksRealDrawingRequiresEnvFlag);
             Assert.False(report.SolidWorksRealDrawingSmokeTestAttempted);
             Assert.False(report.SolidWorksRealDrawingSmokeTestPassed);
             Assert.Null(report.SolidWorksRealDrawingSmokeTestError);
@@ -2548,7 +2530,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksDrawingReviewChecklistUpdated);
             Assert.True(report.SolidWorksRealDrawingDimensionsImplemented);
             Assert.True(report.SolidWorksRealDrawingDimensionsDefaultDisabled);
-            Assert.True(report.SolidWorksRealDrawingDimensionsRequiresEnvFlag);
+            Assert.False(report.SolidWorksRealDrawingDimensionsRequiresEnvFlag);
             Assert.False(report.SolidWorksRealDrawingDimensionsSmokeTestAttempted);
             Assert.False(report.SolidWorksRealDrawingDimensionsSmokeTestPassed);
             Assert.Null(report.SolidWorksRealDrawingDimensionsSmokeTestError);
@@ -2567,7 +2549,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksDrawingDimensionReviewChecklistUpdated);
             Assert.True(report.SolidWorksRealDrawingTitleBlockImplemented);
             Assert.True(report.SolidWorksRealDrawingTitleBlockDefaultDisabled);
-            Assert.True(report.SolidWorksRealDrawingTitleBlockRequiresEnvFlag);
+            Assert.False(report.SolidWorksRealDrawingTitleBlockRequiresEnvFlag);
             Assert.False(report.SolidWorksRealDrawingTitleBlockSmokeTestAttempted);
             Assert.False(report.SolidWorksRealDrawingTitleBlockSmokeTestPassed);
             Assert.Null(report.SolidWorksRealDrawingTitleBlockSmokeTestError);
@@ -2605,8 +2587,8 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.ChiefEngineerOrchestratorInvokesCadWorkflow);
             Assert.True(report.WorkflowEngineCanRouteToSolidWorksWorker);
             Assert.True(report.RealCadMainWorkflowDefaultDisabled);
-            Assert.True(report.RealCadMainWorkflowRequiresRequestFlag);
-            Assert.True(report.RealCadMainWorkflowRequiresEnvFlag);
+            Assert.False(report.RealCadMainWorkflowRequiresRequestFlag);
+            Assert.False(report.RealCadMainWorkflowRequiresEnvFlag);
             Assert.True(report.RealCadMainWorkflowPassesQualityGate);
             Assert.True(report.GatewayDoesNotCallWorkerDirectly);
             Assert.True(report.LlmDoesNotCallWorkerDirectly);
@@ -2625,7 +2607,14 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.PlateRegressionPassed);
             Assert.True(report.FlangeDryRunPassed);
             Assert.True(report.ShaftDryRunPassed);
-            Assert.True(report.RealCadPartFamilyDefaultDisabled);
+            Assert.True(report.SolidWorksLocalInteractiveDefaultEnabled);
+            Assert.True(report.SolidWorksDisableEnvSupported);
+            Assert.True(report.SolidWorksCiExecutionDisabled);
+            Assert.True(report.SolidWorksUnitTestExecutionDisabled);
+            Assert.True(report.SolidWorksDryRunDisablesRealExecution);
+            Assert.True(report.SolidWorksVisibleDefaultTrue);
+            Assert.True(report.LegacyEnableFlagNotRequired);
+            Assert.True(report.LegacyRequestConfirmationNotRequired);
             Assert.True(report.V18VersionStageDocumented);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);
@@ -2640,7 +2629,7 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
-    public async Task SelfCheckRealBuildSmokeTestReportsFailureDiagnosticsWithoutStrictMode()
+    public async Task SelfCheckNeverStartsRealBuildInsideUnitTestProcess()
     {
         var root = FindProjectRoot();
         var platform = PlatformBootstrapper.CreateDefault(root);
@@ -2648,7 +2637,6 @@ public sealed class SolidWorksModuleSkeletonTests
 
         using var _ = new EnvironmentScope(new Dictionary<string, string?>
         {
-            ["SW_ENABLE_REAL_EXECUTION"] = "true",
             ["SW_REAL_BUILD_SMOKE_TEST"] = "true",
             ["SW_STRICT_REAL_BUILD_TEST"] = null,
             ["SW_TEMPLATE_PART_PATH"] = null,
@@ -2659,20 +2647,15 @@ public sealed class SolidWorksModuleSkeletonTests
         {
             var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, root);
 
-            Assert.Equal("true", report.SwEnableRealExecutionEnvValue);
             Assert.Equal("true", report.SwRealBuildSmokeTestEnvValue);
-            Assert.True(report.SolidWorksRealBuildSmokeTestAttempted);
+            Assert.False(report.SolidWorksRealBuildSmokeTestAttempted);
             Assert.False(report.SolidWorksRealBuildSmokeTestPassed);
-            Assert.False(report.RealBuildRequestDryRun);
-            Assert.True(report.RealBuildRequestAllowRealCadExecution);
-            Assert.Equal("RealBuildPlateBasic4Holes", report.RealBuildExecutionMode);
-            Assert.NotNull(report.RealBuildOutputDirectory);
-            Assert.True(Path.IsPathFullyQualified(report.RealBuildOutputDirectory));
-            Assert.Contains(Path.Combine("output", "solidworks", "real", "plate_basic_4holes"), report.RealBuildOutputDirectory, StringComparison.OrdinalIgnoreCase);
-            Assert.NotNull(report.RealBuildLatestReportPath);
-            Assert.True(File.Exists(report.RealBuildLatestReportPath));
-            Assert.Contains("template_part_path_required_for_real_build", report.SolidWorksRealBuildSmokeTestError, StringComparison.OrdinalIgnoreCase);
-            Assert.Equal("preflight_failed", report.SolidWorksRealBuildFailureStage);
+            Assert.Null(report.RealBuildRequestDryRun);
+            Assert.Null(report.RealBuildExecutionMode);
+            Assert.Null(report.RealBuildOutputDirectory);
+            Assert.Null(report.RealBuildLatestReportPath);
+            Assert.Null(report.SolidWorksRealBuildSmokeTestError);
+            Assert.Null(report.SolidWorksRealBuildFailureStage);
             Assert.True(report.SolidWorksRealBuildErrorIsActionable);
             Assert.Equal("Passed", report.FinalStatus);
         }

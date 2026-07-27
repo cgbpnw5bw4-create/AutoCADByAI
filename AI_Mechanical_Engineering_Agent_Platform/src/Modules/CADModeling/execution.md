@@ -36,7 +36,7 @@
 
 ## 安全开关
 
-真实 `SolidWorks` 执行默认关闭。只有请求中 `allow_real_cad_execution=true`、`dry_run=false`，并且环境变量 `SW_ENABLE_REAL_EXECUTION=true` 时，才允许进入真实连接路径。
+V2.0 起，本地交互式 `SolidWorks` 主流程默认真实执行：`dry_run=false`、`SW_VISIBLE=true`。`dry_run=true`、`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时禁止进入真实连接路径。
 
 ## 主流程触发输入
 
@@ -110,7 +110,7 @@ plate_basic_4holes.SLDPRT
 → SolidWorksArtifactValidator
 ```
 
-默认 self-check 不执行真实工程图。真实工程图 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_SMOKE_TEST=true`。
+self-check 不执行真实工程图。需要隔离诊断时使用独立工程图 Runner；最终验收仍从 CLI 主入口运行。
 
 ## V1.2 工程图尺寸补充
 
@@ -127,7 +127,7 @@ plate_basic_4holes.SLDDRW
 → SolidWorksArtifactValidator
 ```
 
-默认 self-check 不执行真实尺寸标注。真实尺寸 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_DIMENSION_SMOKE_TEST=true`。严格模式使用 `SW_STRICT_REAL_DRAWING_DIMENSION_TEST=true`。
+self-check 不执行真实尺寸标注。真实尺寸诊断使用独立 Runner，严格诊断可使用其专用严格模式；这些入口不能替代主流程验收。
 
 ## V1.3 工程图标题栏补充
 
@@ -144,7 +144,7 @@ plate_basic_4holes_dimensioned.SLDDRW
 → SolidWorksArtifactValidator
 ```
 
-默认 self-check 不执行真实标题栏测试。真实标题栏 smoke test 必须同时设置 `SW_ENABLE_REAL_EXECUTION=true` 和 `SW_REAL_DRAWING_TITLE_BLOCK_SMOKE_TEST=true`。严格模式使用 `SW_STRICT_REAL_DRAWING_TITLE_BLOCK_TEST=true`。
+self-check 不执行真实标题栏测试。真实标题栏诊断使用独立 Runner，严格诊断可使用其专用严格模式；这些入口不能替代主流程验收。
 
 ## V1.4 工程发布包补充
 
@@ -183,7 +183,7 @@ ChiefEngineerOrchestrator
 → AgentOutput 返回 real_cad_executed、quality_gate_passed 和 artifact 路径
 ```
 
-默认主流程仍走 `FakeSolidWorksWorker`，不会启动 SolidWorks。只有请求上下文同时声明 `allow_real_cad_execution=true` 和 `dry_run=false`，并且环境变量 `SW_ENABLE_REAL_EXECUTION=true` 时，`SolidWorksMainWorkflowRunner` 才允许选择 `RealSolidWorksWorker`。`Agent`、`Gateway` 和 `LLM` 仍不能直接调用 Worker。
+本地交互式主流程默认选择 `RealSolidWorksWorker`，不再要求请求确认或启用环境变量。dry-run、CI、单元测试、`SW_DISABLE_REAL_EXECUTION=true` 或 `SW_FORCE_FAKE_WORKER=true` 时选择 `FakeSolidWorksWorker`。`Agent`、`Gateway` 和 `LLM` 仍不能直接调用 Worker。
 
 V1.5 还修正发布包语义：`package_build_status` 只表示打包过程是否成功，`all_source_reports_passed` 表示所有源报告是否通过，`deliverable_status` 表示最终是否可交付。任一源报告 `final_status=Failed` 时，`source_report_failures` 必须列出失败报告，`all_source_reports_passed=false`，`deliverable_status=NotDeliverable`。
 
@@ -204,13 +204,13 @@ Gateway
 → 总体 QualityGate
 ```
 
-四阶段源文件必须使用同一 request 的精确绝对路径传递，不得从历史 latest 目录拼接。最终包写入 `output/solidworks/e2e/plate_basic_4holes/<timestamp>/`；阶段产物保持在既有 `output/solidworks/real/` 受信任根，以满足原有 Validator。明确请求真实执行但缺少任一四重确认时必须失败关闭，不能使用 Fake Worker 作为验收结果。
+四阶段源文件必须使用同一 request 的精确绝对路径传递，不得从历史 latest 目录拼接。最终包写入 `output/solidworks/e2e/plate_basic_4holes/<timestamp>/`；阶段产物保持在既有 `output/solidworks/real/` 受信任根。策略明确禁用真实执行时不得把 Fake Worker 结果当作真实验收结果。
 
 ## V1.7-REAL-AUTH 本地开发授权
 
-本地开发人员可在不提交的 `config/solidworks.local.json` 中显式启用 `LocalDevelopmentProfile`。CLI 读取有效配置后自动形成 `allow_real_cad_execution=true` 与 `dry_run=false` 的内部请求，并在平台创建前设置真实执行环境；结构化业务输入只描述零件和交付内容，不重复承担授权字段。
+本地开发人员可在不提交的 `config/solidworks.local.json` 中提供模板、可见性和超时。CLI 默认形成 `dry_run=false` 的本地交互请求；结构化业务输入只描述零件和交付内容，不承担授权字段。
 
-该便利不改变产品边界：配置不存在或无效时真实 CAD 仍被禁止；Gateway、Agent 和 LLM 仍不能直接访问 Worker；完整流程仍必须穿过 WorkflowEngine、ArtifactValidator、Reviewer、QualityGate 与 ReleasePackage。默认 self-check 不读取或应用本地授权配置，因此不会启动 SolidWorks。
+该便利不改变产品边界：配置不存在不阻止默认本地执行，但模板缺失仍会在 preflight 明确失败；Gateway、Agent 和 LLM 仍不能直接访问 Worker；完整流程仍必须穿过 WorkflowEngine、ArtifactValidator、Reviewer、QualityGate 与 ReleasePackage。self-check 不启动 SolidWorks。
 
 ## V1.8 参数化零件族
 
@@ -294,7 +294,7 @@ Router 根据已注册 `part_type` 选择 build-only 或 plate 完整包语义�
 
 ### 授权、串行和输出
 
-真实执行必须通过请求层、`LocalDevelopmentProfile` 本地授权层和环境层。默认 self-check 不连接 COM。真实任务全局串行，阶段验收顺序为 `flange_basic` → `shaft_basic`。
+真实执行由 V2.0 统一运行策略决定，不再经过请求确认或本地授权层。self-check、CI、单元测试和 dry-run 不连接 COM；真实任务仍全局串行。
 
 两族输出根目录为 `output/solidworks/e2e/<part_type>/<timestamp>/`，最小内容为：
 

@@ -170,30 +170,6 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient);
         }
 
-        if (isPartFamilyBuild &&
-            partFamilyBuilder is not null &&
-            !string.Equals(partFamilyBuilder.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
-        {
-            var localAuthorization = SolidWorksWorkerLocalExecutionAuthorization.Load(
-                string.IsNullOrWhiteSpace(request.OutputDirectory) ? options.OutputDirectory : request.OutputDirectory);
-            if (!localAuthorization.IsAuthorized)
-            {
-                logs.Add("COM connection was not attempted because LocalDevelopmentProfile authorization was missing or invalid.");
-                issues.AddRange(localAuthorization.Issues);
-                issues.Add($"{PartFamilyFailureStages.LocalExecutionAuthorizationMissing}: LocalDevelopmentProfile authorization is required for non-plate real builds.");
-                return RealBuildFailureResult(
-                    request,
-                    "Rejected",
-                    logs,
-                    issues,
-                    realCadConnected: false,
-                    preflight,
-                    options,
-                    PartFamilyFailureStages.LocalExecutionAuthorizationMissing,
-                    partFamilyBuilder);
-            }
-        }
-
         if (!request.ConnectionSmokeTestOnly &&
             !request.DrawingSmokeTestOnly &&
             !request.DrawingDimensionSmokeTestOnly &&
@@ -584,9 +560,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
     private static bool ShouldRejectBeforeConnection(
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options) =>
-        request.DryRun ||
-        !request.AllowRealCadExecution ||
-        !options.EnableRealExecution;
+        !options.ShouldUseRealWorker(request.DryRun);
 
     private static SolidWorksWorkerResult Result(
         SolidWorksWorkerRequest request,
