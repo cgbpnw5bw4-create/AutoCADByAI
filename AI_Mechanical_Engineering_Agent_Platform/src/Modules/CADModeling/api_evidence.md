@@ -147,3 +147,55 @@ V1.4 只整理已经存在的 SLDPRT、STEP、SLDDRW、PDF 和 JSON 报告，并
 ### 常见失败与禁止事项
 
 `flange_build_failed` 必须指向具体的草图、拉伸、切除或阵列步骤；`shaft_build_failed` 必须指向截面、中心线、旋转或台阶映射步骤。证据不足时使用明确的 evidence-insufficient 原因停止，不得凭感觉修改 COM 长参数，不得复制第三方脚本，不得以 dry-run 或文件存在冒充真实验收。
+
+## V1.9 Phase 1 API 证据合同
+
+### 目标、输入与输出
+
+本节把 V1.8 候选策略固定为 V1.9 独立 diagnostic 的唯一候选路径。输入是官方 API、已验证 plate 本地证据、法兰/轴专用诊断日志和产物；输出是每族可回填的 `ApiEvidenceReport` 或 `part_family_api_evidence_insufficient`。
+
+### 法兰策略
+
+1. 外圆：`CreateCircle` 创建外圆，`FeatureExtrusion2` 拉伸为实心圆盘。
+2. 中心孔：新建独立活动草图，创建内孔圆，再用 `FeatureCut4` 切除。
+3. 螺栓孔：按分布圆计算全部孔中心，在单一活动草图中创建全部圆，再用一次 `FeatureCut4` 切除。
+
+拒绝 `HoleWizard` 和圆周阵列 API，避免引入未验证长参数与选择状态。
+
+### 轴策略
+
+1. `CreateLine` 构建完整闭合轴向轮廓，包含可选台阶。
+2. `CreateCenterLine` 创建旋转中心线，并使用 selection mark `16`。
+3. `FeatureRevolve2` 执行 360° 旋转，并记录完整参数、轴线选择状态、返回 Feature 和重建结果。
+
+偏移多段拉伸仅作为 backlog / 拒绝策略，本轮不与旋转路径混用。
+
+### 验证、失败与禁止事项
+
+Phase 1 入场时只能声称法兰与轴的证据足以进入独立 diagnostic，两族实际 smoke 结果、运行标识和报告路径尚待回填；该限制现已由下述 Phase 2 API 证据回填关闭。
+
+diagnostic 必须默认关闭，并记录每个 API 的参数单位、草图状态、选择标记、返回值、保存/导出结果和专用 `failure_stage`。证据不足时返回 `part_family_api_evidence_insufficient`，不得盲改 COM 参数、不得直接回填主 Worker、不得用诊断 Runner 作为最终验收入口。
+
+## V1.9 Phase 2 API 证据回填
+
+Phase 1 的待回填状态已经完成。两族 diagnostic 均只标记为 `CandidatePassed`，并由后续 CLI 主工作流程补齐最终可交付证据。
+
+### 法兰证据
+
+- diagnostic：`output/solidworks/diagnostics/v1_9/flange_basic/20260720_081331_449_b538c0c180d44bc6a3007a34e1bd1c0f/evidence_report.json`。
+- 产物：SLDPRT 91751 字节，STEP 48876 字节，均非空。
+- 审查：同目录 `review/flange_basic_review_report.json` 为 100 分且 `pass`；特征树包含一个 `Extrusion` 和两个 `ICE`，四视图确认中心孔及 6 个螺栓孔。
+- 最终主流程：`output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/`，状态为 `Passed`、`Deliverable`、QualityGate `Passed`。
+- 最终 `build_report.json` 的 `api_evidence` 已包含 `v1_9_flange_diagnostic_visual_review_and_main_workflow_passed`。
+
+### 轴证据
+
+- diagnostic：`output/solidworks/diagnostics/v1_9/shaft_basic/20260720_081653_181_b0b4a7315e994226b8361ee551be7e6b/evidence_report.json`。
+- 产物：SLDPRT 91716 字节，STEP 23323 字节，均非空。
+- 审查：同目录 `review/shaft_basic_review_report.json` 为 100 分且 `pass`；特征树包含 `Revolution`，四视图确认直径 40 主体及直径 32、直径 24 两级台阶。
+- 最终主流程：`output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/`，状态为 `Passed`、`Deliverable`、QualityGate `Passed`。
+- 最终 `build_report.json` 的 `api_evidence` 已包含 `v1_9_shaft_diagnostic_visual_review_and_main_workflow_passed`。
+
+### 证据边界
+
+diagnostic 中的 `geometry_body_count_status` 与 `theoretical_volume_status` 仍为 `NotVerified`。现有专用 API、特征树、四视图、非空产物、主工作流程和质量门禁证据足以完成 V1.9 基础零件族验收；body count 和理论体积自动核验作为非阻断 Improvements 保留。不得仅凭 `CandidatePassed` 跳过主工作流程，也不得据此进入 V2.0。

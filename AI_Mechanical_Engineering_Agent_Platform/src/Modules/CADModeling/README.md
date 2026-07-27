@@ -42,3 +42,19 @@
 - Agent、Gateway 和 LLM 永远不直接调用 CAD API、SDK、COM 或 Worker。
 - 默认 self-check 不启动 SolidWorks。
 - 本轮不做装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。
+
+## V1.9 Phase 1 真实 build-only 能力
+
+### 目标与输入输出
+
+V1.9 Phase 1 使 `flange_basic` 和 `shaft_basic` 从 dry-run 定义进入受控真实 SolidWorks build-only 主工作流程。输入仍为通用 `CADModelSpec`；输出为每族的真实 SLDPRT、STEP、构建报告、端到端报告、质量门禁结果和发布包。`plate_basic_4holes` 仍保留完整工程图包回归。
+
+### 执行步骤和验证标准
+
+最终验收必须经结构化输入、Gateway / `chief-engineer`、`ChiefEngineerOrchestrator`、`WorkflowEngine`、`SolidWorksWorkflowRouter`、两个 Registry、`RealSolidWorksWorker`、ArtifactValidator、Reviewer、QualityGate 和 build-only ReleasePackage。法兰和轴的发布包位于 `output/solidworks/e2e/<part_type>/<timestamp>/`，且必须包含零件、STEP、`build_report.json`、`e2e_execution_report.json` 和 `release_manifest.json`。
+
+默认 self-check 不启动 COM。真实验收按 flange 再 shaft 串行执行，并保留三层授权、产物校验和质量门禁证据。
+
+### 常见失败和禁止事项
+
+API evidence 不足、法兰四个几何阶段、轴三个几何阶段、保存、STEP 导出、产物校验和质量门禁拒绝都必须返回专用 `failure_stage`。V1.9 Phase 2 已完成两族独立 diagnostic、视觉复核及 CLI 真实主流程回填：flange 和 shaft 均为 `Passed`、`Deliverable`、QualityGate `Passed`；最终目录见 `execution.md`。禁止 flange / shaft 自动工程图，禁止 Builder / SmokeRunner 直接验收，禁止进入 V2.0。

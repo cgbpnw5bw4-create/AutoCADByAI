@@ -15,7 +15,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "1.8";
+    private const string SelfCheckSchemaVersion = "1.9";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -211,6 +211,7 @@ public static class PlatformSelfCheckRunner
         var realCadE2eLocalAuthorizationProfileSupported = v17E2eChecks.LocalAuthorizationProfileSupported;
         var realCadE2eLocalAuthorizationDefaultDisabled = v17E2eChecks.LocalAuthorizationDefaultDisabled;
         var v18PartFamilyChecks = await RunV18PartFamilyChecksAsync(root, platform, outputRoot, versionStageText, cancellationToken);
+        var v19PartFamilyChecks = RunV19PartFamilyChecks(root, platform, versionStageText, v18PartFamilyChecks);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -330,7 +331,6 @@ public static class PlatformSelfCheckRunner
             (!solidWorksSkeletonChecks.SolidWorksStrictRealSmokeTest ||
              !solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestAttempted ||
              solidWorksSkeletonChecks.SolidWorksRealConnectionSmokeTestPassed) &&
-            solidWorksSkeletonChecks.SolidWorksGenericRealBuildNotImplemented &&
             solidWorksSkeletonChecks.SolidWorksRealCadNotExecutedByDefault &&
             solidWorksSkeletonChecks.SolidWorksRealPlateBuildImplemented &&
             solidWorksSkeletonChecks.SolidWorksRealBuildRequiresEnvFlag &&
@@ -447,6 +447,7 @@ public static class PlatformSelfCheckRunner
              realCadE2eLocalAuthorizationProfileSupported &&
              realCadE2eLocalAuthorizationDefaultDisabled &&
              v18PartFamilyChecks.AllPassed &&
+             v19PartFamilyChecks.AllPassed &&
              executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -774,7 +775,21 @@ public static class PlatformSelfCheckRunner
             FlangeDryRunPassed = v18PartFamilyChecks.FlangeDryRunPassed,
             ShaftDryRunPassed = v18PartFamilyChecks.ShaftDryRunPassed,
             RealCadPartFamilyDefaultDisabled = v18PartFamilyChecks.RealCadPartFamilyDefaultDisabled,
-            V18VersionStageDocumented = v18PartFamilyChecks.V18VersionStageDocumented
+            V18VersionStageDocumented = v18PartFamilyChecks.V18VersionStageDocumented,
+            FlangeRealBuilderImplemented = v19PartFamilyChecks.FlangeRealBuilderImplemented,
+            ShaftRealBuilderImplemented = v19PartFamilyChecks.ShaftRealBuilderImplemented,
+            FlangeRealWorkflowSupported = v19PartFamilyChecks.FlangeRealWorkflowSupported,
+            ShaftRealWorkflowSupported = v19PartFamilyChecks.ShaftRealWorkflowSupported,
+            FlangeRealWorkflowDefaultDisabled = v19PartFamilyChecks.FlangeRealWorkflowDefaultDisabled,
+            ShaftRealWorkflowDefaultDisabled = v19PartFamilyChecks.ShaftRealWorkflowDefaultDisabled,
+            FlangeApiEvidenceDocumented = v19PartFamilyChecks.FlangeApiEvidenceDocumented,
+            ShaftApiEvidenceDocumented = v19PartFamilyChecks.ShaftApiEvidenceDocumented,
+            FlangeArtifactValidationSupported = v19PartFamilyChecks.FlangeArtifactValidationSupported,
+            ShaftArtifactValidationSupported = v19PartFamilyChecks.ShaftArtifactValidationSupported,
+            PlatePartFamilyRegressionPassed = v19PartFamilyChecks.PlatePartFamilyRegressionPassed,
+            NoLargePartTypeSwitch = v19PartFamilyChecks.NoLargePartTypeSwitch,
+            AllPartFamiliesUseRegistry = v19PartFamilyChecks.AllPartFamiliesUseRegistry,
+            V19VersionStageDocumented = v19PartFamilyChecks.V19VersionStageDocumented
         };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -835,9 +850,11 @@ public static class PlatformSelfCheckRunner
         var builderRegistryType = worker?.GetType().Assembly.GetType(
             "SolidWorksWorker.PartFamilyBuilderRegistry",
             throwOnError: false);
-        var builderRegistry = builderRegistryType?
-            .GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static)?
-            .Invoke(null, null);
+        var createBuilderRegistry = builderRegistryType?
+            .GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static);
+        var builderRegistry = createBuilderRegistry?.Invoke(
+            null,
+            createBuilderRegistry.GetParameters().Select(_ => (object?)null).ToArray());
         var registeredBuilders = builderRegistryType?
             .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
             .Invoke(builderRegistry, null) as System.Collections.IEnumerable;
@@ -931,6 +948,111 @@ public static class PlatformSelfCheckRunner
             shaftDryRunPassed,
             realCadPartFamilyDefaultDisabled,
             v18VersionStageDocumented);
+    }
+
+    private static V19PartFamilySelfCheckResult RunV19PartFamilyChecks(
+        string projectRoot,
+        PlatformKernel platform,
+        string versionStageText,
+        V18PartFamilySelfCheckResult v18)
+    {
+        var definitions = PartTypeRegistry.CreateDefault().GetAll();
+        var workerAssembly = platform.WorkerRegistry.GetByName("FakeSolidWorksWorker")?.GetType().Assembly;
+        var builderRegistryType = workerAssembly?.GetType("SolidWorksWorker.PartFamilyBuilderRegistry", throwOnError: false);
+        var createBuilderRegistry = builderRegistryType?.GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static);
+        var builderRegistry = createBuilderRegistry?.Invoke(
+            null,
+            createBuilderRegistry.GetParameters().Select(_ => (object?)null).ToArray());
+        var builders = (builderRegistryType?
+            .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+            .Invoke(builderRegistry, null) as System.Collections.IEnumerable)?
+            .Cast<object>()
+            .ToArray() ?? [];
+
+        bool BuilderImplemented(string partType, string expectedTypeName)
+        {
+            var definition = definitions.SingleOrDefault(item =>
+                string.Equals(item.PartType, partType, StringComparison.OrdinalIgnoreCase));
+            var builder = builders.SingleOrDefault(item =>
+                string.Equals(
+                    item.GetType().GetProperty("PartType")?.GetValue(item)?.ToString(),
+                    partType,
+                    StringComparison.OrdinalIgnoreCase));
+            return definition is not null &&
+                   builder is not null &&
+                   string.Equals(builder.GetType().Name, expectedTypeName, StringComparison.Ordinal) &&
+                   builder.GetType().GetProperty("SupportsRealExecution")?.GetValue(builder) is true &&
+                   string.Equals(
+                       builder.GetType().GetProperty("RealExecutionMode")?.GetValue(builder)?.ToString(),
+                       definition.RealExecutionMode,
+                       StringComparison.OrdinalIgnoreCase) &&
+                   builder.GetType().GetMethod("BuildAsync", BindingFlags.Public | BindingFlags.Instance) is not null;
+        }
+
+        var flangeRealBuilderImplemented = BuilderImplemented(FlangeBasicDefinition.Type, "FlangeFeatureBuilder");
+        var shaftRealBuilderImplemented = BuilderImplemented(ShaftBasicDefinition.Type, "ShaftFeatureBuilder");
+        var operationSupported = SolidWorksE2eCliContract.IsPartFamilyReleasePackage(
+            SolidWorksE2eCliContract.PartFamilyReleasePackageOperation) &&
+            Enum.IsDefined(SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage);
+        var flangeInputExists = File.Exists(Path.Combine(projectRoot, "examples", "real_cad_flange_request.json"));
+        var shaftInputExists = File.Exists(Path.Combine(projectRoot, "examples", "real_cad_shaft_request.json"));
+        var flangeRealWorkflowSupported = operationSupported && flangeInputExists && flangeRealBuilderImplemented;
+        var shaftRealWorkflowSupported = operationSupported && shaftInputExists && shaftRealBuilderImplemented;
+        var runtimeDefaults = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
+        var defaultDisabled = !runtimeDefaults.EnableRealExecution && !runtimeDefaults.MainWorkflowExecutionEnabled;
+
+        var apiEvidencePath = Path.Combine(projectRoot, "src", "Modules", "CADModeling", "api_evidence.md");
+        var apiEvidenceText = File.Exists(apiEvidencePath) ? File.ReadAllText(apiEvidencePath) : string.Empty;
+        var flangeApiEvidenceDocumented =
+            apiEvidenceText.Contains("flange_basic", StringComparison.OrdinalIgnoreCase) &&
+            apiEvidenceText.Contains("FeatureExtrusion2", StringComparison.Ordinal) &&
+            apiEvidenceText.Contains("FeatureCut4", StringComparison.Ordinal);
+        var shaftApiEvidenceDocumented =
+            apiEvidenceText.Contains("shaft_basic", StringComparison.OrdinalIgnoreCase) &&
+            apiEvidenceText.Contains("FeatureRevolve2", StringComparison.Ordinal) &&
+            (apiEvidenceText.Contains("Mark=16", StringComparison.OrdinalIgnoreCase) ||
+             apiEvidenceText.Contains("selection mark `16`", StringComparison.OrdinalIgnoreCase));
+
+        var artifactValidatorExists = typeof(Modules.CADModeling.Validators.SolidWorksArtifactValidator)
+            .GetMethod("Validate", BindingFlags.Public | BindingFlags.Instance) is not null;
+        var flangeDefinition = definitions.Single(item => item.PartType == FlangeBasicDefinition.Type);
+        var shaftDefinition = definitions.Single(item => item.PartType == ShaftBasicDefinition.Type);
+        var flangeArtifactValidationSupported = artifactValidatorExists &&
+            string.Equals(flangeDefinition.RealExecutionMode, PartFamilyExecutionModes.FlangeBasic, StringComparison.Ordinal);
+        var shaftArtifactValidationSupported = artifactValidatorExists &&
+            string.Equals(shaftDefinition.RealExecutionMode, PartFamilyExecutionModes.ShaftBasic, StringComparison.Ordinal);
+
+        var builderPartTypes = builders
+            .Select(builder => builder.GetType().GetProperty("PartType")?.GetValue(builder)?.ToString())
+            .OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var definitionPartTypes = definitions
+            .Select(definition => definition.PartType)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var allPartFamiliesUseRegistry =
+            builderRegistryType?.GetMethod("TryGetBuilder", BindingFlags.Public | BindingFlags.Instance) is not null &&
+            definitionPartTypes.SetEquals(builderPartTypes);
+        var noLargePartTypeSwitch =
+            v18.PartFamilyBuildersDoNotUseLargeSwitch &&
+            workerAssembly?.GetType("SolidWorksWorker.SolidWorksPartFamilyBuildModes", throwOnError: false)?
+                .GetMethod("ForPartType", BindingFlags.Public | BindingFlags.Static) is null;
+        var v19VersionStageDocumented = versionStageText.Contains("V1.9", StringComparison.OrdinalIgnoreCase);
+
+        return new V19PartFamilySelfCheckResult(
+            flangeRealBuilderImplemented,
+            shaftRealBuilderImplemented,
+            flangeRealWorkflowSupported,
+            shaftRealWorkflowSupported,
+            defaultDisabled,
+            defaultDisabled,
+            flangeApiEvidenceDocumented,
+            shaftApiEvidenceDocumented,
+            flangeArtifactValidationSupported,
+            shaftArtifactValidationSupported,
+            v18.PlateRegressionPassed,
+            noLargePartTypeSwitch,
+            allPartFamiliesUseRegistry,
+            v19VersionStageDocumented);
     }
 
     private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
@@ -4951,6 +5073,39 @@ public static class PlatformSelfCheckRunner
             ShaftDryRunPassed &&
             RealCadPartFamilyDefaultDisabled &&
             V18VersionStageDocumented;
+    }
+
+    private sealed record V19PartFamilySelfCheckResult(
+        bool FlangeRealBuilderImplemented,
+        bool ShaftRealBuilderImplemented,
+        bool FlangeRealWorkflowSupported,
+        bool ShaftRealWorkflowSupported,
+        bool FlangeRealWorkflowDefaultDisabled,
+        bool ShaftRealWorkflowDefaultDisabled,
+        bool FlangeApiEvidenceDocumented,
+        bool ShaftApiEvidenceDocumented,
+        bool FlangeArtifactValidationSupported,
+        bool ShaftArtifactValidationSupported,
+        bool PlatePartFamilyRegressionPassed,
+        bool NoLargePartTypeSwitch,
+        bool AllPartFamiliesUseRegistry,
+        bool V19VersionStageDocumented)
+    {
+        public bool AllPassed =>
+            FlangeRealBuilderImplemented &&
+            ShaftRealBuilderImplemented &&
+            FlangeRealWorkflowSupported &&
+            ShaftRealWorkflowSupported &&
+            FlangeRealWorkflowDefaultDisabled &&
+            ShaftRealWorkflowDefaultDisabled &&
+            FlangeApiEvidenceDocumented &&
+            ShaftApiEvidenceDocumented &&
+            FlangeArtifactValidationSupported &&
+            ShaftArtifactValidationSupported &&
+            PlatePartFamilyRegressionPassed &&
+            NoLargePartTypeSwitch &&
+            AllPartFamiliesUseRegistry &&
+            V19VersionStageDocumented;
     }
 
     private static JsonSerializerOptions JsonOptions()

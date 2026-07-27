@@ -309,11 +309,17 @@ public static class SolidWorksPlateBuildReportWriter
     {
         finalStatus = SolidWorksFakeSuccessGuard.NormalizePlateFinalStatus(diagnostics, finalStatus);
         var now = DateTimeOffset.UtcNow;
+        var failureStage = string.Equals(finalStatus, "Passed", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : InferFailureStage(diagnostics);
         var report = new
         {
             build_id = $"solidworks-real-build-{Guid.NewGuid():N}",
             build_plan_id = request.BuildPlan.PlanId,
+            part_type = request.BuildPlan.PartType,
+            mode = "real",
             execution_mode = executionMode,
+            real_execution_requested = !request.DryRun && request.AllowRealCadExecution,
             real_cad_executed = realCadExecuted,
             real_cad_connected = realCadConnected,
             solidworks_version = solidWorksVersion,
@@ -344,10 +350,27 @@ public static class SolidWorksPlateBuildReportWriter
             selected_plane_strategy = diagnostics.SelectedPlaneStrategy,
             plane_selection_errors = diagnostics.PlaneSelectionErrors,
             available_reference_planes = diagnostics.AvailableReferencePlanes,
+            failure_stage = failureStage,
+            api_evidence = "real_solidworks_plate_basic_4holes_smoke_passed",
             final_status = finalStatus
         };
 
         return JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static string InferFailureStage(SolidWorksPlateBuildDiagnostics diagnostics)
+    {
+        if (diagnostics.SldprtSaveAttempted && !diagnostics.SldprtSaveSuccess)
+        {
+            return PartFamilyFailureStages.PartSaveFailed;
+        }
+
+        if (diagnostics.StepExportAttempted && !diagnostics.StepExportSuccess)
+        {
+            return PartFamilyFailureStages.StepExportFailed;
+        }
+
+        return "plate_build_failed";
     }
 }
 

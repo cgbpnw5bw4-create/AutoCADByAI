@@ -1,11 +1,11 @@
 using AgentContracts;
 using DomainSchemas;
+using System.Text.Json;
 
 namespace PlatformCore;
 
 public sealed class SolidWorksWorkflowRouter
 {
-    private const string BuildCompleteDrawingPackage = "build_complete_drawing_package";
     private readonly PartTypeRegistry _partTypeRegistry;
 
     public SolidWorksWorkflowRouter(PartTypeRegistry? partTypeRegistry = null)
@@ -31,7 +31,14 @@ public sealed class SolidWorksWorkflowRouter
         var requestAllowsReal = FlagEnabled(context, "allow_real_cad_execution") ||
             FlagEnabled(context, "solidworks_allow_real_cad_execution");
         var dryRun = !FlagDisabled(context, "dry_run");
-        var isCompleteDrawingPackage = ContextValueEquals(context, BuildCompleteDrawingPackage, "operation");
+        var isCompleteDrawingPackage = ContextValueEquals(
+            context,
+            SolidWorksE2eCliContract.CompleteDrawingPackageOperation,
+            "operation");
+        var isPartFamilyReleasePackage = ContextValueEquals(
+            context,
+            SolidWorksE2eCliContract.PartFamilyReleasePackageOperation,
+            "operation");
 
         return new SolidWorksMainWorkflowRequest(
             $"solidworks-main-workflow-{context.TaskId}",
@@ -43,7 +50,9 @@ public sealed class SolidWorksWorkflowRouter
             modelSpec,
             Operation: isCompleteDrawingPackage
                 ? SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage
-                : SolidWorksMainWorkflowOperation.BuildPlate,
+                : isPartFamilyReleasePackage
+                    ? SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage
+                    : SolidWorksMainWorkflowOperation.BuildPlate,
             GenerateDrawing: FlagEnabled(context, "generate_drawing"),
             GenerateDimensions: FlagEnabled(context, "generate_dimensions"),
             GenerateTitleBlock: FlagEnabled(context, "generate_title_block"),
@@ -56,14 +65,22 @@ public sealed class SolidWorksWorkflowRouter
 
     public bool ShouldRun(AgentContext context)
     {
-        if (ContextValueEquals(context, BuildCompleteDrawingPackage, "operation"))
+        if (ContextValueEquals(context, SolidWorksE2eCliContract.CompleteDrawingPackageOperation, "operation") ||
+            ContextValueEquals(context, SolidWorksE2eCliContract.PartFamilyReleasePackageOperation, "operation"))
         {
             // Explicit structured CAD operations must enter the workflow so an
             // unknown family returns unsupported_part_type instead of null.
-            return HasExplicitPartType(context) || TryGetSharedStateModelSpec(context) is not null;
+            return HasExplicitPartType(context) ||
+                   TryGetContextModelSpec(context) is not null ||
+                   TryGetSharedStateModelSpec(context) is not null;
         }
 
         if (FlagEnabled(context, "solidworks_main_workflow"))
+        {
+            return true;
+        }
+
+        if (TryGetContextModelSpec(context) is not null)
         {
             return true;
         }
@@ -150,6 +167,12 @@ public sealed class SolidWorksWorkflowRouter
 
     private CADModelSpec? ResolveModelSpec(AgentContext context)
     {
+        var contextSpec = TryGetContextModelSpec(context);
+        if (contextSpec is not null)
+        {
+            return contextSpec;
+        }
+
         var sharedSpec = TryGetSharedStateModelSpec(context);
         if (sharedSpec is not null)
         {
@@ -171,6 +194,28 @@ public sealed class SolidWorksWorkflowRouter
             : string.Equals(messageFamily.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase)
                 ? CreatePlateBasicFourHolesSpec()
                 : CreatePartFamilySpec(messageFamily.PartType, context.Input.Context);
+    }
+
+    private static CADModelSpec? TryGetContextModelSpec(AgentContext context)
+    {
+        if (!context.Input.Context.TryGetValue("cad_model_spec_json", out var json) ||
+            string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CADModelSpec>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            });
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static CADModelSpec CreateSpec(

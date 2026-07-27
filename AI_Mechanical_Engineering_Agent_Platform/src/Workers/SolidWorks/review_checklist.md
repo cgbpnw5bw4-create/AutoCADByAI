@@ -134,3 +134,71 @@ V1.2 Claude 审查未发现 Blockers。以下 Improvements 已进入 `docs/techn
 3. 确认 `generic_cad_model_spec_supported`、`part_type_registry_exists`、`plate_part_family_registered`、`flange_part_family_registered`、`shaft_part_family_registered`、`unsupported_part_type_rejected`、`invalid_part_parameters_rejected_before_worker`、`part_family_builders_do_not_use_large_switch`、`plate_regression_passed`、`flange_dry_run_passed`、`shaft_dry_run_passed`、`real_cad_part_family_default_disabled`、`v1_8_version_stage_documented`、`markdown_chinese_check_passed` 全部为 `true`。
 
 上述条件满足时可进入 Claude 实现审查。`flange_basic` 在独立 smoke 通过后才可进入真实验收；`shaft_basic` 在旋转专用证据和独立 smoke 通过后才可进入真实验收。本轮不进入 V1.9。
+
+## V1.9 Phase 1 Worker 审查
+
+### 目标与输入输出
+
+审查 flange / shaft 真实 Builder、`RealSolidWorksWorker` 分发、真实 build-only 报告和发布包，并确认 plate 完整图包回归。输入为源码、测试、self-check、API evidence、同次真实报告和产物；输出为 Blockers、Improvements、实现审查结论和真实 smoke 待回填项。
+
+### 必查项
+
+- `PartFamilyBuilderRegistry` 是否解析 flange / shaft 真实 Builder，且无大型 `switch(part_type)`。
+- `RealSolidWorksWorker` 是否返回 `RealBuildFlangeBasic` / `RealBuildShaftBasic`，并统一记录保存、STEP 导出和 API evidence。
+- 是否使用请求、本地 profile、环境三层授权；默认 self-check 是否不连接 COM。
+- 真实 SolidWorks 是否全局串行，并按 flange → shaft 验收。
+- flange 是否分开外圆拉伸、中心孔切除和螺栓孔切除，是否拒绝 `HoleWizard` / 圆周阵列。
+- shaft 是否使用闭合线段轮廓、中心线 selection mark `16` 和 `FeatureRevolve2` 360°，是否拒绝本轮混用偏移多段拉伸。
+- 两族是否仅进入 build-only，没有调用工程图 Builder；plate 完整包是否回归通过。
+- 是否使用十二个专用 `failure_stage`，且 `part_family_api_evidence_insufficient` 会在证据不足时失败关闭。
+- 发布包是否位于 `output/solidworks/e2e/<part_type>/<timestamp>/`，并包含 SLDPRT、STEP、构建报告、端到端报告和 manifest。
+- 最终验收是否通过 Gateway / Agent / WorkflowEngine / Router / Registry / Worker / Validator / Reviewer / QualityGate，而非直接 Builder / SmokeRunner。
+- Phase 1 文档是否明确入场时真实 smoke 尚待回填，Phase 2 是否用同次 CLI 主工作流程证据关闭该状态。
+
+### Blockers
+
+- flange / shaft 任一 Builder 缺失、无 API evidence 门禁或只返回泛化失败阶段。
+- 默认 self-check 启动 SolidWorks、缺少任一授权仍执行、或真实 COM 并发。
+- flange / shaft 自动工程图，或 plate 完整包回归退化。
+- SLDPRT / STEP 缺失或为空却返回成功，或 QualityGate 拒绝后仍生成可交付包。
+- 用 Builder / SmokeRunner、历史 latest 或文件存在冒充最终验收。
+- 大型类型 switch、绕过 Registry、跳过 Validator / Reviewer / QualityGate 或进入 V2.0。
+
+### 自检字段和通过标准
+
+```text
+flange_real_builder_implemented
+shaft_real_builder_implemented
+flange_real_workflow_supported
+shaft_real_workflow_supported
+flange_real_workflow_default_disabled
+shaft_real_workflow_default_disabled
+flange_api_evidence_documented
+shaft_api_evidence_documented
+flange_artifact_validation_supported
+shaft_artifact_validation_supported
+plate_part_family_regression_passed
+no_large_part_type_switch
+all_part_families_use_registry
+v1_9_version_stage_documented
+markdown_chinese_check_passed
+```
+
+默认 build、test、self-check 和所有字段通过时，可进入实现审查。真实验收还必须回填 flange / shaft 独立 diagnostic 的实际 `Passed` 结果和路径，再按 flange → shaft 运行最终主工作流程。本阶段不进入 V2.0。
+
+## V1.9 Phase 2 Worker 审查回填
+
+### 已验证项
+
+- flange diagnostic 为 `CandidatePassed`，产物非空，规则审查 100 分且通过；特征树为一个 `Extrusion` 加两个 `ICE`，四视图确认中心孔和 6 个螺栓孔。
+- shaft diagnostic 为 `CandidatePassed`，产物非空，规则审查 100 分且通过；特征树为 `Revolution`，四视图确认直径 40 主体及直径 32、24 台阶。
+- flange 最终主流程目录为 `output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/`。
+- shaft 最终主流程目录为 `output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/`。
+- 两次最终运行均为 `Passed`、`Deliverable`、QualityGate `Passed`，其 `build_report.json` 已带 V1.9 diagnostic、视觉审查和主流程通过 metadata。
+- plate 完整工程图包在 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260720_082027_397-bd86bc56b48349c69db5f8173c1b3d85/` 回归通过。
+
+### 修复与剩余改进
+
+flange 首次 `part_save_failed` 已用 plate 验证过的 `SaveAs3` / `SaveAs` 路径修复。首次主流程的瞬时哈希读锁曾触发 `artifact_copy_failed`；当前逻辑只有在复制和目标校验成功后才将已恢复的源读锁降为 warning，最终重跑通过。
+
+body count 与 theoretical volume 仍为 `NotVerified`，继续列为非阻断 Improvement。若后续出现目标复制、文件大小或校验失败，仍必须阻断，不能套用读锁 warning。V1.9 基础零件族可以进入 Claude 实现审查，但不得进入 V2.0。

@@ -306,11 +306,17 @@ public sealed record SolidWorksDrawingTitleBlockProperty(
 
 public sealed class SolidWorksReleaseManifest
 {
+    public string SchemaVersion { get; set; } = "1.9";
+
     public string ReleaseId { get; set; } = $"solidworks-release-{Guid.NewGuid():N}";
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public string PartName { get; set; } = "plate_basic_4holes";
+
+    public string? RequestId { get; set; }
+
+    public bool RequiresDrawingDeliverables { get; set; } = true;
 
     public string SourceRoot { get; set; } = string.Empty;
 
@@ -374,11 +380,19 @@ public sealed class SolidWorksReleaseManifestItem
 
 public sealed class SolidWorksPackageQualityReport
 {
+    public string SchemaVersion { get; set; } = "1.9";
+
     public string QualityReportId { get; set; } = $"solidworks-release-quality-{Guid.NewGuid():N}";
 
     public DateTimeOffset CheckedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public string OutputDirectory { get; set; } = string.Empty;
+
+    public string PartName { get; set; } = "plate_basic_4holes";
+
+    public string? RequestId { get; set; }
+
+    public bool RequiresDrawingDeliverables { get; set; } = true;
 
     public bool ManifestExists { get; set; }
 
@@ -451,7 +465,10 @@ public sealed record SolidWorksReleasePackageSourceSet(
     string? TitleBlockReportPath,
     IReadOnlyList<SolidWorksReleaseExecutionEvidence> ExecutionEvidence,
     IReadOnlyList<string>? Warnings = null,
-    bool RequireRealExecutionEvidence = true);
+    bool RequireRealExecutionEvidence = true,
+    string PartType = "plate_basic_4holes",
+    string? RequestId = null,
+    bool RequireDrawingDeliverables = true);
 
 /// <summary>
 /// Runtime evidence from a stage that was executed through the controlled

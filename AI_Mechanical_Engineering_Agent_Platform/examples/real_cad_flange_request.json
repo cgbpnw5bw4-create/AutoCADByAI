@@ -1,0 +1,34 @@
+{
+  "operation": "build_part_family_release_package",
+  "cad_model_spec": {
+    "id": "real-cad-flange-basic-v1-9",
+    "part_type": "flange_basic",
+    "dimensions": {
+      "outer_diameter_mm": "160",
+      "inner_diameter_mm": "60",
+      "thickness_mm": "18",
+      "bolt_hole_count": "6",
+      "bolt_hole_diameter_mm": "14",
+      "bolt_circle_diameter_mm": "115"
+    },
+    "features": {},
+    "material": "Q235",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "allow_real_cad_execution": "true",
+      "dry_run": "false"
+    }
+  }
+}

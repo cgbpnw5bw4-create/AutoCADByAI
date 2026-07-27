@@ -266,3 +266,82 @@ V1.8 进入 Claude 审查前，用户指定的十四个 self-check 字段必须�
 - 禁止以大型 `switch(part_type)` 或分散的 `plate_basic_4holes` 特判代替 Registry 多态分发。
 - 禁止非法参数进入真实 Worker，禁止默认 self-check 启动 SolidWorks。
 - 禁止在本轮实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。
+
+## V1.9 Phase 1 真实 build-only 执行
+
+### 目标与范围
+
+`flange_basic` 和 `shaft_basic` 在本阶段只执行真实零件构建、保存、STEP 导出、产物校验、工程复审、质量门禁和 build-only 发布包。两族不生成 Drawing；`plate_basic_4holes` 继续保持原完整 Drawing / Dimension / TitleBlock / ReleasePackage 回归。
+
+### 执行链
+
+```text
+结构化输入
+→ Gateway / chief-engineer
+→ ChiefEngineerOrchestrator
+→ WorkflowEngine
+→ SolidWorksWorkflowRouter
+→ PartTypeRegistry
+→ PartFamilyBuilderRegistry
+→ RealSolidWorksWorker
+→ ArtifactValidator
+→ Reviewer
+→ QualityGate
+→ build-only ReleasePackage
+```
+
+Router 根据已注册 `part_type` 选择 build-only 或 plate 完整包语义。最终验收不允许 CLI、Agent 或审查者直接调用 Builder / SmokeRunner。
+
+### 授权、串行和输出
+
+真实执行必须通过请求层、`LocalDevelopmentProfile` 本地授权层和环境层。默认 self-check 不连接 COM。真实任务全局串行，阶段验收顺序为 `flange_basic` → `shaft_basic`。
+
+两族输出根目录为 `output/solidworks/e2e/<part_type>/<timestamp>/`，最小内容为：
+
+```text
+artifacts/<part_type>.SLDPRT
+artifacts/<part_type>.STEP
+reports/build_report.json
+reports/e2e_execution_report.json
+release_manifest.json
+```
+
+### 自检与验证标准
+
+```text
+flange_real_builder_implemented
+shaft_real_builder_implemented
+flange_real_workflow_supported
+shaft_real_workflow_supported
+flange_real_workflow_default_disabled
+shaft_real_workflow_default_disabled
+flange_api_evidence_documented
+shaft_api_evidence_documented
+flange_artifact_validation_supported
+shaft_artifact_validation_supported
+plate_part_family_regression_passed
+no_large_part_type_switch
+all_part_families_use_registry
+v1_9_version_stage_documented
+markdown_chinese_check_passed
+```
+
+默认 build、test、self-check 和上述字段必须通过。真实通过只能在同次主工作流程产生非空 SLDPRT / STEP、完整报告、QualityGate 通过和发布包后回填。Phase 1 入场时真实 smoke 结果和路径尚待回填；该条件现已由下述 Phase 2 证据关闭。
+
+### 失败和禁止事项
+
+失败必须使用 V1.9 专用证据、法兰、轴、保存、STEP、产物校验或 QualityGate 阶段，详见 `failure_repair.md`。禁止 flange / shaft 自动工程图，禁止并发真实 SolidWorks，禁止用 diagnostic 结果冒充最终验收，禁止进入 V2.0。
+
+## V1.9 Phase 2 执行结果
+
+按 flange → shaft 的串行顺序完成专用 diagnostic 和最终 CLI 主工作流程后，两个 build-only 零件族均已可交付：
+
+| 零件族 | diagnostic | 最终主流程目录 | 最终状态 |
+|---|---|---|---|
+| `flange_basic` | `CandidatePassed`，100 分审查通过 | `output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/` | `Passed` / `Deliverable` / QualityGate `Passed` |
+| `shaft_basic` | `CandidatePassed`，100 分审查通过 | `output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/` | `Passed` / `Deliverable` / QualityGate `Passed` |
+| `plate_basic_4holes` | 完整包回归 | `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260720_082027_397-bd86bc56b48349c69db5f8173c1b3d85/` | `Passed` / `Deliverable` / QualityGate `Passed` |
+
+最终构建报告已经写入 V1.9 diagnostic、视觉审查和主流程通过的 API evidence metadata。先前两次成功 CLI 运行属于 metadata 回填前的过程证据；最终交付必须引用表内目录。
+
+diagnostic 的 body count 与 theoretical volume 仍未自动验证，但专用特征树、四视图、非空产物和完整主工作流程证据已满足本阶段基础族验收。该增强保留为 Improvement，不扩展到 V2.0。

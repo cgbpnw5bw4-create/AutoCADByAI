@@ -115,3 +115,40 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 3. 修复后运行 build、test、self-check；对 `flange_basic` 和 `shaft_basic` 至少要求 dry-run 通过。
 
 禁止为修复单个失败而增加大型 `switch(part_type)`、绕过 Registry、启动默认真实 CAD，或扩展到装配体、BOM、键槽、螺纹、法兰密封面、批量队列与 V1.9。
+
+## V1.9 Phase 1 build-only 失败修复
+
+### 目标与输入输出
+
+本节将 `flange_basic` 和 `shaft_basic` 真实构建失败定位到单一可行动阶段。输入为同次 `build_report.json`、`e2e_execution_report.json`、Registry / Builder 日志、API evidence、ArtifactValidator 和 QualityGate 结果；输出必须包含直接原因、证据路径、修复策略和下一步验证命令。
+
+| `failure_stage` | 首先检查 | 修复策略 |
+|---|---|---|
+| `part_family_api_evidence_insufficient` | 官方 API、独立 diagnostic report、完整参数与返回值 | 停止主 Worker 回填，先在对应零件族专用 Runner 补证据。 |
+| `flange_profile_create_failed` | 外圆草图、基准面、单位和 `CreateCircle` 返回值 | 在 flange diagnostic 中修复外圆轮廓，不进入拉伸。 |
+| `flange_extrude_failed` | 外圆轮廓状态、`FeatureExtrusion2` 参数和 Feature 返回值 | 复用 plate 已验证参数语义，独立验证圆盘拉伸。 |
+| `flange_inner_cut_failed` | 独立活动内孔草图、`FeatureCut4` 返回值 | 保持中心孔与螺栓孔分步，不合并失败语义。 |
+| `flange_bolt_holes_failed` | 分布圆坐标、孔数、单草图状态和 `FeatureCut4` | 修正孔中心计算或草图，不改用 `HoleWizard` / 圆周阵列。 |
+| `shaft_profile_create_failed` | `CreateLine` 闭合轮廓、`CreateCenterLine`、台阶序列 | 先在 shaft diagnostic 验证闭合性和旋转轴线，不进入旋转。 |
+| `shaft_revolve_failed` | selection mark `16`、`FeatureRevolve2` 完整参数和返回 Feature | 对照官方 360° 旋转证据，不切换偏移拉伸。 |
+| `shaft_step_feature_failed` | 台阶参数对、轮廓线段顺序、重建后几何 | 修正台阶到闭合轮廓的映射，仍使用同一旋转策略。 |
+| `part_save_failed` | SLDPRT 保存返回值、路径、文件锁和大小 | 修复保存边界，非空文件前不得进入 STEP。 |
+| `step_export_failed` | 活动文档、STEP 导出返回值、路径和大小 | 激活当次零件后重跑导出，不复用历史 STEP。 |
+| `artifact_validation_failed` | SLDPRT / STEP 存在、大小、绝对路径、零件族和报告一致性 | 修复产物或报告，不放宽 Validator。 |
+| `quality_gate_rejected` | Validator、Reviewer 问题和 GateDecision | 修复上游证据或工程合理性，不绕过 QualityGate。 |
+
+### 执行和验证标准
+
+1. 只读取同次 `output/solidworks/e2e/<part_type>/<timestamp>/` 中的显式报告和 manifest。
+2. API 失败先进独立 diagnostic，其他失败在 Worker、Validator、Reviewer 或 QualityGate 对应层修复。
+3. 修复后先运行默认 build / test / self-check，再在三层授权下按 flange → shaft 串行重跑真实主工作流程。
+
+禁止读取历史 latest 修补当次包，禁止用 Builder / SmokeRunner 结果冒充最终验收，禁止 flange / shaft 自动工程图，禁止进入 V2.0。
+
+## V1.9 Phase 2 已验证修复
+
+- flange 首次 diagnostic 的 `part_save_failed` 已通过 plate 验证过的 `SaveAs3` 主路径与 `SaveAs` 回退路径修复；后续 diagnostic 产物非空并为 `CandidatePassed`。
+- 首次主流程遇到瞬时源文件哈希读锁并返回 `artifact_copy_failed`。当前仅在复制成功且目标文件校验通过时，将已经恢复的源读锁降级为 warning；最终 metadata 回填主流程已重跑通过。
+- 若目标复制、大小或校验失败，仍必须保留 `artifact_copy_failed` 并停止发布，不能套用上述 warning 分支。
+
+这些修复只关闭 V1.9 基础零件族的已知保存与瞬时读锁问题，不扩大到工程图或 V2.0。

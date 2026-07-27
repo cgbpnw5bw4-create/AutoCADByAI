@@ -698,7 +698,7 @@ public sealed class SolidWorksModuleSkeletonTests
         Assert.True(result.RealCadConnected);
         Assert.False(result.RealCadExecuted);
         Assert.NotEqual("RealBuild", result.ExecutionMode);
-        Assert.False(worker.SupportsGenericRealBuild);
+        Assert.True(worker.SupportsGenericRealBuild);
         Assert.Equal(0, sessionManager.ExecuteWithApplicationAttempts);
     }
 
@@ -1999,7 +1999,7 @@ public sealed class SolidWorksModuleSkeletonTests
 
         Assert.Equal("Rejected", result.Status);
         Assert.Equal("RealPreflightOnly", result.ExecutionMode);
-        Assert.Contains(result.Issues, issue => issue.Contains("unsupported_real_build_plan", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Issues, issue => issue.Contains("part_family_builder_missing", StringComparison.OrdinalIgnoreCase));
         Assert.False(result.RealCadExecuted);
         Assert.False(result.RealCadConnected);
         Assert.Equal(0, sessionManager.ConnectAttempts);
@@ -2090,7 +2090,7 @@ public sealed class SolidWorksModuleSkeletonTests
 
             var report = new SolidWorksArtifactValidator(Path.Combine(FindProjectRoot(), "output", "solidworks")).Validate(workerResult);
 
-            Assert.True(report.IsPassed);
+            Assert.True(report.IsPassed, string.Join(Environment.NewLine, report.Issues));
             Assert.Empty(report.Issues);
         }
         finally
@@ -2488,7 +2488,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.False(report.SolidWorksRealConnectionSmokeTestAttempted);
             Assert.False(report.SolidWorksRealConnectionSmokeTestPassed);
             Assert.Null(report.SolidWorksRealConnectionSmokeTestError);
-            Assert.True(report.SolidWorksGenericRealBuildNotImplemented);
+            Assert.False(report.SolidWorksGenericRealBuildNotImplemented);
             Assert.True(report.SolidWorksRealCadNotExecutedByDefault);
             Assert.True(report.SolidWorksRealPlateBuildImplemented);
             Assert.True(report.SolidWorksRealBuildRequiresEnvFlag);
@@ -3485,6 +3485,7 @@ public sealed class SolidWorksModuleSkeletonTests
                 "new_part_success",
                 "plane_selection_started",
                 "plane_selection_success",
+                "cut_holes_success",
                 "save_sldprt_success",
                 "export_step_success",
                 "build_report_written"

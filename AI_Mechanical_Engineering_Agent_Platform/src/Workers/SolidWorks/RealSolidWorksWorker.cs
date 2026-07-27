@@ -11,6 +11,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
     private readonly ISolidWorksDrawingBuilder _drawingBuilder;
     private readonly ISolidWorksDrawingDimensionBuilder _drawingDimensionBuilder;
     private readonly ISolidWorksDrawingTitleBlockBuilder _drawingTitleBlockBuilder;
+    private readonly PartFamilyBuilderRegistry _partFamilyBuilderRegistry;
     private readonly SolidWorksRuntimeOptions? _options;
 
     public RealSolidWorksWorker()
@@ -59,12 +60,32 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         ISolidWorksDrawingBuilder? drawingBuilder,
         ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder,
         ISolidWorksDrawingTitleBlockBuilder? drawingTitleBlockBuilder)
+        : this(
+            sessionManager,
+            options,
+            plateBuilder,
+            drawingBuilder,
+            drawingDimensionBuilder,
+            drawingTitleBlockBuilder,
+            null)
+    {
+    }
+
+    public RealSolidWorksWorker(
+        ISolidWorksSessionManager? sessionManager,
+        SolidWorksRuntimeOptions? options,
+        ISolidWorksPlateBuilder? plateBuilder,
+        ISolidWorksDrawingBuilder? drawingBuilder,
+        ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder,
+        ISolidWorksDrawingTitleBlockBuilder? drawingTitleBlockBuilder,
+        PartFamilyBuilderRegistry? partFamilyBuilderRegistry)
     {
         _sessionManager = sessionManager ?? new SolidWorksSessionManager();
         _plateBuilder = plateBuilder ?? new LateBoundSolidWorksPlateBuilder();
         _drawingBuilder = drawingBuilder ?? new LateBoundSolidWorksDrawingBuilder();
         _drawingDimensionBuilder = drawingDimensionBuilder ?? new LateBoundSolidWorksDrawingDimensionBuilder();
         _drawingTitleBlockBuilder = drawingTitleBlockBuilder ?? new LateBoundSolidWorksDrawingTitleBlockBuilder();
+        _partFamilyBuilderRegistry = partFamilyBuilderRegistry ?? PartFamilyBuilderRegistry.CreateDefault(_plateBuilder);
         _options = options;
     }
 
@@ -72,7 +93,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
 
     public string TargetSystem => "SolidWorks";
 
-    public bool SupportsGenericRealBuild => false;
+    public bool SupportsGenericRealBuild => true;
 
     public bool SupportsPlateBasicFourHolesBuild => true;
 
@@ -94,10 +115,16 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         var logs = new List<string>
         {
             "operation_executed: real_build_request_received",
-            "RealSolidWorksWorker V1.0-B executed preflight boundary checks.",
-            "RealBuild generic mode is not implemented.",
-            "V1.0-B only supports RealBuildPlateBasic4Holes under explicit safety switches."
+            "RealSolidWorksWorker executed preflight boundary checks.",
+            "Real part-family builds are resolved through PartFamilyBuilderRegistry."
         };
+
+        var isPartFamilyBuild =
+            !request.ConnectionSmokeTestOnly &&
+            !request.DrawingSmokeTestOnly &&
+            !request.DrawingDimensionSmokeTestOnly &&
+            !request.DrawingTitleBlockSmokeTestOnly;
+        IPartFamilyBuilder? partFamilyBuilder = null;
 
         if (ShouldRejectBeforeConnection(request, options))
         {
@@ -112,15 +139,11 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 preflight);
         }
 
-        if (!request.ConnectionSmokeTestOnly &&
-            !request.DrawingSmokeTestOnly &&
-            !request.DrawingDimensionSmokeTestOnly &&
-            !request.DrawingTitleBlockSmokeTestOnly &&
-            !string.Equals(request.BuildPlan.PartType, "plate_basic_4holes", StringComparison.OrdinalIgnoreCase))
+        if (isPartFamilyBuild &&
+            !_partFamilyBuilderRegistry.TryGetBuilder(request.BuildPlan.PartType, out partFamilyBuilder))
         {
-            logs.Add("COM connection was not attempted because the real build plan is unsupported.");
-            issues.Add($"part_family_builder_missing: {request.BuildPlan.PartType} has no independently smoke-tested real SolidWorks builder; only plate_basic_4holes is enabled.");
-            issues.Add("unsupported_real_build_plan: RealSolidWorksWorker only enables the independently validated plate_basic_4holes real path.");
+            logs.Add("COM connection was not attempted because no part-family builder is registered.");
+            issues.Add($"part_family_builder_missing: {request.BuildPlan.PartType} has no registered real SolidWorks builder.");
             return Result(
                 request,
                 "Rejected",
@@ -130,6 +153,45 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 realCadConnected: false,
                 preflight,
                 PartFamilyFailureStages.PartFamilyBuilderMissing);
+        }
+
+        if (isPartFamilyBuild && partFamilyBuilder is not null && !partFamilyBuilder.SupportsRealExecution)
+        {
+            logs.Add("COM connection was not attempted because the registered builder lacks sufficient API evidence.");
+            issues.Add($"{PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient}: {partFamilyBuilder.ApiEvidence}.");
+            return Result(
+                request,
+                "Rejected",
+                "RealPreflightOnly",
+                logs,
+                issues,
+                realCadConnected: false,
+                preflight,
+                PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient);
+        }
+
+        if (isPartFamilyBuild &&
+            partFamilyBuilder is not null &&
+            !string.Equals(partFamilyBuilder.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
+        {
+            var localAuthorization = SolidWorksWorkerLocalExecutionAuthorization.Load(
+                string.IsNullOrWhiteSpace(request.OutputDirectory) ? options.OutputDirectory : request.OutputDirectory);
+            if (!localAuthorization.IsAuthorized)
+            {
+                logs.Add("COM connection was not attempted because LocalDevelopmentProfile authorization was missing or invalid.");
+                issues.AddRange(localAuthorization.Issues);
+                issues.Add($"{PartFamilyFailureStages.LocalExecutionAuthorizationMissing}: LocalDevelopmentProfile authorization is required for non-plate real builds.");
+                return RealBuildFailureResult(
+                    request,
+                    "Rejected",
+                    logs,
+                    issues,
+                    realCadConnected: false,
+                    preflight,
+                    options,
+                    PartFamilyFailureStages.LocalExecutionAuthorizationMissing,
+                    partFamilyBuilder);
+            }
         }
 
         if (!request.ConnectionSmokeTestOnly &&
@@ -148,7 +210,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 realCadConnected: false,
                 preflight,
                 options,
-                "preflight_failed");
+                "preflight_failed",
+                partFamilyBuilder);
         }
 
         if (preflight.FinalStatus == "Failed")
@@ -171,8 +234,29 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     realCadConnected: false,
                     preflight,
                     options,
-                    "preflight_failed");
+                    "preflight_failed",
+                    partFamilyBuilder);
         }
+
+        var coordinationLease = await RealSolidWorksExecutionCoordinator.TryAcquireAsync(
+            options.ExecutionTimeoutSeconds,
+            cancellationToken);
+        if (coordinationLease is null)
+        {
+            issues.Add("real_cad_execution_coordination_timeout: process-wide SolidWorks execution gate timed out.");
+            return Result(
+                request,
+                "Failed",
+                partFamilyBuilder?.RealExecutionMode ?? "RealPreflightOnly",
+                logs,
+                issues,
+                realCadConnected: false,
+                preflight,
+                PartFamilyFailureStages.QualityGateRejected);
+        }
+
+        using (coordinationLease)
+        {
 
         logs.Add("operation_executed: connection_started");
         var connection = await _sessionManager.ConnectAsync(options, cancellationToken);
@@ -207,7 +291,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                         realCadConnected: false,
                         connectedPreflight,
                         options,
-                        "solidworks_connection_failed");
+                        "solidworks_connection_failed",
+                        partFamilyBuilder);
             }
 
             logs.Add("operation_executed: connection_success");
@@ -398,7 +483,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     PreflightReport: connectedPreflight with { Issues = issues });
             }
 
-            SolidWorksPlateBuildResult buildResult;
+            PartFamilyBuildResult buildResult;
             try
             {
                 buildResult = await ExecuteWithControlledDocumentCleanupAsync(
@@ -406,11 +491,12 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     request,
                     options,
                     logs,
-                    (application, token) => _plateBuilder.BuildPlateBasicFourHolesAsync(
-                        application,
-                        request,
-                        options,
-                        connection.SolidWorksVersion,
+                    (application, token) => partFamilyBuilder!.BuildAsync(
+                        new PartFamilyBuildContext(
+                            application,
+                            request,
+                            options,
+                            connection.SolidWorksVersion),
                         token),
                     cancellationToken);
             }
@@ -420,7 +506,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 return Result(
                     request,
                     "Failed",
-                    SolidWorksPlateBuildOutput.ExecutionMode,
+                    partFamilyBuilder!.RealExecutionMode,
                     logs,
                     issues,
                     realCadConnected: true,
@@ -432,7 +518,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 return Result(
                     request,
                     "Failed",
-                    SolidWorksPlateBuildOutput.ExecutionMode,
+                    partFamilyBuilder!.RealExecutionMode,
                     logs,
                     issues,
                     realCadConnected: true,
@@ -445,13 +531,14 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             return new SolidWorksWorkerResult(
                 request.RequestId,
                 buildResult.Status,
-                buildResult.GeneratedArtifacts,
+                buildResult.Artifacts,
                 logs,
                 issues,
-                SolidWorksPlateBuildOutput.ExecutionMode,
+                buildResult.ExecutionMode,
                 RealCadExecuted: buildResult.RealCadExecuted,
                 RealCadConnected: true,
-                PreflightReport: connectedPreflight with { Issues = issues });
+                PreflightReport: connectedPreflight with { Issues = issues },
+                FailureStage: buildResult.FailureStage);
         }
         finally
         {
@@ -463,6 +550,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             {
                 logs.Add($"solidworks_disconnect_warning: {ex.Message}");
             }
+        }
         }
     }
 
@@ -529,8 +617,67 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         bool realCadConnected,
         SolidWorksPreflightReport preflight,
         SolidWorksRuntimeOptions options,
-        string failedStage)
+        string failedStage,
+        IPartFamilyBuilder? partFamilyBuilder = null)
     {
+        if (partFamilyBuilder is not null &&
+            !string.Equals(partFamilyBuilder.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
+        {
+            var familyOutputDirectory = SolidWorksPartFamilyBuildOutput.ResolveOutputDirectory(
+                request,
+                options,
+                partFamilyBuilder.PartType);
+            var familyReportPath = Path.Combine(familyOutputDirectory, "build_report.json");
+            var familyDiagnostics = new SolidWorksPartFamilyBuildDiagnostics
+            {
+                FailureStage = failedStage,
+                RealCadExecuted = false
+            };
+            familyDiagnostics.OperationsExecuted.Add("real_build_request_received");
+            familyDiagnostics.OperationsExecuted.Add("safety_flags_checked");
+            familyDiagnostics.OperationsExecuted.Add("preflight_started");
+            familyDiagnostics.OperationsExecuted.Add(failedStage);
+            familyDiagnostics.Issues.AddRange(issues);
+            var familyIssues = issues.ToList();
+            var familyArtifacts = Array.Empty<SolidWorksArtifact>();
+            try
+            {
+                SolidWorksPartFamilyBuildReportWriter.Write(
+                    familyReportPath,
+                    new PartFamilyBuildContext(
+                        new object(),
+                        request,
+                        options,
+                        preflight.SolidWorksVersion,
+                        RealCadConnected: realCadConnected),
+                    partFamilyBuilder,
+                    familyOutputDirectory,
+                    familyDiagnostics,
+                    "Failed");
+                familyArtifacts =
+                [
+                    SolidWorksPartFamilyBuildOutput.Artifact(
+                        "real-build-report", "BuildReport", familyReportPath, ".json", "Real part-family preflight failure report.")
+                ];
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                familyIssues.Add($"build_report_write_failed: {ex.Message}");
+            }
+
+            return new SolidWorksWorkerResult(
+                request.RequestId,
+                status,
+                familyArtifacts,
+                logs,
+                familyIssues,
+                partFamilyBuilder.RealExecutionMode,
+                RealCadExecuted: false,
+                RealCadConnected: realCadConnected,
+                PreflightReport: preflight with { Issues = familyIssues },
+                FailureStage: failedStage);
+        }
+
         var outputDirectory = SolidWorksPlateBuildOutput.ResolveOutputDirectory(request, options);
         var reportPath = Path.Combine(outputDirectory, "build_report.json");
         var diagnostics = new SolidWorksPlateBuildDiagnostics();
@@ -574,7 +721,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             SolidWorksPlateBuildOutput.ExecutionMode,
             RealCadExecuted: false,
             RealCadConnected: realCadConnected,
-            PreflightReport: preflight with { Issues = allIssues });
+            PreflightReport: preflight with { Issues = allIssues },
+            FailureStage: failedStage);
     }
 
     private static SolidWorksPreflightReport CreatePreflightReport(
@@ -630,7 +778,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             request.DrawingDimensionSmokeTestOnly ? "plate_basic_4holes_dimensioned.SLDDRW" : null,
             request.DrawingTitleBlockSmokeTestOnly ? "plate_basic_4holes_title_block.SLDDRW" : null,
             !request.DrawingSmokeTestOnly && !request.DrawingDimensionSmokeTestOnly && !request.DrawingTitleBlockSmokeTestOnly
-                ? "plate_basic_4holes.SLDPRT"
+                ? $"{request.BuildPlan.PartType}.SLDPRT"
                 : null
         }
         .Where(name => !string.IsNullOrWhiteSpace(name))

@@ -208,3 +208,40 @@ V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录
 4. 运行 build、test、默认 self-check，确认修复过程不启动 SolidWorks。
 
 禁止用法兰或轴的 dry-run 报告代替真实诊断报告，禁止无独立 smoke 证据就改动主 Worker，禁止借修复扩展到装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。
+
+## V1.9 Phase 1 真实 build-only 失败分流
+
+### 目标与输入输出
+
+本节处理已进入 `RealSolidWorksWorker` 的 flange / shaft 真实构建失败。输入是同次 Worker 日志、`PartFamilyBuildResult`、`build_report.json`、诊断证据、产物校验和质量门禁裁决；输出是下列单一失败阶段及可重现修复路径。
+
+| `failure_stage` | Worker 层证据 | 修复与回填条件 |
+|---|---|---|
+| `part_family_api_evidence_insufficient` | Builder 的 API evidence 状态、独立 diagnostic 路径 | 不连接主 Worker；先在专用 Runner 获得真实 `Passed` 证据。 |
+| `flange_profile_create_failed` | 基准面、草图状态、`CreateCircle` 返回值 | 外圆轮廓诊断通过后才允许拉伸。 |
+| `flange_extrude_failed` | `FeatureExtrusion2` 参数、Feature 和重建状态 | 圆盘实体存在且无错后回填。 |
+| `flange_inner_cut_failed` | 独立活动内孔草图和 `FeatureCut4` | 中心孔真实切通并重建通过后回填。 |
+| `flange_bolt_holes_failed` | 孔中心坐标、孔数、单草图和 `FeatureCut4` | 全部螺栓孔存在且与参数一致后回填。 |
+| `shaft_profile_create_failed` | `CreateLine`、`CreateCenterLine`、闭合性、台阶映射 | 轮廓闭合且中心线状态可审计后回填。 |
+| `shaft_revolve_failed` | selection mark `16`、`FeatureRevolve2` 参数与返回 Feature | 360° 旋转和重建都成功后回填。 |
+| `shaft_step_feature_failed` | 台阶数量、每段直径/长度与实际几何 | 参数和几何一致，不使用偏移拉伸回退。 |
+| `part_save_failed` | 保存返回值、错误码、目标路径和文件大小 | SLDPRT 真实非空且当次路径一致。 |
+| `step_export_failed` | 活动文档、导出返回值、错误码和文件大小 | STEP 真实非空且与当次零件一致。 |
+| `artifact_validation_failed` | 两个产物、路径根、扩展名、大小和报告 | 修复 Builder / report，不放宽 ArtifactValidator。 |
+| `quality_gate_rejected` | Validator issues、Reviewer issues、GateDecision | 修复上游原因，重跑完整主工作流程。 |
+
+### 执行步骤与验证标准
+
+1. 从当次 `output/solidworks/e2e/<part_type>/<timestamp>/reports/e2e_execution_report.json` 开始，不扫描历史 latest。
+2. API 阶段失败先进该族 diagnostic；保存/导出在 Worker 边界修复；校验/门禁在对应层修复。
+3. 默认验证不启动 COM；需要真实重跑时重新确认三层授权，并以 flange → shaft 全局串行执行。
+
+禁止用直接 Builder / SmokeRunner 结果替换主工作流程报告，禁止为修复 flange / shaft 进入工程图，禁止跳过 QualityGate，禁止进入 V2.0。
+
+## V1.9 Phase 2 修复证据
+
+flange 首次 diagnostic 在保存阶段返回 `part_save_failed`。修复复用 plate 已验证的 `SaveAs3` 主调用，并保留 `SaveAs` 回退；后续真实保存和 STEP 导出均生成非空产物。
+
+首次主流程的发布包阶段遇到瞬时源文件哈希读锁并返回 `artifact_copy_failed`。修复后的顺序是先复制、再校验目标，只有两步均成功且源读锁属于已恢复状态时才记录 warning。最终 flange 与 shaft metadata 回填运行均为 `Passed`、`Deliverable`、QualityGate `Passed`。
+
+任何复制失败、目标缺失、空文件或目标校验失败仍是阻断项。禁止把已验证的瞬时读锁分支泛化为发布包错误豁免，也不进入 V2.0。

@@ -284,3 +284,74 @@ API：`ICustomPropertyManager.Add3`、`ICustomPropertyManager.Get6` 和 `ICustom
 4. 仅当专用 Runner 成功、报告可复现且产物非空时，才可将 API 路径回填该族 Builder。
 
 禁止用 plate 的 API 成功报告代替 flange 或 shaft 专用证据，禁止在 evidence 不足时盲改 COM 长参数，禁止自动执行宏或复制第三方脚本，禁止把文件存在当作真实几何成功。
+
+## V1.9 Phase 1 真实 Builder API 证据
+
+### 目标与当前状态
+
+本节定义 flange 和 shaft 从候选 API 进入独立 diagnostic 的严格路径。官方 URL 沿用上文 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4`、`CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 和官方整周旋转示例。
+
+Phase 1 入场结论仅为：两族证据足以进入默认关闭的独立 diagnostic，flange 和 shaft 的实际 smoke `final_status`、`run_id` 和报告路径尚待回填；该限制现已由下述 Phase 2 真实证据关闭。
+
+### flange 选定策略
+
+1. 选择标准基准面，进入外圆草图。
+2. `CreateCircle` 创建外圆，`FeatureExtrusion2` 生成实心圆盘。
+3. 在新的独立活动草图中创建中心孔，用 `FeatureCut4` 切除。
+4. 新建螺栓孔草图，按分布圆计算全部孔中心，在同一草图中创建全部圆。
+5. 在螺栓孔草图仍活动时调用 `FeatureCut4`，一次切除全部螺栓孔。
+
+该策略严格拒绝 `HoleWizard` 和圆周阵列 API。失败分别记录 `flange_profile_create_failed`、`flange_extrude_failed`、`flange_inner_cut_failed` 或 `flange_bolt_holes_failed`。
+
+### shaft 选定策略
+
+1. `CreateLine` 创建包含基础直径和可选台阶的闭合轴向半截面。
+2. `CreateCenterLine` 创建旋转轴线，将其设为构造线，并以 selection `mark=16` 选中。
+3. `FeatureRevolve2` 执行 360° 旋转，验证返回 Feature、重建结果和台阶几何。
+
+失败分别记录 `shaft_profile_create_failed`、`shaft_revolve_failed` 或 `shaft_step_feature_failed`。偏移多段拉伸保留在 backlog / 拒绝策略中，V1.9 Phase 1 不与旋转路径混用。
+
+### 输入输出、验证和回填条件
+
+diagnostic 输入包含零件族参数、模板、输出目录和显式安全开关。输出必须包含官方 API 来源、每步参数和单位、草图/选择状态、返回值、子阶段失败、SLDPRT / STEP 路径和文件大小。
+
+只有独立 Runner 输出可重现 `Passed`、产物非空、人工打开几何检查通过，才能把证据回填真实 Builder。回填后仍必须经完整主工作流程验收，诊断成功不等于最终可交付。
+
+证据不足时返回 `part_family_api_evidence_insufficient`。禁止盲改长参数、复制官方示例为生产代码、自动执行宏、使用第三方脚本，或以 Builder / SmokeRunner 代替最终主工作流程。
+
+## V1.9 Phase 2 真实证据结果
+
+### diagnostic 与视觉复核
+
+`flange_basic` 专用 diagnostic 位于：
+
+```text
+output/solidworks/diagnostics/v1_9/flange_basic/20260720_081331_449_b538c0c180d44bc6a3007a34e1bd1c0f/
+```
+
+其 `evidence_report.json` 为 `CandidatePassed`。SLDPRT 为 91751 字节，STEP 为 48876 字节；`review/flange_basic_review_report.json` 规则评分为 100 且通过。特征树显示一个 `Extrusion` 与两个 `ICE`，四视图人工检查确认中心孔和 6 个螺栓孔，符合外圆拉伸、中心孔独立切除、螺栓孔单草图切除策略。
+
+`shaft_basic` 专用 diagnostic 位于：
+
+```text
+output/solidworks/diagnostics/v1_9/shaft_basic/20260720_081653_181_b0b4a7315e994226b8361ee551be7e6b/
+```
+
+其 `evidence_report.json` 为 `CandidatePassed`。SLDPRT 为 91716 字节，STEP 为 23323 字节；`review/shaft_basic_review_report.json` 规则评分为 100 且通过。特征树显示 `Revolution`，四视图人工检查确认直径 40 主体和直径 32、直径 24 两级台阶，符合闭合轮廓、中心线及 `FeatureRevolve2` 路径。
+
+### 最终主工作流程证据
+
+最终 metadata 回填运行如下：
+
+```text
+output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/
+output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/
+```
+
+两次运行的 `e2e_execution_report.json` 均为 `Passed`、`Deliverable`、QualityGate `Passed`，真实 Worker、连接、执行和同次源报告证据均通过。最终 `build_report.json` 分别记录 `v1_9_flange_diagnostic_visual_review_and_main_workflow_passed` 与 `v1_9_shaft_diagnostic_visual_review_and_main_workflow_passed`。此前两条成功 CLI 路径只作为 metadata 回填前的过程记录，不是最终交付路径。
+
+### 修复证据与限制
+
+flange 首次 diagnostic 的 `part_save_failed` 通过复用 plate 已验证的 `SaveAs3` 主路径和 `SaveAs` 回退路径修复。首次主流程的瞬时源文件哈希读锁曾导致 `artifact_copy_failed`；修复后仍先要求复制与目标校验成功，再把已经恢复的源读锁降级为 warning，最终重跑通过。
+
+两族 diagnostic 的 body count 和 theoretical volume 字段仍为 `NotVerified`。它们不削弱本阶段已经形成的特征树、四视图、非空产物和完整主流程证据，但自动核验仍应作为 Improvements 实现。不得放宽目标文件校验，不得把 warning 当作任意复制错误的豁免，也不得进入 V2.0。

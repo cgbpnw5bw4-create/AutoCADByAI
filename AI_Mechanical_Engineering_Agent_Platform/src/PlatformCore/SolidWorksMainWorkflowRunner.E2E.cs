@@ -9,6 +9,161 @@ namespace PlatformCore;
 
 public sealed partial class SolidWorksMainWorkflowRunner
 {
+    private async Task<SolidWorksMainWorkflowResult> ExecutePartFamilyReleasePackageAsync(
+        SolidWorksMainWorkflowRequest request,
+        CancellationToken cancellationToken)
+    {
+        var releaseDirectory = Path.GetFullPath(request.OutputDirectory);
+        Directory.CreateDirectory(Path.Combine(releaseDirectory, "reports"));
+        var partType = request.ModelSpec?.PartType ?? string.Empty;
+
+        if (!PartTypeRegistry.CreateDefault().TryGetDefinition(partType, out _))
+        {
+            var familyIssues = new[] { $"{PartFamilyFailureStages.UnsupportedPartType}: {partType} is not registered." };
+            var failedWorkflow = await _workflowEngine.ExecuteAsync(
+                [
+                    new WorkflowStep(
+                        "V1.9 part-family eligibility",
+                        _ => Task.FromResult(StepFailed(
+                            "solidworks-e2e-part-family-eligibility",
+                            "The requested part family is not registered.",
+                            familyIssues,
+                            fatal: true)),
+                        "solidworks-e2e-part-family-eligibility")
+                ],
+                new WorkflowContext($"solidworks-e2e-{request.TaskId}", new Dictionary<string, object?>
+                {
+                    ["request_id"] = request.RequestId,
+                    ["part_type"] = partType
+                }),
+                cancellationToken);
+
+            return await WriteE2eResultAsync(
+                request,
+                releaseDirectory,
+                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
+                package: null,
+                failedWorkflow,
+                new GateDecision($"gate-solidworks-e2e-family-{Guid.NewGuid():N}", GateDecisionResult.Failed, "Requested part family is not registered."),
+                familyIssues,
+                PartFamilyFailureStages.UnsupportedPartType,
+                cancellationToken);
+        }
+
+        var runtimeOptions = _runtimeOptionsProvider();
+        var localAuthorization = SolidWorksLocalExecutionProfile.Load(request.ProjectRoot);
+        var confirmationIssues = GetE2eConfirmationIssues(request, runtimeOptions, localAuthorization);
+        if (confirmationIssues.Count > 0)
+        {
+            var failedWorkflow = await _workflowEngine.ExecuteAsync(
+                [
+                    new WorkflowStep(
+                        "V1.9 real part-family execution confirmation",
+                        _ => Task.FromResult(StepFailed(
+                            "solidworks-e2e-execution-confirmation",
+                            "V1.9 real part-family workflow was rejected because its required confirmations are incomplete.",
+                            confirmationIssues,
+                            fatal: true)),
+                        "solidworks-e2e-execution-confirmation")
+                ],
+                new WorkflowContext($"solidworks-e2e-{request.TaskId}", new Dictionary<string, object?>
+                {
+                    ["request_id"] = request.RequestId,
+                    ["part_type"] = partType,
+                    ["operation"] = request.Operation.ToString()
+                }),
+                cancellationToken);
+
+            return await WriteE2eResultAsync(
+                request,
+                releaseDirectory,
+                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
+                package: null,
+                failedWorkflow,
+                new GateDecision($"gate-solidworks-e2e-confirmation-{Guid.NewGuid():N}", GateDecisionResult.Failed, "Required real CAD confirmations are missing."),
+                confirmationIssues,
+                localAuthorization.IsAuthorized
+                    ? "real_execution_confirmation_missing"
+                    : "local_execution_authorization_missing",
+                cancellationToken,
+                localAuthorization: localAuthorization);
+        }
+
+        var runSegment = ToSafePathSegment(request.RequestId);
+        var build = await ExecuteSingleStageAsync(
+            request with
+            {
+                Operation = SolidWorksMainWorkflowOperation.BuildPlate,
+                Stage = SolidWorksMainWorkflowStage.BuildPartFamily,
+                OutputDirectory = Path.Combine(request.ProjectRoot, "output", "solidworks", "real", ToSafePathSegment(partType), runSegment)
+            },
+            cancellationToken);
+        var stageResults = new List<(string Stage, SolidWorksMainWorkflowResult Result)> { ("build", build) };
+        var sourceSet = new SolidWorksReleasePackageSourceSet(
+            FindArtifactPath(build, $"{partType}.SLDPRT"),
+            FindArtifactPath(build, $"{partType}.STEP"),
+            DrawingPath: null,
+            PdfPath: null,
+            BuildReportPath: FindArtifactPath(build, "build_report.json"),
+            DrawingReportPath: null,
+            DimensionReportPath: null,
+            TitleBlockReportPath: null,
+            ExecutionEvidence: stageResults.Select(ToExecutionEvidence).ToArray(),
+            Warnings: ["V1.9 build-only release contains SLDPRT, STEP and reports; drawing adaptation is explicitly out of scope."],
+            RequireRealExecutionEvidence: true,
+            PartType: partType,
+            RequestId: request.RequestId,
+            RequireDrawingDeliverables: false);
+
+        var package = await BuildE2eReleasePackageAsync(request.ProjectRoot, sourceSet, releaseDirectory, cancellationToken);
+        var packageOutcome = ReadPackageOutcome(package?.QualityReportPath);
+        var allStagesPassed = StagePassedForE2e(build);
+        var finalIssues = build.Issues
+            .Concat(package?.Issues ?? Array.Empty<string>())
+            .Concat(allStagesPassed ? Array.Empty<string>() : ["real_part_family_build_failed"])
+            .Concat(packageOutcome.AllSourceReportsPassed ? Array.Empty<string>() : ["all_source_reports_passed=false"])
+            .Concat(string.Equals(packageOutcome.DeliverableStatus, "Deliverable", StringComparison.OrdinalIgnoreCase)
+                ? Array.Empty<string>()
+                : ["deliverable_status=NotDeliverable"])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var passed = allStagesPassed &&
+            package is { Status: "Completed" } &&
+            packageOutcome.AllSourceReportsPassed &&
+            string.Equals(packageOutcome.DeliverableStatus, "Deliverable", StringComparison.OrdinalIgnoreCase) &&
+            finalIssues.Length == 0;
+        var finalReview = new ReviewReport(
+            $"solidworks-e2e-review-{Guid.NewGuid():N}",
+            "solidworks-part-family-reviewer",
+            passed,
+            passed ? 0.98 : 0.0,
+            finalIssues,
+            RequiresHumanApproval: false,
+            HasFatalError: !passed);
+        var finalGate = new DefaultGatekeeper(new GateDecisionPolicy(), new RejectReportBuilder()).Evaluate(finalReview).Decision;
+        _auditLog.Record(
+            "quality-gate",
+            "solidworks-e2e-workflow",
+            "quality_gate_after_part_family_release_package",
+            $"V1.9 {partType} end-to-end QualityGate evaluated the run as {finalGate.Result}.");
+
+        var failureStage = passed
+            ? null
+            : FirstFailureStage(stageResults) ?? packageOutcome.FailureStage ?? package?.FailureStage ?? PartFamilyFailureStages.QualityGateRejected;
+        return await WriteE2eResultAsync(
+            request,
+            releaseDirectory,
+            stageResults,
+            package,
+            build.WorkflowResult,
+            finalGate,
+            finalIssues,
+            failureStage,
+            cancellationToken,
+            packageOutcome,
+            localAuthorization);
+    }
+
     private async Task<SolidWorksMainWorkflowResult> ExecuteCompleteDrawingPackageAsync(
         SolidWorksMainWorkflowRequest request,
         CancellationToken cancellationToken)
@@ -165,7 +320,10 @@ public sealed partial class SolidWorksMainWorkflowRunner
             FindArtifactPath(stageResults, "title_block", "title_block_report.json"),
             stageResults.Select(ToExecutionEvidence).ToArray(),
             Warnings: new[] { "V1.7 release uses only paths produced by this request_id; historical latest outputs were not scanned." },
-            RequireRealExecutionEvidence: true);
+            RequireRealExecutionEvidence: true,
+            PartType: PlateBasic4HolesDefinition.Type,
+            RequestId: request.RequestId,
+            RequireDrawingDeliverables: true);
 
         var package = await BuildE2eReleasePackageAsync(request.ProjectRoot, sourceSet, releaseDirectory, cancellationToken);
         var allStagesPassed = stageResults.Count == 4 && stageResults.All(item => StagePassedForE2e(item.Result));
@@ -239,13 +397,20 @@ public sealed partial class SolidWorksMainWorkflowRunner
         Directory.CreateDirectory(reportsDirectory);
         var reportPath = Path.Combine(reportsDirectory, "e2e_execution_report.json");
         var latestOutputsPath = Path.Combine(releaseDirectory, "latest_real_outputs.md");
-        var generatedArtifacts = new[]
+        var partType = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type;
+        var requiresDrawingDeliverables = request.Operation == SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage;
+        var expectedStageCount = requiresDrawingDeliverables ? 4 : 1;
+        var expectedArtifactPaths = new List<string>
         {
-            Path.Combine(releaseDirectory, "artifacts", "plate_basic_4holes.SLDPRT"),
-            Path.Combine(releaseDirectory, "artifacts", "plate_basic_4holes.STEP"),
-            Path.Combine(releaseDirectory, "artifacts", "plate_basic_4holes.SLDDRW"),
-            Path.Combine(releaseDirectory, "artifacts", "plate_basic_4holes.pdf")
-        }.Where(ExistingNonEmpty).ToArray();
+            Path.Combine(releaseDirectory, "artifacts", $"{partType}.SLDPRT"),
+            Path.Combine(releaseDirectory, "artifacts", $"{partType}.STEP")
+        };
+        if (requiresDrawingDeliverables)
+        {
+            expectedArtifactPaths.Add(Path.Combine(releaseDirectory, "artifacts", $"{partType}.SLDDRW"));
+            expectedArtifactPaths.Add(Path.Combine(releaseDirectory, "artifacts", $"{partType}.pdf"));
+        }
+        var generatedArtifacts = expectedArtifactPaths.Where(ExistingNonEmpty).ToArray();
         var allSourceReportsPassed = packageOutcome?.AllSourceReportsPassed ?? false;
         var deliverableStatus = packageOutcome?.DeliverableStatus ?? "NotDeliverable";
         var finalStatus = finalGate.Result == GateDecisionResult.Passed &&
@@ -281,6 +446,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 issues)).ToArray();
         var report = new SolidWorksE2eExecutionReport(
             request.RequestId,
+            partType,
+            request.Operation.ToString(),
             request.StructuredInputReceived,
             request.GatewayInvoked,
             request.ChiefEngineerInvoked,
@@ -291,8 +458,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
             request.SolidWorksRouterTriggered,
             stageResults.Any(item => item.Result.Logs.Contains("operation_executed: connection_started", StringComparer.OrdinalIgnoreCase)),
             stageResults.Any(item => item.Result.Logs.Contains("operation_executed: real_build_request_received", StringComparer.OrdinalIgnoreCase)),
-            stageResults.Count == 4 && stageResults.All(item => item.Result.RealCadConnected),
-            stageResults.Count == 4 && stageResults.All(item => item.Result.RealCadExecuted),
+            stageResults.Count == expectedStageCount && stageResults.All(item => item.Result.RealCadConnected),
+            stageResults.Count == expectedStageCount && stageResults.All(item => item.Result.RealCadExecuted),
             finalGate.Result.ToString(),
             sourceReports,
             allSourceReportsPassed,
@@ -302,7 +469,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
             issues,
             Array.Empty<string>(),
             finalStatus,
-            "custom_properties_only",
+            requiresDrawingDeliverables ? "custom_properties_only" : "not_requested",
             false);
         await File.WriteAllTextAsync(reportPath, JsonSerializer.Serialize(report, JsonOptions()), cancellationToken);
         await File.WriteAllTextAsync(latestOutputsPath, BuildLatestOutputsMarkdown(report, reportPath), cancellationToken);
@@ -382,17 +549,26 @@ public sealed partial class SolidWorksMainWorkflowRunner
         SolidWorksLocalExecutionProfile localAuthorization)
     {
         var issues = new List<string>();
+        var version = request.Operation == SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage ? "V1.9" : "V1.7";
         if (!localAuthorization.IsAuthorized)
         {
             issues.AddRange(localAuthorization.Issues);
-            issues.Add("LocalDevelopmentProfile authorization is required for V1.7 real CAD E2E execution.");
+            issues.Add($"LocalDevelopmentProfile authorization is required for {version} real CAD E2E execution.");
         }
-        if (!request.AllowRealCadExecution) issues.Add("allow_real_cad_execution=true is required for V1.7 real CAD E2E execution.");
-        if (request.DryRun) issues.Add("dry_run=false is required for V1.7 real CAD E2E execution.");
-        if (!options.EnableRealExecution) issues.Add("SW_ENABLE_REAL_EXECUTION=true is required for V1.7 real CAD E2E execution.");
-        if (!options.MainWorkflowExecutionEnabled) issues.Add("SW_REAL_MAIN_WORKFLOW_TEST=true is required for V1.7 real CAD E2E execution.");
-        if (!request.GenerateDrawing || !request.GenerateDimensions || !request.GenerateTitleBlock || !request.GenerateReleasePackage)
+        if (!request.AllowRealCadExecution) issues.Add($"allow_real_cad_execution=true is required for {version} real CAD E2E execution.");
+        if (request.DryRun) issues.Add($"dry_run=false is required for {version} real CAD E2E execution.");
+        if (!options.EnableRealExecution) issues.Add($"SW_ENABLE_REAL_EXECUTION=true is required for {version} real CAD E2E execution.");
+        if (!options.MainWorkflowExecutionEnabled) issues.Add($"SW_REAL_MAIN_WORKFLOW_TEST=true is required for {version} real CAD E2E execution.");
+        if (request.Operation == SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage &&
+            (!request.GenerateDrawing || !request.GenerateDimensions || !request.GenerateTitleBlock || !request.GenerateReleasePackage))
+        {
             issues.Add("build_complete_drawing_package requires all generate_* flags to be true.");
+        }
+        if (request.Operation == SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage &&
+            (request.GenerateDrawing || request.GenerateDimensions || request.GenerateTitleBlock || !request.GenerateReleasePackage))
+        {
+            issues.Add("build_part_family_release_package requires drawing flags to be false and generate_release_package=true.");
+        }
         return issues;
     }
 
@@ -469,7 +645,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
         string.Concat(value.Select(character => Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
 
     private static string BuildLatestOutputsMarkdown(SolidWorksE2eExecutionReport report, string reportPath) =>
-        $"# V1.7 最新真实主工作流输出\n\n- request_id：`{report.RequestId}`\n- final_status：`{report.FinalStatus}`\n- all_source_reports_passed：`{report.AllSourceReportsPassed}`\n- deliverable_status：`{report.DeliverableStatus}`\n- e2e_execution_report：`{reportPath}`\n- 标题栏语义：只验证自定义属性写入、读回与刷新；未验证 Sheet Format 可见渲染。\n";
+        $"# V1.9 最新真实主工作流输出\n\n- part_type：`{report.PartType}`\n- operation：`{report.Operation}`\n- request_id：`{report.RequestId}`\n- final_status：`{report.FinalStatus}`\n- quality_gate_decision：`{report.QualityGateDecision}`\n- all_source_reports_passed：`{report.AllSourceReportsPassed}`\n- deliverable_status：`{report.DeliverableStatus}`\n- e2e_execution_report：`{reportPath}`\n";
 
     private static JsonSerializerOptions JsonOptions() => new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
@@ -489,6 +665,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
 
     private sealed record SolidWorksE2eExecutionReport(
         string RequestId,
+        string PartType,
+        string Operation,
         bool StructuredInputReceived,
         bool GatewayInvoked,
         bool ChiefEngineerInvoked,

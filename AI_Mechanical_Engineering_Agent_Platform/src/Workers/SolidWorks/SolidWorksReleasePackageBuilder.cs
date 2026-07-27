@@ -471,6 +471,9 @@ public sealed class SolidWorksReleasePackageValidator
         var report = new SolidWorksPackageQualityReport
         {
             OutputDirectory = outputDirectory,
+            PartName = manifest.PartName,
+            RequestId = manifest.RequestId,
+            RequiresDrawingDeliverables = manifest.RequiresDrawingDeliverables,
             ManifestExists = ExistingNonEmpty(manifestPath),
             ReleaseSummaryExists = ExistingNonEmpty(summaryPath)
         };
@@ -481,9 +484,10 @@ public sealed class SolidWorksReleasePackageValidator
         report.ArtifactsCollected = manifest.Artifacts.All(item => item.Exists && item.SizeBytes > 0);
         report.ReportsCollected = manifest.Reports.All(item => item.Exists && item.SizeBytes > 0);
         report.PdfExists = manifest.Artifacts.Any(item =>
-            item.Name.Equals("plate_basic_4holes.pdf", StringComparison.OrdinalIgnoreCase) &&
+            item.Name.Equals($"{manifest.PartName}.pdf", StringComparison.OrdinalIgnoreCase) &&
             item.Exists &&
             item.SizeBytes > 0);
+        var pdfRequirementSatisfied = !manifest.RequiresDrawingDeliverables || report.PdfExists;
         report.PathsUnderReleaseDirectory = manifest.Artifacts.Concat(manifest.Reports).All(item =>
             !string.IsNullOrWhiteSpace(item.PackagePath) &&
             IsUnderDirectory(outputDirectory, item.PackagePath));
@@ -508,16 +512,19 @@ public sealed class SolidWorksReleasePackageValidator
         report.RequireRealExecutionEvidence = manifest.RequireRealExecutionEvidence;
         report.SourceExecutionEvidence.Clear();
         report.SourceExecutionEvidence.AddRange(manifest.SourceExecutionEvidence);
-        report.RealExecutionEvidencePassed = !manifest.RequireRealExecutionEvidence || HasCompleteRealExecutionEvidence(manifest.SourceExecutionEvidence);
+        report.RealExecutionEvidencePassed = !manifest.RequireRealExecutionEvidence || HasCompleteRealExecutionEvidence(manifest);
         report.AllSourceReportsPassed =
             report.SourceReportsChecked &&
             manifest.Reports.Count > 0 &&
             sourceReportStatuses.All(status => string.Equals(status.FinalStatus, "Passed", StringComparison.OrdinalIgnoreCase)) &&
             report.RealExecutionEvidencePassed;
 
-        AddCheck(report, "artifacts_collected", report.ArtifactsCollected, "source_artifacts_missing", "SLDPRT, STEP, SLDDRW and PDF must be collected.");
-        AddCheck(report, "reports_collected", report.ReportsCollected, "source_report_missing", "build, diagnostic, drawing, dimension and title block reports must be collected.");
-        AddCheck(report, "pdf_exists", report.PdfExists, "source_artifacts_missing", "plate_basic_4holes.pdf must exist in artifacts.");
+        AddCheck(report, "artifacts_collected", report.ArtifactsCollected, "source_artifacts_missing",
+            manifest.RequiresDrawingDeliverables ? "SLDPRT, STEP, SLDDRW and PDF must be collected." : "SLDPRT and STEP must be collected.");
+        AddCheck(report, "reports_collected", report.ReportsCollected, "source_report_missing",
+            manifest.RequiresDrawingDeliverables ? "build, drawing, dimension and title block reports must be collected." : "build_report.json must be collected.");
+        AddCheck(report, "pdf_exists", pdfRequirementSatisfied, "source_artifacts_missing",
+            manifest.RequiresDrawingDeliverables ? $"{manifest.PartName}.pdf must exist in artifacts." : "PDF is not required for a V1.9 build-only package.");
         AddCheck(report, "paths_under_release_directory", report.PathsUnderReleaseDirectory, "package_validation_failed", outputDirectory);
         AddCheck(report, "file_sizes_valid", report.FileSizesValid, "package_validation_failed", "all required copied files must be greater than zero bytes.");
         AddCheck(report, "reports_final_status_checked", report.ReportsFinalStatusChecked, "source_report_missing", "each collected report must expose final_status.");
@@ -529,7 +536,9 @@ public sealed class SolidWorksReleasePackageValidator
             "real_execution_evidence_passed",
             report.RealExecutionEvidencePassed,
             "real_execution_evidence_failed",
-            "V1.7 explicit release packages require all four stages to prove real worker execution and QualityGate passage.");
+            manifest.RequiresDrawingDeliverables
+                ? "Complete drawing packages require all four stages to prove real worker execution and QualityGate passage."
+                : "Build-only packages require the registered real part-family build stage to prove Worker, ArtifactValidator, Reviewer and QualityGate passage.");
 
         foreach (var item in manifest.Artifacts.Where(item => !item.Exists || item.SizeBytes <= 0))
         {
@@ -582,7 +591,7 @@ public sealed class SolidWorksReleasePackageValidator
             return "release_summary_write_failed";
         }
 
-        if (!report.ArtifactsCollected || !report.PdfExists)
+        if (!report.ArtifactsCollected || (manifest.RequiresDrawingDeliverables && !report.PdfExists))
         {
             return "source_artifacts_missing";
         }
@@ -621,8 +630,22 @@ public sealed class SolidWorksReleasePackageValidator
             message));
     }
 
-    private static bool HasCompleteRealExecutionEvidence(IReadOnlyList<SolidWorksReleaseExecutionEvidence> evidence)
+    private static bool HasCompleteRealExecutionEvidence(SolidWorksReleaseManifest manifest)
     {
+        var evidence = manifest.SourceExecutionEvidence;
+        if (!manifest.RequiresDrawingDeliverables)
+        {
+            var registry = PartFamilyBuilderRegistry.CreateDefault();
+            return registry.TryGetBuilder(manifest.PartName, out var builder) &&
+                   evidence.Count == 1 &&
+                   evidence.All(item =>
+                       string.Equals(item.Stage, "build", StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(item.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(item.ExecutionMode, builder.RealExecutionMode, StringComparison.OrdinalIgnoreCase) &&
+                       item.RealCadExecuted && item.RealCadConnected && item.QualityGatePassed &&
+                       string.IsNullOrWhiteSpace(item.FailureStage));
+        }
+
         var expectedModes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["build"] = "RealBuildPlateBasic4Holes",

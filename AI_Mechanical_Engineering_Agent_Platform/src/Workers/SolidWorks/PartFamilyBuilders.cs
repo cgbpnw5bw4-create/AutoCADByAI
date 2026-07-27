@@ -9,6 +9,22 @@ public sealed record PartFamilyDryRunBuildResult(
     IReadOnlyList<string> Issues,
     string? FailureStage = null);
 
+public sealed record PartFamilyBuildContext(
+    object Application,
+    SolidWorksWorkerRequest Request,
+    SolidWorksRuntimeOptions Options,
+    string? SolidWorksVersion,
+    bool RealCadConnected = true);
+
+public sealed record PartFamilyBuildResult(
+    string Status,
+    IReadOnlyList<SolidWorksArtifact> Artifacts,
+    IReadOnlyList<string> Logs,
+    IReadOnlyList<string> Issues,
+    string ExecutionMode,
+    bool RealCadExecuted,
+    string? FailureStage = null);
+
 public interface IPartFamilyBuilder
 {
     string PartType { get; }
@@ -19,9 +35,15 @@ public interface IPartFamilyBuilder
 
     string ApiEvidence { get; }
 
+    string RealExecutionMode { get; }
+
     Task<PartFamilyDryRunBuildResult> BuildDryRunAsync(
         SolidWorksWorkerRequest request,
         string artifactsDirectory,
+        CancellationToken cancellationToken = default);
+
+    Task<PartFamilyBuildResult> BuildAsync(
+        PartFamilyBuildContext context,
         CancellationToken cancellationToken = default);
 }
 
@@ -37,9 +59,9 @@ public sealed class PartFamilyBuilderRegistry
         }
     }
 
-    public static PartFamilyBuilderRegistry CreateDefault() =>
+    public static PartFamilyBuilderRegistry CreateDefault(ISolidWorksPlateBuilder? plateBuilder = null) =>
         new([
-            new PlateBasic4HolesPartFamilyBuilder(),
+            new PlateBasic4HolesPartFamilyBuilder(plateBuilder),
             new FlangeFeatureBuilder(),
             new ShaftFeatureBuilder()
         ]);
@@ -70,6 +92,13 @@ public sealed class PartFamilyBuilderRegistry
 
 public sealed class PlateBasic4HolesPartFamilyBuilder : TextPlaceholderPartFamilyBuilder
 {
+    private readonly ISolidWorksPlateBuilder _plateBuilder;
+
+    public PlateBasic4HolesPartFamilyBuilder(ISolidWorksPlateBuilder? plateBuilder = null)
+    {
+        _plateBuilder = plateBuilder ?? new LateBoundSolidWorksPlateBuilder();
+    }
+
     public override string PartType => PlateBasic4HolesDefinition.Type;
 
     public override string FailureStage => "plate_build_failed";
@@ -77,28 +106,28 @@ public sealed class PlateBasic4HolesPartFamilyBuilder : TextPlaceholderPartFamil
     public override bool SupportsRealExecution => true;
 
     public override string ApiEvidence => "real_solidworks_plate_basic_4holes_smoke_passed";
-}
 
-public sealed class FlangeFeatureBuilder : TextPlaceholderPartFamilyBuilder
-{
-    public override string PartType => FlangeBasicDefinition.Type;
+    public override string RealExecutionMode => SolidWorksPartFamilyBuildModes.PlateBasic4Holes;
 
-    public override string FailureStage => PartFamilyFailureStages.FlangeBuildFailed;
-
-    public override bool SupportsRealExecution => false;
-
-    public override string ApiEvidence => "dry_run_only_real_api_smoke_not_completed";
-}
-
-public sealed class ShaftFeatureBuilder : TextPlaceholderPartFamilyBuilder
-{
-    public override string PartType => ShaftBasicDefinition.Type;
-
-    public override string FailureStage => PartFamilyFailureStages.ShaftBuildFailed;
-
-    public override bool SupportsRealExecution => false;
-
-    public override string ApiEvidence => "dry_run_only_optional_step_api_evidence_insufficient";
+    public override async Task<PartFamilyBuildResult> BuildAsync(
+        PartFamilyBuildContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _plateBuilder.BuildPlateBasicFourHolesAsync(
+            context.Application,
+            context.Request,
+            context.Options,
+            context.SolidWorksVersion,
+            cancellationToken);
+        return new PartFamilyBuildResult(
+            result.Status,
+            result.GeneratedArtifacts,
+            result.Logs,
+            result.Issues,
+            SolidWorksPlateBuildOutput.ExecutionMode,
+            result.RealCadExecuted,
+            string.Equals(result.Status, "Completed", StringComparison.OrdinalIgnoreCase) ? null : FailureStage);
+    }
 }
 
 public abstract class TextPlaceholderPartFamilyBuilder : IPartFamilyBuilder
@@ -110,6 +139,23 @@ public abstract class TextPlaceholderPartFamilyBuilder : IPartFamilyBuilder
     public abstract bool SupportsRealExecution { get; }
 
     public abstract string ApiEvidence { get; }
+
+    public virtual string RealExecutionMode => "RealBuildPartFamily";
+
+    public virtual Task<PartFamilyBuildResult> BuildAsync(
+        PartFamilyBuildContext context,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new PartFamilyBuildResult(
+            "Rejected",
+            Array.Empty<SolidWorksArtifact>(),
+            [$"part_family_builder: {GetType().Name}"],
+            [$"{PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient}: {PartType} has no evidence-backed real builder."],
+            "RealPreflightOnly",
+            RealCadExecuted: false,
+            PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient));
+    }
 
     public virtual async Task<PartFamilyDryRunBuildResult> BuildDryRunAsync(
         SolidWorksWorkerRequest request,

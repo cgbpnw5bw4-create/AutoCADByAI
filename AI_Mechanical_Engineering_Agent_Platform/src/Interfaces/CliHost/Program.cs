@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using AgentGatewayHost;
 using AgentRuntime.Microsoft;
+using DomainSchemas;
 using PlatformCore;
 
 if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.OrdinalIgnoreCase))
@@ -49,7 +50,8 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
         return 2;
     }
 
-    var validationIssues = Validate(input);
+    var modelSpec = ResolveModelSpec(input);
+    var validationIssues = Validate(input, modelSpec);
     if (validationIssues.Count > 0)
     {
         Console.Error.WriteLine("Structured input was rejected:");
@@ -62,8 +64,9 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
     }
 
     var runId = $"cad-e2e-{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}-{Guid.NewGuid():N}";
-    var e2eOutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "e2e", "plate_basic_4holes", runId);
-    var context = ToGatewayContext(input!, localAuthorization, projectRoot, e2eOutputDirectory, runId);
+    var partType = modelSpec!.PartType;
+    var e2eOutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "e2e", ToSafePathSegment(partType), runId);
+    var context = ToGatewayContext(input!, modelSpec, localAuthorization, projectRoot, e2eOutputDirectory, runId);
     var platform = RuntimePlatformFactory.CreateDefault(projectRoot);
     var dispatcher = new AgentMessageDispatcher(platform);
     var response = await dispatcher.DispatchAsync("chief-engineer", new GatewayMessageRequest(
@@ -71,7 +74,7 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
         "cli",
         runId,
         Environment.UserName,
-        "Execute controlled build_complete_drawing_package for plate_basic_4holes from structured input.",
+        $"Execute controlled {input!.Operation} for {partType} from structured CADModelSpec input.",
         Array.Empty<string>(),
         context));
 
@@ -84,7 +87,7 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
     var reportPath = response.Artifacts
         .FirstOrDefault(artifact => string.Equals(artifact.Kind, "E2eExecutionReport", StringComparison.OrdinalIgnoreCase))
         ?.Path ?? Path.Combine(e2eOutputDirectory, "reports", "e2e_execution_report.json");
-    Console.WriteLine("SolidWorks V1.7 end-to-end workflow finished; inspect final status before treating it as accepted.");
+    Console.WriteLine("SolidWorks V1.9 controlled workflow finished; inspect final status before treating it as accepted.");
     Console.WriteLine($"Real execution authorized: {localAuthorization.IsAuthorized}");
     Console.WriteLine($"Authorization source: {localAuthorization.ExecutionAuthorizationSource}");
     Console.WriteLine($"Gateway status: {response.Status}");
@@ -111,9 +114,11 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
 Console.WriteLine("Usage:");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- self-check");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json");
+Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_flange_request.json");
+Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_shaft_request.json");
 return 1;
 
-static IReadOnlyList<string> Validate(CadWorkflowInput? input)
+static IReadOnlyList<string> Validate(CadWorkflowInput? input, CADModelSpec? modelSpec)
 {
     var issues = new List<string>();
     if (input is null)
@@ -122,17 +127,45 @@ static IReadOnlyList<string> Validate(CadWorkflowInput? input)
         return issues;
     }
 
-    if (!string.Equals(input.Operation, "build_complete_drawing_package", StringComparison.OrdinalIgnoreCase)) issues.Add("operation must be build_complete_drawing_package.");
-    if (!string.Equals(input.PartType, "plate_basic_4holes", StringComparison.OrdinalIgnoreCase)) issues.Add("part_type must be plate_basic_4holes.");
-    if (input.LengthMm != 160 || input.WidthMm != 80 || input.ThicknessMm != 12 || input.HoleCount != 4 || input.HoleDiameterMm != 10)
-        issues.Add("V1.7 only accepts the controlled 160x80x12 mm plate with four 10 mm holes.");
-    if (input.GenerateDrawing != true || input.GenerateDimensions != true || input.GenerateTitleBlock != true || input.GenerateReleasePackage != true)
-        issues.Add("all generate_drawing, generate_dimensions, generate_title_block and generate_release_package flags must be true.");
+    if (!SolidWorksE2eCliContract.IsSupportedOperation(input.Operation))
+    {
+        issues.Add($"operation must be {SolidWorksE2eCliContract.CompleteDrawingPackageOperation} or {SolidWorksE2eCliContract.PartFamilyReleasePackageOperation}.");
+    }
+
+    if (modelSpec is null || string.IsNullOrWhiteSpace(modelSpec.PartType))
+    {
+        issues.Add("cad_model_spec.part_type is required.");
+        return issues;
+    }
+
+    var generateDrawing = ResolveBooleanOption(input.GenerateDrawing, modelSpec.DrawingRequirements, "generate_drawing");
+    var generateDimensions = ResolveBooleanOption(input.GenerateDimensions, modelSpec.DrawingRequirements, "generate_dimensions");
+    var generateTitleBlock = ResolveBooleanOption(input.GenerateTitleBlock, modelSpec.DrawingRequirements, "generate_title_block");
+    var generateReleasePackage = ResolveBooleanOption(input.GenerateReleasePackage, modelSpec.DrawingRequirements, "generate_release_package");
+
+    if (string.Equals(input.Operation, SolidWorksE2eCliContract.CompleteDrawingPackageOperation, StringComparison.OrdinalIgnoreCase))
+    {
+        if (!string.Equals(modelSpec.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
+            issues.Add("build_complete_drawing_package remains restricted to plate_basic_4holes.");
+        if (!HasExactPlateRegressionDimensions(modelSpec))
+            issues.Add("the controlled plate regression requires 160x80x12 mm with four 10 mm holes.");
+        if (!generateDrawing || !generateDimensions || !generateTitleBlock || !generateReleasePackage)
+            issues.Add("the complete plate package requires all generate_* flags to be true.");
+    }
+    else if (SolidWorksE2eCliContract.IsPartFamilyReleasePackage(input.Operation))
+    {
+        if (generateDrawing || generateDimensions || generateTitleBlock)
+            issues.Add("build_part_family_release_package is build-only; drawing, dimension and title-block flags must be false.");
+        if (!generateReleasePackage)
+            issues.Add("build_part_family_release_package requires generate_release_package=true.");
+    }
+
     return issues;
 }
 
 static IReadOnlyDictionary<string, string> ToGatewayContext(
     CadWorkflowInput input,
+    CADModelSpec modelSpec,
     SolidWorksLocalExecutionProfile localAuthorization,
     string projectRoot,
     string outputDirectory,
@@ -141,18 +174,14 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
     {
         ["request_id"] = runId,
         ["operation"] = input.Operation!,
-        ["part_type"] = input.PartType!,
-        ["length_mm"] = input.LengthMm!.Value.ToString(CultureInfo.InvariantCulture),
-        ["width_mm"] = input.WidthMm!.Value.ToString(CultureInfo.InvariantCulture),
-        ["thickness_mm"] = input.ThicknessMm!.Value.ToString(CultureInfo.InvariantCulture),
-        ["hole_count"] = input.HoleCount!.Value.ToString(CultureInfo.InvariantCulture),
-        ["hole_diameter_mm"] = input.HoleDiameterMm!.Value.ToString(CultureInfo.InvariantCulture),
-        ["allow_real_cad_execution"] = input.AllowRealCadExecution == true ? "true" : "false",
-        ["dry_run"] = input.DryRun == false ? "false" : "true",
-        ["generate_drawing"] = "true",
-        ["generate_dimensions"] = "true",
-        ["generate_title_block"] = "true",
-        ["generate_release_package"] = "true",
+        ["part_type"] = modelSpec.PartType,
+        ["cad_model_spec_json"] = JsonSerializer.Serialize(modelSpec, JsonOptions()),
+        ["allow_real_cad_execution"] = ResolveBooleanOption(input.AllowRealCadExecution, modelSpec.ExecutionOptions, "allow_real_cad_execution") ? "true" : "false",
+        ["dry_run"] = ResolveBooleanOption(input.DryRun, modelSpec.ExecutionOptions, "dry_run", defaultValue: true) ? "true" : "false",
+        ["generate_drawing"] = ResolveBooleanOption(input.GenerateDrawing, modelSpec.DrawingRequirements, "generate_drawing") ? "true" : "false",
+        ["generate_dimensions"] = ResolveBooleanOption(input.GenerateDimensions, modelSpec.DrawingRequirements, "generate_dimensions") ? "true" : "false",
+        ["generate_title_block"] = ResolveBooleanOption(input.GenerateTitleBlock, modelSpec.DrawingRequirements, "generate_title_block") ? "true" : "false",
+        ["generate_release_package"] = ResolveBooleanOption(input.GenerateReleasePackage, modelSpec.DrawingRequirements, "generate_release_package") ? "true" : "false",
         ["structured_input_received"] = "true",
         ["gateway_invoked"] = "true",
         ["real_execution_authorized"] = localAuthorization.IsAuthorized ? "true" : "false",
@@ -160,6 +189,75 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
         ["project_root"] = projectRoot,
         ["solidworks_output_directory"] = outputDirectory
     };
+
+static CADModelSpec? ResolveModelSpec(CadWorkflowInput? input)
+{
+    if (input?.CadModelSpec is not null)
+    {
+        return input.CadModelSpec;
+    }
+
+    if (input is null || string.IsNullOrWhiteSpace(input.PartType))
+    {
+        return null;
+    }
+
+    var dimensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    AddNumber(dimensions, "length_mm", input.LengthMm);
+    AddNumber(dimensions, "width_mm", input.WidthMm);
+    AddNumber(dimensions, "thickness_mm", input.ThicknessMm);
+    AddNumber(dimensions, "hole_count", input.HoleCount);
+    AddNumber(dimensions, "hole_diameter_mm", input.HoleDiameterMm);
+    return new CADModelSpec(
+        $"cad-model-spec-{input.PartType}-{Guid.NewGuid():N}",
+        input.PartType,
+        dimensions,
+        material: "Q235",
+        outputRequirements: ["SLDPRT", "STEP", "build_report.json"]);
+}
+
+static void AddNumber<T>(IDictionary<string, string> values, string name, T? value) where T : struct, IFormattable
+{
+    if (value.HasValue)
+    {
+        values[name] = value.Value.ToString(null, CultureInfo.InvariantCulture);
+    }
+}
+
+static bool ResolveBooleanOption(
+    bool? explicitValue,
+    IReadOnlyDictionary<string, string> options,
+    string name,
+    bool defaultValue = false)
+{
+    if (explicitValue.HasValue)
+    {
+        return explicitValue.Value;
+    }
+
+    return options.TryGetValue(name, out var value)
+        ? string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1"
+        : defaultValue;
+}
+
+static bool HasExactPlateRegressionDimensions(CADModelSpec spec) =>
+    HasValue(spec, "length_mm", "160") &&
+    HasValue(spec, "width_mm", "80") &&
+    HasValue(spec, "thickness_mm", "12") &&
+    HasValue(spec, "hole_count", "4") &&
+    HasValue(spec, "hole_diameter_mm", "10");
+
+static bool HasValue(CADModelSpec spec, string name, string expected) =>
+    spec.TryGetParameter(name, out var value) &&
+    decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var actual) &&
+    decimal.TryParse(expected, NumberStyles.Float, CultureInfo.InvariantCulture, out var target) &&
+    actual == target;
+
+static JsonSerializerOptions JsonOptions() => new()
+{
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+};
 
 static string? ReadString(JsonElement root, string propertyName) =>
     root.TryGetProperty(propertyName, out var value) ? value.ToString() : null;
@@ -180,9 +278,13 @@ static string FindProjectRoot(string startDirectory)
     return startDirectory;
 }
 
+static string ToSafePathSegment(string value) =>
+    string.Concat(value.Select(character => Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
+
 internal sealed class CadWorkflowInput
 {
     public string? Operation { get; init; }
+    public CADModelSpec? CadModelSpec { get; init; }
     public string? PartType { get; init; }
     public decimal? LengthMm { get; init; }
     public decimal? WidthMm { get; init; }

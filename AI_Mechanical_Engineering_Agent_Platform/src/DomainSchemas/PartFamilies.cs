@@ -12,7 +12,26 @@ public static class PartFamilyFailureStages
     public const string PartFamilyBuilderMissing = "part_family_builder_missing";
     public const string FlangeBuildFailed = "flange_build_failed";
     public const string ShaftBuildFailed = "shaft_build_failed";
+    public const string PartFamilyApiEvidenceInsufficient = "part_family_api_evidence_insufficient";
+    public const string FlangeProfileCreateFailed = "flange_profile_create_failed";
+    public const string FlangeExtrudeFailed = "flange_extrude_failed";
+    public const string FlangeInnerCutFailed = "flange_inner_cut_failed";
+    public const string FlangeBoltHolesFailed = "flange_bolt_holes_failed";
+    public const string ShaftProfileCreateFailed = "shaft_profile_create_failed";
+    public const string ShaftRevolveFailed = "shaft_revolve_failed";
+    public const string ShaftStepFeatureFailed = "shaft_step_feature_failed";
+    public const string PartSaveFailed = "part_save_failed";
+    public const string StepExportFailed = "step_export_failed";
     public const string ArtifactValidationFailed = "artifact_validation_failed";
+    public const string QualityGateRejected = "quality_gate_rejected";
+    public const string LocalExecutionAuthorizationMissing = "local_execution_authorization_missing";
+}
+
+public static class PartFamilyExecutionModes
+{
+    public const string PlateBasic4Holes = "RealBuildPlateBasic4Holes";
+    public const string FlangeBasic = "RealBuildFlangeBasic";
+    public const string ShaftBasic = "RealBuildShaftBasic";
 }
 
 public enum PartParameterValueKind
@@ -64,6 +83,8 @@ public interface IPartFamilyDefinition
     string BuilderFailureStage { get; }
 
     string ApiEvidence { get; }
+
+    string RealExecutionMode => "RealBuildPartFamily";
 
     PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec);
 
@@ -171,6 +192,8 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
     public string BuilderFailureStage => "plate_build_failed";
 
     public string ApiEvidence => "real_solidworks_plate_basic_4holes_smoke_passed";
+
+    public string RealExecutionMode => PartFamilyExecutionModes.PlateBasic4Holes;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -299,7 +322,9 @@ public sealed class FlangeBasicDefinition : IPartFamilyDefinition
 
     public string BuilderFailureStage => PartFamilyFailureStages.FlangeBuildFailed;
 
-    public string ApiEvidence => "dry_run_only_real_api_smoke_not_completed";
+    public string ApiEvidence => "v1_9_flange_diagnostic_visual_review_and_main_workflow_passed";
+
+    public string RealExecutionMode => PartFamilyExecutionModes.FlangeBasic;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -313,40 +338,52 @@ public sealed class FlangeBasicDefinition : IPartFamilyDefinition
         {
             new SolidWorksOperation("op-001", "CreateSketch", "TopPlane", new Dictionary<string, string>
             {
-                ["profile"] = "annulus",
-                ["outer_diameter_mm"] = PartFamilyParameters.Get(spec, "outer_diameter_mm"),
-                ["inner_diameter_mm"] = PartFamilyParameters.Get(spec, "inner_diameter_mm")
-            }, [], "Concentric flange profile created."),
+                ["profile"] = "outer_circle",
+                ["outer_diameter_mm"] = PartFamilyParameters.Get(spec, "outer_diameter_mm")
+            }, [], "Outer flange profile created."),
             new SolidWorksOperation("op-002", "ExtrudeBoss", "TopPlane", new Dictionary<string, string>
             {
                 ["depth_mm"] = PartFamilyParameters.Get(spec, "thickness_mm"), ["direction"] = "mid_plane"
             }, ["op-001"], "Flange body created."),
             new SolidWorksOperation("op-003", "CreateSketch", "TopFace", new Dictionary<string, string>
             {
-                ["pattern"] = "bolt_circle",
-                ["bolt_hole_count"] = PartFamilyParameters.Get(spec, "bolt_hole_count"),
-                ["bolt_circle_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_circle_diameter_mm")
-            }, ["op-002"], "Bolt-circle sketch created."),
+                ["profile"] = "center_hole_circle",
+                ["inner_diameter_mm"] = PartFamilyParameters.Get(spec, "inner_diameter_mm")
+            }, ["op-002"], "Flange center-hole sketch created."),
             new SolidWorksOperation("op-004", "CutExtrude", "TopFace", new Dictionary<string, string>
             {
+                ["cut_role"] = "center_hole",
+                ["hole_diameter_mm"] = PartFamilyParameters.Get(spec, "inner_diameter_mm"),
+                ["through_all"] = "true"
+            }, ["op-003"], "Flange center hole cut through the body."),
+            new SolidWorksOperation("op-005", "CreateSketch", "TopFace", new Dictionary<string, string>
+            {
+                ["pattern"] = "bolt_circle",
+                ["bolt_hole_count"] = PartFamilyParameters.Get(spec, "bolt_hole_count"),
+                ["bolt_circle_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_circle_diameter_mm"),
+                ["bolt_hole_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_hole_diameter_mm")
+            }, ["op-004"], "Bolt-circle sketch created from direct hole centres."),
+            new SolidWorksOperation("op-006", "CutExtrude", "TopFace", new Dictionary<string, string>
+            {
+                ["cut_role"] = "bolt_holes",
                 ["hole_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_hole_diameter_mm"),
                 ["hole_count"] = PartFamilyParameters.Get(spec, "bolt_hole_count"),
                 ["through_all"] = "true"
-            }, ["op-003"], "Bolt holes cut through the flange."),
-            new SolidWorksOperation("op-005", "SavePart", string.Empty, new Dictionary<string, string>
+            }, ["op-005"], "Bolt holes cut through the flange."),
+            new SolidWorksOperation("op-007", "SavePart", string.Empty, new Dictionary<string, string>
             {
                 ["file_name"] = "fake_flange_basic.SLDPRT.txt"
-            }, ["op-004"], "Dry-run flange part path planned."),
-            new SolidWorksOperation("op-006", "ExportStep", string.Empty, new Dictionary<string, string>
+            }, ["op-006"], "Dry-run flange part path planned."),
+            new SolidWorksOperation("op-008", "ExportStep", string.Empty, new Dictionary<string, string>
             {
                 ["file_name"] = "fake_flange_basic.STEP.txt"
-            }, ["op-005"], "Dry-run flange STEP path planned.")
+            }, ["op-007"], "Dry-run flange STEP path planned.")
         };
         return PartFamilyPlanFactory.Success(taskId, spec, operations);
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
-        PartFamilyPlanFactory.ReviewCommon(plan, Type);
+        PartFamilyPlanFactory.ReviewFlange(plan);
 }
 
 public sealed class ShaftBasicDefinition : IPartFamilyDefinition
@@ -367,7 +404,9 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
 
     public string BuilderFailureStage => PartFamilyFailureStages.ShaftBuildFailed;
 
-    public string ApiEvidence => "dry_run_only_optional_step_api_evidence_insufficient";
+    public string ApiEvidence => "v1_9_shaft_revolve_diagnostic_visual_review_and_main_workflow_passed";
+
+    public string RealExecutionMode => PartFamilyExecutionModes.ShaftBasic;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -377,44 +416,33 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
             return new(null, validation.FailureStage, validation.Issues);
         }
 
-        var diameters = PartFamilyParameters.ParseNumberList(spec, "optional_step_diameters");
-        var lengths = PartFamilyParameters.ParseNumberList(spec, "optional_step_lengths");
-        var overallLength = double.Parse(
-            PartFamilyParameters.Get(spec, "length_mm"),
-            NumberStyles.Float,
-            CultureInfo.InvariantCulture);
-        var baseLength = overallLength - lengths.Sum();
         var operations = new List<SolidWorksOperation>
         {
             new("op-001", "CreateSketch", "RightPlane", new Dictionary<string, string>
             {
-                ["profile"] = "circle", ["diameter_mm"] = PartFamilyParameters.Get(spec, "diameter_mm")
-            }, [], "Base shaft profile created."),
-            new("op-002", "ExtrudeBoss", "RightPlane", new Dictionary<string, string>
+                ["profile"] = "closed_half_section",
+                ["diameter_mm"] = PartFamilyParameters.Get(spec, "diameter_mm"),
+                ["length_mm"] = PartFamilyParameters.Get(spec, "length_mm"),
+                ["optional_step_diameters"] = PartFamilyParameters.Get(spec, "optional_step_diameters"),
+                ["optional_step_lengths"] = PartFamilyParameters.Get(spec, "optional_step_lengths")
+            }, [], "Closed half-section profile for the complete shaft created."),
+            new("op-002", "CreateCenterLine", "RightPlane", new Dictionary<string, string>
             {
-                ["depth_mm"] = PartFamilyParameters.Format(baseLength), ["direction"] = "blind"
-            }, ["op-001"], "Base shaft body created.")
+                ["axis"] = "shaft_axis", ["selection_mark"] = "16"
+            }, ["op-001"], "Shaft revolve centreline created."),
+            new("op-003", "RevolveBoss", "RightPlane", new Dictionary<string, string>
+            {
+                ["feature_api"] = "FeatureRevolve2",
+                ["angle_degrees"] = "360",
+                ["profile_selection_mark"] = "0",
+                ["axis_selection_mark"] = "16"
+            }, ["op-002"], "Full shaft body revolved from the complete half-section profile.")
         };
-        var previous = "op-002";
-        for (var index = 0; index < diameters.Count; index++)
-        {
-            var sketchId = $"op-{operations.Count + 1:000}";
-            operations.Add(new SolidWorksOperation(sketchId, "CreateSketch", "EndFace", new Dictionary<string, string>
-            {
-                ["profile"] = "circle", ["diameter_mm"] = PartFamilyParameters.Format(diameters[index]), ["step_index"] = (index + 1).ToString(CultureInfo.InvariantCulture)
-            }, [previous], $"Optional shaft step {index + 1} profile created."));
-            var extrudeId = $"op-{operations.Count + 1:000}";
-            operations.Add(new SolidWorksOperation(extrudeId, "ExtrudeBoss", "EndFace", new Dictionary<string, string>
-            {
-                ["depth_mm"] = PartFamilyParameters.Format(lengths[index]), ["direction"] = "blind", ["step_index"] = (index + 1).ToString(CultureInfo.InvariantCulture)
-            }, [sketchId], $"Optional shaft step {index + 1} created."));
-            previous = extrudeId;
-        }
 
         operations.Add(new SolidWorksOperation($"op-{operations.Count + 1:000}", "SavePart", string.Empty, new Dictionary<string, string>
         {
             ["file_name"] = "fake_shaft_basic.SLDPRT.txt"
-        }, [previous], "Dry-run shaft part path planned."));
+        }, ["op-003"], "Dry-run shaft part path planned."));
         operations.Add(new SolidWorksOperation($"op-{operations.Count + 1:000}", "ExportStep", string.Empty, new Dictionary<string, string>
         {
             ["file_name"] = "fake_shaft_basic.STEP.txt"
@@ -424,7 +452,7 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
-        PartFamilyPlanFactory.ReviewCommon(plan, Type);
+        PartFamilyPlanFactory.ReviewShaft(plan);
 }
 
 public sealed class PlateBasic4HolesValidator : IPartFamilyValidator
@@ -580,6 +608,139 @@ internal static class PartFamilyPlanFactory
         }
 
         return issues;
+    }
+
+    public static IReadOnlyList<string> ReviewFlange(SolidWorksBuildPlan plan)
+    {
+        var issues = ReviewCommon(plan, FlangeBasicDefinition.Type).ToList();
+        var outerSketch = OperationAt(plan, 0, "CreateSketch", issues, "flange outer profile");
+        var extrude = OperationAt(plan, 1, "ExtrudeBoss", issues, "flange extrusion");
+        var innerSketch = OperationAt(plan, 2, "CreateSketch", issues, "flange centre-hole profile");
+        var innerCut = OperationAt(plan, 3, "CutExtrude", issues, "flange centre-hole cut");
+        var boltSketch = OperationAt(plan, 4, "CreateSketch", issues, "flange bolt-circle profile");
+        var boltCut = OperationAt(plan, 5, "CutExtrude", issues, "flange bolt-hole cut");
+
+        RequireMapped(plan, outerSketch, "outer_diameter_mm", "outer_diameter_mm", issues);
+        RequireMapped(plan, extrude, "thickness_mm", "depth_mm", issues);
+        RequireMapped(plan, innerSketch, "inner_diameter_mm", "inner_diameter_mm", issues);
+        RequireMapped(plan, innerCut, "inner_diameter_mm", "hole_diameter_mm", issues);
+        RequireMapped(plan, boltSketch, "bolt_hole_count", "bolt_hole_count", issues);
+        RequireMapped(plan, boltSketch, "bolt_hole_diameter_mm", "bolt_hole_diameter_mm", issues);
+        RequireMapped(plan, boltSketch, "bolt_circle_diameter_mm", "bolt_circle_diameter_mm", issues);
+        RequireMapped(plan, boltCut, "bolt_hole_count", "hole_count", issues);
+        RequireMapped(plan, boltCut, "bolt_hole_diameter_mm", "hole_diameter_mm", issues);
+        RequireValue(outerSketch, "profile", "outer_circle", issues);
+        RequireValue(innerCut, "cut_role", "center_hole", issues);
+        RequireValue(boltSketch, "pattern", "bolt_circle", issues);
+        RequireValue(boltCut, "cut_role", "bolt_holes", issues);
+        RequireValue(innerCut, "through_all", "true", issues);
+        RequireValue(boltCut, "through_all", "true", issues);
+        return issues;
+    }
+
+    public static IReadOnlyList<string> ReviewShaft(SolidWorksBuildPlan plan)
+    {
+        var issues = ReviewCommon(plan, ShaftBasicDefinition.Type).ToList();
+        var profile = OperationAt(plan, 0, "CreateSketch", issues, "shaft half-section profile");
+        var centerLine = OperationAt(plan, 1, "CreateCenterLine", issues, "shaft centreline");
+        var revolve = OperationAt(plan, 2, "RevolveBoss", issues, "shaft revolve");
+
+        RequireMapped(plan, profile, "diameter_mm", "diameter_mm", issues);
+        RequireMapped(plan, profile, "length_mm", "length_mm", issues);
+        RequireMapped(plan, profile, "optional_step_diameters", "optional_step_diameters", issues, optional: true);
+        RequireMapped(plan, profile, "optional_step_lengths", "optional_step_lengths", issues, optional: true);
+        RequireValue(profile, "profile", "closed_half_section", issues);
+        RequireValue(centerLine, "selection_mark", "16", issues);
+        RequireValue(revolve, "feature_api", "FeatureRevolve2", issues);
+        RequireValue(revolve, "angle_degrees", "360", issues);
+        RequireValue(revolve, "profile_selection_mark", "0", issues);
+        RequireValue(revolve, "axis_selection_mark", "16", issues);
+
+        var diameters = ParseNumberList(plan.Dimensions?.GetValueOrDefault("optional_step_diameters") ?? string.Empty);
+        var lengths = ParseNumberList(plan.Dimensions?.GetValueOrDefault("optional_step_lengths") ?? string.Empty);
+        if (diameters.Count != lengths.Count)
+        {
+            issues.Add("shaft optional step diameter and length mappings must have equal counts.");
+        }
+
+        return issues;
+    }
+
+    private static SolidWorksOperation? OperationAt(
+        SolidWorksBuildPlan plan,
+        int index,
+        string expectedType,
+        List<string> issues,
+        string label)
+    {
+        if (plan.Operations.Count <= index ||
+            !plan.Operations[index].OperationType.Equals(expectedType, StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add($"{label} must be operation {index + 1} with operation_type {expectedType}.");
+            return null;
+        }
+
+        if (index > 0 && !plan.Operations[index].DependsOn.Contains(plan.Operations[index - 1].OperationId, StringComparer.OrdinalIgnoreCase))
+        {
+            issues.Add($"{label} must depend on the immediately preceding feature operation.");
+        }
+
+        return plan.Operations[index];
+    }
+
+    private static void RequireMapped(
+        SolidWorksBuildPlan plan,
+        SolidWorksOperation? operation,
+        string dimensionName,
+        string operationName,
+        List<string> issues,
+        bool optional = false)
+    {
+        var expected = plan.Dimensions?.GetValueOrDefault(dimensionName) ?? string.Empty;
+        if (optional && string.IsNullOrWhiteSpace(expected))
+        {
+            expected = string.Empty;
+        }
+
+        if (operation is null || !operation.Parameters.TryGetValue(operationName, out var actual) ||
+            !string.Equals(actual, expected, StringComparison.Ordinal))
+        {
+            issues.Add($"{operationName} must map CADModelSpec dimensions.{dimensionName} without reinterpretation.");
+        }
+    }
+
+    private static void RequireValue(
+        SolidWorksOperation? operation,
+        string name,
+        string expected,
+        List<string> issues)
+    {
+        if (operation is null || !operation.Parameters.TryGetValue(name, out var actual) ||
+            !string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add($"{name} must be {expected}.");
+        }
+    }
+
+    private static IReadOnlyList<double> ParseNumberList(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Array.Empty<double>();
+        }
+
+        var values = new List<double>();
+        foreach (var item in text.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!double.TryParse(item, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+            {
+                return Array.Empty<double>();
+            }
+
+            values.Add(value);
+        }
+
+        return values;
     }
 }
 

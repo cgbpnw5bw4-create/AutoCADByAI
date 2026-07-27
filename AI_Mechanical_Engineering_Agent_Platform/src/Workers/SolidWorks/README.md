@@ -149,3 +149,23 @@ artifact_validation_failed
 ```
 
 禁止默认启动 SolidWorks，禁止跳过总调度、工作流程、路由、校验、复审和质量门禁，禁止本轮扩展装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量队列或 V1.9。
+
+## V1.9 Phase 1 真实 build-only Worker
+
+### 目标与输入输出
+
+V1.9 Phase 1 为 `flange_basic` 和 `shaft_basic` 提供真实 Builder 契约，并由 `RealSolidWorksWorker` 统一处理 `PartFamilyBuildContext`、返回 `PartFamilyBuildResult`、保存、STEP 导出和报告。输出执行模式分别为 `RealBuildFlangeBasic` 和 `RealBuildShaftBasic`；plate 仍使用 `RealBuildPlateBasic4Holes` 并保持完整工程图包回归。
+
+`flange_basic` 和 `shaft_basic` 只输出零件、STEP、构建/端到端报告和 build-only 发布包，不自动调用工程图 Builder。
+
+### 执行步骤
+
+Worker 只能从 Gateway / `chief-engineer` 经总调度、工作流程、Router 和两个 Registry 进入。真实调用必须经请求、本地 profile 和环境三层授权，并在全局锁下串行执行。阶段真实验收顺序是 flange 再 shaft。
+
+成功产物经 ArtifactValidator、Reviewer 和 QualityGate 后，写入 `output/solidworks/e2e/<part_type>/<timestamp>/`。发布包必须包含两个产物、两份报告和 manifest。
+
+### 验证、失败和禁止事项
+
+默认 self-check 只验证 Builder 存在、主工作流程支持、默认关闭、API evidence、ArtifactValidator、plate 回归和 Registry 结构，不连接 COM。失败必须使用 V1.9 专用阶段，不得只返回泛化 `flange_build_failed` / `shaft_build_failed`。
+
+V1.9 Phase 2 已完成两族独立 diagnostic、视觉复核和 CLI 真实主流程回填。flange 与 shaft 均为 `Passed`、`Deliverable`、QualityGate `Passed`，最终报告路径见 `execution.md` 和 `api_evidence.md`。禁止 Builder / SmokeRunner 直接充当最终验收，禁止 flange / shaft 自动工程图，禁止进入 V2.0。

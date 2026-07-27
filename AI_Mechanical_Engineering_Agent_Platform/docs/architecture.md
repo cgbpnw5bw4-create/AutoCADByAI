@@ -164,3 +164,44 @@ V1.8 将围绕 `plate_basic_4holes` 建立的单一零件路径抽象为通用 `
 `unsupported_part_type`、`missing_required_parameter`、`invalid_parameter_value` 必须在 Worker 之前返回。Registry、计划、Builder 和执行失败使用 `part_family_definition_missing`、`build_plan_generation_failed`、`part_family_builder_missing`、`flange_build_failed`、`shaft_build_failed`、`artifact_validation_failed`。验证必须包含三族注册、前置拒绝、plate 回归、flange / shaft dry-run、无大型 switch 与默认真实 CAD 关闭。
 
 禁止把 dry-run 、文件存在或候选 API 解释为真实验收成功；禁止为新增零件族破坏 Gateway、Agent、Worker 和 QualityGate 边界。
+
+## V1.9 Phase 1 多零件族真实构建架构
+
+### 目标与范围
+
+V1.9 Phase 1 在 V1.8 Registry 架构上为 `flange_basic` 和 `shaft_basic` 建立真实 SolidWorks build-only 主工作流程。输入是结构化 `CADModelSpec` 和三层授权，输出是真实 SLDPRT、STEP、执行报告、质量裁决和 build-only 发布包。
+
+`flange_basic` 和 `shaft_basic` 不进入工程图、尺寸、标题栏或 PDF 链路。`plate_basic_4holes` 仍执行完整工程图包回归，不被降级为 build-only。
+
+### 完整调用链
+
+```text
+结构化输入
+→ Gateway / chief-engineer
+→ ChiefEngineerOrchestrator
+→ WorkflowEngine
+→ SolidWorksWorkflowRouter
+→ PartTypeRegistry
+→ PartFamilyBuilderRegistry
+→ RealSolidWorksWorker
+→ ArtifactValidator
+→ Reviewer
+→ QualityGate
+→ build-only ReleasePackage
+```
+
+Registry 负责零件族和 Builder 映射；`RealSolidWorksWorker` 负责统一预检、会话、真实执行、保存/导出和报告；Validator、Reviewer 和 QualityGate 负责防止“API 返回非空”或“文件存在”被误解为可交付。最终验收不接受直接 Builder 或 SmokeRunner 路径。
+
+### 安全与串行边界
+
+真实执行必须同时满足请求授权、`LocalDevelopmentProfile` 本地授权和环境授权。默认 self-check 不使用任何授权，不连接 COM。所有真实 SolidWorks 任务在全局范围串行；阶段验收按 `flange_basic` 再 `shaft_basic` 执行。
+
+### 发布包与失败语义
+
+发布包根目录统一为 `output/solidworks/e2e/<part_type>/<timestamp>/`。每个 build-only 包必须包含零件、STEP、`build_report.json`、`e2e_execution_report.json` 和 `release_manifest.json`。失败语义必须精确到法兰轮廓/拉伸/内孔/螺栓孔、轴轮廓/旋转/台阶、保存、STEP 导出、产物校验或质量门禁拒绝。
+
+V1.9 Phase 2 已完成两族独立 diagnostic、视觉复核和 CLI 真实主流程回填。`flange_basic` 的最终目录为 `output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/`，`shaft_basic` 的最终目录为 `output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/`；两者均为 `Passed`、`Deliverable`、QualityGate `Passed`。diagnostic 的 body count 与 theoretical volume 自动核验仍为非阻断 Improvement。
+
+### 验证与禁止事项
+
+验证覆盖两族真实 Builder、两族主工作流程、默认关闭、API evidence、ArtifactValidator、plate 完整包回归、无大型类型 switch 和全族 Registry 分发。禁止 flange / shaft 自动工程图，禁止并发 COM，禁止跳过平台边界，禁止进入 V2.0。

@@ -70,3 +70,32 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 完成实现后运行 build、test 和默认 self-check，确认 plate 回归、flange / shaft dry-run、Registry 和前置拒绝均通过。若法兰或轴的真实 API 证据不足，正确处理是保留 dry-run-only 并记录 evidence 缺口，不是盲改主 Worker。
 
 禁止借技术债越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9；本轮完成后就停在 V1.8 审查门。
+
+## V1.9 Phase 1 Improvements Backlog
+
+### 目标与适用范围
+
+本节只记录不阻塞 V1.9 Phase 1 build-only 合同的改进项。输入是当前实现、报告、测试和审查结论，输出是后续可单独设计的 backlog，不得用于放宽本轮产物、质量门禁或授权要求。
+
+### 不阻塞改进项
+
+- 用源码文本搜索支撑“无大型 `switch(part_type)`”仍是辅助证据；后续可增加更精确的结构化分析，但 V1.9 必须已有 Registry 行为测试。
+- 动态 `InternalRoute` 仍需独立设计，本轮保持现有运行时路由边界。
+- `HumanApproval` 可在后续用于真实 CAD 人工批准挂起，但不代替当前三层授权。
+- 轴的偏移多段拉伸作为备选方案记入 backlog。V1.9 Phase 1 固定使用闭合轮廓、中心线和 `FeatureRevolve2` 360° 旋转，不混用偏移拉伸。
+
+### 执行、验证和失败边界
+
+执行 V1.9 时先确认所有阻断性合同已完成，再把上述事项保留为 Improvements。若当前实现仍使用 Builder 直调作为最终验收、缺少 ArtifactValidator / Reviewer / QualityGate、或无法产生 build-only 发布包，则不得降级为 backlog。
+
+禁止借 backlog 扩大 flange / shaft 工程图、并发 COM、跳过质量门禁或进入 V2.0。
+
+## V1.9 Phase 2 验收后 Improvements
+
+flange 与 shaft diagnostic、视觉审查、非空产物和最终主工作流程均已通过，因此下列增强不阻断 V1.9 基础零件族验收：
+
+- diagnostic 的 `geometry_body_count_status` 仍为 `NotVerified`；后续可在稳定 COM 边界内增加实体数量读取与报告。
+- diagnostic 的 `theoretical_volume_status` 仍为 `NotVerified`；后续可根据参数计算理论体积，并与 SolidWorks 质量属性结果做带公差比较。
+- 自动几何增强必须保留现有特征树、四视图和主工作流程证据，不能用新增字段替代人工视觉复核或 QualityGate。
+
+瞬时源哈希读锁的恢复规则已经完成，不是未解决债务：只有复制和目标校验成功时才降为 warning；目标缺失、为空或校验失败仍必须阻断。上述 Improvements 不授权 flange / shaft 工程图，也不进入 V2.0。

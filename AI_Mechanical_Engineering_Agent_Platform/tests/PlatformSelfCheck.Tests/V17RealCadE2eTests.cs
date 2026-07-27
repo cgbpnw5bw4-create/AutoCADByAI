@@ -300,7 +300,7 @@ public sealed class V17RealCadE2eTests
         Assert.DoesNotContain("smokeRunnerText", source, StringComparison.Ordinal);
 
         var v18Start = source.IndexOf("RunV18PartFamilyChecksAsync", StringComparison.Ordinal);
-        var v18End = source.IndexOf("private static bool TryWriteJsonReport", v18Start, StringComparison.Ordinal);
+        var v18End = source.IndexOf("private static V19PartFamilySelfCheckResult", v18Start, StringComparison.Ordinal);
         Assert.True(v18Start >= 0 && v18End > v18Start);
         Assert.DoesNotContain("File.ReadAllText", source[v18Start..v18End], StringComparison.Ordinal);
     }

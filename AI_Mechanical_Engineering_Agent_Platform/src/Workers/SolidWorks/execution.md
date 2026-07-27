@@ -245,3 +245,72 @@ V1.8 将 Worker 从单一四孔板特判升级为可注册的零件族执行边�
 - 不在 Worker 中增加大型 `switch(part_type)`，不使用分散字符串特判执行零件族几何。
 - 不把 `flange_basic` 或 `shaft_basic` dry-run 写成真实 SolidWorks 成功或可交付。
 - 不实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。
+
+## V1.9 Phase 1 真实 build-only Worker 执行
+
+### 目标与适用范围
+
+`RealSolidWorksWorker` 对 `flange_basic` 和 `shaft_basic` 执行 build-only，使用 `PartFamilyBuilderRegistry` 解析真实 Builder，并统一管理会话、保存、STEP 导出和报告。两族不进入 Drawing；plate 完整包回归保持不变。
+
+### 输入与输出
+
+输入为已校验 BuildPlan、`PartFamilyBuildContext`、三层授权和对应 API evidence。输出 `PartFamilyBuildResult`、真实 SLDPRT / STEP、`build_report.json`、端到端报告、Validator / Reviewer / QualityGate 结果和 build-only 发布包。
+
+### 执行链和安全边界
+
+```text
+结构化输入
+→ Gateway / chief-engineer
+→ ChiefEngineerOrchestrator
+→ WorkflowEngine
+→ SolidWorksWorkflowRouter
+→ PartTypeRegistry
+→ PartFamilyBuilderRegistry
+→ RealSolidWorksWorker
+→ ArtifactValidator
+→ Reviewer
+→ QualityGate
+→ build-only ReleasePackage
+```
+
+三层授权为请求 `allow_real_cad_execution=true` / `dry_run=false`、`LocalDevelopmentProfile` 本地授权、以及 `SW_ENABLE_REAL_EXECUTION=true` / `SW_REAL_MAIN_WORKFLOW_TEST=true` 环境授权。默认 self-check 不连接 COM。
+
+真实 SolidWorks 操作全局串行，首次验收顺序为 flange → shaft。前一任务释放会话并写完报告后，才允许后一任务连接。
+
+### 构建策略
+
+- flange：外圆 `CreateCircle` 加 `FeatureExtrusion2`；中心孔独立活动草图 `FeatureCut4`；全部螺栓孔单草图 `FeatureCut4`。不用 `HoleWizard` 或圆周阵列。
+- shaft：`CreateLine` 闭合轮廓，`CreateCenterLine` 中心线，selection mark `16`，`FeatureRevolve2` 360°。偏移多段拉伸仅作 backlog，本轮不混用。
+
+### 产物与报告
+
+最终目录为 `output/solidworks/e2e/<part_type>/<timestamp>/`，必需内容为：
+
+```text
+artifacts/<part_type>.SLDPRT
+artifacts/<part_type>.STEP
+reports/build_report.json
+reports/e2e_execution_report.json
+release_manifest.json
+```
+
+`build_report.json` 要记录零件族、真实模式、执行模式、授权请求、连接、保存、导出、API evidence、`failure_stage` 和最终状态。执行模式应分别为 `RealBuildFlangeBasic` 和 `RealBuildShaftBasic`。
+
+### 验证和禁止事项
+
+Phase 1 入场时 API 证据只足以进入独立 diagnostic，实际 smoke 结果和路径尚待回填；该条件现已由下述 Phase 2 运行记录关闭。真实验收必须使用主工作流程，不允许直接 Builder / SmokeRunner。禁止 flange / shaft 自动工程图，禁止并发 COM，禁止缺失 Validator / Reviewer / QualityGate 仍生成可交付包，禁止进入 V2.0。
+
+## V1.9 Phase 2 Worker 运行记录
+
+Phase 1 的待运行状态已经关闭。flange 与 shaft 专用 diagnostic 都为 `CandidatePassed`，并分别通过 100 分规则审查、特征树检查、四视图检查和非空 SLDPRT / STEP 校验。最终 CLI 主流程目录为：
+
+```text
+output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/
+output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/
+```
+
+两次 `e2e_execution_report.json` 均证明 `Gateway`、`ChiefEngineerOrchestrator`、`WorkflowEngine`、`Router`、`Registry`、`RealSolidWorksWorker`、`ArtifactValidator`、`Reviewer`、`QualityGate` 与发布包通过，最终状态为 `Passed`、`Deliverable`。最终 `build_report.json` 还记录了对应的 V1.9 专用诊断、视觉审查和主流程通过元数据。
+
+plate 完整包在 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260720_082027_397-bd86bc56b48349c69db5f8173c1b3d85/` 回归为 `Passed`、`Deliverable`、QualityGate `Passed`，其工程图能力没有退化。
+
+保存修复沿用 plate 已验证的 `SaveAs3` / `SaveAs` 策略。源文件瞬时读锁只在复制和目标校验已经成功时降级为 warning；其他 `artifact_copy_failed` 必须继续阻断。body count 与 theoretical volume 自动核验留作 Improvement，本阶段不生成 flange / shaft 工程图，也不进入 V2.0。

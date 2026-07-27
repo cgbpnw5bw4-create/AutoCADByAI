@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksDrawingDimensionS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksDrawingTitleBlockSmokeRunner", "tools\SolidWorksDrawingTitleBlockSmokeRunner\SolidWorksDrawingTitleBlockSmokeRunner.csproj", "{936982BC-8587-4567-9C84-05CDD0C0116D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolidWorksPartFamilySmokeRunner", "tools\SolidWorksPartFamilySmokeRunner\SolidWorksPartFamilySmokeRunner.csproj", "{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -293,6 +295,18 @@ Global
 		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x64.Build.0 = Release|Any CPU
 		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x86.ActiveCfg = Release|Any CPU
 		{936982BC-8587-4567-9C84-05CDD0C0116D}.Release|x86.Build.0 = Release|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Debug|x64.Build.0 = Debug|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Debug|x86.Build.0 = Debug|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Release|x64.ActiveCfg = Release|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Release|x64.Build.0 = Release|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Release|x86.ActiveCfg = Release|Any CPU
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -321,5 +335,6 @@ Global
 		{42142BE0-021D-4780-8021-52DF3A88AFCB} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{26A52E56-BB20-4C4C-8B74-D35E7DF1398D} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{936982BC-8587-4567-9C84-05CDD0C0116D} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{B9FFAD13-A990-4EEC-99A7-CC0335C33D05} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal

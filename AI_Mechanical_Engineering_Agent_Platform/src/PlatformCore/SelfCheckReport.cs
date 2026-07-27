@@ -361,4 +361,46 @@ public sealed record PlatformSelfCheckReport(
 
     [JsonPropertyName("v1_8_version_stage_documented")]
     public bool V18VersionStageDocumented { get; init; }
+
+    [JsonPropertyName("flange_real_builder_implemented")]
+    public bool FlangeRealBuilderImplemented { get; init; }
+
+    [JsonPropertyName("shaft_real_builder_implemented")]
+    public bool ShaftRealBuilderImplemented { get; init; }
+
+    [JsonPropertyName("flange_real_workflow_supported")]
+    public bool FlangeRealWorkflowSupported { get; init; }
+
+    [JsonPropertyName("shaft_real_workflow_supported")]
+    public bool ShaftRealWorkflowSupported { get; init; }
+
+    [JsonPropertyName("flange_real_workflow_default_disabled")]
+    public bool FlangeRealWorkflowDefaultDisabled { get; init; }
+
+    [JsonPropertyName("shaft_real_workflow_default_disabled")]
+    public bool ShaftRealWorkflowDefaultDisabled { get; init; }
+
+    [JsonPropertyName("flange_api_evidence_documented")]
+    public bool FlangeApiEvidenceDocumented { get; init; }
+
+    [JsonPropertyName("shaft_api_evidence_documented")]
+    public bool ShaftApiEvidenceDocumented { get; init; }
+
+    [JsonPropertyName("flange_artifact_validation_supported")]
+    public bool FlangeArtifactValidationSupported { get; init; }
+
+    [JsonPropertyName("shaft_artifact_validation_supported")]
+    public bool ShaftArtifactValidationSupported { get; init; }
+
+    [JsonPropertyName("plate_part_family_regression_passed")]
+    public bool PlatePartFamilyRegressionPassed { get; init; }
+
+    [JsonPropertyName("no_large_part_type_switch")]
+    public bool NoLargePartTypeSwitch { get; init; }
+
+    [JsonPropertyName("all_part_families_use_registry")]
+    public bool AllPartFamiliesUseRegistry { get; init; }
+
+    [JsonPropertyName("v1_9_version_stage_documented")]
+    public bool V19VersionStageDocumented { get; init; }
 }

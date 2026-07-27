@@ -12,6 +12,7 @@ namespace PlatformCore;
 public enum SolidWorksMainWorkflowStage
 {
     BuildPlate,
+    BuildPartFamily,
     CreateDrawing,
     AddDrawingDimensions,
     ApplyDrawingTitleBlock
@@ -20,7 +21,8 @@ public enum SolidWorksMainWorkflowStage
 public enum SolidWorksMainWorkflowOperation
 {
     BuildPlate,
-    BuildCompleteDrawingPackage
+    BuildCompleteDrawingPackage,
+    BuildPartFamilyReleasePackage
 }
 
 public sealed record SolidWorksMainWorkflowRequest(
@@ -97,7 +99,9 @@ public sealed partial class SolidWorksMainWorkflowRunner
         CancellationToken cancellationToken = default) =>
         request.Operation == SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage
             ? ExecuteCompleteDrawingPackageAsync(request, cancellationToken)
-            : ExecuteSingleStageAsync(request, cancellationToken);
+            : request.Operation == SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage
+                ? ExecutePartFamilyReleasePackageAsync(request, cancellationToken)
+                : ExecuteSingleStageAsync(request, cancellationToken);
 
     private async Task<SolidWorksMainWorkflowResult> ExecuteSingleStageAsync(
         SolidWorksMainWorkflowRequest request,
@@ -116,15 +120,49 @@ public sealed partial class SolidWorksMainWorkflowRunner
         var issues = new List<string>();
         var runtimeOptions = _runtimeOptionsProvider();
         var requestAllowsReal = request.AllowRealCadExecution && !request.DryRun;
-        var realExecutionAllowed = requestAllowsReal &&
+        var realExecutionFlagsSatisfied = requestAllowsReal &&
             runtimeOptions.EnableRealExecution &&
             runtimeOptions.MainWorkflowExecutionEnabled;
-        var workerName = realExecutionAllowed ? "RealSolidWorksWorker" : FakeWorkerName;
+        var partType = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type;
+        var localAuthorizationRequired = realExecutionFlagsSatisfied &&
+            !string.Equals(partType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase);
+        var localAuthorization = localAuthorizationRequired
+            ? SolidWorksLocalExecutionProfile.Load(request.ProjectRoot)
+            : null;
+        var realExecutionAllowed = realExecutionFlagsSatisfied && localAuthorization?.IsAuthorized != false;
+        var workerName = realExecutionFlagsSatisfied ? "RealSolidWorksWorker" : FakeWorkerName;
         var workflowId = $"solidworks-main-workflow-{request.TaskId}";
         var outputDirectory = Path.GetFullPath(request.OutputDirectory);
 
-        var steps = new[]
+        var steps = new List<WorkflowStep>();
+        if (localAuthorizationRequired)
         {
+            steps.Add(new WorkflowStep(
+                "SolidWorks local execution authorization",
+                _ =>
+                {
+                    if (localAuthorization?.IsAuthorized == true)
+                    {
+                        return Task.FromResult(StepPassed(
+                            "solidworks-local-execution-authorization",
+                            "LocalDevelopmentProfile authorization passed for non-plate real execution."));
+                    }
+
+                    var authorizationIssues = (localAuthorization?.Issues ?? Array.Empty<string>())
+                        .Append($"{PartFamilyFailureStages.LocalExecutionAuthorizationMissing}: LocalDevelopmentProfile authorization is required for non-plate real builds.")
+                        .ToArray();
+                    issues.AddRange(authorizationIssues);
+                    return Task.FromResult(StepFailed(
+                        "solidworks-local-execution-authorization",
+                        "Non-plate real execution was rejected before worker invocation.",
+                        authorizationIssues,
+                        fatal: true));
+                },
+                "solidworks-local-execution-authorization"));
+        }
+
+        steps.AddRange(
+        [
             new WorkflowStep(
                 "SolidWorks build plan generation",
                 async _ =>
@@ -277,7 +315,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
                         Issues: stepIssues));
                 },
                 "solidworks-artifact-quality-gate")
-        };
+        ]);
 
         var workflowResult = await _workflowEngine.ExecuteAsync(
             steps,
@@ -605,6 +643,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
             PartFamilyFailureStages.PartFamilyBuilderMissing,
             PartFamilyFailureStages.FlangeBuildFailed,
             PartFamilyFailureStages.ShaftBuildFailed,
+            PartFamilyFailureStages.LocalExecutionAuthorizationMissing,
             PartFamilyFailureStages.ArtifactValidationFailed
         };
 

@@ -285,7 +285,7 @@ public sealed class V18PartFamilyTests
     }
 
     [Fact]
-    public async Task ShaftBuildPlanSegmentLengthsEqualOverallLength()
+    public async Task ShaftBuildPlanMapsCompleteHalfProfileAndOverallLength()
     {
         var output = await new SolidWorksBuildPlanSkill().ExecuteAsync(new SkillInput(
             "shaft-overall-length",
@@ -294,11 +294,21 @@ public sealed class V18PartFamilyTests
             new Dictionary<string, string>()));
 
         var plan = Assert.IsType<SolidWorksBuildPlan>(output.Result);
-        var segmentLength = plan.Operations
-            .Where(operation => operation.OperationType.Equals("ExtrudeBoss", StringComparison.OrdinalIgnoreCase))
-            .Sum(operation => double.Parse(operation.Parameters["depth_mm"], CultureInfo.InvariantCulture));
+        var profile = Assert.Single(plan.Operations, operation =>
+            operation.OperationType.Equals("CreateSketch", StringComparison.OrdinalIgnoreCase));
+        var segments = ShaftFeatureBuilder.BuildSegments(
+            double.Parse(profile.Parameters["diameter_mm"], CultureInfo.InvariantCulture),
+            double.Parse(profile.Parameters["length_mm"], CultureInfo.InvariantCulture),
+            [32, 24],
+            [40, 30]);
+        var horizontalLength = segments
+            .Where(segment => Math.Abs(segment.Y1 - segment.Y2) < 1e-12 && segment.Y1 > 0)
+            .Sum(segment => segment.X2 - segment.X1);
 
-        Assert.Equal(180d, segmentLength, precision: 10);
+        Assert.Equal("closed_half_section", profile.Parameters["profile"]);
+        Assert.Equal(180d, horizontalLength, precision: 10);
+        Assert.Contains(plan.Operations, operation => operation.OperationType == "CreateCenterLine");
+        Assert.Contains(plan.Operations, operation => operation.OperationType == "RevolveBoss");
     }
 
     [Fact]
@@ -331,7 +341,7 @@ public sealed class V18PartFamilyTests
     }
 
     [Fact]
-    public async Task FlangeAndShaftRealRequestsFailClosedBeforeSessionConnection()
+    public async Task FlangeAndShaftRealRequestsWithMissingTemplateFailBeforeSessionConnection()
     {
         foreach (var partType in new[] { FlangeBasicDefinition.Type, ShaftBasicDefinition.Type })
         {
@@ -353,8 +363,8 @@ public sealed class V18PartFamilyTests
                 var result = await new RealSolidWorksWorker(session, options).ExecuteAsync(new SolidWorksWorkerRequest(
                     $"real-{partType}", plan, outputRoot, DryRun: false, AllowRealCadExecution: true));
 
-                Assert.Equal("Rejected", result.Status);
-                Assert.Equal(PartFamilyFailureStages.PartFamilyBuilderMissing, result.FailureStage);
+                Assert.Equal("Failed", result.Status);
+                Assert.Equal("preflight_failed", result.FailureStage);
                 Assert.False(result.RealCadExecuted);
                 Assert.Equal(0, session.ConnectCount);
             }

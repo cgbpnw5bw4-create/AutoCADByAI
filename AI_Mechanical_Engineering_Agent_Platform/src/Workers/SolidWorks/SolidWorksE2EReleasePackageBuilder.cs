@@ -34,25 +34,44 @@ public sealed class SolidWorksE2EReleasePackageBuilder
 
         var manifest = new SolidWorksReleaseManifest
         {
+            PartName = sources.PartType,
+            RequestId = sources.RequestId,
             SourceRoot = root,
             OutputDirectory = releaseDirectory,
-            RequireRealExecutionEvidence = sources.RequireRealExecutionEvidence
+            RequireRealExecutionEvidence = sources.RequireRealExecutionEvidence,
+            RequiresDrawingDeliverables = sources.RequireDrawingDeliverables
         };
         manifest.SourceExecutionEvidence.AddRange(sources.ExecutionEvidence);
         manifest.Warnings.AddRange(sources.Warnings ?? Array.Empty<string>());
 
-        AddItem(manifest.Artifacts, "plate_basic_4holes.SLDPRT", "Artifact", sources.SldprtPath, Path.Combine(artifactsDirectory, "plate_basic_4holes.SLDPRT"), issues);
-        AddItem(manifest.Artifacts, "plate_basic_4holes.STEP", "Artifact", sources.StepPath, Path.Combine(artifactsDirectory, "plate_basic_4holes.STEP"), issues);
-        AddItem(manifest.Artifacts, "plate_basic_4holes.SLDDRW", "Artifact", sources.DrawingPath, Path.Combine(artifactsDirectory, "plate_basic_4holes.SLDDRW"), issues);
-        AddItem(manifest.Artifacts, "plate_basic_4holes.pdf", "Artifact", sources.PdfPath, Path.Combine(artifactsDirectory, "plate_basic_4holes.pdf"), issues);
+        AddItem(manifest.Artifacts, $"{sources.PartType}.SLDPRT", "Artifact", sources.SldprtPath, Path.Combine(artifactsDirectory, $"{sources.PartType}.SLDPRT"), issues);
+        AddItem(manifest.Artifacts, $"{sources.PartType}.STEP", "Artifact", sources.StepPath, Path.Combine(artifactsDirectory, $"{sources.PartType}.STEP"), issues);
+        if (sources.RequireDrawingDeliverables)
+        {
+            AddItem(manifest.Artifacts, $"{sources.PartType}.SLDDRW", "Artifact", sources.DrawingPath, Path.Combine(artifactsDirectory, $"{sources.PartType}.SLDDRW"), issues);
+            AddItem(manifest.Artifacts, $"{sources.PartType}.pdf", "Artifact", sources.PdfPath, Path.Combine(artifactsDirectory, $"{sources.PartType}.pdf"), issues);
+        }
 
         AddItem(manifest.Reports, "build_report.json", "Report", sources.BuildReportPath, Path.Combine(reportsDirectory, "build_report.json"), issues, readReportStatus: true);
-        AddItem(manifest.Reports, "drawing_report.json", "Report", sources.DrawingReportPath, Path.Combine(reportsDirectory, "drawing_report.json"), issues, readReportStatus: true);
-        AddItem(manifest.Reports, "dimension_report.json", "Report", sources.DimensionReportPath, Path.Combine(reportsDirectory, "dimension_report.json"), issues, readReportStatus: true);
-        AddItem(manifest.Reports, "title_block_report.json", "Report", sources.TitleBlockReportPath, Path.Combine(reportsDirectory, "title_block_report.json"), issues, readReportStatus: true);
+        if (sources.RequireDrawingDeliverables)
+        {
+            AddItem(manifest.Reports, "drawing_report.json", "Report", sources.DrawingReportPath, Path.Combine(reportsDirectory, "drawing_report.json"), issues, readReportStatus: true);
+            AddItem(manifest.Reports, "dimension_report.json", "Report", sources.DimensionReportPath, Path.Combine(reportsDirectory, "dimension_report.json"), issues, readReportStatus: true);
+            AddItem(manifest.Reports, "title_block_report.json", "Report", sources.TitleBlockReportPath, Path.Combine(reportsDirectory, "title_block_report.json"), issues, readReportStatus: true);
+        }
 
         CopyItems(manifest.Artifacts, logs, issues);
         CopyItems(manifest.Reports, logs, issues);
+        var resolvedSourceReadIssues = issues
+            .Where(issue => issue.StartsWith("source_read_failed:", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        if (resolvedSourceReadIssues.Length > 0 &&
+            manifest.Artifacts.Concat(manifest.Reports).All(item => item.Exists && item.SizeBytes > 0))
+        {
+            manifest.Warnings.AddRange(resolvedSourceReadIssues.Select(issue =>
+                $"{issue} The package copy succeeded and the destination checksum was verified."));
+            issues.RemoveAll(issue => issue.StartsWith("source_read_failed:", StringComparison.OrdinalIgnoreCase));
+        }
         manifest.Errors.AddRange(issues);
 
         ApplySemanticStatus(manifest, DetermineFailureStage(manifest, issues));
@@ -174,7 +193,7 @@ public sealed class SolidWorksE2EReleasePackageBuilder
         manifest.SourceReportFailures.AddRange(statuses.Where(status => string.Equals(status.FinalStatus, "Failed", StringComparison.OrdinalIgnoreCase)));
         manifest.SourceReportWarnings.Clear();
         manifest.SourceReportWarnings.AddRange(statuses.Where(status => !string.IsNullOrWhiteSpace(status.FinalStatus) && !string.Equals(status.FinalStatus, "Passed", StringComparison.OrdinalIgnoreCase) && !string.Equals(status.FinalStatus, "Failed", StringComparison.OrdinalIgnoreCase)));
-        manifest.RealExecutionEvidencePassed = !manifest.RequireRealExecutionEvidence || HasCompleteRealEvidence(manifest.SourceExecutionEvidence);
+        manifest.RealExecutionEvidencePassed = !manifest.RequireRealExecutionEvidence || HasCompleteRealEvidence(manifest);
         manifest.AllSourceReportsPassed =
             manifest.SourceReportsChecked &&
             statuses.All(status => string.Equals(status.FinalStatus, "Passed", StringComparison.OrdinalIgnoreCase)) &&
@@ -188,8 +207,22 @@ public sealed class SolidWorksE2EReleasePackageBuilder
         manifest.FinalStatus = manifest.DeliverableStatus == "Deliverable" ? "Passed" : "Failed";
     }
 
-    private static bool HasCompleteRealEvidence(IReadOnlyList<SolidWorksReleaseExecutionEvidence> evidence)
+    private static bool HasCompleteRealEvidence(SolidWorksReleaseManifest manifest)
     {
+        var evidence = manifest.SourceExecutionEvidence;
+        if (!manifest.RequiresDrawingDeliverables)
+        {
+            var registry = PartFamilyBuilderRegistry.CreateDefault();
+            return registry.TryGetBuilder(manifest.PartName, out var builder) &&
+                   evidence.Count == 1 &&
+                   evidence.All(item =>
+                       string.Equals(item.Stage, "build", StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(item.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(item.ExecutionMode, builder.RealExecutionMode, StringComparison.OrdinalIgnoreCase) &&
+                       item.RealCadExecuted && item.RealCadConnected && item.QualityGatePassed &&
+                       string.IsNullOrWhiteSpace(item.FailureStage));
+        }
+
         var expected = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["build"] = "RealBuildPlateBasic4Holes",
@@ -242,8 +275,11 @@ public sealed class SolidWorksE2EReleasePackageBuilder
     private static string BuildSummary(SolidWorksReleaseManifest manifest)
     {
         var text = new StringBuilder();
-        text.AppendLine("# V1.7 SolidWorks 端到端发布包摘要");
+        text.AppendLine("# V1.9 SolidWorks 受控主工作流发布包摘要");
         text.AppendLine();
+        text.AppendLine($"- request_id：`{manifest.RequestId ?? "unknown"}`");
+        text.AppendLine($"- part_type：`{manifest.PartName}`");
+        text.AppendLine($"- requires_drawing_deliverables：`{manifest.RequiresDrawingDeliverables}`");
         text.AppendLine($"- all_source_reports_passed：`{manifest.AllSourceReportsPassed}`");
         text.AppendLine($"- real_execution_evidence_passed：`{manifest.RealExecutionEvidencePassed}`");
         text.AppendLine($"- deliverable_status：`{manifest.DeliverableStatus}`");

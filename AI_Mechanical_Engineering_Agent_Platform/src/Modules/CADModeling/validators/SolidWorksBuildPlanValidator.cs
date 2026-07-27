@@ -8,7 +8,9 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
     private static readonly HashSet<string> AllowedOperationTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "CreateSketch",
+        "CreateCenterLine",
         "ExtrudeBoss",
+        "RevolveBoss",
         "CutExtrude",
         "AddFillet",
         "AddChamfer",

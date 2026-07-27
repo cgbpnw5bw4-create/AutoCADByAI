@@ -7,12 +7,16 @@ namespace PlatformCore.Modules.CADModeling.Validators;
 public sealed class SolidWorksArtifactValidator : IValidator
 {
     private readonly string? _configuredOutputRoot;
+    private readonly PartTypeRegistry _partTypeRegistry;
 
-    public SolidWorksArtifactValidator(string? configuredOutputRoot = null)
+    public SolidWorksArtifactValidator(
+        string? configuredOutputRoot = null,
+        PartTypeRegistry? partTypeRegistry = null)
     {
         _configuredOutputRoot = string.IsNullOrWhiteSpace(configuredOutputRoot)
             ? null
             : NormalizeDirectory(configuredOutputRoot);
+        _partTypeRegistry = partTypeRegistry ?? PartTypeRegistry.CreateDefault();
     }
 
     public string Name => "solidworks-artifact-validator";
@@ -27,14 +31,17 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
 
         var isFakeMode = string.Equals(result.ExecutionMode, "Fake", StringComparison.OrdinalIgnoreCase);
-        var isRealPlateBuildMode = string.Equals(result.ExecutionMode, "RealBuildPlateBasic4Holes", StringComparison.OrdinalIgnoreCase);
+        var partFamilyDefinition = _partTypeRegistry.GetAll().FirstOrDefault(definition =>
+            string.Equals(definition.RealExecutionMode, result.ExecutionMode, StringComparison.OrdinalIgnoreCase));
+        var isRealPartFamilyBuildMode = partFamilyDefinition is not null;
         var isRealDrawingMode = string.Equals(result.ExecutionMode, "RealDrawingBasicViews", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingDimensionMode = string.Equals(result.ExecutionMode, "RealDrawingDimensions", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingTitleBlockMode = string.Equals(result.ExecutionMode, "RealDrawingTitleBlock", StringComparison.OrdinalIgnoreCase);
 
-        if (!isFakeMode && !isRealPlateBuildMode && !isRealDrawingMode && !isRealDrawingDimensionMode && !isRealDrawingTitleBlockMode)
+        if (!isFakeMode && !isRealPartFamilyBuildMode && !isRealDrawingMode && !isRealDrawingDimensionMode && !isRealDrawingTitleBlockMode)
         {
-            issues.Add("execution_mode must be Fake, RealBuildPlateBasic4Holes, RealDrawingBasicViews, RealDrawingDimensions, or RealDrawingTitleBlock.");
+            var familyModes = string.Join(", ", _partTypeRegistry.GetAll().Select(definition => definition.RealExecutionMode));
+            issues.Add($"execution_mode must be Fake, {familyModes}, RealDrawingBasicViews, RealDrawingDimensions, or RealDrawingTitleBlock.");
         }
 
         if (result.GeneratedArtifacts.Count == 0)
@@ -46,9 +53,9 @@ public sealed class SolidWorksArtifactValidator : IValidator
         {
             ValidateFakeMode(result, issues);
         }
-        else if (isRealPlateBuildMode)
+        else if (isRealPartFamilyBuildMode)
         {
-            ValidateRealPlateBuildMode(result, issues);
+            ValidateRealPartFamilyBuildMode(result, partFamilyDefinition!, issues);
         }
         else if (isRealDrawingMode)
         {
@@ -113,16 +120,19 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
     }
 
-    private void ValidateRealPlateBuildMode(SolidWorksWorkerResult result, List<string> issues)
+    private void ValidateRealPartFamilyBuildMode(
+        SolidWorksWorkerResult result,
+        IPartFamilyDefinition definition,
+        List<string> issues)
     {
         if (!result.RealCadExecuted)
         {
-            issues.Add("real_cad_executed must be true for RealBuildPlateBasic4Holes.");
+            issues.Add($"real_cad_executed must be true for {definition.RealExecutionMode}.");
         }
 
         if (!result.RealCadConnected)
         {
-            issues.Add("real_cad_connected must be true for RealBuildPlateBasic4Holes.");
+            issues.Add($"real_cad_connected must be true for {definition.RealExecutionMode}.");
         }
 
         var part = FindArtifact(result, ".SLDPRT");
@@ -145,7 +155,7 @@ public sealed class SolidWorksArtifactValidator : IValidator
 
         if (report is not null && File.Exists(report.FilePath))
         {
-            ValidateRealBuildReport(report.FilePath, issues);
+            ValidateRealBuildReport(report.FilePath, definition, issues);
         }
     }
 
@@ -283,7 +293,10 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
     }
 
-    private static void ValidateRealBuildReport(string reportPath, List<string> issues)
+    private static void ValidateRealBuildReport(
+        string reportPath,
+        IPartFamilyDefinition definition,
+        List<string> issues)
     {
         try
         {
@@ -296,9 +309,21 @@ public sealed class SolidWorksArtifactValidator : IValidator
             }
 
             if (!root.TryGetProperty("execution_mode", out var executionMode) ||
-                !string.Equals(executionMode.GetString(), "RealBuildPlateBasic4Holes", StringComparison.OrdinalIgnoreCase))
+                !string.Equals(executionMode.GetString(), definition.RealExecutionMode, StringComparison.OrdinalIgnoreCase))
             {
-                issues.Add("build_report execution_mode must be RealBuildPlateBasic4Holes.");
+                issues.Add($"build_report execution_mode must be {definition.RealExecutionMode}.");
+            }
+
+            if (!root.TryGetProperty("part_type", out var partType) ||
+                !string.Equals(partType.GetString(), definition.PartType, StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add($"build_report part_type must be {definition.PartType}.");
+            }
+
+            if (!root.TryGetProperty("real_cad_connected", out var connected) ||
+                connected.ValueKind != JsonValueKind.True)
+            {
+                issues.Add("build_report real_cad_connected must be true.");
             }
 
             if (!root.TryGetProperty("sldprt_save_success", out var sldprtSaveSuccess) ||
@@ -311,6 +336,12 @@ public sealed class SolidWorksArtifactValidator : IValidator
                 stepExportSuccess.ValueKind != JsonValueKind.True)
             {
                 issues.Add("build_report step_export_success must be true.");
+            }
+
+            if (!root.TryGetProperty("final_status", out var finalStatus) ||
+                !string.Equals(finalStatus.GetString(), "Passed", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add("build_report final_status must be Passed.");
             }
         }
         catch (JsonException ex)

@@ -107,3 +107,66 @@ V1.8 审查结构化输入到发布包的通用零件族执行链，以及 `plat
    - `markdown_chinese_check_passed`
 
 上述条件全部满足时可进入 Claude 实现审查。`flange_basic` 只有完成独立真实 smoke 后才可进入真实验收；`shaft_basic` 还必须先获得 `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 的专用诊断证据。本轮审查结论不得授权进入 V1.9。
+
+## V1.9 Phase 1 审查合同
+
+### 目标与输入输出
+
+审查 `flange_basic` 和 `shaft_basic` 的真实 build-only 主工作流程，同时保护 `plate_basic_4holes` 完整工程图包回归。输入为源码、测试、默认 self-check、API evidence、同次真实报告与发布包；输出为 Blockers、Improvements、合同通过状态和待回填证据。
+
+### 必查项
+
+- 最终路径是否严格经过 Gateway / `chief-engineer`、`ChiefEngineerOrchestrator`、`WorkflowEngine`、`SolidWorksWorkflowRouter`、两个 Registry、`RealSolidWorksWorker`、ArtifactValidator、Reviewer、QualityGate 和 build-only ReleasePackage。
+- flange / shaft 是否不自动生成 Drawing，plate 是否保持完整图包回归。
+- 是否同时要求请求授权、`LocalDevelopmentProfile` 本地授权和环境授权，默认 self-check 是否不连接 COM。
+- 真实 SolidWorks 是否全局串行，验收是否按 flange → shaft 顺序。
+- 两族包是否写入 `output/solidworks/e2e/<part_type>/<timestamp>/`，并包含 SLDPRT、STEP、`build_report.json`、`e2e_execution_report.json`、`release_manifest.json`。
+- 是否使用全部十二个专用 `failure_stage`，且 API evidence 不足时失败关闭。
+- 法兰是否使用外圆拉伸、独立内孔草图切除、单草图螺栓孔切除，并拒绝 `HoleWizard` / 圆周阵列。
+- 轴是否使用 `CreateLine`、`CreateCenterLine`、selection mark `16` 和 `FeatureRevolve2` 360°，没有混用偏移多段拉伸。
+- 是否仅声称当前证据足以进入 diagnostic，并把实际 smoke 结果/路径保留为待回填。
+- 最终验收是否禁止直接 Builder / SmokeRunner、历史 latest 和仅文件存在证据。
+
+### Blockers
+
+- flange / shaft 自动进入工程图，或 plate 完整图包回归退化。
+- 三层授权缺任一层仍连接 COM，或真实任务并发。
+- 绕过 Gateway、Agent、WorkflowEngine、Registry、Worker、Validator、Reviewer 或 QualityGate。
+- 发布包缺少任一必需产物/报告，却被标记可交付。
+- API evidence 不足却声称真实建模已 `Passed`，或伪造 smoke 路径。
+- 使用大型 `switch(part_type)`、未经 Registry 分发，或进入 V2.0。
+
+### 自检与通过标准
+
+```text
+flange_real_builder_implemented
+shaft_real_builder_implemented
+flange_real_workflow_supported
+shaft_real_workflow_supported
+flange_real_workflow_default_disabled
+shaft_real_workflow_default_disabled
+flange_api_evidence_documented
+shaft_api_evidence_documented
+flange_artifact_validation_supported
+shaft_artifact_validation_supported
+plate_part_family_regression_passed
+no_large_part_type_switch
+all_part_families_use_registry
+v1_9_version_stage_documented
+markdown_chinese_check_passed
+```
+
+默认 build、test、self-check 和上述字段全部通过后，可进入实现审查。真实验收仍需回填 flange / shaft 独立 smoke 的实际结果、报告路径和同次主工作流程包。本阶段不进入 V2.0。
+
+## V1.9 Phase 2 审查回填
+
+Phase 1 的 diagnostic 与主流程待回填项已经关闭：
+
+- `flange_basic` diagnostic 为 `CandidatePassed`，规则审查 100 分且通过；特征树和四视图确认中心孔及 6 个螺栓孔。
+- `shaft_basic` diagnostic 为 `CandidatePassed`，规则审查 100 分且通过；特征树和四视图确认旋转体及直径 40、32、24 的两级台阶。
+- flange 最终目录为 `output/solidworks/e2e/flange_basic/cad-e2e-20260720_085451_612-f303b15a20be4b1987a53007bb819ea6/`。
+- shaft 最终目录为 `output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a7845a938319737a44/`。
+- 两次主流程均为 `Passed`、`Deliverable`、QualityGate `Passed`，且最终构建报告已回填 diagnostic、视觉复核和主流程证据。
+- plate 完整回归目录为 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260720_082027_397-bd86bc56b48349c69db5f8173c1b3d85/`，状态同为 `Passed`、`Deliverable`、QualityGate `Passed`。
+
+因此，V1.9 基础法兰、基础轴 build-only 真实验收和 plate 完整包回归均有同次证据，可进入 Claude 实现审查。diagnostic 的 body count 与 theoretical volume 仍为 `NotVerified`，按 Improvement 处理，不阻断本阶段；禁止据此扩大到自动工程图或 V2.0。
