@@ -70,7 +70,7 @@ public sealed class PlatformBootstrapperTests
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));
         Assert.Equal("Passed", report.FinalStatus);
-        Assert.Equal("2.0", report.SchemaVersion);
+        Assert.Equal("2.0-b", report.SchemaVersion);
         Assert.StartsWith("platform-self-check-", report.RunId, StringComparison.Ordinal);
         Assert.NotEqual(default, report.GeneratedAt);
         Assert.False(string.IsNullOrWhiteSpace(report.SourceRevision));
@@ -99,8 +99,22 @@ public sealed class PlatformBootstrapperTests
         Assert.True(report.SolidWorksUnitTestExecutionDisabled);
         Assert.True(report.SolidWorksDryRunDisablesRealExecution);
         Assert.True(report.SolidWorksVisibleDefaultTrue);
+        Assert.True(report.SolidWorksExecutionEnvironmentProbeSupported);
         Assert.True(report.LegacyEnableFlagNotRequired);
         Assert.True(report.LegacyRequestConfirmationNotRequired);
+        Assert.True(report.GenericCadModelSpecV2Supported);
+        Assert.True(report.SketchDefinitionSupported);
+        Assert.True(report.SketchConstraintsSupported);
+        Assert.True(report.FeatureDefinitionSupported);
+        Assert.True(report.FeatureGraphSupported);
+        Assert.True(report.FeatureGraphCycleDetected);
+        Assert.True(report.MissingFeatureDependencyRejected);
+        Assert.True(report.BuildPlanCompilerSupported);
+        Assert.True(report.PlateUsesGenericFeatureGraph);
+        Assert.True(report.FlangeUsesGenericFeatureGraph);
+        Assert.True(report.ShaftUsesGenericFeatureGraph);
+        Assert.True(report.NoPartSpecificLogicInRealWorker);
+        Assert.True(report.V20ADocumented);
         Assert.Equal("chief-engineer", Assert.Single(report.PublicAgents).Id);
         Assert.Equal("chief-engineer", Assert.Single(report.GatewayVisibleAgents).Id);
         Assert.Contains(report.RegisteredWorkers, worker => worker.Name == "FakeSolidWorksWorker");
@@ -109,7 +123,7 @@ public sealed class PlatformBootstrapperTests
         using var stream = File.OpenRead(reportPath);
         using var document = await JsonDocument.ParseAsync(stream);
         Assert.Equal("Passed", document.RootElement.GetProperty("final_status").GetString());
-        Assert.Equal("2.0", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.Equal("2.0-b", document.RootElement.GetProperty("schema_version").GetString());
         Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());
         Assert.False(document.RootElement.TryGetProperty("solidworks_com_false_success_tests_added", out _));
     }

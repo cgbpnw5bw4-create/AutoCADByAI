@@ -162,6 +162,7 @@ V1.7 首先读取同次 `reports/e2e_execution_report.json`，再读取同目录
 | failure_stage | 首先检查 | 修复边界 |
 |---|---|---|
 | `real_execution_disabled` | dry-run、禁用变量、CI、单元测试、强制 Fake Worker | 确认禁用来源；需要真实执行时从本地交互式 CLI 重跑，不能使用 Fake 回退。 |
+| `real_execution_environment_unavailable` | issue 中的操作系统、交互桌面和 `SldWorks.Application` 注册探测结果 | 在受支持的本地交互 Windows 会话安装或修复 SolidWorks COM 注册后重跑；该阶段必须发生在 COM 连接前，不能删除探测或回退 Fake Worker。 |
 | `preflight_failed` | `build_report.json`、模板路径、环境 | 修复既有 `SW_TEMPLATE_PART_PATH` 或工程图模板配置，不新增 API。 |
 | `source_artifacts_missing` | manifest 的 SourcePath、阶段 report | 只重跑本次失败阶段，保持 request 绑定。 |
 | `source_report_missing` / `source_report_failed` | 四个复制后的 report | 回到对应 Build、Drawing、Dimension 或 TitleBlock 阶段。 |

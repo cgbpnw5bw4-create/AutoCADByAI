@@ -15,7 +15,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "2.0";
+    private const string SelfCheckSchemaVersion = "2.0-b";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -213,6 +213,8 @@ public static class PlatformSelfCheckRunner
         var v18PartFamilyChecks = await RunV18PartFamilyChecksAsync(root, platform, outputRoot, versionStageText, cancellationToken);
         var v19PartFamilyChecks = RunV19PartFamilyChecks(root, platform, versionStageText, v18PartFamilyChecks);
         var v20SolidWorksDefaultOnChecks = RunV20SolidWorksDefaultOnChecks();
+        var v20AGenericCadModelSpecChecks = RunV20AGenericCadModelSpecChecks(root, versionStageText);
+        var v20BFeatureHandlerChecks = RunV20BFeatureHandlerChecks(root, platform, versionStageText);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -433,6 +435,8 @@ public static class PlatformSelfCheckRunner
              v18PartFamilyChecks.AllPassed &&
              v19PartFamilyChecks.AllPassed &&
              v20SolidWorksDefaultOnChecks.AllPassed &&
+             v20AGenericCadModelSpecChecks.AllPassed &&
+             v20BFeatureHandlerChecks.AllPassed &&
              executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -779,8 +783,34 @@ public static class PlatformSelfCheckRunner
             SolidWorksUnitTestExecutionDisabled = v20SolidWorksDefaultOnChecks.UnitTestExecutionDisabled,
             SolidWorksDryRunDisablesRealExecution = v20SolidWorksDefaultOnChecks.DryRunDisablesRealExecution,
             SolidWorksVisibleDefaultTrue = v20SolidWorksDefaultOnChecks.VisibleDefaultTrue,
+            SolidWorksExecutionEnvironmentProbeSupported = v20SolidWorksDefaultOnChecks.ExecutionEnvironmentProbeSupported,
             LegacyEnableFlagNotRequired = v20SolidWorksDefaultOnChecks.LegacyEnableFlagNotRequired,
-            LegacyRequestConfirmationNotRequired = v20SolidWorksDefaultOnChecks.LegacyRequestConfirmationNotRequired
+            LegacyRequestConfirmationNotRequired = v20SolidWorksDefaultOnChecks.LegacyRequestConfirmationNotRequired,
+            GenericCadModelSpecV2Supported = v20AGenericCadModelSpecChecks.GenericCadModelSpecV2Supported,
+            SketchDefinitionSupported = v20AGenericCadModelSpecChecks.SketchDefinitionSupported,
+            SketchConstraintsSupported = v20AGenericCadModelSpecChecks.SketchConstraintsSupported,
+            FeatureDefinitionSupported = v20AGenericCadModelSpecChecks.FeatureDefinitionSupported,
+            FeatureGraphSupported = v20AGenericCadModelSpecChecks.FeatureGraphSupported,
+            FeatureGraphCycleDetected = v20AGenericCadModelSpecChecks.FeatureGraphCycleDetected,
+            MissingFeatureDependencyRejected = v20AGenericCadModelSpecChecks.MissingFeatureDependencyRejected,
+            BuildPlanCompilerSupported = v20AGenericCadModelSpecChecks.BuildPlanCompilerSupported,
+            PlateUsesGenericFeatureGraph = v20AGenericCadModelSpecChecks.PlateUsesGenericFeatureGraph,
+            FlangeUsesGenericFeatureGraph = v20AGenericCadModelSpecChecks.FlangeUsesGenericFeatureGraph,
+            ShaftUsesGenericFeatureGraph = v20AGenericCadModelSpecChecks.ShaftUsesGenericFeatureGraph,
+            NoPartSpecificLogicInRealWorker = v20AGenericCadModelSpecChecks.NoPartSpecificLogicInRealWorker,
+            V20ADocumented = v20AGenericCadModelSpecChecks.V20ADocumented,
+            FeatureHandlerRegistryExists = v20BFeatureHandlerChecks.FeatureHandlerRegistryExists,
+            NoFeatureTypeLargeSwitch = v20BFeatureHandlerChecks.NoFeatureTypeLargeSwitch,
+            SketchHandlerRegistered = v20BFeatureHandlerChecks.SketchHandlerRegistered,
+            ExtrudeHandlerRegistered = v20BFeatureHandlerChecks.ExtrudeHandlerRegistered,
+            CutHandlerRegistered = v20BFeatureHandlerChecks.CutHandlerRegistered,
+            HoleHandlerRegistered = v20BFeatureHandlerChecks.HoleHandlerRegistered,
+            RevolveHandlerRegistered = v20BFeatureHandlerChecks.RevolveHandlerRegistered,
+            FeatureHandlerValidationSupported = v20BFeatureHandlerChecks.FeatureHandlerValidationSupported,
+            FeatureApiEvidenceRequired = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
+            UnverifiedApiBlocksRealExecution = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
+            FeatureHandlerDocsCompleted = v20BFeatureHandlerChecks.FeatureHandlerDocsCompleted,
+            V20BDocumented = v20BFeatureHandlerChecks.V20BDocumented
         };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -1099,6 +1129,22 @@ public static class PlatformSelfCheckRunner
                 Path.GetTempPath(),
                 DryRun: false,
                 AllowRealCadExecution: false));
+        var environmentProbeInterface = Type.GetType(
+            "SolidWorksWorker.ISolidWorksExecutionEnvironmentProbe, SolidWorksWorker",
+            throwOnError: false);
+        var environmentProbeType = Type.GetType(
+            "SolidWorksWorker.SolidWorksExecutionEnvironmentProbe, SolidWorksWorker",
+            throwOnError: false);
+        var realWorkerType = Type.GetType(
+            "SolidWorksWorker.RealSolidWorksWorker, SolidWorksWorker",
+            throwOnError: false);
+        var environmentProbeIsInjectable =
+            environmentProbeInterface is not null &&
+            environmentProbeType is not null &&
+            environmentProbeInterface.IsAssignableFrom(environmentProbeType) &&
+            realWorkerType?.GetConstructors().Any(constructor =>
+                constructor.GetParameters().Any(parameter =>
+                    parameter.ParameterType == environmentProbeInterface)) == true;
 
         return new V20SolidWorksDefaultOnSelfCheckResult(
             LocalInteractiveDefaultEnabled:
@@ -1119,8 +1165,553 @@ public static class PlatformSelfCheckRunner
                 !unitTestEnvironment.ShouldUseRealWorker(dryRun: false),
             DryRunDisablesRealExecution: !localInteractive.ShouldUseRealWorker(dryRun: true),
             VisibleDefaultTrue: localInteractive.VisibleModeDefault && localInteractive.Visible,
+            ExecutionEnvironmentProbeSupported: environmentProbeIsInjectable,
             LegacyEnableFlagNotRequired: localInteractive.ShouldUseRealWorker(dryRun: false),
             LegacyRequestConfirmationNotRequired: legacyRequestReview.IsPassed);
+    }
+
+    private static V20AGenericCadModelSpecSelfCheckResult RunV20AGenericCadModelSpecChecks(
+        string projectRoot,
+        string versionStageText)
+    {
+        var requiredSpecProperties = new[]
+        {
+            nameof(CADModelSpec.ModelId),
+            nameof(CADModelSpec.ModelType),
+            nameof(CADModelSpec.Unit),
+            nameof(CADModelSpec.Parameters),
+            nameof(CADModelSpec.ReferenceGeometry),
+            nameof(CADModelSpec.Sketches),
+            nameof(CADModelSpec.Features),
+            nameof(CADModelSpec.Material),
+            nameof(CADModelSpec.OutputRequirements),
+            nameof(CADModelSpec.DrawingRequirements),
+            nameof(CADModelSpec.ExecutionOptions)
+        };
+        var genericCadModelSpecV2Supported = requiredSpecProperties.All(property =>
+            typeof(CADModelSpec).GetProperty(property) is not null);
+        var sketchDefinitionSupported =
+            typeof(SketchDefinition).GetProperty(nameof(SketchDefinition.SketchId)) is not null &&
+            typeof(SketchDefinition).GetProperty(nameof(SketchDefinition.ReferencePlane)) is not null &&
+            typeof(SketchDefinition).GetProperty(nameof(SketchDefinition.Entities)) is not null &&
+            typeof(SketchDefinition).GetProperty(nameof(SketchDefinition.Constraints)) is not null &&
+            typeof(SketchDefinition).GetProperty(nameof(SketchDefinition.Dimensions)) is not null &&
+            new[] { "line", "rectangle", "circle", "arc", "slot" }
+                .All(SketchEntityTypes.Supported.Contains);
+        var sketchConstraintsSupported =
+            new[]
+            {
+                "horizontal", "vertical", "coincident", "concentric", "tangent",
+                "parallel", "perpendicular", "equal", "dimensional"
+            }.All(SketchConstraintTypes.Supported.Contains);
+        var featureDefinitionSupported =
+            typeof(FeatureDefinition).GetProperty(nameof(FeatureDefinition.FeatureId)) is not null &&
+            typeof(FeatureDefinition).GetProperty(nameof(FeatureDefinition.Dependencies)) is not null &&
+            typeof(FeatureDefinition).GetProperty(nameof(FeatureDefinition.ReferencedSketches)) is not null &&
+            typeof(FeatureDefinition).GetProperty(nameof(FeatureDefinition.ReferencedFeatures)) is not null &&
+            new[]
+            {
+                "extrude_boss", "extrude_cut", "revolve_boss", "revolve_cut", "hole",
+                "fillet", "chamfer", "linear_pattern", "circular_pattern", "mirror"
+            }.All(FeatureTypes.Supported.Contains);
+
+        FeatureDefinition Node(string id, string type, string[] dependencies, int? order = null) =>
+            new(
+                id,
+                type,
+                new Dictionary<string, string>(),
+                dependencies,
+                referencedSketches: [],
+                referencedFeatures: dependencies,
+                executionOrder: order);
+
+        var validGraph = new FeatureGraph(
+        [
+            Node("cut", FeatureTypes.ExtrudeCut, ["base"], 2),
+            Node("base", FeatureTypes.ExtrudeBoss, [], 1)
+        ]).ValidateAndSort();
+        var cycleGraph = new FeatureGraph(
+        [
+            Node("cycle-a", FeatureTypes.ExtrudeBoss, ["cycle-b"]),
+            Node("cycle-b", FeatureTypes.ExtrudeCut, ["cycle-a"])
+        ]).ValidateAndSort();
+        var missingGraph = new FeatureGraph(
+            [Node("missing", FeatureTypes.ExtrudeCut, ["not-registered"])])
+            .ValidateAndSort();
+        var featureGraphSupported =
+            validGraph.IsValid &&
+            validGraph.OrderedFeatures.Select(feature => feature.FeatureId)
+                .SequenceEqual(["base", "cut"], StringComparer.OrdinalIgnoreCase);
+        var featureGraphCycleDetected =
+            !cycleGraph.IsValid &&
+            string.Equals(
+                cycleGraph.FailureStage,
+                PartFamilyFailureStages.FeatureDependencyCycle,
+                StringComparison.OrdinalIgnoreCase);
+        var missingFeatureDependencyRejected =
+            !missingGraph.IsValid &&
+            string.Equals(
+                missingGraph.FailureStage,
+                PartFamilyFailureStages.FeatureDependencyMissing,
+                StringComparison.OrdinalIgnoreCase);
+
+        var plateSource = SolidWorksWorkflowRouter.CreatePlateBasicFourHolesSpec();
+        var flangeSource = new CADModelSpec(
+            "self-check-v20-a-flange",
+            FlangeBasicDefinition.Type,
+            new Dictionary<string, string>
+            {
+                ["outer_diameter_mm"] = "160",
+                ["inner_diameter_mm"] = "60",
+                ["thickness_mm"] = "18",
+                ["bolt_hole_count"] = "6",
+                ["bolt_hole_diameter_mm"] = "14",
+                ["bolt_circle_diameter_mm"] = "115"
+            });
+        var shaftSource = new CADModelSpec(
+            "self-check-v20-a-shaft",
+            ShaftBasicDefinition.Type,
+            new Dictionary<string, string>
+            {
+                ["diameter_mm"] = "40",
+                ["length_mm"] = "180",
+                ["optional_step_diameters"] = "32,24",
+                ["optional_step_lengths"] = "40,30"
+            });
+
+        bool UsesGenericGraph(
+            IPartFamilyDefinition definition,
+            CADModelSpec source,
+            params string[] expectedFeatureIds)
+        {
+            var result = definition.GenerateBuildPlan(
+                $"self-check-v20-a-{definition.PartType}",
+                source);
+            if (!result.IsSuccess || result.BuildPlan is not SolidWorksBuildPlan plan)
+            {
+                return false;
+            }
+
+            var compiledFeatureIds = plan.Operations
+                .Select(operation => operation.Parameters.GetValueOrDefault("feature_id"))
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Cast<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            return expectedFeatureIds.ToHashSet(StringComparer.OrdinalIgnoreCase)
+                       .SetEquals(compiledFeatureIds) &&
+                   new SolidWorksBuildPlanValidator().Validate(plan).IsPassed;
+        }
+
+        var compilerProbe = new BuildPlanCompiler().Compile(
+            "self-check-v20-a-compiler",
+            PartFamilyGenericModelFactory.CreatePlateBasic4Holes(plateSource));
+        var buildPlanCompilerSupported =
+            compilerProbe.IsSuccess &&
+            compilerProbe.BuildPlan?.Operations.Any(operation =>
+                operation.Parameters.ContainsKey("feature_id")) == true &&
+            compilerProbe.BuildPlan.Operations[^2].OperationType == "SavePart" &&
+            compilerProbe.BuildPlan.Operations[^1].OperationType == "ExportStep";
+        var plateUsesGenericFeatureGraph = UsesGenericGraph(
+            new PlateBasic4HolesDefinition(),
+            plateSource,
+            "plate_base_extrude",
+            "plate_hole_cut");
+        var flangeUsesGenericFeatureGraph = UsesGenericGraph(
+            new FlangeBasicDefinition(),
+            flangeSource,
+            "flange_body_extrude",
+            "flange_inner_cut",
+            "flange_bolt_holes");
+        var shaftUsesGenericFeatureGraph = UsesGenericGraph(
+            new ShaftBasicDefinition(),
+            shaftSource,
+            "shaft_revolve");
+
+        var realWorkerPath = Path.Combine(
+            projectRoot,
+            "src",
+            "Workers",
+            "SolidWorks",
+            "RealSolidWorksWorker.cs");
+        var realWorkerText = File.Exists(realWorkerPath)
+            ? File.ReadAllText(realWorkerPath)
+            : string.Empty;
+        var noPartSpecificLogicInRealWorker =
+            realWorkerText.Contains("TryGetBuilder", StringComparison.Ordinal) &&
+            !realWorkerText.Contains(PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase) &&
+            !realWorkerText.Contains(FlangeBasicDefinition.Type, StringComparison.OrdinalIgnoreCase) &&
+            !realWorkerText.Contains(ShaftBasicDefinition.Type, StringComparison.OrdinalIgnoreCase);
+        var v20ADocumented =
+            versionStageText.Contains("V2.0-A", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(Path.Combine(projectRoot, "docs", "v2_0_a_generic_cad_model_spec.md"));
+
+        return new V20AGenericCadModelSpecSelfCheckResult(
+            genericCadModelSpecV2Supported,
+            sketchDefinitionSupported,
+            sketchConstraintsSupported,
+            featureDefinitionSupported,
+            featureGraphSupported,
+            featureGraphCycleDetected,
+            missingFeatureDependencyRejected,
+            buildPlanCompilerSupported,
+            plateUsesGenericFeatureGraph,
+            flangeUsesGenericFeatureGraph,
+            shaftUsesGenericFeatureGraph,
+            noPartSpecificLogicInRealWorker,
+            v20ADocumented);
+    }
+
+    private static V20BFeatureHandlerSelfCheckResult RunV20BFeatureHandlerChecks(
+        string projectRoot,
+        PlatformKernel platform,
+        string versionStageText)
+    {
+        var workerAssembly = platform.WorkerRegistry
+            .GetByName("FakeSolidWorksWorker")?
+            .GetType()
+            .Assembly;
+        var registryType = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.FeatureHandlerRegistry",
+            throwOnError: false);
+        var handlerContractType = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.IFeatureHandler",
+            throwOnError: false);
+        var validationResultType = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.FeatureHandlerValidationResult",
+            throwOnError: false);
+        var createDefaultMethod = registryType?.GetMethod(
+            "CreateDefault",
+            BindingFlags.Public | BindingFlags.Static);
+        object? registry = null;
+        object[] handlers = [];
+        try
+        {
+            registry = createDefaultMethod?.Invoke(null, null);
+            handlers = (registryType?
+                    .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+                    .Invoke(registry, null) as System.Collections.IEnumerable)?
+                .Cast<object>()
+                .ToArray() ?? [];
+        }
+        catch (TargetInvocationException)
+        {
+            registry = null;
+            handlers = [];
+        }
+
+        var featureHandlerRegistryExists =
+            registry is not null &&
+            registryType?.GetMethod("Resolve", BindingFlags.Public | BindingFlags.Instance) is not null &&
+            registryType.GetMethod("TryGetHandler", BindingFlags.Public | BindingFlags.Instance) is not null &&
+            registryType.GetMethod(
+                "ValidateForRealExecution",
+                BindingFlags.Public | BindingFlags.Instance) is not null;
+
+        bool HandlerRegistered(string featureType, string expectedTypeName) =>
+            handlers.Any(handler =>
+                string.Equals(handler.GetType().Name, expectedTypeName, StringComparison.Ordinal) &&
+                string.Equals(
+                    handler.GetType()
+                        .GetProperty("FeatureType", BindingFlags.Public | BindingFlags.Instance)?
+                        .GetValue(handler)?
+                        .ToString(),
+                    featureType,
+                    StringComparison.OrdinalIgnoreCase));
+
+        var sketchHandlerRegistered = HandlerRegistered("sketch", "SketchHandler");
+        var extrudeHandlerRegistered = HandlerRegistered(
+            FeatureTypes.ExtrudeBoss,
+            "ExtrudeBossHandler");
+        var cutHandlerRegistered = HandlerRegistered(
+            FeatureTypes.ExtrudeCut,
+            "ExtrudeCutHandler");
+        var holeHandlerRegistered = HandlerRegistered(
+            FeatureTypes.Hole,
+            "HoleHandler");
+        var revolveHandlerRegistered = HandlerRegistered(
+            FeatureTypes.RevolveBoss,
+            "RevolveBossHandler");
+
+        var featureHandlerValidationContractExists =
+            handlerContractType?.GetMethod(
+                "Validate",
+                BindingFlags.Public | BindingFlags.Instance) is not null &&
+            validationResultType?.GetProperty(
+                "IsValid",
+                BindingFlags.Public | BindingFlags.Instance) is not null &&
+            validationResultType.GetProperty(
+                "FailureStage",
+                BindingFlags.Public | BindingFlags.Instance) is not null &&
+            handlers.Length == 5 &&
+            handlers.All(handler =>
+                handler.GetType().GetMethod(
+                    "Validate",
+                    BindingFlags.Public | BindingFlags.Instance)?.DeclaringType == handler.GetType());
+
+        object? EvidenceFor(object handler) =>
+            handler.GetType()
+                .GetProperty("ApiEvidence", BindingFlags.Public | BindingFlags.Instance)?
+                .GetValue(handler);
+
+        string? EvidenceStatus(object handler)
+        {
+            var evidence = EvidenceFor(handler);
+            return evidence?
+                .GetType()
+                .GetProperty("Status", BindingFlags.Public | BindingFlags.Instance)?
+                .GetValue(evidence)?
+                .ToString();
+        }
+
+        var featureApiEvidenceRequired =
+            handlerContractType?.GetProperty(
+                "ApiEvidence",
+                BindingFlags.Public | BindingFlags.Instance) is not null &&
+            handlers.Length == 5 &&
+            handlers.All(handler =>
+                EvidenceFor(handler) is not null &&
+                !string.IsNullOrWhiteSpace(EvidenceStatus(handler)));
+
+        var probeOperations = new SolidWorksOperation[]
+        {
+            new(
+                "v20-b-sketch",
+                "CreateSketch",
+                "Front Plane",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["feature_id"] = "v20-b-sketch",
+                    ["feature_type"] = "sketch",
+                    ["sketch_id"] = "v20-b-sketch",
+                    ["entities"] = JsonSerializer.Serialize(
+                    new[]
+                    {
+                        new SketchEntity(
+                            "v20-b-circle",
+                            SketchEntityTypes.Circle,
+                            new Dictionary<string, string>
+                            {
+                                ["center_x_mm"] = "0",
+                                ["center_y_mm"] = "0",
+                                ["radius_mm"] = "10"
+                            })
+                    })
+                },
+                [],
+                "Self-check sketch probe."),
+            new(
+                "v20-b-extrude",
+                "ExtrudeBoss",
+                "Front Plane",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["feature_id"] = "v20-b-extrude",
+                    ["feature_type"] = FeatureTypes.ExtrudeBoss,
+                    ["depth_mm"] = "10"
+                },
+                ["v20-b-sketch"],
+                "Self-check extrude probe."),
+            new(
+                "v20-b-cut",
+                "CutExtrude",
+                "Front Plane",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["feature_id"] = "v20-b-cut",
+                    ["feature_type"] = FeatureTypes.ExtrudeCut,
+                    ["through_all"] = "true"
+                },
+                ["v20-b-extrude"],
+                "Self-check cut probe."),
+            new(
+                "v20-b-hole",
+                "AddHoleWizardHole",
+                "Front Plane",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["feature_id"] = "v20-b-hole",
+                    ["feature_type"] = FeatureTypes.Hole,
+                    ["hole_diameter_mm"] = "6"
+                },
+                ["v20-b-extrude"],
+                "Self-check hole probe."),
+            new(
+                "v20-b-revolve",
+                "RevolveBoss",
+                "Front Plane",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["feature_id"] = "v20-b-revolve",
+                    ["feature_type"] = FeatureTypes.RevolveBoss,
+                    ["angle_degrees"] = "360"
+                },
+                ["v20-b-sketch"],
+                "Self-check revolve probe.")
+        };
+        var probePlan = new SolidWorksBuildPlan(
+            "self-check-v20-b-feature-handlers",
+            "self-check-v20-b",
+            "SolidWorks",
+            "generic_cad_model",
+            "mm",
+            probeOperations,
+            [],
+            [],
+            ["Self-check only; no real SolidWorks connection is permitted."],
+            ExecutionStrategy: SolidWorksBuildExecutionStrategies.FeatureHandlerGraph);
+
+        object? preflightResult = null;
+        try
+        {
+            preflightResult = registryType?
+                .GetMethod(
+                    "ValidateForRealExecution",
+                    BindingFlags.Public | BindingFlags.Instance)?
+                .Invoke(registry, [probePlan]);
+        }
+        catch (TargetInvocationException)
+        {
+            preflightResult = null;
+        }
+
+        var preflightType = preflightResult?.GetType();
+        var preflightPassed =
+            preflightType?
+                .GetProperty("IsPassed", BindingFlags.Public | BindingFlags.Instance)?
+                .GetValue(preflightResult) is true;
+        var preflightFailureStage = preflightType?
+            .GetProperty("FailureStage", BindingFlags.Public | BindingFlags.Instance)?
+            .GetValue(preflightResult)?
+            .ToString();
+        var preflightIssues = (preflightType?
+                .GetProperty("Issues", BindingFlags.Public | BindingFlags.Instance)?
+                .GetValue(preflightResult) as System.Collections.IEnumerable)?
+            .Cast<object>()
+            .Select(issue => issue.ToString() ?? string.Empty)
+            .ToArray() ?? [];
+        var preflightFeatures = (preflightType?
+                .GetProperty("Features", BindingFlags.Public | BindingFlags.Instance)?
+                .GetValue(preflightResult) as System.Collections.IEnumerable)?
+            .Cast<object>()
+            .Count() ?? 0;
+        var featureHandlerValidationSupported =
+            featureHandlerValidationContractExists &&
+            preflightResult is not null &&
+            preflightFeatures == probeOperations.Length &&
+            preflightIssues.All(issue =>
+                !issue.Contains(
+                    PartFamilyFailureStages.InvalidFeatureParameter,
+                    StringComparison.OrdinalIgnoreCase) &&
+                !issue.Contains(
+                    PartFamilyFailureStages.UnsupportedFeatureType,
+                    StringComparison.OrdinalIgnoreCase));
+        var allHandlerEvidenceUnverified =
+            handlers.Length == 5 &&
+            handlers.All(handler =>
+                string.Equals(
+                    EvidenceStatus(handler),
+                    "unverified",
+                    StringComparison.OrdinalIgnoreCase));
+
+        var realWorkerPath = Path.Combine(
+            projectRoot,
+            "src",
+            "Workers",
+            "SolidWorks",
+            "RealSolidWorksWorker.cs");
+        var realWorkerText = File.Exists(realWorkerPath)
+            ? File.ReadAllText(realWorkerPath)
+            : string.Empty;
+        var evidencePreflightIndex = realWorkerText.IndexOf(
+            "ValidateForRealExecution",
+            StringComparison.Ordinal);
+        var connectionIndex = realWorkerText.IndexOf(
+            "_sessionManager.ConnectAsync",
+            StringComparison.Ordinal);
+        var preflightRunsBeforeConnection =
+            evidencePreflightIndex >= 0 &&
+            connectionIndex > evidencePreflightIndex;
+        var unverifiedApiBlocksRealExecution =
+            allHandlerEvidenceUnverified &&
+            preflightResult is not null &&
+            !preflightPassed &&
+            string.Equals(
+                preflightFailureStage,
+                PartFamilyFailureStages.FeatureApiEvidenceInsufficient,
+                StringComparison.OrdinalIgnoreCase) &&
+            preflightIssues.Length >= handlers.Length &&
+            preflightRunsBeforeConnection;
+
+        var featureSourceRoot = Path.Combine(
+            projectRoot,
+            "src",
+            "Workers",
+            "SolidWorks",
+            "Features");
+        var featureSourceFiles = Directory.Exists(featureSourceRoot)
+            ? Directory.GetFiles(featureSourceRoot, "*.cs", SearchOption.AllDirectories)
+            : [];
+        var domainSchemaRoot = Path.Combine(projectRoot, "src", "DomainSchemas");
+        var domainSchemaFiles = Directory.Exists(domainSchemaRoot)
+            ? Directory.GetFiles(domainSchemaRoot, "*.cs", SearchOption.TopDirectoryOnly)
+            : [];
+        var featureSwitchTokens = new[]
+        {
+            "switch (feature.FeatureType",
+            "switch(feature.FeatureType",
+            "feature.FeatureType switch",
+            "switch (featureType",
+            "switch(featureType",
+            "featureType switch"
+        };
+        var noFeatureTypeLargeSwitch =
+            featureSourceFiles.Length > 0 &&
+            featureSourceFiles
+                .Concat(domainSchemaFiles)
+                .Append(realWorkerPath)
+                .Where(File.Exists)
+                .Select(File.ReadAllText)
+                .All(source => featureSwitchTokens.All(token =>
+                    !source.Contains(token, StringComparison.OrdinalIgnoreCase)));
+
+        var stageDocumentPath = Path.Combine(
+            projectRoot,
+            "docs",
+            "v2_0_b_feature_handlers.md");
+        var stageDocumentText = File.Exists(stageDocumentPath)
+            ? File.ReadAllText(stageDocumentPath)
+            : string.Empty;
+        var requiredDocumentTerms = new[]
+        {
+            "FeatureHandlerRegistry",
+            "SketchHandler",
+            "ExtrudeBossHandler",
+            "ExtrudeCutHandler",
+            "HoleHandler",
+            "RevolveBossHandler",
+            PartFamilyFailureStages.FeatureApiEvidenceInsufficient
+        };
+        var featureHandlerDocsCompleted =
+            !string.IsNullOrWhiteSpace(stageDocumentText) &&
+            requiredDocumentTerms.All(term =>
+                stageDocumentText.Contains(term, StringComparison.OrdinalIgnoreCase));
+        var v20BDocumented =
+            versionStageText.Contains("V2.0-B", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(stageDocumentPath);
+
+        return new V20BFeatureHandlerSelfCheckResult(
+            featureHandlerRegistryExists,
+            noFeatureTypeLargeSwitch,
+            sketchHandlerRegistered,
+            extrudeHandlerRegistered,
+            cutHandlerRegistered,
+            holeHandlerRegistered,
+            revolveHandlerRegistered,
+            featureHandlerValidationSupported,
+            featureApiEvidenceRequired,
+            unverifiedApiBlocksRealExecution,
+            featureHandlerDocsCompleted,
+            v20BDocumented);
     }
 
     private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
@@ -5159,6 +5750,7 @@ public static class PlatformSelfCheckRunner
         bool UnitTestExecutionDisabled,
         bool DryRunDisablesRealExecution,
         bool VisibleDefaultTrue,
+        bool ExecutionEnvironmentProbeSupported,
         bool LegacyEnableFlagNotRequired,
         bool LegacyRequestConfirmationNotRequired)
     {
@@ -5169,8 +5761,69 @@ public static class PlatformSelfCheckRunner
             UnitTestExecutionDisabled &&
             DryRunDisablesRealExecution &&
             VisibleDefaultTrue &&
+            ExecutionEnvironmentProbeSupported &&
             LegacyEnableFlagNotRequired &&
             LegacyRequestConfirmationNotRequired;
+    }
+
+    private sealed record V20AGenericCadModelSpecSelfCheckResult(
+        bool GenericCadModelSpecV2Supported,
+        bool SketchDefinitionSupported,
+        bool SketchConstraintsSupported,
+        bool FeatureDefinitionSupported,
+        bool FeatureGraphSupported,
+        bool FeatureGraphCycleDetected,
+        bool MissingFeatureDependencyRejected,
+        bool BuildPlanCompilerSupported,
+        bool PlateUsesGenericFeatureGraph,
+        bool FlangeUsesGenericFeatureGraph,
+        bool ShaftUsesGenericFeatureGraph,
+        bool NoPartSpecificLogicInRealWorker,
+        bool V20ADocumented)
+    {
+        public bool AllPassed =>
+            GenericCadModelSpecV2Supported &&
+            SketchDefinitionSupported &&
+            SketchConstraintsSupported &&
+            FeatureDefinitionSupported &&
+            FeatureGraphSupported &&
+            FeatureGraphCycleDetected &&
+            MissingFeatureDependencyRejected &&
+            BuildPlanCompilerSupported &&
+            PlateUsesGenericFeatureGraph &&
+            FlangeUsesGenericFeatureGraph &&
+            ShaftUsesGenericFeatureGraph &&
+            NoPartSpecificLogicInRealWorker &&
+            V20ADocumented;
+    }
+
+    private sealed record V20BFeatureHandlerSelfCheckResult(
+        bool FeatureHandlerRegistryExists,
+        bool NoFeatureTypeLargeSwitch,
+        bool SketchHandlerRegistered,
+        bool ExtrudeHandlerRegistered,
+        bool CutHandlerRegistered,
+        bool HoleHandlerRegistered,
+        bool RevolveHandlerRegistered,
+        bool FeatureHandlerValidationSupported,
+        bool FeatureApiEvidenceRequired,
+        bool UnverifiedApiBlocksRealExecution,
+        bool FeatureHandlerDocsCompleted,
+        bool V20BDocumented)
+    {
+        public bool AllPassed =>
+            FeatureHandlerRegistryExists &&
+            NoFeatureTypeLargeSwitch &&
+            SketchHandlerRegistered &&
+            ExtrudeHandlerRegistered &&
+            CutHandlerRegistered &&
+            HoleHandlerRegistered &&
+            RevolveHandlerRegistered &&
+            FeatureHandlerValidationSupported &&
+            FeatureApiEvidenceRequired &&
+            UnverifiedApiBlocksRealExecution &&
+            FeatureHandlerDocsCompleted &&
+            V20BDocumented;
     }
 
     private static JsonSerializerOptions JsonOptions()

@@ -19,7 +19,7 @@
 
 ## 执行顺序
 
-本地交互式主流程默认走 `RealSolidWorksWorker`。真实执行先通过 `SolidWorksEnvironmentValidator`，再由 `SolidWorksSessionManager` 连接，最后由对应 PartFamilyBuilder 执行受控建模步骤；dry-run、CI、单元测试和显式禁用走 Fake Worker。
+本地交互式主流程默认走 `RealSolidWorksWorker`。真实执行先通过 `SolidWorksEnvironmentValidator`，再由 `SolidWorksExecutionEnvironmentProbe` 只读确认 Windows、交互式桌面和 `SldWorks.Application` 注册，然后由 `SolidWorksSessionManager` 连接，最后由对应 PartFamilyBuilder 执行受控建模步骤；dry-run、CI、单元测试和显式禁用走 Fake Worker。环境探测失败必须以 `real_execution_environment_unavailable` 结束，不能连接 COM，也不能自动回退 Fake Worker。
 
 ## V1.1 工程图基础视图链路
 
@@ -145,7 +145,7 @@ ChiefEngineerOrchestrator
 - 当前为 CI 或单元测试环境。
 - 环境变量包含 `SW_FORCE_FAKE_WORKER=true`。
 
-若请求级开关或环境级开关任一缺失，主流程必须保持 fake / dry-run 路径，并在结果中记录 `real_cad_executed=false`。主流程返回的 artifact 元数据必须包含 `real_cad_executed`、`quality_gate_passed`、`execution_mode` 和输出目录。
+V2.0 不再要求旧请求级启用确认或 `SW_ENABLE_REAL_EXECUTION`。本地交互式且 `dry_run=false` 时默认选择真实路径；只有 dry-run、显式禁用、CI、单元测试或强制 Fake Worker 时保持 fake 路径，并在结果中记录 `real_cad_executed=false`。主流程返回的 artifact 元数据必须包含 `real_cad_executed`、`quality_gate_passed`、`execution_mode` 和输出目录。
 
 ## V1.5 发布包语义修正
 
@@ -162,7 +162,7 @@ ChiefEngineerOrchestrator
 
 ## 禁止事项
 
-- 不默认启动 SolidWorks。
+- V2.0 本地交互式且 `dry_run=false` 时默认启动或连接 SolidWorks；self-check、CI、单元测试、dry-run 和显式禁用不得启动。
 - 不让 Agent、Gateway、LLM 直接调用 Worker。
 - 不复制第三方 Python COM 脚本。
 - 不把 COM 类型泄漏到平台 Contracts。
@@ -315,3 +315,15 @@ output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a784
 plate 完整包在 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260720_082027_397-bd86bc56b48349c69db5f8173c1b3d85/` 回归为 `Passed`、`Deliverable`、QualityGate `Passed`，其工程图能力没有退化。
 
 保存修复沿用 plate 已验证的 `SaveAs3` / `SaveAs` 策略。源文件瞬时读锁只在复制和目标校验已经成功时降级为 warning；其他 `artifact_copy_failed` 必须继续阻断。body count 与 theoretical volume 自动核验留作 Improvement，本阶段不生成 flange / shaft 工程图，也不进入 V2.0。
+
+## V2.0-A Worker 边界
+
+V2.0-A 的 canonical `CADModelSpec`、`SketchDefinition`、`FeatureDefinition`、`FeatureGraph` 和 `BuildPlanCompiler` 只负责生成并验证描述性 `SolidWorksBuildPlan`。这条通用链默认走 dry-run，不连接 COM。
+
+`FeatureGraph` 是 Schema 到 BuildPlan 的唯一特征来源。缺失依赖、依赖环、非法顺序、未知草图、实体、约束或特征类型必须在 Worker 调度前失败。
+
+V1.9 的 `plate_basic_4holes`、`flange_basic`、`shaft_basic` 专用真实 Builder 继续由 `PartFamilyBuilderRegistry` 解析，真实能力和既有验收不回退。但它们只证明固定零件族语义，不能证明任意 FeatureGraph 或十类通用 Feature Handler 已经真实执行。
+
+通用 `extrude_boss`、`extrude_cut`、`revolve_boss`、`revolve_cut`、`fillet`、`chamfer`、`hole`、`linear_pattern`、`circular_pattern`、`mirror` 到真实 SolidWorks COM 的 Handler 延期到 V2.0-B。本轮不得增加通用执行分支、装配体或队列。
+
+V2.0 的默认真实策略仍适用于已受控的本地交互主流程；它不允许 V2.0-A 的通用图绕过 dry-run 边界。self-check、单元测试和 dry-run 始终不启动 SolidWorks。

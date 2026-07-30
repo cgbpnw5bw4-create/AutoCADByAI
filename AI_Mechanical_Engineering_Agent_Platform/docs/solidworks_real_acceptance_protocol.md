@@ -21,6 +21,16 @@ V2.0-SW-DEFAULT-ON 起，本地交互式 `run-cad-workflow` 默认启用真实 S
 
 `SW_VISIBLE=false` 只把本地真实执行切换为后台模式，不会关闭真实执行。
 
+## 执行环境结构闸门
+
+`RealSolidWorksWorker` 在创建或连接 COM 应用之前必须完成只读环境探测。探测不实例化 SolidWorks，并至少确认：
+
+- 当前操作系统是 Windows。
+- 当前进程处于交互式桌面会话。
+- `SldWorks.Application` COM ProgID 已注册。
+
+任一条件不满足时，主流程必须以 `failure_stage=real_execution_environment_unavailable` 失败，保留具体 issue，且 COM 连接尝试次数为 0。不得因环境不可用自动回退 Fake Worker，也不得把未执行真实 CAD 的结果写成 Passed。
+
 ## 不可绕过的主流程
 
 最终验收必须从 CLI 入口开始，并经过：
@@ -92,7 +102,7 @@ plate 完整工程图包还应包含 SLDDRW、PDF 和对应阶段报告。
 
 - `real_cad_connected=true`。
 - `real_cad_executed=true`。
-- SLDPRT、STEP 和要求的报告真实存在且非空。
+- SLDPRT、STEP、SLDDRW、PDF 和要求的报告必须按本次请求逐项检查；要求生成的文件必须存在且 `size_bytes > 0`。
 - ArtifactValidator 与 Reviewer 通过。
 - QualityGate 为 `Passed`。
 - `all_source_reports_passed=true`。
@@ -101,12 +111,25 @@ plate 完整工程图包还应包含 SLDDRW、PDF 和对应阶段报告。
 
 Fake Worker 的成功、diagnostic 的候选成功、历史 latest 文件或仅文件存在都不能替代上述证据。
 
+## 人工视觉检查
+
+文件非空只证明保存或导出产生了字节，不证明零件和图纸可交付。真实主流程完成后，验收人必须打开同次运行目录中的产物检查：
+
+- `plate_basic_4holes.SLDPRT`：板长、宽、厚度、四孔数量、孔径和孔位与结构化输入一致。
+- `plate_basic_4holes.SLDDRW` 与 PDF：前视图、俯视图、右视图、等轴测图四个视图均存在，视图方向、比例和轮廓可辨认。
+- 尺寸：必做尺寸可见、数值与模型一致，不重叠到无法读取。
+- 标题栏：零件名称、材料、图号等已写字段可见，且报告中的属性回读没有不一致。
+- `flange_basic` 与 `shaft_basic`：按各自四视图证据检查关键孔、台阶或旋转轮廓；Phase 2 证据不能由 diagnostic 的 `CandidatePassed` 单独替代。
+
+人工检查结论和本次输出路径应一并交给用户。未完成人工视觉检查时，可以报告“主流程技术门禁通过”，但不能声称视觉验收已经完成。
+
 ## 失败处理
 
 禁用策略导致的失败使用明确原因，例如：
 
 - `dry_run_real_execution_disabled`。
 - `real_execution_disabled`。
+- `real_execution_environment_unavailable`。
 
 真实执行开始后必须保留实际阶段，例如连接、模板、特征创建、保存、STEP 导出、artifact validation 或 QualityGate 失败，不得改写为旧式确认缺失。
 
@@ -137,6 +160,7 @@ self-check 必须包含：
 - `solidworks_unit_test_execution_disabled`。
 - `solidworks_dry_run_disables_real_execution`。
 - `solidworks_visible_default_true`。
+- `solidworks_execution_environment_probe_supported`。
 - `legacy_enable_flag_not_required`。
 - `legacy_request_confirmation_not_required`。
 - `markdown_chinese_check_passed`。

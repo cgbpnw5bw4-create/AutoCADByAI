@@ -1,15 +1,18 @@
 {
   "operation": "build_part_family_release_package",
   "cad_model_spec": {
-    "id": "real-cad-shaft-basic-v1-9",
-    "part_type": "shaft_basic",
-    "dimensions": {
+    "model_id": "real-cad-shaft-basic-v2-0-a",
+    "model_type": "shaft_basic",
+    "unit": "mm",
+    "parameters": {
       "diameter_mm": "40",
       "length_mm": "180",
       "optional_step_diameters": "32,24",
       "optional_step_lengths": "40,30"
     },
-    "features": {},
+    "reference_geometry": {},
+    "sketches": [],
+    "features": [],
     "material": "45 steel",
     "output_requirements": [
       "SLDPRT",

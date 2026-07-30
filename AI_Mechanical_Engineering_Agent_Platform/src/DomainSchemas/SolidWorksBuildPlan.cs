@@ -15,7 +15,15 @@ public sealed record SolidWorksBuildPlan(
     IReadOnlyList<string>? OutputRequirements = null,
     IReadOnlyDictionary<string, string>? DrawingRequirements = null,
     IReadOnlyDictionary<string, string>? ExecutionOptions = null,
-    IReadOnlyDictionary<string, string>? Dimensions = null);
+    IReadOnlyDictionary<string, string>? Dimensions = null,
+    string ExecutionStrategy = SolidWorksBuildExecutionStrategies.PartFamilyBuilder,
+    IReadOnlyDictionary<string, string>? ReferenceGeometry = null);
+
+public static class SolidWorksBuildExecutionStrategies
+{
+    public const string PartFamilyBuilder = "part_family_builder";
+    public const string FeatureHandlerGraph = "feature_handler_graph";
+}
 
 public sealed record SolidWorksOperation(
     string OperationId,

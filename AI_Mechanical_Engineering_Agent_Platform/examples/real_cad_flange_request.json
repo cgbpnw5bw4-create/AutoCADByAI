@@ -1,9 +1,10 @@
 {
   "operation": "build_part_family_release_package",
   "cad_model_spec": {
-    "id": "real-cad-flange-basic-v1-9",
-    "part_type": "flange_basic",
-    "dimensions": {
+    "model_id": "real-cad-flange-basic-v2-0-a",
+    "model_type": "flange_basic",
+    "unit": "mm",
+    "parameters": {
       "outer_diameter_mm": "160",
       "inner_diameter_mm": "60",
       "thickness_mm": "18",
@@ -11,7 +12,9 @@
       "bolt_hole_diameter_mm": "14",
       "bolt_circle_diameter_mm": "115"
     },
-    "features": {},
+    "reference_geometry": {},
+    "sketches": [],
+    "features": [],
     "material": "Q235",
     "output_requirements": [
       "SLDPRT",

@@ -1,6 +1,6 @@
 ---
 name: quality-review
-description: "用于项目质量审查，检查架构边界、self-check 字段、分层规则、真实 CAD 默认关闭、第三方脚本边界和 Markdown 中文规范。"
+description: "用于项目质量审查，检查架构边界、self-check 字段、SolidWorks V2.0 执行策略、第三方脚本边界和 Markdown 中文规范。"
 ---
 
 # 质量审查技能
@@ -12,7 +12,8 @@ description: "用于项目质量审查，检查架构边界、self-check 字段�
 ## 必查项
 
 - self-check 字段是否覆盖新增能力。
-- 是否默认执行真实 CAD。
+- V2.0 本地交互式 `dry_run=false` 是否默认执行真实 CAD，同时 CI、单元测试、self-check、dry-run 和显式禁用是否保持不启动。
+- 真实 Worker 是否在 COM 连接前探测交互桌面与 SolidWorks COM 注册，失败时是否 fail-closed 且不回退 Fake Worker。
 - 是否复制第三方脚本。
 - 是否让 Agent、Gateway 或 LLM 直接调用 Worker。
 - active `.codex/agents/` 是否只包含 `docs/codex_agent_registry.md` 登记的 canonical agents。
@@ -27,7 +28,7 @@ description: "用于项目质量审查，检查架构边界、self-check 字段�
 - V1.4 是否默认不启动 SolidWorks、不做几何 OCR、不做 PDF 视觉识别、不做 BOM、装配图、批量出图、复杂图纸审查或 V1.5。
 - V1.5 是否只做真实 CAD 主工作流集成，不新增 BOM、新 CAD 子功能、更多工程图能力、装配体或 V1.6。
 - V1.5 是否通过 `ChiefEngineerOrchestrator`、`SequentialWorkflowEngine`、`SolidWorksMainWorkflowRunner`、Worker、Validator、Reviewer 和 QualityGate 串接主流程。
-- V1.5 默认是否仍走 `FakeSolidWorksWorker`，并且真实执行是否同时要求请求级 `allow_real_cad_execution=true`、`dry_run=false` 和环境变量 `SW_ENABLE_REAL_EXECUTION=true`。
+- V1.5 历史回归证据是否保留当时的 Fake 默认与双确认语义；该历史规则不得覆盖 V2.0 当前默认启用策略。
 - V1.5 发布包是否区分 `package_build_status`、`all_source_reports_passed` 和 `deliverable_status`，并且源报告失败时 `deliverable_status=NotDeliverable`。
 - V1.5 self-check 是否包含 `real_cad_worker_integrated_into_main_workflow`、`chief_engineer_orchestrator_invokes_cad_workflow`、`workflow_engine_can_route_to_solidworks_worker`、`real_cad_main_workflow_default_disabled`、`release_package_all_source_reports_passed_field_exists`、`release_package_deliverable_status_field_exists`、`release_package_failed_source_reports_block_deliverable` 和 `v1_5_version_stage_documented`。
 - Markdown 中文检查是否通过。
@@ -54,4 +55,4 @@ description: "用于项目质量审查，检查架构边界、self-check 字段�
 
 ### 常见失败与禁止事项
 
-未注册类型回退 plate、非法参数进入 Worker、大型类型 switch、plate 能力退化、flange / shaft dry-run 失败、默认启动 SolidWorks 或以候选 API 冒充真实验收，均为 Blocker。禁止越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。`flange_basic` 和 `shaft_basic` 本轮只可声称 dry-run 通过；真实验收分别等待独立 flange smoke 与 shaft 旋转专用证据。
+未注册类型回退 plate、非法参数进入 Worker、大型类型 switch、plate 能力退化、flange / shaft dry-run 失败、默认 self-check/CI/单元测试启动 SolidWorks，或以候选 API 冒充真实验收，均为 Blocker。禁止越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。`flange_basic` 和 `shaft_basic` 本轮只可声称 dry-run 通过；真实验收分别等待独立 flange smoke 与 shaft 旋转专用证据。

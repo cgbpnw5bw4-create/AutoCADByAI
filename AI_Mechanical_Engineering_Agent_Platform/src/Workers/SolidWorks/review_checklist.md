@@ -5,6 +5,7 @@
 - Worker 是否受请求级安全开关和环境变量保护。
 - Worker 是否只通过平台调用。
 - 本地交互式真实执行是否默认启用，CI、单元测试、dry-run 和显式禁用是否关闭。
+- 真实 Worker 是否在 COM 连接前只读探测 Windows、交互式桌面与 `SldWorks.Application` 注册，失败时是否使用 `real_execution_environment_unavailable` 且不回退 Fake Worker。
 - 是否有 `build_report.json`。
 - 是否有 `diagnostic_report.json`。
 - 是否有可行动 `failure_stage`。
@@ -54,7 +55,7 @@
 
 ## Blockers
 
-默认启动 SolidWorks、真实文件缺失却返回 Passed、API 失败无 evidence、复制第三方脚本、Markdown 中文检查失败，均为 Blocker。
+默认 self-check、CI、单元测试或 dry-run 启动 SolidWorks，真实文件缺失却返回 Passed，环境探测失败仍连接 COM，API 失败无 evidence，复制第三方脚本或 Markdown 中文检查失败，均为 Blocker。本地交互式 `dry_run=false` 默认真实执行是 V2.0 既定策略，不属于 Blocker。
 
 ## 进入下一阶段条件
 
@@ -125,7 +126,7 @@ V1.2 Claude 审查未发现 Blockers。以下 Improvements 已进入 `docs/techn
 - `plate_basic_4holes` 真实能力或回归测试退化。
 - `flange_basic` 或 `shaft_basic` dry-run 失败，或将 dry-run 表述为真实验收。
 - API evidence 不足时盲改主 Worker，或绕过 ArtifactValidator、Reviewer、QualityGate。
-- 默认启动 SolidWorks，或越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量队列、V1.9。
+- 默认 self-check、CI、单元测试或 dry-run 启动 SolidWorks，或越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量队列、V1.9。
 
 ### 验证步骤与通过标准
 

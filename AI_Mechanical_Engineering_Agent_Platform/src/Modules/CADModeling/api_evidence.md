@@ -199,3 +199,36 @@ Phase 1 的待回填状态已经完成。两族 diagnostic 均只标记为 `Cand
 ### 证据边界
 
 diagnostic 中的 `geometry_body_count_status` 与 `theoretical_volume_status` 仍为 `NotVerified`。现有专用 API、特征树、四视图、非空产物、主工作流程和质量门禁证据足以完成 V1.9 基础零件族验收；body count 和理论体积自动核验作为非阻断 Improvements 保留。不得仅凭 `CandidatePassed` 跳过主工作流程，也不得据此进入 V2.0。
+
+## V2.0-B 通用 Feature Handler 证据门禁
+
+### 结论与范围
+
+V2.0-B 的五类通用 Handler 均为 `api_evidence_status=unverified`。这表示 Registry、Schema、参数校验和 BuildPlan 已具备，但通用 COM 参数映射尚未获得可重复的独立诊断授权。V1.9 的固定 plate、flange、shaft 路径只证明特定零件族、特定版本和特定参数轮廓，不得自动提升通用 Handler。
+
+| Handler | 状态 | 已有受限证据 | 仍需关闭的缺口 | 详细文档 |
+|---|---|---|---|---|
+| `sketch` | `unverified` | 固定基准上的直线、圆和部分矩形路径 | 通用基准/面引用、实体全集、约束/尺寸、闭合轮廓证明 | `src/Workers/SolidWorks/Features/Sketch/api_evidence.md` |
+| `extrude_boss` | `unverified` | plate / flange 固定盲拉伸 | 通用参数映射、`mid_plane`、返回与重建合同 | `src/Workers/SolidWorks/Features/Extrude/api_evidence.md` |
+| `extrude_cut` | `unverified` | plate / flange 固定盲切超深 | `through_all` 与深度映射、通用目标与返回合同 | `src/Workers/SolidWorks/Features/Cut/api_evidence.md` |
+| `hole` | `unverified` | 零件族使用草图圆加切除 | 尚无接受的 Hole Wizard 通用映射；放置、方向、终止、标准与类型未决 | `src/Workers/SolidWorks/Features/Hole/api_evidence.md` |
+| `revolve_boss` | `unverified` | shaft 固定 360° 旋转与 selection mark `16` | 通用 profile / axis 引用、角度和选择适配 | `src/Workers/SolidWorks/Features/Revolve/api_evidence.md` |
+
+### 证据合同
+
+任何 Handler 提升为 `verified` 前，证据必须至少记录：
+
+- `EvidenceId`、`HandlerVersion` 和 `SourceRevision`。
+- SolidWorks 精确版本及运行环境。
+- 精确参数轮廓、单位、基准/目标引用和选择标记。
+- 使用的官方 API、完整参数语义、返回值和已知失败模式。
+- 独立诊断运行路径、日志、重建结果和非空产物。
+- 同一参数轮廓的正向、非法输入和 API 失败测试。
+
+证据来源优先级为官方 SolidWorks API Help、本地 SDK 或宏录制、可重复独立诊断、只读参考分析。不得复制第三方代码，也不得将第三方脚本接入生产路径。
+
+### 执行门禁
+
+真实 Worker 必须在 COM 连接前对整张图完成适配、参数校验和 evidence 检查。任一 Handler 不是 `verified` 时返回 `feature_api_evidence_insufficient`，并保持未连接、未执行。不得先执行图中其他节点，也不得用 V1.9 专用 Builder 结果替代通用 Handler 诊断。
+
+`HoleWizard5` 只作为被拒绝的官方研究候选记录；在参数、返回、放置和终止语义未完整验证前，不能作为 Hole Handler 授权。所有候选 API 的官方链接和拒绝原因见各 Handler 的 `api_evidence.md`。

@@ -185,7 +185,9 @@ public sealed partial class SolidWorksMainWorkflowRunner
                         .ToArray();
                     issues.AddRange(stepIssues);
 
-                    var passed = buildPlanValidation.IsPassed && buildPlanReview.IsPassed;
+                    var passed =
+                        buildPlanValidation.IsPassed &&
+                        buildPlanReview.IsPassed;
                     return Task.FromResult(passed
                         ? StepPassed(
                             "solidworks-build-plan-validation",
@@ -601,6 +603,16 @@ public sealed partial class SolidWorksMainWorkflowRunner
     {
         var stages = new[]
         {
+            PartFamilyFailureStages.InvalidCadModelSpec,
+            PartFamilyFailureStages.SketchReferenceMissing,
+            PartFamilyFailureStages.FeatureDependencyMissing,
+            PartFamilyFailureStages.FeatureDependencyCycle,
+            PartFamilyFailureStages.UnsupportedSketchEntity,
+            PartFamilyFailureStages.UnsupportedConstraint,
+            PartFamilyFailureStages.UnsupportedFeatureType,
+            PartFamilyFailureStages.InvalidFeatureParameter,
+            PartFamilyFailureStages.InvalidFeatureOrder,
+            PartFamilyFailureStages.BuildPlanCompileFailed,
             PartFamilyFailureStages.UnsupportedPartType,
             PartFamilyFailureStages.MissingRequiredParameter,
             PartFamilyFailureStages.InvalidParameterValue,

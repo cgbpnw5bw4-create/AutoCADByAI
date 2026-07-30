@@ -205,3 +205,41 @@ V1.9 Phase 2 已完成两族独立 diagnostic、视觉复核和 CLI 真实主流
 ### 验证与禁止事项
 
 验证覆盖两族真实 Builder、两族主工作流程、V2.0 默认执行策略、API evidence、ArtifactValidator、plate 完整包回归、无大型类型 switch 和全族 Registry 分发。禁止 flange / shaft 自动工程图，禁止并发 COM，禁止跳过平台边界。
+
+## V2.0-A 通用 CAD 描述架构
+
+### 目标与唯一编译链
+
+V2.0-A 在零件族参数校验和 Worker 之间建立 CAD 系统中立的通用描述层。完整的通用链为：
+
+```text
+canonical CADModelSpec
+→ SketchDefinition / FeatureDefinition
+→ FeatureGraph.ValidateAndSort
+→ BuildPlanCompiler
+→ SolidWorksBuildPlan
+→ BuildPlan Validator / Reviewer
+→ dry-run Worker
+```
+
+`CADModelSpec` 的核心字段是 `model_id`、`model_type`、`unit`、`parameters`、`reference_geometry`、`sketches`、`features`、`material`、`output_requirements`、`drawing_requirements` 和 `execution_options`。旧 `id`、`part_type`、`dimensions` 与对象形式 `features` 只在输入边界兼容，不能成为另一套计划来源。
+
+### 草图与特征图
+
+`SketchDefinition` 通过 `sketch_id`、`reference_plane`、`entities`、`constraints`、`dimensions` 和 `execution_order` 描述草图。实体与约束使用稳定标识互相引用；构造中心线编译为独立 `CreateCenterLine` operation。
+
+`FeatureDefinition` 通过 `feature_id`、`feature_type`、参数、依赖、草图引用、特征引用、执行顺序和目标引用组成有向图。十类受支持特征为凸台拉伸、拉伸切除、旋转凸台、旋转切除、圆角、倒角、孔、线性阵列、圆周阵列和镜像。
+
+`FeatureGraph` 必须在 Worker 前拒绝缺失依赖、依赖环和非法显式顺序。有效图使用稳定拓扑顺序；`BuildPlanCompiler` 按该顺序生成草图、中心线、特征、保存与 STEP 导出 operation。详细 Schema、映射和 failure_stage 见 `docs/v2_0_a_generic_cad_model_spec.md`。
+
+### 三族迁移与真实执行边界
+
+`plate_basic_4holes`、`flange_basic`、`shaft_basic` 都先由族 Validator 校验参数，再由 `PartFamilyGenericModelFactory` 生成 canonical 草图和特征图，最后统一交给 `BuildPlanCompiler`。各族不得再维护一套手写 BuildPlan operation。
+
+V1.9 三族专用真实 Builder、Registry 分发和真实验收证据保持有效。它们不等于通用 Feature Handler：V2.0-A 的任意新图、任意十类特征组合只允许编译和 dry-run，不能声称已真实执行。通用特征到真实 COM 的执行延期到 V2.0-B。
+
+### 验证与禁止事项
+
+验证必须覆盖 canonical JSON 往返、草图实体与约束、特征图缺失依赖/环/顺序、BuildPlan 编译、三族 FeatureGraph 迁移、Worker 前拒绝和无零件族字符串分支。self-check、单元测试与 dry-run 不连接 COM。
+
+禁止绕过 `FeatureGraph` 直接从族参数写计划，禁止把 operation 名称解释为真实 API 支持，禁止在本阶段引入装配体、BOM、批量队列或通用真实特征执行。本阶段完成后停在 V2.0-A，不进入 V2.0-B。

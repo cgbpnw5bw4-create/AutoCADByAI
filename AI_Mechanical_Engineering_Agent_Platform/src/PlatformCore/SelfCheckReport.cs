@@ -420,9 +420,87 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("solidworks_visible_default_true")]
     public bool SolidWorksVisibleDefaultTrue { get; init; }
 
+    [JsonPropertyName("solidworks_execution_environment_probe_supported")]
+    public bool SolidWorksExecutionEnvironmentProbeSupported { get; init; }
+
     [JsonPropertyName("legacy_enable_flag_not_required")]
     public bool LegacyEnableFlagNotRequired { get; init; }
 
     [JsonPropertyName("legacy_request_confirmation_not_required")]
     public bool LegacyRequestConfirmationNotRequired { get; init; }
+
+    [JsonPropertyName("generic_cad_model_spec_v2_supported")]
+    public bool GenericCadModelSpecV2Supported { get; init; }
+
+    [JsonPropertyName("sketch_definition_supported")]
+    public bool SketchDefinitionSupported { get; init; }
+
+    [JsonPropertyName("sketch_constraints_supported")]
+    public bool SketchConstraintsSupported { get; init; }
+
+    [JsonPropertyName("feature_definition_supported")]
+    public bool FeatureDefinitionSupported { get; init; }
+
+    [JsonPropertyName("feature_graph_supported")]
+    public bool FeatureGraphSupported { get; init; }
+
+    [JsonPropertyName("feature_graph_cycle_detected")]
+    public bool FeatureGraphCycleDetected { get; init; }
+
+    [JsonPropertyName("missing_feature_dependency_rejected")]
+    public bool MissingFeatureDependencyRejected { get; init; }
+
+    [JsonPropertyName("build_plan_compiler_supported")]
+    public bool BuildPlanCompilerSupported { get; init; }
+
+    [JsonPropertyName("plate_uses_generic_feature_graph")]
+    public bool PlateUsesGenericFeatureGraph { get; init; }
+
+    [JsonPropertyName("flange_uses_generic_feature_graph")]
+    public bool FlangeUsesGenericFeatureGraph { get; init; }
+
+    [JsonPropertyName("shaft_uses_generic_feature_graph")]
+    public bool ShaftUsesGenericFeatureGraph { get; init; }
+
+    [JsonPropertyName("no_part_specific_logic_in_real_worker")]
+    public bool NoPartSpecificLogicInRealWorker { get; init; }
+
+    [JsonPropertyName("v2_0_a_documented")]
+    public bool V20ADocumented { get; init; }
+
+    [JsonPropertyName("feature_handler_registry_exists")]
+    public bool FeatureHandlerRegistryExists { get; init; }
+
+    [JsonPropertyName("no_feature_type_large_switch")]
+    public bool NoFeatureTypeLargeSwitch { get; init; }
+
+    [JsonPropertyName("sketch_handler_registered")]
+    public bool SketchHandlerRegistered { get; init; }
+
+    [JsonPropertyName("extrude_handler_registered")]
+    public bool ExtrudeHandlerRegistered { get; init; }
+
+    [JsonPropertyName("cut_handler_registered")]
+    public bool CutHandlerRegistered { get; init; }
+
+    [JsonPropertyName("hole_handler_registered")]
+    public bool HoleHandlerRegistered { get; init; }
+
+    [JsonPropertyName("revolve_handler_registered")]
+    public bool RevolveHandlerRegistered { get; init; }
+
+    [JsonPropertyName("feature_handler_validation_supported")]
+    public bool FeatureHandlerValidationSupported { get; init; }
+
+    [JsonPropertyName("feature_api_evidence_required")]
+    public bool FeatureApiEvidenceRequired { get; init; }
+
+    [JsonPropertyName("unverified_api_blocks_real_execution")]
+    public bool UnverifiedApiBlocksRealExecution { get; init; }
+
+    [JsonPropertyName("feature_handler_docs_completed")]
+    public bool FeatureHandlerDocsCompleted { get; init; }
+
+    [JsonPropertyName("v2_0_b_documented")]
+    public bool V20BDocumented { get; init; }
 }

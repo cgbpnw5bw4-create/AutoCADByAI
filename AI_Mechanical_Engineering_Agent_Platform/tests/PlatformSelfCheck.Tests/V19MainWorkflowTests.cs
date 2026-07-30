@@ -21,7 +21,11 @@ public sealed class V19MainWorkflowTests
             SolidWorksE2eCliContract.PartFamilyReleasePackageOperation,
             root.GetProperty("operation").GetString());
         var spec = root.GetProperty("cad_model_spec");
-        Assert.Equal(partType, spec.GetProperty("part_type").GetString());
+        Assert.Equal(partType, spec.GetProperty("model_type").GetString());
+        Assert.Equal("mm", spec.GetProperty("unit").GetString());
+        Assert.Equal(JsonValueKind.Object, spec.GetProperty("parameters").ValueKind);
+        Assert.Equal(JsonValueKind.Array, spec.GetProperty("sketches").ValueKind);
+        Assert.Equal(JsonValueKind.Array, spec.GetProperty("features").ValueKind);
         Assert.False(spec.GetProperty("drawing_requirements").GetProperty("generate_drawing").GetString() == "true");
         Assert.Equal("true", spec.GetProperty("drawing_requirements").GetProperty("generate_release_package").GetString());
     }

@@ -4,6 +4,16 @@ namespace DomainSchemas;
 
 public static class PartFamilyFailureStages
 {
+    public const string InvalidCadModelSpec = "invalid_cad_model_spec";
+    public const string SketchReferenceMissing = "sketch_reference_missing";
+    public const string FeatureDependencyMissing = "feature_dependency_missing";
+    public const string FeatureDependencyCycle = "feature_dependency_cycle";
+    public const string UnsupportedSketchEntity = "unsupported_sketch_entity";
+    public const string UnsupportedConstraint = "unsupported_constraint";
+    public const string UnsupportedFeatureType = "unsupported_feature_type";
+    public const string InvalidFeatureParameter = "invalid_feature_parameter";
+    public const string InvalidFeatureOrder = "invalid_feature_order";
+    public const string BuildPlanCompileFailed = "build_plan_compile_failed";
     public const string UnsupportedPartType = "unsupported_part_type";
     public const string MissingRequiredParameter = "missing_required_parameter";
     public const string InvalidParameterValue = "invalid_parameter_value";
@@ -13,6 +23,7 @@ public static class PartFamilyFailureStages
     public const string FlangeBuildFailed = "flange_build_failed";
     public const string ShaftBuildFailed = "shaft_build_failed";
     public const string PartFamilyApiEvidenceInsufficient = "part_family_api_evidence_insufficient";
+    public const string FeatureApiEvidenceInsufficient = "feature_api_evidence_insufficient";
     public const string FlangeProfileCreateFailed = "flange_profile_create_failed";
     public const string FlangeExtrudeFailed = "flange_extrude_failed";
     public const string FlangeInnerCutFailed = "flange_inner_cut_failed";
@@ -45,7 +56,8 @@ public sealed record PartParameterSchema(
     string Name,
     PartParameterValueKind ValueKind,
     bool Required,
-    string Description);
+    string Description,
+    string? DefaultValue = null);
 
 public sealed record PartFamilyValidationResult(
     bool IsValid,
@@ -144,6 +156,21 @@ public sealed class PartTypeRegistry
 
 public sealed class CADModelSpecValidator
 {
+    private static readonly IReadOnlySet<string> SupportedUnits = new HashSet<string>(
+        ["mm", "cm", "m", "in"],
+        StringComparer.OrdinalIgnoreCase);
+    private static readonly IReadOnlySet<string> SupportedOutputs = new HashSet<string>(
+        [
+            "SLDPRT",
+            "STEP",
+            "SLDDRW",
+            "PDF",
+            "build_report.json",
+            "e2e_execution_report.json",
+            "release_manifest.json",
+            "package_quality_report.json"
+        ],
+        StringComparer.OrdinalIgnoreCase);
     private readonly PartTypeRegistry _registry;
 
     public CADModelSpecValidator(PartTypeRegistry? registry = null)
@@ -153,11 +180,29 @@ public sealed class CADModelSpecValidator
 
     public PartFamilyValidationResult Validate(CADModelSpec? spec)
     {
-        if (spec is null || string.IsNullOrWhiteSpace(spec.PartType))
+        if (spec is null ||
+            string.IsNullOrWhiteSpace(spec.ModelId) ||
+            string.IsNullOrWhiteSpace(spec.ModelType))
         {
             return PartFamilyValidationResult.Failed(
                 PartFamilyFailureStages.MissingRequiredParameter,
-                "missing_required_parameter: part_type is required.");
+                "missing_required_parameter: model_id and model_type are required.");
+        }
+
+        if (!SupportedUnits.Contains(spec.Unit))
+        {
+            return PartFamilyValidationResult.Failed(
+                PartFamilyFailureStages.InvalidCadModelSpec,
+                $"invalid_cad_model_spec: unsupported unit {spec.Unit}.");
+        }
+
+        var invalidOutput = spec.OutputRequirements.FirstOrDefault(output =>
+            string.IsNullOrWhiteSpace(output) || !SupportedOutputs.Contains(output));
+        if (invalidOutput is not null)
+        {
+            return PartFamilyValidationResult.Failed(
+                PartFamilyFailureStages.InvalidCadModelSpec,
+                $"invalid_cad_model_spec: unsupported output requirement {invalidOutput}.");
         }
 
         if (!_registry.TryGetDefinition(spec.PartType, out var definition))
@@ -167,8 +212,43 @@ public sealed class CADModelSpecValidator
                 $"unsupported_part_type: {spec.PartType} is not registered.");
         }
 
-        return definition.Validator.Validate(spec);
+        var familyValidation = definition.Validator.Validate(spec);
+        if (!familyValidation.IsValid)
+        {
+            return familyValidation;
+        }
+
+        if (spec.Sketches.Count == 0 && spec.Features.Count == 0)
+        {
+            return PartFamilyValidationResult.Passed();
+        }
+
+        if (spec.Sketches.Count == 0 || spec.Features.Count == 0)
+        {
+            return PartFamilyValidationResult.Failed(
+                PartFamilyFailureStages.InvalidCadModelSpec,
+                "invalid_cad_model_spec: sketches and features must both be present for a generic FeatureGraph.");
+        }
+
+        var parameterSchemas = FeatureParameterSchemaRegistry.CreateDefault();
+        foreach (var feature in spec.Features)
+        {
+            var parameterValidation = parameterSchemas.Validate(feature);
+            if (!parameterValidation.IsValid)
+            {
+                return new PartFamilyValidationResult(
+                    false,
+                    parameterValidation.FailureStage,
+                    parameterValidation.Issues);
+            }
+        }
+
+        var compilation = new BuildPlanCompiler().Compile($"validation-{spec.ModelId}", spec);
+        return compilation.IsSuccess
+            ? PartFamilyValidationResult.Passed()
+            : new PartFamilyValidationResult(false, compilation.FailureStage, compilation.Issues);
     }
+
 }
 
 public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
@@ -179,11 +259,11 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
 
     public IReadOnlyList<PartParameterSchema> ParameterSchema { get; } =
     [
-        new("length_mm", PartParameterValueKind.Number, true, "Plate length in millimetres."),
-        new("width_mm", PartParameterValueKind.Number, true, "Plate width in millimetres."),
-        new("thickness_mm", PartParameterValueKind.Number, true, "Plate thickness in millimetres."),
-        new("hole_diameter_mm", PartParameterValueKind.Number, true, "Through-hole diameter in millimetres."),
-        new("hole_count", PartParameterValueKind.Integer, true, "Fixed four-hole count.")
+        new("length_mm", PartParameterValueKind.Number, true, "Plate length in millimetres.", "160"),
+        new("width_mm", PartParameterValueKind.Number, true, "Plate width in millimetres.", "80"),
+        new("thickness_mm", PartParameterValueKind.Number, true, "Plate thickness in millimetres.", "12"),
+        new("hole_diameter_mm", PartParameterValueKind.Number, true, "Through-hole diameter in millimetres.", "10"),
+        new("hole_count", PartParameterValueKind.Integer, true, "Fixed four-hole count.", "4")
     ];
 
     public IPartFamilyValidator Validator { get; } = new PlateBasic4HolesValidator();
@@ -202,40 +282,11 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
             return new(null, validation.FailureStage, validation.Issues);
         }
 
-        var length = PartFamilyParameters.Get(spec, "length_mm");
-        var width = PartFamilyParameters.Get(spec, "width_mm");
-        var thickness = PartFamilyParameters.Get(spec, "thickness_mm");
-        var holeDiameter = PartFamilyParameters.Get(spec, "hole_diameter_mm");
-        var holeCount = PartFamilyParameters.Get(spec, "hole_count");
-        var operations = new[]
-        {
-            Operation("op-001", "CreateSketch", "TopPlane", new Dictionary<string, string>
-            {
-                ["profile"] = "center_rectangle", ["length_mm"] = length, ["width_mm"] = width
-            }, [], "Base plate sketch created."),
-            Operation("op-002", "ExtrudeBoss", "TopPlane", new Dictionary<string, string>
-            {
-                ["depth_mm"] = thickness, ["direction"] = "mid_plane"
-            }, ["op-001"], "Plate solid body created."),
-            Operation("op-003", "CreateSketch", "TopFace", new Dictionary<string, string>
-            {
-                ["pattern"] = "rectangular", ["hole_count"] = holeCount, ["margin_x_mm"] = "20", ["margin_y_mm"] = "20"
-            }, ["op-002"], "Hole sketch points created."),
-            Operation("op-004", "CutExtrude", "TopFace", new Dictionary<string, string>
-            {
-                ["hole_diameter_mm"] = holeDiameter, ["through_all"] = "true", ["hole_count"] = holeCount
-            }, ["op-003"], "Four through holes cut through the plate."),
-            Operation("op-005", "SavePart", string.Empty, new Dictionary<string, string>
-            {
-                ["file_name"] = "fake_plate_basic_4holes.SLDPRT.txt"
-            }, ["op-004"], "Dry-run part artifact path planned."),
-            Operation("op-006", "ExportStep", string.Empty, new Dictionary<string, string>
-            {
-                ["file_name"] = "fake_plate_basic_4holes.STEP.txt"
-            }, ["op-005"], "Dry-run STEP artifact path planned.")
-        };
-
-        return Success(taskId, spec, operations);
+        return PartFamilyPlanFactory.CompileGeneric(
+            taskId,
+            PartFamilyPlanFactory.UseProvidedGraphOrCreate(
+                spec,
+                PartFamilyGenericModelFactory.CreatePlateBasic4Holes));
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan)
@@ -285,20 +336,6 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
         return issues;
     }
 
-    private static PartFamilyBuildPlanResult Success(
-        string taskId,
-        CADModelSpec spec,
-        IReadOnlyList<SolidWorksOperation> operations) =>
-        PartFamilyPlanFactory.Success(taskId, spec, operations);
-
-    private static SolidWorksOperation Operation(
-        string id,
-        string type,
-        string plane,
-        IReadOnlyDictionary<string, string> parameters,
-        IReadOnlyList<string> dependsOn,
-        string expected) =>
-        new(id, type, plane, parameters, dependsOn, expected);
 }
 
 public sealed class FlangeBasicDefinition : IPartFamilyDefinition
@@ -333,52 +370,11 @@ public sealed class FlangeBasicDefinition : IPartFamilyDefinition
             return new(null, validation.FailureStage, validation.Issues);
         }
 
-        var operations = new[]
-        {
-            new SolidWorksOperation("op-001", "CreateSketch", "TopPlane", new Dictionary<string, string>
-            {
-                ["profile"] = "outer_circle",
-                ["outer_diameter_mm"] = PartFamilyParameters.Get(spec, "outer_diameter_mm")
-            }, [], "Outer flange profile created."),
-            new SolidWorksOperation("op-002", "ExtrudeBoss", "TopPlane", new Dictionary<string, string>
-            {
-                ["depth_mm"] = PartFamilyParameters.Get(spec, "thickness_mm"), ["direction"] = "mid_plane"
-            }, ["op-001"], "Flange body created."),
-            new SolidWorksOperation("op-003", "CreateSketch", "TopFace", new Dictionary<string, string>
-            {
-                ["profile"] = "center_hole_circle",
-                ["inner_diameter_mm"] = PartFamilyParameters.Get(spec, "inner_diameter_mm")
-            }, ["op-002"], "Flange center-hole sketch created."),
-            new SolidWorksOperation("op-004", "CutExtrude", "TopFace", new Dictionary<string, string>
-            {
-                ["cut_role"] = "center_hole",
-                ["hole_diameter_mm"] = PartFamilyParameters.Get(spec, "inner_diameter_mm"),
-                ["through_all"] = "true"
-            }, ["op-003"], "Flange center hole cut through the body."),
-            new SolidWorksOperation("op-005", "CreateSketch", "TopFace", new Dictionary<string, string>
-            {
-                ["pattern"] = "bolt_circle",
-                ["bolt_hole_count"] = PartFamilyParameters.Get(spec, "bolt_hole_count"),
-                ["bolt_circle_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_circle_diameter_mm"),
-                ["bolt_hole_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_hole_diameter_mm")
-            }, ["op-004"], "Bolt-circle sketch created from direct hole centres."),
-            new SolidWorksOperation("op-006", "CutExtrude", "TopFace", new Dictionary<string, string>
-            {
-                ["cut_role"] = "bolt_holes",
-                ["hole_diameter_mm"] = PartFamilyParameters.Get(spec, "bolt_hole_diameter_mm"),
-                ["hole_count"] = PartFamilyParameters.Get(spec, "bolt_hole_count"),
-                ["through_all"] = "true"
-            }, ["op-005"], "Bolt holes cut through the flange."),
-            new SolidWorksOperation("op-007", "SavePart", string.Empty, new Dictionary<string, string>
-            {
-                ["file_name"] = "fake_flange_basic.SLDPRT.txt"
-            }, ["op-006"], "Dry-run flange part path planned."),
-            new SolidWorksOperation("op-008", "ExportStep", string.Empty, new Dictionary<string, string>
-            {
-                ["file_name"] = "fake_flange_basic.STEP.txt"
-            }, ["op-007"], "Dry-run flange STEP path planned.")
-        };
-        return PartFamilyPlanFactory.Success(taskId, spec, operations);
+        return PartFamilyPlanFactory.CompileGeneric(
+            taskId,
+            PartFamilyPlanFactory.UseProvidedGraphOrCreate(
+                spec,
+                PartFamilyGenericModelFactory.CreateFlangeBasic));
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
@@ -415,39 +411,11 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
             return new(null, validation.FailureStage, validation.Issues);
         }
 
-        var operations = new List<SolidWorksOperation>
-        {
-            new("op-001", "CreateSketch", "RightPlane", new Dictionary<string, string>
-            {
-                ["profile"] = "closed_half_section",
-                ["diameter_mm"] = PartFamilyParameters.Get(spec, "diameter_mm"),
-                ["length_mm"] = PartFamilyParameters.Get(spec, "length_mm"),
-                ["optional_step_diameters"] = PartFamilyParameters.Get(spec, "optional_step_diameters"),
-                ["optional_step_lengths"] = PartFamilyParameters.Get(spec, "optional_step_lengths")
-            }, [], "Closed half-section profile for the complete shaft created."),
-            new("op-002", "CreateCenterLine", "RightPlane", new Dictionary<string, string>
-            {
-                ["axis"] = "shaft_axis", ["selection_mark"] = "16"
-            }, ["op-001"], "Shaft revolve centreline created."),
-            new("op-003", "RevolveBoss", "RightPlane", new Dictionary<string, string>
-            {
-                ["feature_api"] = "FeatureRevolve2",
-                ["angle_degrees"] = "360",
-                ["profile_selection_mark"] = "0",
-                ["axis_selection_mark"] = "16"
-            }, ["op-002"], "Full shaft body revolved from the complete half-section profile.")
-        };
-
-        operations.Add(new SolidWorksOperation($"op-{operations.Count + 1:000}", "SavePart", string.Empty, new Dictionary<string, string>
-        {
-            ["file_name"] = "fake_shaft_basic.SLDPRT.txt"
-        }, ["op-003"], "Dry-run shaft part path planned."));
-        operations.Add(new SolidWorksOperation($"op-{operations.Count + 1:000}", "ExportStep", string.Empty, new Dictionary<string, string>
-        {
-            ["file_name"] = "fake_shaft_basic.STEP.txt"
-        }, [operations[^1].OperationId], "Dry-run shaft STEP path planned."));
-
-        return PartFamilyPlanFactory.Success(taskId, spec, operations);
+        return PartFamilyPlanFactory.CompileGeneric(
+            taskId,
+            PartFamilyPlanFactory.UseProvidedGraphOrCreate(
+                spec,
+                PartFamilyGenericModelFactory.CreateShaftBasic));
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
@@ -560,35 +528,27 @@ public sealed class ShaftBasicValidator : IPartFamilyValidator
 
 internal static class PartFamilyPlanFactory
 {
-    public static PartFamilyBuildPlanResult Success(
-        string taskId,
+    public static CADModelSpec UseProvidedGraphOrCreate(
         CADModelSpec spec,
-        IReadOnlyList<SolidWorksOperation> operations)
+        Func<CADModelSpec, CADModelSpec> createFamilyGraph) =>
+        spec.Sketches.Count > 0 || spec.Features.Count > 0
+            ? spec with { RequiresFeatureHandlerPipeline = true }
+            : createFamilyGraph(spec) with { RequiresFeatureHandlerPipeline = false };
+
+    public static PartFamilyBuildPlanResult CompileGeneric(
+        string taskId,
+        CADModelSpec spec)
     {
-        var safeType = spec.PartType.ToLowerInvariant();
-        return new PartFamilyBuildPlanResult(
-            new SolidWorksBuildPlan(
-                $"solidworks-build-plan-{taskId}",
-                spec.Id,
-                "SolidWorks",
-                spec.PartType,
-                "mm",
-                operations,
-                [
-                    new SolidWorksArtifact("expected-part", "Part", $"output/solidworks/artifacts/fake_{safeType}.SLDPRT.txt", ".SLDPRT", false, 0, $"Dry-run {safeType} part placeholder."),
-                    new SolidWorksArtifact("expected-step", "Step", $"output/solidworks/artifacts/fake_{safeType}.STEP.txt", ".STEP", false, 0, $"Dry-run {safeType} STEP placeholder."),
-                    new SolidWorksArtifact("expected-build-report", "BuildReport", "output/solidworks/reports/build_report.json", ".json", false, 0, "Dry-run family-aware build report.")
-                ],
-                ["target_cad_system must be SolidWorks", "part_type must be registered", "parameters must pass the part-family validator"],
-                ["Dry-run plan generation does not call SolidWorks or COM."],
-                Material: spec.Material,
-                Features: new Dictionary<string, string>(spec.Features, StringComparer.OrdinalIgnoreCase),
-                OutputRequirements: spec.OutputRequirements.ToArray(),
-                DrawingRequirements: new Dictionary<string, string>(spec.DrawingRequirements, StringComparer.OrdinalIgnoreCase),
-                ExecutionOptions: new Dictionary<string, string>(spec.ExecutionOptions, StringComparer.OrdinalIgnoreCase),
-                Dimensions: new Dictionary<string, string>(spec.Dimensions, StringComparer.OrdinalIgnoreCase)),
-            null,
-            Array.Empty<string>());
+        var validation = new CADModelSpecValidator().Validate(spec);
+        if (!validation.IsValid)
+        {
+            return new PartFamilyBuildPlanResult(null, validation.FailureStage, validation.Issues);
+        }
+
+        var compiled = new BuildPlanCompiler().Compile(taskId, spec);
+        return compiled.IsSuccess
+            ? new PartFamilyBuildPlanResult(compiled.BuildPlan, null, Array.Empty<string>())
+            : new PartFamilyBuildPlanResult(null, compiled.FailureStage, compiled.Issues);
     }
 
     public static IReadOnlyList<string> ReviewCommon(SolidWorksBuildPlan plan, string expectedPartType)

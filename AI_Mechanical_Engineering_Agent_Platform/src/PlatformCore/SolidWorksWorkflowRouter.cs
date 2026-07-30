@@ -138,7 +138,8 @@ public sealed class SolidWorksWorkflowRouter
         {
             foreach (var parameter in definition.ParameterSchema)
             {
-                var value = FirstValue(values, parameter.Name, $"solidworks_{parameter.Name}");
+                var value = FirstValue(values, parameter.Name, $"solidworks_{parameter.Name}") ??
+                    parameter.DefaultValue;
                 if (!string.IsNullOrWhiteSpace(value))
                 {
                     dimensions[parameter.Name] = value;
@@ -180,18 +181,14 @@ public sealed class SolidWorksWorkflowRouter
         var explicitPartType = ReadExplicitPartType(context);
         if (!string.IsNullOrWhiteSpace(explicitPartType))
         {
-            return string.Equals(explicitPartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase)
-                ? CreatePlateBasicFourHolesSpec(values: context.Input.Context)
-                : CreatePartFamilySpec(explicitPartType, context.Input.Context);
+            return CreatePartFamilySpec(explicitPartType, context.Input.Context);
         }
 
         var messageFamily = _partTypeRegistry.GetAll().FirstOrDefault(definition =>
             context.Input.Message.Contains(definition.PartType, StringComparison.OrdinalIgnoreCase));
         return messageFamily is null
             ? null
-            : string.Equals(messageFamily.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase)
-                ? CreatePlateBasicFourHolesSpec()
-                : CreatePartFamilySpec(messageFamily.PartType, context.Input.Context);
+            : CreatePartFamilySpec(messageFamily.PartType, context.Input.Context);
     }
 
     private static CADModelSpec? TryGetContextModelSpec(AgentContext context)

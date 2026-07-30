@@ -521,7 +521,7 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
-    public async Task SolidWorksBuildPlanValidatorDoesNotTreatNonCriticalTextAsFatal()
+    public async Task SolidWorksBuildPlanValidatorTreatsUnsupportedOperationAsNonRetryable()
     {
         var plan = await CreatePlanAsync();
         var validator = new SolidWorksBuildPlanValidator();
@@ -547,7 +547,7 @@ public sealed class SolidWorksModuleSkeletonTests
             AllowRealCadExecution: true));
 
         Assert.False(nonCritical.IsPassed);
-        Assert.False(nonCritical.HasFatalError);
+        Assert.True(nonCritical.HasFatalError);
         Assert.True(legacyConfirmationCombination.IsPassed);
         Assert.False(legacyConfirmationCombination.HasFatalError);
     }
@@ -2613,8 +2613,22 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.SolidWorksUnitTestExecutionDisabled);
             Assert.True(report.SolidWorksDryRunDisablesRealExecution);
             Assert.True(report.SolidWorksVisibleDefaultTrue);
+            Assert.True(report.SolidWorksExecutionEnvironmentProbeSupported);
             Assert.True(report.LegacyEnableFlagNotRequired);
             Assert.True(report.LegacyRequestConfirmationNotRequired);
+            Assert.True(report.GenericCadModelSpecV2Supported);
+            Assert.True(report.SketchDefinitionSupported);
+            Assert.True(report.SketchConstraintsSupported);
+            Assert.True(report.FeatureDefinitionSupported);
+            Assert.True(report.FeatureGraphSupported);
+            Assert.True(report.FeatureGraphCycleDetected);
+            Assert.True(report.MissingFeatureDependencyRejected);
+            Assert.True(report.BuildPlanCompilerSupported);
+            Assert.True(report.PlateUsesGenericFeatureGraph);
+            Assert.True(report.FlangeUsesGenericFeatureGraph);
+            Assert.True(report.ShaftUsesGenericFeatureGraph);
+            Assert.True(report.NoPartSpecificLogicInRealWorker);
+            Assert.True(report.V20ADocumented);
             Assert.True(report.V18VersionStageDocumented);
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.Equal("Passed", report.FinalStatus);

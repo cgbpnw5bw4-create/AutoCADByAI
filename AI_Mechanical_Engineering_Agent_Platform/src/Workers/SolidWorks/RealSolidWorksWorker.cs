@@ -1,6 +1,7 @@
 using DomainSchemas;
 using WorkerContracts;
 using System.Reflection;
+using SolidWorksWorker.Features;
 
 namespace SolidWorksWorker;
 
@@ -12,6 +13,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
     private readonly ISolidWorksDrawingDimensionBuilder _drawingDimensionBuilder;
     private readonly ISolidWorksDrawingTitleBlockBuilder _drawingTitleBlockBuilder;
     private readonly PartFamilyBuilderRegistry _partFamilyBuilderRegistry;
+    private readonly FeatureHandlerRegistry _featureHandlerRegistry;
+    private readonly ISolidWorksExecutionEnvironmentProbe _executionEnvironmentProbe;
     private readonly SolidWorksRuntimeOptions? _options;
 
     public RealSolidWorksWorker()
@@ -67,6 +70,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             drawingBuilder,
             drawingDimensionBuilder,
             drawingTitleBlockBuilder,
+            null,
             null)
     {
     }
@@ -79,6 +83,27 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder,
         ISolidWorksDrawingTitleBlockBuilder? drawingTitleBlockBuilder,
         PartFamilyBuilderRegistry? partFamilyBuilderRegistry)
+        : this(
+            sessionManager,
+            options,
+            plateBuilder,
+            drawingBuilder,
+            drawingDimensionBuilder,
+            drawingTitleBlockBuilder,
+            partFamilyBuilderRegistry,
+            null)
+    {
+    }
+
+    public RealSolidWorksWorker(
+        ISolidWorksSessionManager? sessionManager,
+        SolidWorksRuntimeOptions? options,
+        ISolidWorksPlateBuilder? plateBuilder,
+        ISolidWorksDrawingBuilder? drawingBuilder,
+        ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder,
+        ISolidWorksDrawingTitleBlockBuilder? drawingTitleBlockBuilder,
+        PartFamilyBuilderRegistry? partFamilyBuilderRegistry,
+        ISolidWorksExecutionEnvironmentProbe? executionEnvironmentProbe)
     {
         _sessionManager = sessionManager ?? new SolidWorksSessionManager();
         _plateBuilder = plateBuilder ?? new LateBoundSolidWorksPlateBuilder();
@@ -86,6 +111,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         _drawingDimensionBuilder = drawingDimensionBuilder ?? new LateBoundSolidWorksDrawingDimensionBuilder();
         _drawingTitleBlockBuilder = drawingTitleBlockBuilder ?? new LateBoundSolidWorksDrawingTitleBlockBuilder();
         _partFamilyBuilderRegistry = partFamilyBuilderRegistry ?? PartFamilyBuilderRegistry.CreateDefault(_plateBuilder);
+        _featureHandlerRegistry = FeatureHandlerRegistry.CreateDefault();
+        _executionEnvironmentProbe = executionEnvironmentProbe ?? new SolidWorksExecutionEnvironmentProbe();
         _options = options;
     }
 
@@ -125,6 +152,11 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             !request.DrawingDimensionSmokeTestOnly &&
             !request.DrawingTitleBlockSmokeTestOnly;
         IPartFamilyBuilder? partFamilyBuilder = null;
+        var usesFeatureHandlerGraph =
+            isPartFamilyBuild &&
+            request.BuildPlan.ExecutionStrategy.Equals(
+                SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                StringComparison.OrdinalIgnoreCase);
 
         if (ShouldRejectBeforeConnection(request, options))
         {
@@ -139,8 +171,35 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 preflight);
         }
 
-        if (isPartFamilyBuild &&
-            !_partFamilyBuilderRegistry.TryGetBuilder(request.BuildPlan.PartType, out partFamilyBuilder))
+        if (usesFeatureHandlerGraph)
+        {
+            var handlerPreflight = _featureHandlerRegistry.ValidateForRealExecution(request.BuildPlan);
+            if (!handlerPreflight.IsPassed)
+            {
+                logs.Add("COM connection was not attempted because the complete FeatureGraph handler/evidence preflight failed.");
+                issues.AddRange(handlerPreflight.Issues);
+                var genericBuilder = new SolidWorksFeatureGraphPartFamilyBuilder(
+                    request.BuildPlan.PartType,
+                    _featureHandlerRegistry);
+                return RealBuildFailureResult(
+                    request,
+                    "Rejected",
+                    logs,
+                    issues,
+                    realCadConnected: false,
+                    preflight,
+                    options,
+                    handlerPreflight.FailureStage ?? PartFamilyFailureStages.FeatureApiEvidenceInsufficient,
+                    genericBuilder);
+            }
+
+            partFamilyBuilder = new SolidWorksFeatureGraphPartFamilyBuilder(
+                request.BuildPlan.PartType,
+                _featureHandlerRegistry);
+            logs.Add("Real feature execution was resolved through FeatureHandlerRegistry.");
+        }
+        else if (isPartFamilyBuild &&
+                 !_partFamilyBuilderRegistry.TryGetBuilder(request.BuildPlan.PartType, out partFamilyBuilder))
         {
             logs.Add("COM connection was not attempted because no part-family builder is registered.");
             issues.Add($"part_family_builder_missing: {request.BuildPlan.PartType} has no registered real SolidWorks builder.");
@@ -168,6 +227,39 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 realCadConnected: false,
                 preflight,
                 PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient);
+        }
+
+        var environmentProbe = _executionEnvironmentProbe.Probe();
+        if (!environmentProbe.CanAttemptRealExecution)
+        {
+            issues.AddRange(environmentProbe.Issues);
+            logs.Add("COM connection was not attempted because the real execution environment probe failed.");
+            var failedPreflight = preflight with
+            {
+                FinalStatus = "Failed",
+                Issues = issues
+            };
+
+            return request.ConnectionSmokeTestOnly
+                ? Result(
+                    request,
+                    "Failed",
+                    "RealPreflightOnly",
+                    logs,
+                    issues,
+                    realCadConnected: false,
+                    failedPreflight,
+                    SolidWorksExecutionEnvironmentProbe.FailureStage)
+                : RealBuildFailureResult(
+                    request,
+                    "Failed",
+                    logs,
+                    issues,
+                    realCadConnected: false,
+                    failedPreflight,
+                    options,
+                    SolidWorksExecutionEnvironmentProbe.FailureStage,
+                    partFamilyBuilder);
         }
 
         if (!request.ConnectionSmokeTestOnly &&
@@ -594,8 +686,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         string failedStage,
         IPartFamilyBuilder? partFamilyBuilder = null)
     {
-        if (partFamilyBuilder is not null &&
-            !string.Equals(partFamilyBuilder.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
+        if (partFamilyBuilder is not null)
         {
             var familyOutputDirectory = SolidWorksPartFamilyBuildOutput.ResolveOutputDirectory(
                 request,
@@ -748,9 +839,9 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             Path.GetFileName(request.SourcePartPath),
             Path.GetFileName(request.SourceDrawingPath),
             Path.GetFileName(request.SourceDimensionedDrawingPath),
-            request.DrawingSmokeTestOnly ? "plate_basic_4holes.SLDDRW" : null,
-            request.DrawingDimensionSmokeTestOnly ? "plate_basic_4holes_dimensioned.SLDDRW" : null,
-            request.DrawingTitleBlockSmokeTestOnly ? "plate_basic_4holes_title_block.SLDDRW" : null,
+            request.DrawingSmokeTestOnly ? $"{request.BuildPlan.PartType}.SLDDRW" : null,
+            request.DrawingDimensionSmokeTestOnly ? $"{request.BuildPlan.PartType}_dimensioned.SLDDRW" : null,
+            request.DrawingTitleBlockSmokeTestOnly ? $"{request.BuildPlan.PartType}_title_block.SLDDRW" : null,
             !request.DrawingSmokeTestOnly && !request.DrawingDimensionSmokeTestOnly && !request.DrawingTitleBlockSmokeTestOnly
                 ? $"{request.BuildPlan.PartType}.SLDPRT"
                 : null

@@ -1,0 +1,42 @@
+# Extrude Boss Handler API 证据
+
+## 状态与范围
+
+`FeatureType=extrude_boss`，`HandlerVersion=2.0-b.1`，`api_evidence_status=unverified`。本文覆盖通用基体拉伸 Handler；薄壁、拔模、复杂 feature scope 和其他拉伸变体不在本阶段。
+
+V1.9 plate 与 flange 的专用 Builder 已使用固定盲拉伸参数，但没有验证当前 Handler 对通用 `direction`、深度、草图引用和长参数列表的映射。
+
+## 参数 Schema
+
+| 参数 | 类型 | 必需 | 校验 |
+|---|---|---|---|
+| `depth_mm` | positive number | 是 | 必须是有限正数，并在真实 Adapter 中转换为米。 |
+| `direction` | `blind` 或 `mid_plane` | 否 | 枚举外的值返回 `invalid_feature_parameter`；`mid_plane` 当前没有真实授权。 |
+
+Handler 类型不匹配返回 `unsupported_feature_type`。参数合法只表示可以生成 BuildPlan，不表示可以执行真实 API。
+
+## 官方候选 API
+
+候选为 `IFeatureManager.FeatureExtrusion2`：[SolidWorks 官方 API Help](https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureExtrusion2.html)。
+
+候选合同要求明确 `Sd`、`Flip`、`Dir`、`T1`、`T2`、`D1`、`D2`，以及拔模、薄壁、合并、feature scope、auto-select、起始条件和偏移参数。成功应返回 `IFeature`，失败可能返回 `null`。
+
+真实调用前必须有有效闭合草图处于活动或已选状态，毫米深度必须转换为米，终止条件必须与本次证据参数轮廓完全一致。
+
+## 已有受限证据与缺口
+
+- V1.9 plate/flange 证明固定专用 Builder 的盲拉伸路径可工作。
+- 该结果没有绑定 `ExtrudeBossHandler`、当前 BuildPlan Adapter 或通用引用解析。
+- `direction=mid_plane` 不能从盲拉伸结果推导。
+- 草图选择错误、参数数量或终止条件错误都可能返回 `null`。
+- 薄壁、拔模和多实体 scope 没有本阶段证据。
+
+## 提升为 verified 的条件
+
+独立 Handler 诊断必须记录证据标识、版本、源码修订、SolidWorks 版本、精确长参数、单位转换、草图选择状态、返回 Feature、重建结果和产物路径。至少分别验证 `blind` 与 `mid_plane`，并对缺失草图、零/负深度、无效枚举和 API 返回 `null` 提供负向结果。
+
+证据必须绑定 `HandlerVersion=2.0-b.1` 和准确 `ParameterProfile`。在参数轮廓逐项审查前，状态保持 `unverified`，全图预检以 `feature_api_evidence_insufficient` 在 COM 前阻断。
+
+## 禁止事项
+
+禁止复用专用 Builder 成功结果直接授权通用映射，禁止猜测 `FeatureExtrusion2` 长参数，禁止把 `mid_plane` 静默降级为 `blind`，禁止复制第三方代码。

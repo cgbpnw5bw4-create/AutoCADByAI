@@ -152,3 +152,62 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 - 若目标复制、大小或校验失败，仍必须保留 `artifact_copy_failed` 并停止发布，不能套用上述 warning 分支。
 
 这些修复只关闭 V1.9 基础零件族的已知保存与瞬时读锁问题，不扩大到工程图或 V2.0。
+
+## V2.0-A Schema、FeatureGraph 与编译失败
+
+### 目标与适用范围
+
+本节处理 canonical `CADModelSpec` 到 `SolidWorksBuildPlan` 的纯校验和编译失败。输入为原始 Schema、草图、特征图和编译 issues；输出为单一 `failure_stage`、直接原因、修复后的 Schema 与 dry-run 结果。任何失败都不得进入 Worker 或连接 COM。
+
+| `failure_stage` | 直接原因 | 修复与回填条件 |
+|---|---|---|
+| `invalid_cad_model_spec` | `model_id`、`model_type`、`unit`、草图标识或特征数组不合法 | 修正 canonical 字段；有效 Schema 后重新编译。 |
+| `feature_id_missing` | 特征没有稳定标识 | 补非空 `feature_id`，同步修正引用。 |
+| `duplicate_feature_id` | 多个特征标识重复 | 为节点分配唯一标识并重建依赖。 |
+| `sketch_reference_missing` | 草图缺基准引用，或特征引用未知草图 | 修正 `reference_plane` / `referenced_sketches`。 |
+| `feature_dependency_missing` | 特征依赖不存在 | 补齐上游节点或修正依赖标识。 |
+| `feature_dependency_cycle` | 有向特征图存在环 | 重新设计依赖；不得强制使用输入顺序。 |
+| `unsupported_sketch_entity` | 实体未命名或类型不受支持 | 使用八类受支持实体，或延期扩展。 |
+| `unsupported_constraint` | 约束类型不支持或引用未知实体 | 修正约束和同草图实体引用。 |
+| `unsupported_feature_type` | 特征不在十类映射中 | 使用受支持类型，或延期到后续阶段。 |
+| `invalid_feature_parameter` | 参数、单位或目标引用不符合特征语义 | 修正输入；不得由 Handler 猜测。 |
+| `invalid_feature_order` | 顺序非正、重复或早于依赖 | 修正顺序，或删除非必需显式顺序。 |
+| `build_plan_compile_failed` | 已校验结构仍无法产生计划 | 保留编译 issues，修复编译器边界并重跑 dry-run。 |
+
+### 修复步骤
+
+1. 先验证 canonical 字段和零件族参数，不读取历史产物。
+2. 独立运行草图引用与实体/约束校验。
+3. 用 `FeatureGraph.ValidateAndSort()` 复现缺失依赖、环或顺序问题。
+4. 只在图有效后调用 `BuildPlanCompiler`。
+5. 通过 BuildPlan Validator、Reviewer 和 dry-run 后关闭问题。
+
+不得为修复单图而回到手写 operation，不得跳过图校验，不得调用 V1.9 专用真实 Builder 证明任意图可执行。禁止装配体、队列、通用真实 COM Handler 和 V2.0-B。
+
+## V2.0-B Feature Handler 失败修复
+
+### 目标与输入输出
+
+本节处理 BuildPlan operation 适配、Handler 注册、参数校验和 API evidence 门禁失败。输入为服务端执行来源、计划操作、Registry 快照、Handler validation issues 与 `FeatureApiEvidence`；输出为稳定 `failure_stage`、直接原因、修复证据和无 COM 回归结果。
+
+| `failure_stage` | 直接原因 | 修复步骤 | 关闭条件 |
+|---|---|---|---|
+| `unsupported_feature_type` | operation 没有 Handler 适配，或 Registry 未注册对应类型 | 确认类型拼写；需要新能力时补独立 Handler、Schema、测试、证据和注册 | 默认或扩展 Registry 可解析，未知类型仍受控拒绝，Worker 无大型 switch |
+| `invalid_feature_parameter` | 必需参数缺失、JSON 类型错误、数值或枚举超界 | 读取对应 Handler `ParameterSchema` 和 validation issues，修正输入后重跑纯校验 | 参数合法，非法样例仍在 COM 前拒绝 |
+| `sketch_reference_missing` | `reference_plane` 或草图目标引用为空 | 修正 canonical reference 和 operation target | 引用可解析，草图校验通过 |
+| `unsupported_sketch_entity` | 草图实体不在 Handler 声明集合或缺稳定类型 | 使用已支持实体，或新增完整实现、测试与证据 | 未支持实体仍拒绝，支持实体通过无 COM 校验 |
+| `feature_api_evidence_insufficient` | 整图至少一个 Handler 的证据状态不是 `verified` | 停止 Worker 回填；按对应 `api_evidence.md` 建独立诊断，记录版本、参数、返回值、重建和产物 | 证据经审查为 `verified`，且同参数轮廓的失败与成功测试齐全 |
+
+### 整图预检修复顺序
+
+1. 确认计划是否由服务端标为 `feature_handler_graph`；不得从请求 JSON 补写来源。
+2. 适配整张图全部几何 operation，先关闭 `unsupported_feature_type`。
+3. 对全部 Handler 运行参数校验，先关闭所有输入问题。
+4. 汇总全部 Handler evidence；任一 `unverified` 都以 `feature_api_evidence_insufficient` 停止。
+5. 只在整图全部证据为 `verified` 后才允许连接 COM，再进入 ArtifactValidator、Reviewer 与 QualityGate。
+
+五类 Handler 当前全部为 `unverified`，所以正常结果是 COM 连接计数为零。V1.9 的 plate、flange、shaft 专用证据不能用于修改通用 Handler 状态。`ExecuteAsync` 的二次门禁也必须保留，不能只依赖 Worker 预检。
+
+### 禁止事项
+
+禁止为单个失败增加大型 `switch(feature_type)`，禁止部分执行图，禁止把 Fake Worker 或历史零件族产物当作通用真实成功，禁止未经独立诊断将状态改为 `verified`，禁止复制第三方代码，也不得借修复扩展装配体、BOM、队列或后续阶段。

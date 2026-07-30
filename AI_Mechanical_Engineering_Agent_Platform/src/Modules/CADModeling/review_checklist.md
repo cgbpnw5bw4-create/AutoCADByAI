@@ -170,3 +170,46 @@ Phase 1 的 diagnostic 与主流程待回填项已经关闭：
 - plate 完整回归目录为 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260720_082027_397-bd86bc56b48349c69db5f8173c1b3d85/`，状态同为 `Passed`、`Deliverable`、QualityGate `Passed`。
 
 因此，V1.9 基础法兰、基础轴 build-only 真实验收和 plate 完整包回归均有同次证据，可进入 Claude 实现审查。diagnostic 的 body count 与 theoretical volume 仍为 `NotVerified`，按 Improvement 处理，不阻断本阶段；禁止据此扩大到自动工程图或 V2.0。
+
+## V2.0-A 通用 CADModelSpec 审查
+
+### 必查项
+
+- canonical `CADModelSpec` 是否包含 11 个核心字段，并受控兼容旧 `id`、`part_type`、`dimensions` 和对象形式 `features`。
+- `SketchDefinition` 是否包含实体、约束、尺寸、基准引用和稳定标识；约束是否只引用同草图已存在实体。
+- `FeatureDefinition` 是否覆盖十类特征，并包含依赖、草图/特征引用、执行顺序和目标引用。
+- `FeatureGraph` 是否拒绝缺失依赖、依赖环、非正/重复/依赖逆序，并产生稳定拓扑顺序。
+- `BuildPlanCompiler` 是否从图生成草图、中心线、特征、保存与 STEP 导出 operation，且不连接 COM。
+- plate、flange、shaft 是否都通过 `PartFamilyGenericModelFactory` 和 `BuildPlanCompiler`，没有第二套手写计划。
+- 图或编译失败是否在 Worker 前结束，并保留精确 `failure_stage`。
+- `RealSolidWorksWorker` 是否只经 Registry 解析 V1.9 专用 Builder，没有三族字符串分支。
+- 文档和报告是否明确十类 operation 映射不等于通用真实 Feature Handler。
+
+### Blockers
+
+- 从零件族参数直接手写 BuildPlan operation，或 FeatureGraph 不再是唯一来源。
+- 缺失依赖、环或非法顺序仍调度 Worker。
+- 用输入数组顺序覆盖拓扑结果，或静默删除依赖。
+- 把 V1.9 三族真实 Builder 证据泛化为任意 FeatureGraph 已真实执行。
+- 在 V2.0-A 新增通用 COM Handler、装配体、BOM、批量队列或进入 V2.0-B。
+
+### 自检字段
+
+```text
+generic_cad_model_spec_v2_supported
+sketch_definition_supported
+sketch_constraints_supported
+feature_definition_supported
+feature_graph_supported
+feature_graph_cycle_detected
+missing_feature_dependency_rejected
+build_plan_compiler_supported
+plate_uses_generic_feature_graph
+flange_uses_generic_feature_graph
+shaft_uses_generic_feature_graph
+no_part_specific_logic_in_real_worker
+v2_0_a_documented
+markdown_chinese_check_passed
+```
+
+build、test、默认 self-check 和上述字段全部通过后，V2.0-A 才可进入实现审查。self-check、单元测试与 dry-run 不得连接 COM；本轮不得运行真实 CAD，也不得进入 V2.0-B。

@@ -63,7 +63,7 @@ public sealed class V18PartFamilyTests
 
         Assert.Equal(ShaftBasicDefinition.Type, roundTripped.PartType);
         Assert.Equal("40", roundTripped.Dimensions["diameter_mm"]);
-        Assert.Equal("ground", roundTripped.Features["feature_finish"]);
+        Assert.Equal("ground", roundTripped.FeatureOptions["feature_finish"]);
         Assert.Equal("40Cr", roundTripped.Material);
         Assert.Contains("STEP", roundTripped.OutputRequirements);
         Assert.Equal("1:2", roundTripped.DrawingRequirements["drawing_scale"]);

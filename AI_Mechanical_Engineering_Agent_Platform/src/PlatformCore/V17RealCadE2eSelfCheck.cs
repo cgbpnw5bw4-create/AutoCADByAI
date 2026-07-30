@@ -80,7 +80,7 @@ internal static class V17RealCadE2eSelfCheck
         }
     }
 
-    private static AgentContext CreateControlledContext(string projectRoot, string outputDirectory) =>
+    internal static AgentContext CreateControlledContext(string projectRoot, string outputDirectory) =>
         new(
             $"v17-self-check-{Guid.NewGuid():N}",
             new AgentInput(

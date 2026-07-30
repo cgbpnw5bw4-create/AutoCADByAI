@@ -345,3 +345,106 @@ markdown_chinese_check_passed
 最终构建报告已经写入 V1.9 diagnostic、视觉审查和主流程通过的 API evidence metadata。先前两次成功 CLI 运行属于 metadata 回填前的过程证据；最终交付必须引用表内目录。
 
 diagnostic 的 body count 与 theoretical volume 仍未自动验证，但专用特征树、四视图、非空产物和完整主工作流程证据已满足本阶段基础族验收。该增强保留为 Improvement，不扩展到 V2.0。
+
+## V2.0-A 通用 CADModelSpec 编译
+
+### 目标与输入输出
+
+输入为 canonical `CADModelSpec`，核心字段包括 `model_id`、`model_type`、`unit`、`parameters`、`reference_geometry`、`sketches`、`features`、`material`、`output_requirements`、`drawing_requirements` 和 `execution_options`。输出为经过图校验的 `SolidWorksBuildPlan`、Validator / Reviewer 结果和 dry-run 产物。
+
+完整规范与 JSON 示例见 `docs/v2_0_a_generic_cad_model_spec.md`。
+
+### 唯一执行链
+
+```text
+CADModelSpec
+→ CADModelSpecValidator
+→ PartTypeRegistry / 零件族 Validator
+→ PartFamilyGenericModelFactory
+→ SketchDefinition / FeatureDefinition
+→ FeatureGraph
+→ BuildPlanCompiler
+→ SolidWorksBuildPlanValidator
+→ SolidWorksBuildPlanReviewer
+→ dry-run Worker
+```
+
+`FeatureGraph` 是 Schema 到 BuildPlan 和 dry-run 的唯一特征来源。三族定义不得直接创建另一套 operation；`BuildPlanCompiler` 统一生成 `CreateSketch`、构造中心线、十类特征映射、`SavePart` 和 `ExportStep`。
+
+### 草图、特征与三族迁移
+
+`SketchDefinition` 保存草图标识、基准引用、实体、约束、尺寸与可选执行顺序。`FeatureDefinition` 保存特征标识、类型、参数、依赖、草图/特征引用、执行顺序与目标引用。
+
+十类特征是 `extrude_boss`、`extrude_cut`、`revolve_boss`、`revolve_cut`、`fillet`、`chamfer`、`hole`、`linear_pattern`、`circular_pattern`、`mirror`。本阶段这些类型只编译为 BuildPlan operation。
+
+- plate 编译 `plate_base_extrude` → `plate_hole_cut`。
+- flange 编译 `flange_body_extrude` → `flange_inner_cut` → `flange_bolt_holes`。
+- shaft 编译含构造中心线的 `shaft_profile_sketch` → `shaft_revolve`。
+
+### 验证和失败
+
+缺失特征依赖返回 `feature_dependency_missing`，依赖环返回 `feature_dependency_cycle`，非正、重复或不符合依赖的显式顺序返回 `invalid_feature_order`。草图引用、实体、约束、特征类型和编译失败必须分别使用 `sketch_reference_missing`、`unsupported_sketch_entity`、`unsupported_constraint`、`unsupported_feature_type` 和 `build_plan_compile_failed`。
+
+所有失败都必须在 Worker 前结束。默认 self-check、单元测试与 dry-run 不连接 COM；V2.0 本地交互默认真实策略不适用于这条通用 FeatureGraph 验证链。
+
+### 真实执行边界
+
+V1.9 三族专用真实 Builder 保持可用，仍由 Registry 解析。V2.0-A 不新增通用 Feature Handler，不允许把任意 FeatureGraph 发送给真实 COM，也不得声称任意图已经真实执行。通用真实特征执行延期到 V2.0-B。
+
+禁止装配体、BOM、批量任务队列和大型类型 switch。本阶段完成后停在 V2.0-A。
+
+## V2.0-B 通用 Feature Handler 执行
+
+### 目标与输入输出
+
+V2.0-B 把服务端编译得到的通用 FeatureGraph 计划交给可注册 Handler 边界。输入是带服务端执行来源的 `SolidWorksBuildPlan`；输出是 Registry 解析、参数校验、全图 API evidence 预检和受控执行报告。完整规范见 `docs/v2_0_b_feature_handlers.md`。
+
+### 执行链
+
+```text
+canonical CADModelSpec
+→ FeatureGraph
+→ BuildPlanCompiler
+→ 服务端 execution strategy
+→ RealSolidWorksWorker 安全检查
+→ 全部 operation 适配
+→ FeatureHandlerRegistry
+→ 全部 Handler 参数校验
+→ 全部 Handler API evidence 预检
+→ 证据全部 verified 后才连接 COM
+→ SolidWorksFeatureGraphPartFamilyBuilder
+→ ArtifactValidator
+→ Reviewer
+→ QualityGate
+```
+
+`CreateSketch` / `CreateCenterLine`、`ExtrudeBoss`、`CutExtrude`、`AddHoleWizardHole`、`RevolveBoss` 分别适配到 `sketch`、`extrude_boss`、`extrude_cut`、`hole`、`revolve_boss`。Registry 大小写不敏感、拒绝重复注册；未知几何操作返回 `unsupported_feature_type`。扩展新 Handler 不修改 Worker，也不增加大型特征类型 switch。
+
+### 来源与兼容边界
+
+Handler 管线来源由服务端根据调用方实际提供的草图和特征写入，JSON 不能自行伪造。通用图使用 `feature_handler_graph`；三族固定生成图继续使用 `part_family_builder` 和 V1.9 专用真实 Builder。因此 V2.0-B 的未验证证据会阻断任意通用图，但不会令 plate、flange、shaft 已验收的固定路径回退。
+
+### 证据门禁
+
+当前五类 Handler 的 `api_evidence_status` 全部为 `unverified`。V1.9 的固定零件族结果只属于受限参数轮廓，不等同于通用 API 映射验证。整图预检遇到任一未验证 Handler 时返回 `feature_api_evidence_insufficient`，保持 `RealCadConnected=false`、`RealCadExecuted=false` 和 COM 连接计数为零。不得部分执行已通过节点。
+
+### self-check 字段
+
+```text
+feature_handler_registry_exists
+no_feature_type_large_switch
+sketch_handler_registered
+extrude_handler_registered
+cut_handler_registered
+hole_handler_registered
+revolve_handler_registered
+feature_handler_validation_supported
+feature_api_evidence_required
+unverified_api_blocks_real_execution
+feature_handler_docs_completed
+v2_0_b_documented
+```
+
+### 验证与禁止事项
+
+验证必须覆盖默认五类注册、大小写查找、重复拒绝、未知类型、非法参数、无需修改 Worker 的扩展、全图 evidence 预检、COM 前阻断及 V1.9 回归。禁止把 `unverified` 提升为真实授权，禁止复制第三方代码，禁止请求伪造执行来源，禁止绕过 Validator、Reviewer、QualityGate，也不扩展装配体、BOM、队列或后续阶段。
