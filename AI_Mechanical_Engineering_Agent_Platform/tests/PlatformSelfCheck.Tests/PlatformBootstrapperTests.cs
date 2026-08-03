@@ -70,7 +70,7 @@ public sealed class PlatformBootstrapperTests
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));
         Assert.Equal("Passed", report.FinalStatus);
-        Assert.Equal("2.0-b", report.SchemaVersion);
+        Assert.Equal("2.0-c", report.SchemaVersion);
         Assert.StartsWith("platform-self-check-", report.RunId, StringComparison.Ordinal);
         Assert.NotEqual(default, report.GeneratedAt);
         Assert.False(string.IsNullOrWhiteSpace(report.SourceRevision));
@@ -123,7 +123,7 @@ public sealed class PlatformBootstrapperTests
         using var stream = File.OpenRead(reportPath);
         using var document = await JsonDocument.ParseAsync(stream);
         Assert.Equal("Passed", document.RootElement.GetProperty("final_status").GetString());
-        Assert.Equal("2.0-b", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.Equal("2.0-c", document.RootElement.GetProperty("schema_version").GetString());
         Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());
         Assert.False(document.RootElement.TryGetProperty("solidworks_com_false_success_tests_added", out _));
     }

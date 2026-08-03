@@ -32,7 +32,7 @@ public sealed class SketchHandler : FeatureHandlerBase
             "Coordinates are expressed in metres.",
             "The requested entity and constraint subset has evidence for the same parameter profile."
         ],
-        FeatureApiEvidenceStatuses.Unverified,
+        FeatureApiEvidenceStatuses.Verified,
         [
             "TopFace and arbitrary reference resolution are not implemented.",
             "Arc, slot and constraint application lack handler-level evidence.",
@@ -40,8 +40,15 @@ public sealed class SketchHandler : FeatureHandlerBase
         ],
         [
             "V1.9 part-family diagnostics exercised selected subsets only.",
-            "No handler-specific diagnostic is bound to the current implementation."
-        ]);
+            "V2.0-C diagnostic verified TopPlane line, center rectangle and circle creation with non-null geometry and successful rebuild.",
+            "Diagnostic SLDPRT SHA256 40b86eb8075fcde859c9e850ac68872bf1f1bf8fa302d97e62faf028871aa326."
+        ],
+        EvidenceId: "v2.0-c-20260730-085830-sketch",
+        HandlerVersion: "2.0-c.2",
+        ParameterProfile: "standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres",
+        SolidWorksVersion: "33.5.0",
+        DiagnosticRunPath: "output/solidworks/features/20260730_085830_6592380/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {
@@ -59,6 +66,31 @@ public sealed class SketchHandler : FeatureHandlerBase
                 $"{PartFamilyFailureStages.SketchReferenceMissing}: sketch {feature.FeatureId} has no reference plane.");
         }
 
+        var unknownParameters = RejectUnknownParameters(
+            feature,
+            "sketch_id",
+            "reference_plane",
+            "entity_count",
+            "constraint_count",
+            "entities",
+            "constraints",
+            "dimensions",
+            "x1_mm",
+            "y1_mm",
+            "x2_mm",
+            "y2_mm",
+            "center_x_mm",
+            "center_y_mm",
+            "length_mm",
+            "width_mm",
+            "height_mm",
+            "radius_mm",
+            "diameter_mm");
+        if (!unknownParameters.IsValid)
+        {
+            return unknownParameters;
+        }
+
         if (!feature.Parameters.TryGetValue("entities", out var entitiesJson))
         {
             return FeatureHandlerValidationResult.Failed(
@@ -69,8 +101,11 @@ public sealed class SketchHandler : FeatureHandlerBase
         try
         {
             var entities = JsonSerializer.Deserialize<SketchEntity[]>(entitiesJson) ?? [];
+            var supported = new HashSet<string>(
+                [SketchEntityTypes.Line, SketchEntityTypes.Rectangle, SketchEntityTypes.Circle],
+                StringComparer.OrdinalIgnoreCase);
             if (entities.Length == 0 ||
-                entities.Any(entity => !SketchEntityTypes.Supported.Contains(entity.EntityType)))
+                entities.Any(entity => !supported.Contains(entity.EntityType)))
             {
                 return FeatureHandlerValidationResult.Failed(
                     PartFamilyFailureStages.UnsupportedSketchEntity,
@@ -87,11 +122,105 @@ public sealed class SketchHandler : FeatureHandlerBase
         return FeatureHandlerValidationResult.Passed();
     }
 
+    public override FeatureHandlerValidationResult ValidateParameterProfileForRealExecution(
+        FeatureDefinition feature)
+    {
+        var validation = Validate(feature);
+        if (!validation.IsValid)
+        {
+            return validation;
+        }
+
+        if (!string.Equals(
+                feature.TargetReference,
+                "TopPlane",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return EvidenceProfileBlocked(
+                feature,
+                $"reference_plane={feature.TargetReference ?? "missing"} is outside evidence profile {ApiEvidence.ParameterProfile}.");
+        }
+
+        if (!IsEmptyJsonCollection(feature.Parameters.GetValueOrDefault("constraints")) ||
+            !IsEmptyJsonCollection(feature.Parameters.GetValueOrDefault("dimensions")))
+        {
+            return EvidenceProfileBlocked(
+                feature,
+                $"constraints or dimensions are outside evidence profile {ApiEvidence.ParameterProfile}.");
+        }
+
+        try
+        {
+            var entities = JsonSerializer.Deserialize<SketchEntity[]>(
+                feature.Parameters.GetValueOrDefault("entities") ?? "[]") ?? [];
+            foreach (var entity in entities)
+            {
+                var allowed = entity.EntityType.ToLowerInvariant() switch
+                {
+                    SketchEntityTypes.Line =>
+                        new[] { "x1_mm", "y1_mm", "x2_mm", "y2_mm" },
+                    SketchEntityTypes.Rectangle =>
+                        new[] { "center_x_mm", "center_y_mm", "length_mm", "width_mm", "height_mm" },
+                    SketchEntityTypes.Circle =>
+                        new[] { "center_x_mm", "center_y_mm", "radius_mm", "diameter_mm" },
+                    _ => Array.Empty<string>()
+                };
+                var unknown = entity.Parameters.Keys
+                    .Where(parameter => !allowed.Contains(parameter, StringComparer.OrdinalIgnoreCase))
+                    .Order(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+                if (unknown.Length > 0)
+                {
+                    return EvidenceProfileBlocked(
+                        feature,
+                        $"entity {entity.EntityId} contains parameters outside evidence profile: " +
+                        $"{string.Join(", ", unknown)}.");
+                }
+            }
+        }
+        catch (JsonException ex)
+        {
+            return EvidenceProfileBlocked(feature, $"entities JSON is invalid: {ex.Message}");
+        }
+
+        return FeatureHandlerValidationResult.Passed();
+    }
+
     public override Task<FeatureHandlerExecutionResult> ExecuteAsync(
         FeatureHandlerExecutionContext context,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(EvidenceBlocked(context.Feature));
+        return context.Adapter is null
+            ? Task.FromResult(AdapterMissing(context.Feature))
+            : context.Adapter.ExecuteSketchAsync(
+                context.Feature,
+                context.Operation,
+                context.State,
+                cancellationToken);
+    }
+
+    private static bool IsEmptyJsonCollection(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return true;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.ValueKind switch
+            {
+                JsonValueKind.Array => document.RootElement.GetArrayLength() == 0,
+                JsonValueKind.Object => !document.RootElement.EnumerateObject().Any(),
+                JsonValueKind.Null => true,
+                _ => false
+            };
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

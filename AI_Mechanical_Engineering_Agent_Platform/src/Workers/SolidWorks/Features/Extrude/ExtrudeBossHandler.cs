@@ -30,7 +30,7 @@ public sealed class ExtrudeBossHandler : FeatureHandlerBase
             "Lengths are converted from millimetres to metres.",
             "End-condition semantics match the evidence profile."
         ],
-        FeatureApiEvidenceStatuses.Unverified,
+        FeatureApiEvidenceStatuses.Verified,
         [
             "V2.0-A direction=mid_plane is not proven by the V1.9 blind-extrude call.",
             "Incorrect active sketch or argument count can return null.",
@@ -38,8 +38,15 @@ public sealed class ExtrudeBossHandler : FeatureHandlerBase
         ],
         [
             "V1.9 plate/flange family builders used FeatureExtrusion2.",
-            "No handler-specific diagnostic proves the generic parameter mapping."
-        ]);
+            "V2.0-C diagnostic verified a 10 mm blind boss from a selected rectangular sketch and measured volume increase from 0 to 5.9999999999999995E-05 cubic metres.",
+            "Diagnostic SLDPRT SHA256 40b86eb8075fcde859c9e850ac68872bf1f1bf8fa302d97e62faf028871aa326."
+        ],
+        EvidenceId: "v2.0-c-20260730-085830-extrude-boss",
+        HandlerVersion: "2.0-c.2",
+        ParameterProfile: "blind;single_end;positive_depth_mm;no_draft;no_thin;merge_result",
+        SolidWorksVersion: "33.5.0",
+        DiagnosticRunPath: "output/solidworks/features/20260730_085830_6592380/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {
@@ -48,14 +55,19 @@ public sealed class ExtrudeBossHandler : FeatureHandlerBase
             return Unsupported(feature);
         }
 
+        var unknownParameters = RejectUnknownParameters(feature, "depth_mm", "direction");
+        if (!unknownParameters.IsValid)
+        {
+            return unknownParameters;
+        }
+
         if (!Positive(feature, "depth_mm"))
         {
             return Invalid(feature, "depth_mm must be a finite positive number.");
         }
 
         if (feature.Parameters.TryGetValue("direction", out var direction) &&
-            !direction.Equals("blind", StringComparison.OrdinalIgnoreCase) &&
-            !direction.Equals("mid_plane", StringComparison.OrdinalIgnoreCase))
+            !direction.Equals("blind", StringComparison.OrdinalIgnoreCase))
         {
             return Invalid(feature, $"direction {direction} is not in the declared schema.");
         }
@@ -68,7 +80,13 @@ public sealed class ExtrudeBossHandler : FeatureHandlerBase
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(EvidenceBlocked(context.Feature));
+        return context.Adapter is null
+            ? Task.FromResult(AdapterMissing(context.Feature))
+            : context.Adapter.ExecuteExtrudeBossAsync(
+                context.Feature,
+                context.Operation,
+                context.State,
+                cancellationToken);
     }
 
     private static bool Positive(FeatureDefinition feature, string name) =>

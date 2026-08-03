@@ -355,3 +355,54 @@ output/solidworks/e2e/shaft_basic/cad-e2e-20260720_085555_295-33293160545047a784
 flange 首次 diagnostic 的 `part_save_failed` 通过复用 plate 已验证的 `SaveAs3` 主路径和 `SaveAs` 回退路径修复。首次主流程的瞬时源文件哈希读锁曾导致 `artifact_copy_failed`；修复后仍先要求复制与目标校验成功，再把已经恢复的源读锁降级为 warning，最终重跑通过。
 
 两族 diagnostic 的 body count 和 theoretical volume 字段仍为 `NotVerified`。它们不削弱本阶段已经形成的特征树、四视图、非空产物和完整主流程证据，但自动核验仍应作为 Improvements 实现。不得放宽目标文件校验，不得把 warning 当作任意复制错误的豁免，也不得进入 V2.0。
+
+## V2.0-C Feature Adapter API 证据
+
+### 架构证据边界
+
+`ISolidWorksFeatureAdapter` 定义可测试的 API 边界，`RealSolidWorksFeatureAdapter` 是唯一允许访问 SolidWorks COM 的通用特征实现。Handler 只保留纯逻辑 Schema、校验和命令，不得引用 Interop。V1.9 专用 Builder 的成功证据可帮助筛选候选，但不自动验证 Adapter。
+
+### 四类最小候选
+
+| 能力 | 官方候选 | 参数轮廓 | 当前状态 |
+|---|---|---|---|
+| line | [`ISketchManager.CreateLine`](https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateLine.html) | TopPlane、两个端点、米制坐标 | `verified`，仅精确轮廓 |
+| rectangle | [`ISketchManager.CreateCenterRectangle` 所在官方方法索引](https://help.solidworks.com/2026/english/api/sldworksapi/solidworks.interop.sldworks~solidworks.interop.sldworks.isketchmanager_methods.html) | TopPlane、中心与宽高、米制坐标 | `verified`，仅精确轮廓 |
+| circle | [`ISketchManager.CreateCircle`](https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateCircle.html) | TopPlane、圆心与半径、米制坐标 | `verified`，仅精确轮廓 |
+| blind extrude | [`IFeatureManager.FeatureExtrusion2`](https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureExtrusion2.html) | 正深度、blind、闭合草图 | `verified`，仅精确轮廓 |
+| blind cut | [`IFeatureManager.FeatureCut4`](https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureCut4.html) | 正深度、blind、单圆草图 | `verified`，仅精确轮廓 |
+| hole 组合 | `CreateCircle` + blind `FeatureCut4` | 直径匹配的独立圆草图、正切割深度 | `verified`，仅 `simple_circular_cut_blind` |
+
+孔组合明确拒绝 `SimpleHole2` 和 Hole Wizard；这些名称不得出现在选定 API、实现调用或通过证据中。内部 operation `CreateSimpleHole` 只描述组合语义，不构成调用同名或近名 SolidWorks API 的授权；历史 `AddHoleWizardHole` 标签已退出当前适配映射。
+
+### 诊断和提升条件
+
+专用 diagnostic 必须绑定源码修订、SolidWorks/Adapter/Handler 版本和精确参数轮廓，并输出：
+
+```text
+output/solidworks/features/<timestamp>/model.SLDPRT
+output/solidworks/features/<timestamp>/model.STEP
+output/solidworks/features/<timestamp>/feature_execution_report.json
+```
+
+旧 run `output/solidworks/features/20260730_073759_9143941/feature_execution_report.json` 的 Cut/Hole 即使返回非空 Feature 且重建通过，人工复核仍未见孔，因此该 run 不得保留为 verified。
+
+权威诊断报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`，SolidWorks 版本 `33.5.0`，Handler/Adapter 版本 `2.0-c.2`，复合源码修订为 `feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`。SLDPRT 为 73416 bytes，SHA256 `E411188A101E49EFB1BD835E9BEF3A16EA0EE3BB124A873FFB96EDC5E72012E3`；STEP 为 26403 bytes，SHA256 `EF532158373D512CF31A76FE930CD90FBF21A913E52608CF9A04805F0590CE06`。
+
+Boss 体积从 `0` 增至 `5.9999999999999995E-05` m³；Cut 降至 `5.9214601836602546E-05` m³；Hole 再降至 `5.84292036732051E-05` m³。7 个 diagnostic 特征报告的结果对象、重建和几何变化均已校验；最终 100/`pass`、`Extrusion` 加两个 `ICE` 和人工双孔确认以同次 E2E 审查报告为准。
+
+诊断后只把代码中声明的四个精确 `ParameterProfile` 提升为 `verified`。`through_all`、`mid_plane`、原生 `SimpleHole2` / Hole Wizard、任意面及任何其他轮廓仍以 `feature_api_unverified` 阻断。
+
+特征错误校验优先调用官方 `IFeature.GetErrorCode2(out bool IsWarning)`。若晚绑定 RCW 无法封送该 by-ref 布尔参数，允许回退到官方标记为 superseded 但仍保留的无引用参数兼容成员 `IFeature.GetErrorCode()`；两者都不可调用时必须返回 `feature_result_invalid`，不得只依赖重建布尔值。
+
+诊断报告自身仍为 `CandidatePassed`、`main_workflow_accepted=false`、`quality_gate_passed=false`、`NotDeliverable`。诊断通过不等于最终验收；它只提供四个精确 profile 的 evidence。
+
+生产预检必须在 `ConnectAsync` 前校验未知参数、精确 profile、复合源码修订与 diagnostic 绑定；Hole 还必须直接依赖只含一个等直径圆的声明草图。未知参数返回 `invalid_feature_parameter`，其他上述不匹配返回 `feature_api_unverified`。连接后必须以实际 SolidWorks `33.5.0` 复核各 Handler evidence，版本不匹配时不得调用建模 API。
+
+最终主流程已由 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260730_090151_162-1b16c3982731423a8ae9a93f1db2dbbe/` 关闭：Final 与 QualityGate 均为 `Passed`，`all_source_reports_passed=true`，`deliverable_status=Deliverable`。Feature 报告为 7/7，结果对象、重建、几何变化和产物校验全部为 `true`，三段体积与 diagnostic 相同。
+
+同次 SLDPRT 为 73830 bytes，SHA256 `045A5CF2C445F66B1CE2502065F84805A40CF217600DAD213C68D9EEFBA78612`；STEP 为 26399 bytes，SHA256 `DCAB84553885D804AB961E4BBABB691A7A47C6962D030781211B7B777E1EF7BB`。`review_active_source/feature_pipeline_plate_review_report.json` 为 100 分、`pass`，特征树为一个 `Extrusion` 加两个 `ICE`，人工确认两个孔。该结论只覆盖已列出的四个精确 profile，不授权其他轮廓。
+
+### 禁止事项
+
+禁止 Handler COM、盲改长参数、未验证生产执行、第三方脚本生产路径、`SimpleHole2` / Hole Wizard、历史产物补证、空 Feature/文件成功和进入 V2.0-D。

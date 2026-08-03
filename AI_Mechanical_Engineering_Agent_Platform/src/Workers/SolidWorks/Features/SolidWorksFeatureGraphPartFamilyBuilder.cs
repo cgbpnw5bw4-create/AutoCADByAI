@@ -11,29 +11,34 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
 {
     private readonly string _partType;
     private readonly FeatureHandlerRegistry _registry;
+    private readonly Func<object, ISolidWorksFeatureAdapter> _adapterFactory;
 
     public SolidWorksFeatureGraphPartFamilyBuilder(
         string partType,
         FeatureHandlerRegistry registry,
         ISolidWorksComFacade? comFacade = null,
         ISolidWorksFileVerifier? fileVerifier = null,
-        ISolidWorksPartFamilyPlaneSelector? planeSelector = null)
+        ISolidWorksPartFamilyPlaneSelector? planeSelector = null,
+        Func<object, ISolidWorksFeatureAdapter>? adapterFactory = null)
         : base(comFacade, fileVerifier, planeSelector)
     {
         _partType = string.IsNullOrWhiteSpace(partType) ? "generic_cad_model" : partType;
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _adapterFactory = adapterFactory ?? (model => new RealSolidWorksFeatureAdapter(model, Com));
     }
 
     public override string PartType => _partType;
 
-    public override string FailureStage => PartFamilyFailureStages.FeatureApiEvidenceInsufficient;
+    public override string FailureStage => PartFamilyFailureStages.FeatureApiUnverified;
 
     public override bool SupportsRealExecution => true;
 
     public override string ApiEvidence =>
         "feature_handler_registry_preflight_required; handler evidence is evaluated per node";
 
-    public override string RealExecutionMode => "RealBuildGenericFeatureGraph";
+    public override string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
+
+    protected override bool RequiresStrictFinalRebuild => true;
 
     protected override void BuildFeatures(
         object model,
@@ -42,6 +47,10 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
         List<string> logs)
     {
         var state = new FeatureHandlerExecutionState();
+        using var adapter = _adapterFactory(model)
+            ?? throw Failure(
+                PartFamilyFailureStages.FeatureAdapterMissing,
+                "Feature adapter factory returned null.");
         foreach (var operation in plan.Operations.Where(operation =>
                      !operation.OperationType.Equals("SavePart", StringComparison.OrdinalIgnoreCase) &&
                      !operation.OperationType.Equals("ExportStep", StringComparison.OrdinalIgnoreCase)))
@@ -64,18 +73,19 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
 
             var result = resolution.Handler!.ExecuteAsync(
                 new FeatureHandlerExecutionContext(
-                        model,
-                        Com,
+                        adapter,
                         adaptation.Feature,
                         operation,
                         state))
                 .GetAwaiter()
                 .GetResult();
             logs.AddRange(result.Logs);
+            diagnostics.FeatureHandlerReports.Add(
+                resolution.Handler.GenerateReport(adaptation.Feature, result));
             if (!result.IsSuccess)
             {
                 throw Failure(
-                    result.FailureStage ?? PartFamilyFailureStages.FeatureApiEvidenceInsufficient,
+                    result.FailureStage ?? PartFamilyFailureStages.FeatureResultInvalid,
                     result.Issues.FirstOrDefault() ?? "Feature handler execution failed.");
             }
 

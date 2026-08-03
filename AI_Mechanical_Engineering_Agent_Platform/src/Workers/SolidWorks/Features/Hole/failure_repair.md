@@ -23,3 +23,17 @@
 ## 禁止事项
 
 禁止根据 `AddHoleWizardHole` 名称盲调 Hole Wizard，禁止猜测标准/类型枚举，禁止用 V1.9 草图切除结果宣称通用孔已验证，禁止复制第三方代码。
+
+## V2.0-C Adapter 失败修复
+
+| `failure_stage` | 直接原因 | 修复与关闭条件 |
+|---|---|---|
+| `feature_adapter_missing` | Worker 无可用 `ISolidWorksFeatureAdapter` | 修复注入；`HoleHandler` 不得创建或调用真实 Adapter。 |
+| `hole_execution_failed` | 圆草图或 blind `FeatureCut4` 任一子步骤失败 | 分开记录基准、位置、直径、深度、选择和 API 返回；两个子步骤都必须通过。 |
+| `feature_result_invalid` | 圆实体、切除 Feature、依赖或重建无效 | 阻断后续步骤，补结构化结果和孔几何检查。 |
+| `feature_artifact_missing` | 当次 SLDPRT、STEP 或报告缺失/为空 | 修复当次保存、导出和报告，不复用历史产物。 |
+| `feature_api_unverified` | 请求超出已验证圆直径匹配、正深度 blind `FeatureCut4`、无 wizard profile | 停止生产；原生 `SimpleHole2` / Hole Wizard 和其他终止/放置语义仍未验证。 |
+
+旧 run `20260730_073759_9143941` 的非空 Hole 被人工判定为无孔假成功，必须撤销。权威 run `20260730_085830_6592380` 以体积再次下降、第二个 `ICE` 和等轴测/俯视第二孔确认关闭该问题。
+
+修复只能沿“圆草图 + 正深度 blind `FeatureCut4`”策略，不得调用或声称 `SimpleHole2` / Hole Wizard。diagnostic 仍为 `CandidatePassed` / `NotDeliverable`，需 `run-cad-workflow` 最终验收；禁止 Handler COM、扩大 profile 和进入 V2.0-D。

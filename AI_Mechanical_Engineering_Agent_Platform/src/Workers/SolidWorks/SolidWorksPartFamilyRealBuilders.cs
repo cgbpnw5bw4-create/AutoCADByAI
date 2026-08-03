@@ -17,6 +17,7 @@ public static class SolidWorksPartFamilyBuildModes
 public sealed class SolidWorksPartFamilyBuildDiagnostics
 {
     public List<string> OperationsExecuted { get; } = [];
+    public List<Features.FeatureHandlerReport> FeatureHandlerReports { get; } = [];
     public List<string> Issues { get; } = [];
     public List<string> Warnings { get; } = [];
     public bool RealCadExecuted { get; set; }
@@ -93,6 +94,7 @@ public static class SolidWorksPartFamilyBuildReportWriter
             build_id = $"solidworks-real-build-{Guid.NewGuid():N}",
             build_plan_id = context.Request.BuildPlan.PlanId,
             part_type = builder.PartType,
+            execution_strategy = context.Request.BuildPlan.ExecutionStrategy,
             mode = "real",
             execution_mode = builder.RealExecutionMode,
             real_execution_requested = !context.Request.DryRun,
@@ -112,11 +114,107 @@ public static class SolidWorksPartFamilyBuildReportWriter
             final_status = finalStatus,
             api_evidence = builder.ApiEvidence,
             operations_executed = diagnostics.OperationsExecuted,
+            feature_handler_reports = diagnostics.FeatureHandlerReports,
+            feature_execution_report_path = diagnostics.FeatureHandlerReports.Count > 0
+                ? Path.Combine(outputDirectory, "feature_execution_report.json")
+                : null,
             issues = diagnostics.Issues,
             warnings = diagnostics.Warnings,
             generated_at = DateTimeOffset.UtcNow
         };
-        File.WriteAllText(reportPath, JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(
+            reportPath,
+            JsonSerializer.Serialize(
+                report,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                }));
+    }
+}
+
+public static class SolidWorksFeatureExecutionReportWriter
+{
+    public static void Write(
+        string reportPath,
+        PartFamilyBuildContext context,
+        IPartFamilyBuilder builder,
+        SolidWorksPartFamilyBuildDiagnostics diagnostics,
+        string requestedFinalStatus)
+    {
+        var expectedFeatureCount = context.Request.BuildPlan.Operations.Count(operation =>
+            !operation.OperationType.Equals("SavePart", StringComparison.OrdinalIgnoreCase) &&
+            !operation.OperationType.Equals("ExportStep", StringComparison.OrdinalIgnoreCase));
+        var allFeaturesExecuted =
+            expectedFeatureCount > 0 &&
+            diagnostics.FeatureHandlerReports.Count == expectedFeatureCount &&
+            diagnostics.FeatureHandlerReports.All(report =>
+                string.IsNullOrWhiteSpace(report.FailureStage) &&
+                report.Issues.Count == 0);
+        var allResultsValidated =
+            allFeaturesExecuted &&
+            diagnostics.FeatureHandlerReports.All(report => report.ResultObjectValidated);
+        var allRebuildsPassed =
+            allFeaturesExecuted &&
+            diagnostics.FeatureHandlerReports.All(report => report.RebuildPassed);
+        var allGeometryChangesValidated =
+            allFeaturesExecuted &&
+            diagnostics.FeatureHandlerReports.All(report => report.GeometryChangeValidated);
+        var artifactsValidated =
+            diagnostics.SldprtSaveSuccess &&
+            diagnostics.SldprtSizeBytes > 0 &&
+            diagnostics.StepExportSuccess &&
+            diagnostics.StepSizeBytes > 0;
+        var passed =
+            requestedFinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
+            allResultsValidated &&
+            allRebuildsPassed &&
+            allGeometryChangesValidated &&
+            artifactsValidated;
+        var failureStage = passed
+            ? null
+            : diagnostics.FailureStage ??
+              (!allFeaturesExecuted || !allResultsValidated || !allRebuildsPassed || !allGeometryChangesValidated
+                  ? PartFamilyFailureStages.FeatureResultInvalid
+                  : PartFamilyFailureStages.FeatureArtifactMissing);
+        var report = new
+        {
+            report_id = $"solidworks-feature-execution-{Guid.NewGuid():N}",
+            build_plan_id = context.Request.BuildPlan.PlanId,
+            model_id = context.Request.BuildPlan.SourceCadModelSpecId,
+            part_type = builder.PartType,
+            execution_strategy = context.Request.BuildPlan.ExecutionStrategy,
+            execution_mode = builder.RealExecutionMode,
+            real_cad_executed = diagnostics.RealCadExecuted,
+            real_cad_connected = context.RealCadConnected,
+            solidworks_version = context.SolidWorksVersion,
+            expected_feature_count = expectedFeatureCount,
+            executed_feature_count = diagnostics.FeatureHandlerReports.Count,
+            all_features_executed = allFeaturesExecuted,
+            all_result_objects_validated = allResultsValidated,
+            all_rebuilds_passed = allRebuildsPassed,
+            all_geometry_changes_validated = allGeometryChangesValidated,
+            artifacts_validated = artifactsValidated,
+            sldprt_path = diagnostics.SldprtPath,
+            sldprt_size_bytes = diagnostics.SldprtSizeBytes,
+            step_path = diagnostics.StepPath,
+            step_size_bytes = diagnostics.StepSizeBytes,
+            feature_results = diagnostics.FeatureHandlerReports,
+            failure_stage = failureStage,
+            final_status = passed ? "Passed" : "Failed",
+            generated_at = DateTimeOffset.UtcNow
+        };
+        Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
+        File.WriteAllText(
+            reportPath,
+            JsonSerializer.Serialize(
+                report,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                }));
     }
 }
 
@@ -416,6 +514,7 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
     protected ISolidWorksComFacade Com { get; }
     protected ISolidWorksFileVerifier FileVerifier { get; }
     protected ISolidWorksPartFamilyPlaneSelector PlaneSelector { get; }
+    protected virtual bool RequiresStrictFinalRebuild => false;
 
     public override Task<PartFamilyBuildResult> BuildAsync(
         PartFamilyBuildContext context,
@@ -508,6 +607,7 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         var partPath = Path.Combine(outputDirectory, $"{PartType}.SLDPRT");
         var stepPath = Path.Combine(outputDirectory, $"{PartType}.STEP");
         var reportPath = Path.Combine(outputDirectory, "build_report.json");
+        var featureExecutionReportPath = Path.Combine(outputDirectory, "feature_execution_report.json");
         diagnostics.SldprtPath = partPath;
         diagnostics.StepPath = stepPath;
         object? model = null;
@@ -524,17 +624,41 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
             diagnostics.RealCadExecuted = true;
             diagnostics.OperationsExecuted.Add("new_part_success");
             BuildFeatures(model, context.Request.BuildPlan, diagnostics, logs);
-            Com.TryInvoke(model, "ForceRebuild3", false);
+            var finalRebuildPassed = Com.TryInvokeBool(model, "ForceRebuild3", false);
+            if (RequiresStrictFinalRebuild && !finalRebuildPassed)
+            {
+                throw Failure(
+                    PartFamilyFailureStages.FeatureResultInvalid,
+                    "Final ForceRebuild3(false) did not return true.");
+            }
             Save(model, partPath, diagnostics);
             Export(context.Application, model, stepPath, diagnostics);
             SolidWorksPartFamilyBuildReportWriter.Write(reportPath, context, this, outputDirectory, diagnostics, "Passed");
-            return new PartFamilyBuildResult(
-                "Completed",
-                [
+            var artifacts = new List<SolidWorksArtifact>
+            {
                     SolidWorksPartFamilyBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", $"Real {PartType} SolidWorks part."),
                     SolidWorksPartFamilyBuildOutput.Artifact("real-step", "Step", stepPath, ".STEP", $"Real {PartType} STEP export."),
                     SolidWorksPartFamilyBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Real part-family build report.")
-                ],
+            };
+            if (diagnostics.FeatureHandlerReports.Count > 0)
+            {
+                SolidWorksFeatureExecutionReportWriter.Write(
+                    featureExecutionReportPath,
+                    context,
+                    this,
+                    diagnostics,
+                    "Passed");
+                artifacts.Add(SolidWorksPartFamilyBuildOutput.Artifact(
+                    "feature-execution-report",
+                    "FeatureExecutionReport",
+                    featureExecutionReportPath,
+                    ".json",
+                    "Per-feature SolidWorks execution evidence report."));
+            }
+
+            return new PartFamilyBuildResult(
+                "Completed",
+                artifacts,
                 logs.Concat(diagnostics.OperationsExecuted.Select(operation => $"operation_executed: {operation}")).ToArray(),
                 [],
                 RealExecutionMode,
@@ -544,13 +668,25 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         {
             diagnostics.FailureStage = ex.Stage;
             diagnostics.Issues.Add($"{ex.Stage}: {ex.Message}");
-            return FailedWithReport(context, outputDirectory, reportPath, diagnostics, logs);
+            return FailedWithReport(
+                context,
+                outputDirectory,
+                reportPath,
+                featureExecutionReportPath,
+                diagnostics,
+                logs);
         }
         catch (Exception ex) when (ex is COMException or TargetInvocationException or MissingMethodException or IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             diagnostics.FailureStage = FailureStage;
             diagnostics.Issues.Add($"{FailureStage}: {ex.GetBaseException().Message}");
-            return FailedWithReport(context, outputDirectory, reportPath, diagnostics, logs);
+            return FailedWithReport(
+                context,
+                outputDirectory,
+                reportPath,
+                featureExecutionReportPath,
+                diagnostics,
+                logs);
         }
         finally
         {
@@ -565,6 +701,7 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         PartFamilyBuildContext context,
         string outputDirectory,
         string reportPath,
+        string featureExecutionReportPath,
         SolidWorksPartFamilyBuildDiagnostics diagnostics,
         IReadOnlyList<string> logs)
     {
@@ -578,6 +715,29 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             diagnostics.Issues.Add($"build_report_write_failed: {ex.Message}");
+        }
+
+        if (diagnostics.FeatureHandlerReports.Count > 0)
+        {
+            try
+            {
+                SolidWorksFeatureExecutionReportWriter.Write(
+                    featureExecutionReportPath,
+                    context,
+                    this,
+                    diagnostics,
+                    "Failed");
+                artifacts.Add(SolidWorksPartFamilyBuildOutput.Artifact(
+                    "feature-execution-report",
+                    "FeatureExecutionReport",
+                    featureExecutionReportPath,
+                    ".json",
+                    "Per-feature SolidWorks execution failure report."));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                diagnostics.Issues.Add($"feature_execution_report_write_failed: {ex.Message}");
+            }
         }
 
         return new PartFamilyBuildResult(

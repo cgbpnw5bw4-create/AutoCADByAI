@@ -399,6 +399,9 @@ public sealed class SolidWorksReleaseManifest
 
     public bool RequiresDrawingDeliverables { get; set; } = true;
 
+    public string BuildExecutionStrategy { get; set; } =
+        SolidWorksBuildExecutionStrategies.PartFamilyBuilder;
+
     public string SourceRoot { get; set; } = string.Empty;
 
     public string OutputDirectory { get; set; } = string.Empty;
@@ -549,7 +552,9 @@ public sealed record SolidWorksReleasePackageSourceSet(
     bool RequireRealExecutionEvidence = true,
     string PartType = "plate_basic_4holes",
     string? RequestId = null,
-    bool RequireDrawingDeliverables = true);
+    bool RequireDrawingDeliverables = true,
+    string BuildExecutionStrategy = SolidWorksBuildExecutionStrategies.PartFamilyBuilder,
+    string? FeatureExecutionReportPath = null);
 
 /// <summary>
 /// Runtime evidence from a stage that was executed through the controlled

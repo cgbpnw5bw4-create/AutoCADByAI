@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\src\Workers\SolidWorks\SolidWorksWorker.csproj" />
     <ProjectReference Include="..\..\tools\SolidWorksSmokeRunner\SolidWorksSmokeRunner.csproj" />
     <ProjectReference Include="..\..\tools\SolidWorksPartFamilySmokeRunner\SolidWorksPartFamilySmokeRunner.csproj" />
+    <ProjectReference Include="..\..\tools\SolidWorksFeatureExecutionSmokeRunner\SolidWorksFeatureExecutionSmokeRunner.csproj" />
   </ItemGroup>
 
 </Project>

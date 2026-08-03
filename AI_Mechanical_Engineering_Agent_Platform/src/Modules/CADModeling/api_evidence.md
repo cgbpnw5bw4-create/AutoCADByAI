@@ -232,3 +232,36 @@ V2.0-B 的五类通用 Handler 均为 `api_evidence_status=unverified`。这表�
 真实 Worker 必须在 COM 连接前对整张图完成适配、参数校验和 evidence 检查。任一 Handler 不是 `verified` 时返回 `feature_api_evidence_insufficient`，并保持未连接、未执行。不得先执行图中其他节点，也不得用 V1.9 专用 Builder 结果替代通用 Handler 诊断。
 
 `HoleWizard5` 只作为被拒绝的官方研究候选记录；在参数、返回、放置和终止语义未完整验证前，不能作为 Hole Handler 授权。所有候选 API 的官方链接和拒绝原因见各 Handler 的 `api_evidence.md`。
+
+## V2.0-C Adapter 诊断候选证据
+
+### 结论
+
+V2.0-C 将 API 执行从纯逻辑 Handler 移到 `ISolidWorksFeatureAdapter` / `RealSolidWorksFeatureAdapter`。Handler 不得引用 COM。2026-07-30 专用诊断已将 TopPlane 上的 line/rectangle/circle、blind extrude、blind cut 和 `simple_circular_cut_blind` 精确轮廓提升为 `verified`；revolve 与其他未验证能力仍以 `feature_api_unverified` 阻断。
+
+| 能力 | 精确已验证轮廓 | 仍未验证 | 最终状态 |
+|---|---|---|---|
+| Sketch | TopPlane line、center rectangle、circle；空约束/尺寸；毫米单位 | 任意面、arc、slot、约束/尺寸执行 | `verified`，仅精确 profile |
+| Extrude | 单端、正深度 blind、无 draft/thin、合并结果 | `mid_plane`、其他 scope | `verified`，仅精确 profile |
+| Cut | 单端、正深度 blind、`through_all=false`、单实体 scope | `through_all`、normal/thin、多实体 scope | `verified`，仅精确 profile |
+| Hole | 直径匹配单圆草图加正深度 blind `FeatureCut4`、无 wizard | 原生 `SimpleHole2`、Hole Wizard、其他放置/终止语义 | `verified`，仅精确 profile |
+
+### 证据采集
+
+专用 diagnostic 必须输出 `output/solidworks/features/<timestamp>/model.SLDPRT`、`model.STEP` 和 `feature_execution_report.json`，并记录源码修订、SolidWorks/Adapter/Handler 版本、参数轮廓、单位、引用/选择状态、完整 API 参数、返回对象、重建、失败阶段和文件大小。
+
+旧 run `output/solidworks/features/20260730_073759_9143941/feature_execution_report.json` 的 Cut/Hole 虽有非空对象和成功重建，人工复核却没有孔，因此必须从 verified evidence 中排除。
+
+采用的新 run 是 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`。SolidWorks 为 `33.5.0`，Handler/Adapter 为 `2.0-c.2`，复合源码修订为 `feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`；SLDPRT 为 73416 bytes，SHA256 为 `E411188A101E49EFB1BD835E9BEF3A16EA0EE3BB124A873FFB96EDC5E72012E3`；STEP 为 26403 bytes，SHA256 为 `EF532158373D512CF31A76FE930CD90FBF21A913E52608CF9A04805F0590CE06`。
+
+Boss、Cut、Hole 的体积分别为 `0→5.9999999999999995E-05`、`5.9999999999999995E-05→5.9214601836602546E-05`、`5.9214601836602546E-05→5.84292036732051E-05` m³；7 个 diagnostic 特征报告均完成结果对象、重建和几何变化校验。diagnostic 预览仍需人工复核，最终 100/`pass`、`Extrusion` 加两个 `ICE` 和两个孔的确认以同次 E2E 审查报告为准。
+
+该 run 的原始报告仍是 `CandidatePassed`、`main_workflow_accepted=false`、`quality_gate_passed=false`、`NotDeliverable`。它支持四个精确 profile 的 evidence 提升，但最终交付仍必须从 `run-cad-workflow` 经过完整主工作流程。
+
+生产前，`FeatureHandlerRegistry` 必须在 `ConnectAsync` 前校验每个 Handler 的未知参数、精确 `ParameterProfile`、复合源码修订与 diagnostic 报告绑定；未知参数返回 `invalid_feature_parameter`，证据、profile、修订或 diagnostic 不匹配返回 `feature_api_unverified`。Hole 还必须直接依赖声明的 `sketch_id`，该草图只能有一个圆且圆直径必须等于请求孔径，否则同样在 COM 前返回 `feature_api_unverified`。连接后再以实际 SolidWorks `33.5.0` 逐 Handler 校验运行时版本；不匹配时不得调用建模 API。
+
+最终证据目录为 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260730_090151_162-1b16c3982731423a8ae9a93f1db2dbbe/`：E2E Final / QualityGate 为 `Passed`，`all_source_reports_passed=true`、`deliverable_status=Deliverable`，Feature 为 7/7 且结果、重建、几何变化、产物校验均为 `true`。
+
+### 失败与禁止事项
+
+未验证使用 `feature_api_unverified`；API 返回但对象或重建无效使用 `feature_result_invalid`；当次 SLDPRT、STEP 或报告缺失使用 `feature_artifact_missing`。禁止 Handler COM、第三方脚本生产路径、`SimpleHole2` / Hole Wizard、历史产物复用和进入 V2.0-D。

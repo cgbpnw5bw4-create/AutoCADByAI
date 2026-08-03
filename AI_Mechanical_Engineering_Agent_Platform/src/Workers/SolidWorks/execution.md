@@ -327,3 +327,98 @@ V1.9 的 `plate_basic_4holes`、`flange_basic`、`shaft_basic` 专用真实 Buil
 通用 `extrude_boss`、`extrude_cut`、`revolve_boss`、`revolve_cut`、`fillet`、`chamfer`、`hole`、`linear_pattern`、`circular_pattern`、`mirror` 到真实 SolidWorks COM 的 Handler 延期到 V2.0-B。本轮不得增加通用执行分支、装配体或队列。
 
 V2.0 的默认真实策略仍适用于已受控的本地交互主流程；它不允许 V2.0-A 的通用图绕过 dry-run 边界。self-check、单元测试和 dry-run 始终不启动 SolidWorks。
+
+## V2.0-C Feature Adapter 真实执行
+
+### 目标与分层
+
+V2.0-C 将通用 Feature Handler 保持为纯逻辑，把所有 SolidWorks COM 调用放入 `RealSolidWorksFeatureAdapter`。`ISolidWorksFeatureAdapter` 是可注入边界，`RealSolidWorksWorker` 负责会话、安全检查、依赖顺序、Adapter 生命周期、结果聚合、保存和 STEP 导出。
+
+```text
+FeatureGraph / SolidWorksBuildPlan
+→ FeatureHandlerRegistry
+→ 纯逻辑 Handler 校验与命令
+→ ISolidWorksFeatureAdapter
+→ RealSolidWorksFeatureAdapter
+→ RealSolidWorksWorker 聚合同次结果
+→ SolidWorksArtifactValidator
+→ Reviewer
+→ QualityGate
+```
+
+Handler 工程不得引用 SolidWorks Interop，不得持有 COM 对象、连接应用程序、选择文档或保存文件。测试通过 fake Adapter 验证失败和防假成功行为，真实 Worker 只在安全条件与 evidence 门禁均通过时使用真实 Adapter。
+
+### 最小执行候选
+
+| Handler | V2.0-C 候选 | 明确不做 |
+|---|---|---|
+| Sketch | line、rectangle、circle，受控标准基准 | 任意面、arc、slot、通用约束/尺寸执行 |
+| Extrude | 正深度 blind extrude | `mid_plane`、thin、draft、复杂 scope |
+| Cut | 正深度 blind `FeatureCut4` | `through_all` 猜测、normal cut、thin、多实体 scope |
+| Hole | 独立圆草图加正深度 blind `FeatureCut4` | `SimpleHole2`、Hole Wizard、未验证标准/类型枚举 |
+
+专用 diagnostic 未运行和审查前，状态只能是 `diagnostic_candidate` / `unverified`。生产真实计划遇到任一未验证能力时返回 `feature_api_unverified`，不得连接或继续执行。
+
+### 结果校验与防假成功
+
+每个 Adapter 调用必须返回结构化结果。Worker 不得只按“未抛异常”判定成功，还必须检查 Feature/草图实体对象、依赖顺序、重建状态和操作标识。任一返回无效使用 `feature_result_invalid`；不允许跳过失败节点或继续保存部分模型。
+
+保存和 STEP 导出后必须确认当次绝对路径、文件存在且非空。SLDPRT、STEP 或报告任一缺失使用 `feature_artifact_missing`。历史文件、陈旧 timestamp 和其他运行产物不能补齐本次结果。
+
+### 专用 diagnostic 输出
+
+```text
+output/solidworks/features/<timestamp>/
+├── model.SLDPRT
+├── model.STEP
+└── feature_execution_report.json
+```
+
+报告记录运行和源码修订、SolidWorks/Adapter/Handler 版本、证据状态、特征顺序、参数、API 返回、重建、失败阶段、产物路径和大小。diagnostic 成功只允许进入 evidence 审查，不生成最终可交付结论。
+
+### 最终验收与 self-check
+
+最终验收只从命令行主入口 `run-cad-workflow` 进入，并依次经过总工程师编排、工作流引擎、路由、执行器、校验器、复核器、质量门和发布包。直接调用适配器、特征处理器或专用诊断均不能替代这条受控主流程。
+
+```text
+feature_adapter_layer_exists
+feature_handler_no_direct_com_access
+solidworks_feature_adapter_exists
+sketch_real_execution_supported
+extrude_real_execution_supported
+cut_real_execution_supported
+hole_real_execution_supported
+feature_pipeline_end_to_end_supported
+feature_result_validation_supported
+feature_fake_success_guard_supported
+v2_0_c_documented
+markdown_chinese_check_passed
+```
+
+self-check、CI、单元测试和 dry-run 不启动 SolidWorks。禁止 Handler COM、未验证生产执行、`SimpleHole2` / Hole Wizard、空结果/空产物成功、diagnostic 冒充主流程或进入 V2.0-D。
+
+### 2026-07-30 diagnostic 回填
+
+旧 run `output/solidworks/features/20260730_073759_9143941/` 的 Cut/Hole 虽返回非空 Feature 且重建通过，但人工几何复核没有孔，因此不得保留为 verified。该反例要求 Worker 的防假成功不能只依赖对象非空、重建布尔或文件存在。
+
+权威 run 为 `output/solidworks/features/20260730_085830_6592380/`：
+
+- SolidWorks `33.5.0`；Handler/Adapter `2.0-c.2`；复合源码修订 `feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`。
+- `model.SLDPRT` 73416 bytes，SHA256 `E411188A101E49EFB1BD835E9BEF3A16EA0EE3BB124A873FFB96EDC5E72012E3`。
+- `model.STEP` 26403 bytes，SHA256 `EF532158373D512CF31A76FE930CD90FBF21A913E52608CF9A04805F0590CE06`。
+- Boss 体积 `0→5.9999999999999995E-05` m³。
+- Cut 体积 `5.9999999999999995E-05→5.9214601836602546E-05` m³。
+- Hole 体积 `5.9214601836602546E-05→5.84292036732051E-05` m³。
+- 7 个特征报告均完成结果、重建和几何变化校验；最终审查的 100/`pass`、一个 `Extrusion`、两个 `ICE` 与人工双孔确认以同次 E2E 报告为准。
+
+只把 Sketch/Boss/Cut/Hole 的同版本、同 Adapter、同精确 profile 提升为 `verified`。`through_all`、`mid_plane`、原生 `SimpleHole2` / Hole Wizard、任意面仍为 `unverified`。该 diagnostic 自身保持 `CandidatePassed` / `NotDeliverable`，只提供 evidence，不承担最终交付判定。
+
+### 2026-07-30 最终主流程验收
+
+生产 preflight 在 `ConnectAsync` 前校验未知参数、精确 profile、复合修订、diagnostic 绑定和 Hole 的“直接依赖单圆且直径匹配”图关系；未知参数返回 `invalid_feature_parameter`，其余不匹配返回 `feature_api_unverified`。连接后再以实际 SolidWorks `33.5.0` 逐 Handler 复核运行时证据版本，版本不匹配时不调用建模 API。
+
+最终 E2E 目录为 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260730_090151_162-1b16c3982731423a8ae9a93f1db2dbbe/`。同次 `e2e_execution_report.json` 和 `package_quality_report.json` 记录 `final_status=Passed`、QualityGate `Passed`、`all_source_reports_passed=true`、`deliverable_status=Deliverable`。
+
+`feature_execution_report.json` 的预期/执行特征为 7/7，`all_features_executed`、`all_result_objects_validated`、`all_rebuilds_passed`、`all_geometry_changes_validated`、`artifacts_validated` 均为 `true`，Boss/Cut/Hole 三段体积与权威 diagnostic 相同。最终 SLDPRT 为 73830 bytes，SHA256 `045A5CF2C445F66B1CE2502065F84805A40CF217600DAD213C68D9EEFBA78612`；STEP 为 26399 bytes，SHA256 `DCAB84553885D804AB961E4BBABB691A7A47C6962D030781211B7B777E1EF7BB`。
+
+`review_active_source/feature_pipeline_plate_review_report.json` 为 100 分、`pass`，特征树含一个 `Extrusion` 和两个 `ICE`，人工确认两个孔。因此四个精确 profile 已经经过完整主流程并得到 `Passed` / `Deliverable` 结论；这不扩大 evidence 边界，也不进入 V2.0-D。

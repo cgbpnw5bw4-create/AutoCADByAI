@@ -39,7 +39,8 @@ public sealed class RevolveBossHandler : FeatureHandlerBase
         [
             "V1.9 shaft diagnostic passed the exact 20-argument 360-degree sequence.",
             "No handler-specific diagnostic is bound to the current generic adapter."
-        ]);
+        ],
+        ParameterProfile: "diagnostic_candidate");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

@@ -203,3 +203,73 @@ markdown_chinese_check_passed
 flange 首次 `part_save_failed` 已用 plate 验证过的 `SaveAs3` / `SaveAs` 路径修复。首次主流程的瞬时哈希读锁曾触发 `artifact_copy_failed`；当前逻辑只有在复制和目标校验成功后才将已恢复的源读锁降为 warning，最终重跑通过。
 
 body count 与 theoretical volume 仍为 `NotVerified`，继续列为非阻断 Improvement。若后续出现目标复制、文件大小或校验失败，仍必须阻断，不能套用读锁 warning。V1.9 基础零件族可以进入 Claude 实现审查，但不得进入 V2.0。
+
+## V2.0-C Feature Adapter 审查
+
+### 目标与输入输出
+
+审查 Handler/Adapter 隔离、四类最小候选、证据门禁、真实结果校验、专用 diagnostic 和主流程接入。输入为源码、测试、self-check、`feature_execution_report.json` 和同次主流程报告；输出为 Blockers、Improvements 和是否可进入专用诊断/最终验收的结论。
+
+### 必查项
+
+- `ISolidWorksFeatureAdapter` 是否可注入，`RealSolidWorksFeatureAdapter` 是否是唯一通用 Feature COM 实现。
+- 所有 Handler 是否保持纯逻辑，源码/项目引用中是否没有 SolidWorks Interop、COM 会话、文档保存或直接 API 调用。
+- Worker 是否负责 Adapter 生命周期、依赖顺序、会话、保存、STEP 导出和报告，而非 Handler 自行执行。
+- Sketch 是否只候选 line、rectangle、circle 和受控标准基准。
+- Extrude/Cut 是否只候选正深度 blind 轮廓。
+- Hole 是否严格为独立圆草图加 blind `FeatureCut4`，实现和证据是否都不使用 `SimpleHole2` / Hole Wizard。
+- 专用 diagnostic 未运行前是否只标记 `diagnostic_candidate` / `unverified`，未验证是否以 `feature_api_unverified` 阻断生产。
+- API 未抛异常但返回无效对象、依赖或重建时，是否返回 `feature_result_invalid`。
+- SLDPRT、STEP 或报告缺失/为空/陈旧时，是否返回 `feature_artifact_missing`，不能假成功。
+- diagnostic 输出是否严格位于 `output/solidworks/features/<timestamp>/`，包含 `model.SLDPRT`、`model.STEP`、`feature_execution_report.json`。
+- diagnostic 通过后是否只回填 evidence；最终验收是否只从 `run-cad-workflow` 经过完整质量链。
+
+### Blockers
+
+- Handler 直接访问 COM，或真实 API 分散在 Handler/Worker 多处分支。
+- 未验证 API 进入生产，或将 V1.9 专用证据直接提升为通用 Adapter 证据。
+- Hole 使用 `SimpleHole2` / Hole Wizard，或文档把圆草图加切除称为这些 API。
+- 接受无效 Feature、失败重建、空产物或历史文件成功。
+- 用 diagnostic、直接 Adapter/Handler、Builder 或 SmokeRunner 冒充主流程验收。
+- 缺少九个 V2.0-C failure stage 中任一可行动路由。
+- 绕过 Validator、Reviewer、QualityGate，或进入 V2.0-D。
+
+### self-check 与通过标准
+
+```text
+feature_adapter_layer_exists
+feature_handler_no_direct_com_access
+solidworks_feature_adapter_exists
+sketch_real_execution_supported
+extrude_real_execution_supported
+cut_real_execution_supported
+hole_real_execution_supported
+feature_pipeline_end_to_end_supported
+feature_result_validation_supported
+feature_fake_success_guard_supported
+v2_0_c_documented
+markdown_chinese_check_passed
+```
+
+默认 build、test、self-check 必须通过且不启动 SolidWorks。专用 diagnostic 只负责 evidence；证据审查完成后必须从 `run-cad-workflow` 做最终主流程验收。本轮该验收已经完成，仍不得进入 V2.0-D。
+
+### 最终 diagnostic 审查回填
+
+- 旧 run `20260730_073759_9143941`：Cut/Hole 非空对象和重建通过，但人工看不到孔，判定假成功并撤销其 verified 资格。
+- 新 run `20260730_085830_6592380`：SolidWorks `33.5.0`，Handler/Adapter `2.0-c.2`，SLDPRT/STEP 非空且复合源码 revision 固定为 `71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`，Boss/Cut/Hole 体积按预期增/减。
+- 同次 visual review 证明两个孔可见；最终 E2E `review_active_source/feature_pipeline_plate_review_report.json` 为 100 分、`pass`，特征树含一个 `Extrusion` 和两个 `ICE`。
+- 等轴测与俯视人工复核：两个孔均可见。
+- Adapter SHA256：`53EB8776EAA98924F8954EE956DE4E61DB54E4052299E5031412BCA451499123`。
+
+审查结论仅允许 Sketch/Boss/Cut/Hole 的四个精确 profile 标记 `verified`。`through_all`、`mid_plane`、原生 `SimpleHole2` / Hole Wizard、任意面仍是 Blocker。新 diagnostic 自身的 `deliverable_status=NotDeliverable` 保持不变；最终交付结论只读取下述独立主流程。
+
+### 最终主流程审查回填
+
+- E2E 目录：`output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260730_090151_162-1b16c3982731423a8ae9a93f1db2dbbe/`。
+- 状态：Final `Passed`、QualityGate `Passed`、`all_source_reports_passed=true`、`deliverable_status=Deliverable`。
+- Feature：预期/执行 7/7，结果对象、重建、几何变化和产物校验全部为 `true`；Boss/Cut/Hole 体积与 diagnostic 相同。
+- SLDPRT：73389 bytes，SHA256 `5F21BC13F05D5F06B7A2890723AFE0BE1578EF62A9BBDB56DB3CF69408167CD1`。
+- STEP：26407 bytes，SHA256 `23BDE05D6161CC627D63E199F59A3DDE305205B942FA97B18C8C2733550275CB`。
+- `review_artifact/feature_pipeline_plate_artifact_review_report.json`：100 分、`pass`；一个 `Extrusion` 加两个 `ICE`；人工确认两个孔。
+
+审查结论：四个精确 profile 已通过完整主流程并形成 `Deliverable`，同时保持 diagnostic 与交付判定分离；不扩大到未验证 profile，不进入 V2.0-D。

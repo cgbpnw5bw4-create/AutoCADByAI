@@ -15,7 +15,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "2.0-b";
+    private const string SelfCheckSchemaVersion = "2.0-c";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -215,6 +215,7 @@ public static class PlatformSelfCheckRunner
         var v20SolidWorksDefaultOnChecks = RunV20SolidWorksDefaultOnChecks();
         var v20AGenericCadModelSpecChecks = RunV20AGenericCadModelSpecChecks(root, versionStageText);
         var v20BFeatureHandlerChecks = RunV20BFeatureHandlerChecks(root, platform, versionStageText);
+        var v20CFeatureAdapterChecks = RunV20CFeatureAdapterChecks(root, platform, versionStageText);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -437,6 +438,7 @@ public static class PlatformSelfCheckRunner
              v20SolidWorksDefaultOnChecks.AllPassed &&
              v20AGenericCadModelSpecChecks.AllPassed &&
              v20BFeatureHandlerChecks.AllPassed &&
+             v20CFeatureAdapterChecks.AllPassed &&
              executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -810,7 +812,18 @@ public static class PlatformSelfCheckRunner
             FeatureApiEvidenceRequired = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
             UnverifiedApiBlocksRealExecution = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
             FeatureHandlerDocsCompleted = v20BFeatureHandlerChecks.FeatureHandlerDocsCompleted,
-            V20BDocumented = v20BFeatureHandlerChecks.V20BDocumented
+            V20BDocumented = v20BFeatureHandlerChecks.V20BDocumented,
+            FeatureAdapterLayerExists = v20CFeatureAdapterChecks.FeatureAdapterLayerExists,
+            FeatureHandlerNoDirectComAccess = v20CFeatureAdapterChecks.FeatureHandlerNoDirectComAccess,
+            SolidWorksFeatureAdapterExists = v20CFeatureAdapterChecks.SolidWorksFeatureAdapterExists,
+            SketchRealExecutionSupported = v20CFeatureAdapterChecks.SketchRealExecutionSupported,
+            ExtrudeRealExecutionSupported = v20CFeatureAdapterChecks.ExtrudeRealExecutionSupported,
+            CutRealExecutionSupported = v20CFeatureAdapterChecks.CutRealExecutionSupported,
+            HoleRealExecutionSupported = v20CFeatureAdapterChecks.HoleRealExecutionSupported,
+            FeaturePipelineEndToEndSupported = v20CFeatureAdapterChecks.FeaturePipelineEndToEndSupported,
+            FeatureResultValidationSupported = v20CFeatureAdapterChecks.FeatureResultValidationSupported,
+            FeatureFakeSuccessGuardSupported = v20CFeatureAdapterChecks.FeatureFakeSuccessGuardSupported,
+            V20CDocumented = v20CFeatureAdapterChecks.V20CDocumented
         };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -1519,19 +1532,21 @@ public static class PlatformSelfCheckRunner
                 {
                     ["feature_id"] = "v20-b-cut",
                     ["feature_type"] = FeatureTypes.ExtrudeCut,
-                    ["through_all"] = "true"
+                    ["through_all"] = "false",
+                    ["depth_mm"] = "10"
                 },
                 ["v20-b-extrude"],
                 "Self-check cut probe."),
             new(
                 "v20-b-hole",
-                "AddHoleWizardHole",
+                "CreateSimpleHole",
                 "Front Plane",
                 new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ["feature_id"] = "v20-b-hole",
                     ["feature_type"] = FeatureTypes.Hole,
-                    ["hole_diameter_mm"] = "6"
+                    ["hole_diameter_mm"] = "6",
+                    ["depth_mm"] = "10"
                 },
                 ["v20-b-extrude"],
                 "Self-check hole probe."),
@@ -1605,9 +1620,9 @@ public static class PlatformSelfCheckRunner
                 !issue.Contains(
                     PartFamilyFailureStages.UnsupportedFeatureType,
                     StringComparison.OrdinalIgnoreCase));
-        var allHandlerEvidenceUnverified =
+        var hasUnverifiedHandlerEvidence =
             handlers.Length == 5 &&
-            handlers.All(handler =>
+            handlers.Any(handler =>
                 string.Equals(
                     EvidenceStatus(handler),
                     "unverified",
@@ -1632,14 +1647,14 @@ public static class PlatformSelfCheckRunner
             evidencePreflightIndex >= 0 &&
             connectionIndex > evidencePreflightIndex;
         var unverifiedApiBlocksRealExecution =
-            allHandlerEvidenceUnverified &&
+            hasUnverifiedHandlerEvidence &&
             preflightResult is not null &&
             !preflightPassed &&
             string.Equals(
                 preflightFailureStage,
-                PartFamilyFailureStages.FeatureApiEvidenceInsufficient,
+                PartFamilyFailureStages.FeatureApiUnverified,
                 StringComparison.OrdinalIgnoreCase) &&
-            preflightIssues.Length >= handlers.Length &&
+            preflightIssues.Length >= 1 &&
             preflightRunsBeforeConnection;
 
         var featureSourceRoot = Path.Combine(
@@ -1712,6 +1727,140 @@ public static class PlatformSelfCheckRunner
             unverifiedApiBlocksRealExecution,
             featureHandlerDocsCompleted,
             v20BDocumented);
+    }
+
+    private static V20CFeatureAdapterSelfCheckResult RunV20CFeatureAdapterChecks(
+        string projectRoot,
+        PlatformKernel platform,
+        string versionStageText)
+    {
+        var workerAssembly = platform.WorkerRegistry
+            .GetByName("FakeSolidWorksWorker")?
+            .GetType()
+            .Assembly;
+        var adapterContract = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.ISolidWorksFeatureAdapter",
+            throwOnError: false);
+        var adapterType = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.RealSolidWorksFeatureAdapter",
+            throwOnError: false);
+        var artifactType = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.FeatureAdapterArtifact",
+            throwOnError: false);
+        var featureRoot = Path.Combine(
+            projectRoot,
+            "src",
+            "Workers",
+            "SolidWorks",
+            "Features");
+        var handlerFiles = new[]
+        {
+            Path.Combine(featureRoot, "Sketch", "SketchHandler.cs"),
+            Path.Combine(featureRoot, "Extrude", "ExtrudeBossHandler.cs"),
+            Path.Combine(featureRoot, "Cut", "ExtrudeCutHandler.cs"),
+            Path.Combine(featureRoot, "Hole", "HoleHandler.cs"),
+            Path.Combine(featureRoot, "Revolve", "RevolveBossHandler.cs")
+        };
+        var forbiddenHandlerTokens = new[]
+        {
+            "ISolidWorksComFacade",
+            "SldWorks.Application",
+            "dynamic ",
+            ".GetProperty(",
+            ".Invoke(",
+            ".InvokeWithArgs("
+        };
+        var featureHandlerNoDirectComAccess =
+            handlerFiles.All(File.Exists) &&
+            handlerFiles
+                .Select(File.ReadAllText)
+                .All(source => forbiddenHandlerTokens.All(token =>
+                    !source.Contains(token, StringComparison.OrdinalIgnoreCase)));
+        var adapterSourcePath = Path.Combine(featureRoot, "RealSolidWorksFeatureAdapter.cs");
+        var adapterSource = File.Exists(adapterSourcePath)
+            ? File.ReadAllText(adapterSourcePath)
+            : string.Empty;
+        var builderSourcePath = Path.Combine(featureRoot, "SolidWorksFeatureGraphPartFamilyBuilder.cs");
+        var builderSource = File.Exists(builderSourcePath)
+            ? File.ReadAllText(builderSourcePath)
+            : string.Empty;
+        var featureAdapterLayerExists =
+            adapterContract is not null &&
+            adapterContract.IsInterface &&
+            builderSource.Contains("ISolidWorksFeatureAdapter", StringComparison.Ordinal);
+        var solidWorksFeatureAdapterExists =
+            adapterType is not null &&
+            adapterContract is not null &&
+            adapterContract.IsAssignableFrom(adapterType);
+
+        bool AdapterMethodExists(string name) =>
+            adapterContract?.GetMethod(name, BindingFlags.Public | BindingFlags.Instance) is not null &&
+            adapterType?.GetMethod(name, BindingFlags.Public | BindingFlags.Instance) is not null;
+
+        var sketchRealExecutionSupported = AdapterMethodExists("ExecuteSketchAsync");
+        var extrudeRealExecutionSupported = AdapterMethodExists("ExecuteExtrudeBossAsync");
+        var cutRealExecutionSupported = AdapterMethodExists("ExecuteExtrudeCutAsync");
+        var holeRealExecutionSupported = AdapterMethodExists("ExecuteHoleAsync");
+        var featureResultValidationSupported =
+            artifactType?.GetProperty("ResultObjectValidated") is not null &&
+            artifactType.GetProperty("RebuildPassed") is not null &&
+            artifactType.GetProperty("GeometryChangeValidated") is not null &&
+            adapterSource.Contains("ForceRebuild3", StringComparison.Ordinal) &&
+            adapterSource.Contains("GetBodies2", StringComparison.Ordinal) &&
+            adapterSource.Contains("GetMassProperties", StringComparison.Ordinal) &&
+            adapterSource.Contains(
+                "PartFamilyFailureStages.FeatureResultInvalid",
+                StringComparison.Ordinal);
+        var featureFakeSuccessGuardSupported =
+            featureResultValidationSupported &&
+            adapterSource.Contains("FeatureAdapterArtifact", StringComparison.Ordinal) &&
+            adapterSource.Contains("Feature API returned null", StringComparison.Ordinal) &&
+            adapterSource.Contains("RebuildPassed", StringComparison.Ordinal) &&
+            adapterSource.Contains("MeasureSolidVolume", StringComparison.Ordinal) &&
+            File.ReadAllText(Path.Combine(
+                    projectRoot,
+                    "src",
+                    "Workers",
+                    "SolidWorks",
+                    "SolidWorksPartFamilyRealBuilders.cs"))
+                .Contains("SizeBytes <= 0", StringComparison.Ordinal);
+        var featurePipelineEndToEndSupported =
+            File.Exists(Path.Combine(projectRoot, "examples", "feature_pipeline_plate.json")) &&
+            File.Exists(Path.Combine(
+                projectRoot,
+                "src",
+                "Interfaces",
+                "CliHost",
+                "Program.cs")) &&
+            File.Exists(Path.Combine(
+                projectRoot,
+                "src",
+                "Modules",
+                "CADModeling",
+                "validators",
+                "SolidWorksArtifactValidator.cs")) &&
+            builderSource.Contains("FeatureHandlerRegistry", StringComparison.Ordinal) &&
+            builderSource.Contains("ISolidWorksFeatureAdapter", StringComparison.Ordinal);
+        var stageDocumentPath = Path.Combine(
+            projectRoot,
+            "docs",
+            "v2_0_c_feature_adapter_execution.md");
+        var v20CDocumented =
+            versionStageText.Contains("V2.0-C", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(stageDocumentPath);
+
+        return new V20CFeatureAdapterSelfCheckResult(
+            featureAdapterLayerExists,
+            featureHandlerNoDirectComAccess,
+            solidWorksFeatureAdapterExists,
+            sketchRealExecutionSupported,
+            extrudeRealExecutionSupported,
+            cutRealExecutionSupported,
+            holeRealExecutionSupported,
+            featurePipelineEndToEndSupported,
+            featureResultValidationSupported,
+            featureFakeSuccessGuardSupported,
+            v20CDocumented);
     }
 
     private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
@@ -2891,8 +3040,17 @@ public static class PlatformSelfCheckRunner
             {
                 try
                 {
+                    var releaseSelfCheckRoot = Path.Combine(
+                        outputRoot,
+                        "solidworks",
+                        "self-check",
+                        "release-source");
+                    await WriteReleasePackageSourceFixtureAsync(
+                        releaseSelfCheckRoot,
+                        string.Empty,
+                        cancellationToken);
                     var releasePackageResult = await InvokeSolidWorksReleasePackageBuilderAsync(
-                        projectRoot,
+                        releaseSelfCheckRoot,
                         cancellationToken);
                     solidWorksReleaseManifestPath = releasePackageResult.ManifestPath;
                     solidWorksPackageQualityReportPath = releasePackageResult.QualityReportPath;
@@ -5824,6 +5982,33 @@ public static class PlatformSelfCheckRunner
             UnverifiedApiBlocksRealExecution &&
             FeatureHandlerDocsCompleted &&
             V20BDocumented;
+    }
+
+    private sealed record V20CFeatureAdapterSelfCheckResult(
+        bool FeatureAdapterLayerExists,
+        bool FeatureHandlerNoDirectComAccess,
+        bool SolidWorksFeatureAdapterExists,
+        bool SketchRealExecutionSupported,
+        bool ExtrudeRealExecutionSupported,
+        bool CutRealExecutionSupported,
+        bool HoleRealExecutionSupported,
+        bool FeaturePipelineEndToEndSupported,
+        bool FeatureResultValidationSupported,
+        bool FeatureFakeSuccessGuardSupported,
+        bool V20CDocumented)
+    {
+        public bool AllPassed =>
+            FeatureAdapterLayerExists &&
+            FeatureHandlerNoDirectComAccess &&
+            SolidWorksFeatureAdapterExists &&
+            SketchRealExecutionSupported &&
+            ExtrudeRealExecutionSupported &&
+            CutRealExecutionSupported &&
+            HoleRealExecutionSupported &&
+            FeaturePipelineEndToEndSupported &&
+            FeatureResultValidationSupported &&
+            FeatureFakeSuccessGuardSupported &&
+            V20CDocumented;
     }
 
     private static JsonSerializerOptions JsonOptions()

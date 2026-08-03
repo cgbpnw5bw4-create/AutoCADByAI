@@ -24,6 +24,15 @@ public static class PartFamilyFailureStages
     public const string ShaftBuildFailed = "shaft_build_failed";
     public const string PartFamilyApiEvidenceInsufficient = "part_family_api_evidence_insufficient";
     public const string FeatureApiEvidenceInsufficient = "feature_api_evidence_insufficient";
+    public const string FeatureAdapterMissing = "feature_adapter_missing";
+    public const string SketchExecutionFailed = "sketch_execution_failed";
+    public const string SketchGeometryCreateFailed = "sketch_geometry_create_failed";
+    public const string ExtrudeExecutionFailed = "extrude_execution_failed";
+    public const string CutExecutionFailed = "cut_execution_failed";
+    public const string HoleExecutionFailed = "hole_execution_failed";
+    public const string FeatureResultInvalid = "feature_result_invalid";
+    public const string FeatureArtifactMissing = "feature_artifact_missing";
+    public const string FeatureApiUnverified = "feature_api_unverified";
     public const string FlangeProfileCreateFailed = "flange_profile_create_failed";
     public const string FlangeExtrudeFailed = "flange_extrude_failed";
     public const string FlangeInnerCutFailed = "flange_inner_cut_failed";
@@ -42,6 +51,7 @@ public static class PartFamilyExecutionModes
     public const string PlateBasic4Holes = "RealBuildPlateBasic4Holes";
     public const string FlangeBasic = "RealBuildFlangeBasic";
     public const string ShaftBasic = "RealBuildShaftBasic";
+    public const string GenericFeatureGraph = "RealBuildGenericFeatureGraph";
 }
 
 public enum PartParameterValueKind
@@ -166,6 +176,7 @@ public sealed class CADModelSpecValidator
             "SLDDRW",
             "PDF",
             "build_report.json",
+            "feature_execution_report.json",
             "e2e_execution_report.json",
             "release_manifest.json",
             "package_quality_report.json"

@@ -103,7 +103,8 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         ISolidWorksDrawingDimensionBuilder? drawingDimensionBuilder,
         ISolidWorksDrawingTitleBlockBuilder? drawingTitleBlockBuilder,
         PartFamilyBuilderRegistry? partFamilyBuilderRegistry,
-        ISolidWorksExecutionEnvironmentProbe? executionEnvironmentProbe)
+        ISolidWorksExecutionEnvironmentProbe? executionEnvironmentProbe,
+        FeatureHandlerRegistry? featureHandlerRegistry = null)
     {
         _sessionManager = sessionManager ?? new SolidWorksSessionManager();
         _plateBuilder = plateBuilder ?? new LateBoundSolidWorksPlateBuilder();
@@ -111,7 +112,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         _drawingDimensionBuilder = drawingDimensionBuilder ?? new LateBoundSolidWorksDrawingDimensionBuilder();
         _drawingTitleBlockBuilder = drawingTitleBlockBuilder ?? new LateBoundSolidWorksDrawingTitleBlockBuilder();
         _partFamilyBuilderRegistry = partFamilyBuilderRegistry ?? PartFamilyBuilderRegistry.CreateDefault(_plateBuilder);
-        _featureHandlerRegistry = FeatureHandlerRegistry.CreateDefault();
+        _featureHandlerRegistry = featureHandlerRegistry ?? FeatureHandlerRegistry.CreateDefault();
         _executionEnvironmentProbe = executionEnvironmentProbe ?? new SolidWorksExecutionEnvironmentProbe();
         _options = options;
     }
@@ -189,7 +190,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     realCadConnected: false,
                     preflight,
                     options,
-                    handlerPreflight.FailureStage ?? PartFamilyFailureStages.FeatureApiEvidenceInsufficient,
+                    handlerPreflight.FailureStage ?? PartFamilyFailureStages.FeatureApiUnverified,
                     genericBuilder);
             }
 
@@ -361,6 +362,35 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                         options,
                         "solidworks_connection_failed",
                         partFamilyBuilder);
+            }
+
+            if (usesFeatureHandlerGraph)
+            {
+                var runtimeEvidence = _featureHandlerRegistry.ValidateRuntimeForRealExecution(
+                    request.BuildPlan,
+                    connection.SolidWorksVersion);
+                if (!runtimeEvidence.IsPassed)
+                {
+                    issues.AddRange(runtimeEvidence.Issues);
+                    logs.Add(
+                        "No modeling API was invoked because the connected SolidWorks version " +
+                        "does not match the per-handler evidence.");
+                    return RealBuildFailureResult(
+                        request,
+                        "Rejected",
+                        logs,
+                        issues,
+                        realCadConnected: true,
+                        connectedPreflight with
+                        {
+                            FinalStatus = "Failed",
+                            Issues = issues
+                        },
+                        options,
+                        runtimeEvidence.FailureStage ??
+                        PartFamilyFailureStages.FeatureApiUnverified,
+                        partFamilyBuilder);
+                }
             }
 
             logs.Add("operation_executed: connection_success");

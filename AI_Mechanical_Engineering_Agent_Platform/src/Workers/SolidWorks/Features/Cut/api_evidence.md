@@ -2,7 +2,7 @@
 
 ## 状态与范围
 
-`FeatureType=extrude_cut`，`HandlerVersion=2.0-b.1`，`api_evidence_status=unverified`。本文只覆盖通用拉伸切除；normal cut、薄壁切除和多实体 scope 不在本阶段。
+`FeatureType=extrude_cut`，`HandlerVersion=2.0-c.2`。正深度、单端、`through_all=false` 的 blind `FeatureCut4` 轮廓已在 V2.0-C 专用诊断中提升为 `api_evidence_status=verified`；normal cut、薄壁切除和多实体 scope 不在本阶段。
 
 V1.9 plate 与 flange 的专用 Builder 使用固定盲切超深策略。该证据不能证明通用 `through_all` 终止条件或当前 Handler Adapter。
 
@@ -10,10 +10,10 @@ V1.9 plate 与 flange 的专用 Builder 使用固定盲切超深策略。该证�
 
 | 参数 | 类型 | 必需 | 校验 |
 |---|---|---|---|
-| `through_all` | boolean | 否 | 只有解析为 `true` 时满足贯穿语义；当前没有真实映射授权。 |
-| `depth_mm` | positive number | 否 | 若使用盲切，必须是有限正数并转换为米。 |
+| `through_all` | boolean | 否 | V2.0-C 精确 profile 必须缺省或为 `false`；`true` 未验证并被拒绝。 |
+| `depth_mm` | positive number | V2.0-C 必需 | blind cut 的有限正深度，并转换为米。 |
 
-`through_all=true` 与正数 `depth_mm` 至少满足一个，否则返回 `invalid_feature_parameter`。类型不匹配返回 `unsupported_feature_type`。
+必须提供正数 `depth_mm` 且 `through_all` 不得为 `true`，否则返回 `invalid_feature_parameter`。类型不匹配返回 `unsupported_feature_type`。
 
 ## 官方候选 API
 
@@ -37,3 +37,23 @@ V1.9 plate 与 flange 的专用 Builder 使用固定盲切超深策略。该证�
 ## 禁止事项
 
 禁止把盲切超深描述为已验证 through-all，禁止为绕过证据回退到其他切除 API，禁止忽略 body/scope，禁止复制第三方代码或用历史产物代替诊断。
+
+## V2.0-C Adapter 诊断证据回填
+
+### 状态与参数轮廓
+
+V2.0-C 专用诊断已在 SolidWorks `33.5.0` 中验证 20 mm blind `FeatureCut4`、非空 Feature、成功重建和非空产物。`ExtrudeCutHandler` 保持纯逻辑，不得直接访问 COM。
+
+候选要求切割草图和目标实体精确解析，深度由毫米转换为米，终止条件固定为 blind，并记录 `FeatureCut4` 完整参数、返回 Feature、重建和切除结果。`through_all`、normal cut、thin、多实体 scope 均不在 V2.0-C 候选中；不得用超深盲切冒充已验证贯穿。
+
+### diagnostic 与回填
+
+专用 diagnostic 输出 `output/solidworks/features/<timestamp>/model.SLDPRT`、`model.STEP`、`feature_execution_report.json`。报告必须区分调用失败与返回无效 Feature，并绑定当次草图、目标、深度、API 参数和产物。
+
+诊断和审查前以 `feature_api_unverified` 阻断生产；诊断成功只允许 evidence 回填。最终验收仍从 `run-cad-workflow` 经过 Validator、Reviewer 和 QualityGate。
+
+旧 run `20260730_073759_9143941` 的 Cut 虽返回非空 Feature 且重建通过，人工复核却没有孔，因此是 `feature_result_invalid` 反例，不得保留为 verified。
+
+权威证据标识为 `v2.0-c-20260730-085830-extrude-cut`，报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`。20 mm blind `FeatureCut4` 使体积从 `6E-05` 降至 `5.92146018366025E-05` m³，特征树出现第一个 `ICE`，视觉复核确认切孔。证据绑定完整执行链源码 revision `71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`。
+
+只授权 `blind;single_end;positive_depth_mm;through_all_false;no_thin;single_body_scope`。`through_all`、normal cut、thin 和多实体 scope 仍为 `unverified`。新 diagnostic 仍为 `NotDeliverable`，最终验收待 `run-cad-workflow`。禁止 Handler COM、扩大参数轮廓和无效 Feature 成功。

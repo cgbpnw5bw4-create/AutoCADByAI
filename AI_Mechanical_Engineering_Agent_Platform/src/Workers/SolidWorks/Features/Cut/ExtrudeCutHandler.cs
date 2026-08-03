@@ -29,7 +29,7 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
             "Depth and end condition describe the same semantic profile.",
             "The target body and scope are unambiguous."
         ],
-        FeatureApiEvidenceStatuses.Unverified,
+        FeatureApiEvidenceStatuses.Verified,
         [
             "V2.0-A through_all=true is not proven by the V1.9 blind over-depth call.",
             "An invalid selection or end condition can return null.",
@@ -37,8 +37,15 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
         ],
         [
             "V1.9 plate/flange family builders used FeatureCut4.",
-            "No handler-specific diagnostic proves a true through-all mapping."
-        ]);
+            "V2.0-C diagnostic verified a 20 mm blind FeatureCut4 call after reactivating the dependency sketch.",
+            "Solid volume decreased from 5.9999999999999995E-05 to 5.9214601836602546E-05 cubic metres; four-view review shows the cut."
+        ],
+        EvidenceId: "v2.0-c-20260730-085830-extrude-cut",
+        HandlerVersion: "2.0-c.2",
+        ParameterProfile: "blind;single_end;positive_depth_mm;through_all_false;no_thin;single_body_scope",
+        SolidWorksVersion: "33.5.0",
+        DiagnosticRunPath: "output/solidworks/features/20260730_085830_6592380/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {
@@ -49,20 +56,31 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
                 $"{PartFamilyFailureStages.UnsupportedFeatureType}: {feature.FeatureType} cannot be handled by {nameof(ExtrudeCutHandler)}.");
         }
 
+        var unknownParameters = RejectUnknownParameters(feature, "through_all", "depth_mm");
+        if (!unknownParameters.IsValid)
+        {
+            return unknownParameters;
+        }
+
+        var hasThroughAll = feature.Parameters.TryGetValue("through_all", out var text);
+        var parsed = false;
+        var validThroughAll =
+            !hasThroughAll ||
+            bool.TryParse(text, out parsed);
         var throughAll =
-            feature.Parameters.TryGetValue("through_all", out var text) &&
-            bool.TryParse(text, out var parsed) &&
+            hasThroughAll &&
+            validThroughAll &&
             parsed;
         var positiveDepth =
             feature.Parameters.TryGetValue("depth_mm", out var depthText) &&
             double.TryParse(depthText, NumberStyles.Float, CultureInfo.InvariantCulture, out var depth) &&
             double.IsFinite(depth) &&
             depth > 0;
-        if (!throughAll && !positiveDepth)
+        if (!validThroughAll || throughAll || !positiveDepth)
         {
             return FeatureHandlerValidationResult.Failed(
                 PartFamilyFailureStages.InvalidFeatureParameter,
-                $"{PartFamilyFailureStages.InvalidFeatureParameter}: {feature.FeatureId} requires through_all=true or positive depth_mm.");
+                $"{PartFamilyFailureStages.InvalidFeatureParameter}: {feature.FeatureId} supports blind positive depth_mm only.");
         }
 
         return FeatureHandlerValidationResult.Passed();
@@ -73,6 +91,12 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(EvidenceBlocked(context.Feature));
+        return context.Adapter is null
+            ? Task.FromResult(AdapterMissing(context.Feature))
+            : context.Adapter.ExecuteExtrudeCutAsync(
+                context.Feature,
+                context.Operation,
+                context.State,
+                cancellationToken);
     }
 }

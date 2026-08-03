@@ -60,9 +60,14 @@ public sealed partial class SolidWorksMainWorkflowRunner
             },
             cancellationToken);
         var stageResults = new List<(string Stage, SolidWorksMainWorkflowResult Result)> { ("build", build) };
+        var buildExecutionStrategy =
+            request.ModelSpec is { } modelSpec &&
+            (modelSpec.Sketches.Count > 0 || modelSpec.Features.Count > 0)
+                ? SolidWorksBuildExecutionStrategies.FeatureHandlerGraph
+                : SolidWorksBuildExecutionStrategies.PartFamilyBuilder;
         var sourceSet = new SolidWorksReleasePackageSourceSet(
-            FindArtifactPath(build, $"{partType}.SLDPRT"),
-            FindArtifactPath(build, $"{partType}.STEP"),
+            FindArtifactPathByExtension(build, ".SLDPRT"),
+            FindArtifactPathByExtension(build, ".STEP"),
             DrawingPath: null,
             PdfPath: null,
             BuildReportPath: FindArtifactPath(build, "build_report.json"),
@@ -74,7 +79,9 @@ public sealed partial class SolidWorksMainWorkflowRunner
             RequireRealExecutionEvidence: true,
             PartType: partType,
             RequestId: request.RequestId,
-            RequireDrawingDeliverables: false);
+            RequireDrawingDeliverables: false,
+            BuildExecutionStrategy: buildExecutionStrategy,
+            FeatureExecutionReportPath: FindArtifactPath(build, "feature_execution_report.json"));
 
         var package = await BuildE2eReleasePackageAsync(request.ProjectRoot, sourceSet, releaseDirectory, cancellationToken);
         var packageOutcome = ReadPackageOutcome(package?.QualityReportPath);
@@ -468,6 +475,10 @@ public sealed partial class SolidWorksMainWorkflowRunner
 
     private static string? FindArtifactPath(SolidWorksMainWorkflowResult result, string fileName) =>
         result.ArtifactPaths.FirstOrDefault(path => Path.GetFileName(path).Equals(fileName, StringComparison.OrdinalIgnoreCase) && ExistingNonEmpty(path));
+
+    private static string? FindArtifactPathByExtension(SolidWorksMainWorkflowResult result, string extension) =>
+        result.ArtifactPaths.FirstOrDefault(path =>
+            path.EndsWith(extension, StringComparison.OrdinalIgnoreCase) && ExistingNonEmpty(path));
 
     private static string? FindArtifactPath(IReadOnlyList<(string Stage, SolidWorksMainWorkflowResult Result)> results, string stage, string fileName) =>
         results.FirstOrDefault(item => string.Equals(item.Stage, stage, StringComparison.OrdinalIgnoreCase)).Result is { } result

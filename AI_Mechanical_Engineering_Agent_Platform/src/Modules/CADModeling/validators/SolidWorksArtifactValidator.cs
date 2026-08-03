@@ -34,14 +34,21 @@ public sealed class SolidWorksArtifactValidator : IValidator
         var partFamilyDefinition = _partTypeRegistry.GetAll().FirstOrDefault(definition =>
             string.Equals(definition.RealExecutionMode, result.ExecutionMode, StringComparison.OrdinalIgnoreCase));
         var isRealPartFamilyBuildMode = partFamilyDefinition is not null;
+        var isRealGenericFeatureGraphMode = string.Equals(
+            result.ExecutionMode,
+            PartFamilyExecutionModes.GenericFeatureGraph,
+            StringComparison.OrdinalIgnoreCase);
         var isRealDrawingMode = string.Equals(result.ExecutionMode, "RealDrawingBasicViews", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingDimensionMode = string.Equals(result.ExecutionMode, "RealDrawingDimensions", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingTitleBlockMode = string.Equals(result.ExecutionMode, "RealDrawingTitleBlock", StringComparison.OrdinalIgnoreCase);
 
-        if (!isFakeMode && !isRealPartFamilyBuildMode && !isRealDrawingMode && !isRealDrawingDimensionMode && !isRealDrawingTitleBlockMode)
+        if (!isFakeMode && !isRealPartFamilyBuildMode && !isRealGenericFeatureGraphMode &&
+            !isRealDrawingMode && !isRealDrawingDimensionMode && !isRealDrawingTitleBlockMode)
         {
             var familyModes = string.Join(", ", _partTypeRegistry.GetAll().Select(definition => definition.RealExecutionMode));
-            issues.Add($"execution_mode must be Fake, {familyModes}, RealDrawingBasicViews, RealDrawingDimensions, or RealDrawingTitleBlock.");
+            issues.Add(
+                $"execution_mode must be Fake, {familyModes}, {PartFamilyExecutionModes.GenericFeatureGraph}, " +
+                "RealDrawingBasicViews, RealDrawingDimensions, or RealDrawingTitleBlock.");
         }
 
         if (result.GeneratedArtifacts.Count == 0)
@@ -56,6 +63,10 @@ public sealed class SolidWorksArtifactValidator : IValidator
         else if (isRealPartFamilyBuildMode)
         {
             ValidateRealPartFamilyBuildMode(result, partFamilyDefinition!, issues);
+        }
+        else if (isRealGenericFeatureGraphMode)
+        {
+            ValidateRealGenericFeatureGraphMode(result, issues);
         }
         else if (isRealDrawingMode)
         {
@@ -192,6 +203,52 @@ public sealed class SolidWorksArtifactValidator : IValidator
         if (report is not null && File.Exists(report.FilePath))
         {
             ValidateRealDrawingReport(report.FilePath, issues);
+        }
+    }
+
+    private void ValidateRealGenericFeatureGraphMode(
+        SolidWorksWorkerResult result,
+        List<string> issues)
+    {
+        if (!result.RealCadExecuted)
+        {
+            issues.Add($"real_cad_executed must be true for {PartFamilyExecutionModes.GenericFeatureGraph}.");
+        }
+
+        if (!result.RealCadConnected)
+        {
+            issues.Add($"real_cad_connected must be true for {PartFamilyExecutionModes.GenericFeatureGraph}.");
+        }
+
+        var part = FindArtifact(result, ".SLDPRT");
+        var step = FindArtifact(result, ".STEP");
+        var buildReport = result.GeneratedArtifacts.FirstOrDefault(artifact =>
+            Path.GetFileName(artifact.FilePath).Equals("build_report.json", StringComparison.OrdinalIgnoreCase));
+        var featureReport = result.GeneratedArtifacts.FirstOrDefault(artifact =>
+            Path.GetFileName(artifact.FilePath).Equals("feature_execution_report.json", StringComparison.OrdinalIgnoreCase));
+
+        ValidateRealArtifact(part, ".SLDPRT", issues);
+        ValidateRealArtifact(step, ".STEP", issues);
+        ValidateRealArtifact(buildReport, "build_report.json", issues);
+        ValidateRealArtifact(featureReport, "feature_execution_report.json", issues);
+
+        foreach (var artifact in result.GeneratedArtifacts)
+        {
+            var fullPath = Path.GetFullPath(artifact.FilePath);
+            if (!IsUnderRealArtifactRoot(fullPath))
+            {
+                issues.Add($"real generic feature artifact path must be under output/solidworks/real: {artifact.FilePath}.");
+            }
+        }
+
+        if (buildReport is not null && File.Exists(buildReport.FilePath))
+        {
+            ValidateGenericBuildReport(buildReport.FilePath, issues);
+        }
+
+        if (featureReport is not null && File.Exists(featureReport.FilePath))
+        {
+            ValidateFeatureExecutionReport(featureReport.FilePath, issues);
         }
     }
 
@@ -347,6 +404,383 @@ public sealed class SolidWorksArtifactValidator : IValidator
         catch (JsonException ex)
         {
             issues.Add($"build_report.json is invalid: {ex.Message}.");
+        }
+    }
+
+    private static void ValidateGenericBuildReport(string reportPath, List<string> issues)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = document.RootElement;
+            RequireTrue(root, "real_cad_executed", "build_report", issues);
+            RequireTrue(root, "real_cad_connected", "build_report", issues);
+            RequireTrue(root, "sldprt_save_success", "build_report", issues);
+            RequireTrue(root, "step_export_success", "build_report", issues);
+            RequireString(
+                root,
+                "execution_mode",
+                PartFamilyExecutionModes.GenericFeatureGraph,
+                "build_report",
+                issues);
+            RequireString(
+                root,
+                "execution_strategy",
+                SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                "build_report",
+                issues);
+            RequireString(root, "final_status", "Passed", "build_report", issues);
+            ValidateFeatureResults(root, "feature_handler_reports", "build_report", issues);
+        }
+        catch (JsonException ex)
+        {
+            issues.Add($"build_report.json is invalid: {ex.Message}.");
+        }
+    }
+
+    private static void ValidateFeatureExecutionReport(string reportPath, List<string> issues)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = document.RootElement;
+            RequireTrue(root, "real_cad_executed", "feature_execution_report", issues);
+            RequireTrue(root, "real_cad_connected", "feature_execution_report", issues);
+            RequireTrue(root, "all_features_executed", "feature_execution_report", issues);
+            RequireTrue(root, "all_result_objects_validated", "feature_execution_report", issues);
+            RequireTrue(root, "all_rebuilds_passed", "feature_execution_report", issues);
+            RequireTrue(root, "all_geometry_changes_validated", "feature_execution_report", issues);
+            RequireTrue(root, "artifacts_validated", "feature_execution_report", issues);
+            RequireString(
+                root,
+                "execution_mode",
+                PartFamilyExecutionModes.GenericFeatureGraph,
+                "feature_execution_report",
+                issues);
+            RequireString(
+                root,
+                "execution_strategy",
+                SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                "feature_execution_report",
+                issues);
+            RequireString(root, "final_status", "Passed", "feature_execution_report", issues);
+            ValidateFeatureResults(root, "feature_results", "feature_execution_report", issues);
+        }
+        catch (JsonException ex)
+        {
+            issues.Add($"feature_execution_report.json is invalid: {ex.Message}.");
+        }
+    }
+
+    private static void ValidateFeatureResults(
+        JsonElement root,
+        string propertyName,
+        string reportName,
+        List<string> issues)
+    {
+        if (!root.TryGetProperty(propertyName, out var results) ||
+            results.ValueKind != JsonValueKind.Array ||
+            results.GetArrayLength() == 0)
+        {
+            issues.Add($"{reportName} {propertyName} must contain at least one feature result.");
+            return;
+        }
+
+        var runtimeVersion =
+            root.TryGetProperty("solidworks_version", out var versionProperty) &&
+            versionProperty.ValueKind == JsonValueKind.String
+                ? versionProperty.GetString()
+                : null;
+        if (string.IsNullOrWhiteSpace(runtimeVersion))
+        {
+            issues.Add($"{reportName} solidworks_version must be present.");
+        }
+
+        var index = 0;
+        foreach (var result in results.EnumerateArray())
+        {
+            if (!result.TryGetProperty("api_evidence_status", out var evidence) ||
+                !string.Equals(evidence.GetString(), "verified", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add($"{reportName} feature result {index} must bind verified API evidence.");
+            }
+
+            if (!result.TryGetProperty("result_object_validated", out var validated) ||
+                validated.ValueKind != JsonValueKind.True)
+            {
+                issues.Add($"{reportName} feature result {index} did not validate its result object.");
+            }
+
+            if (!result.TryGetProperty("rebuild_passed", out var rebuild) ||
+                rebuild.ValueKind != JsonValueKind.True)
+            {
+                issues.Add($"{reportName} feature result {index} did not pass rebuild validation.");
+            }
+
+            if (!result.TryGetProperty("geometry_change_validated", out var geometry) ||
+                geometry.ValueKind != JsonValueKind.True)
+            {
+                issues.Add($"{reportName} feature result {index} did not validate its geometry change.");
+            }
+
+            var adapterId = ReadString(result, "adapter_id");
+            var adapterVersion = ReadString(result, "adapter_version");
+            if (!string.Equals(
+                    adapterId,
+                    "solidworks.real-feature-adapter",
+                    StringComparison.Ordinal) ||
+                !string.Equals(adapterVersion, "2.0-c.2", StringComparison.Ordinal))
+            {
+                issues.Add(
+                    $"{reportName} feature result {index} must bind " +
+                    "solidworks.real-feature-adapter@2.0-c.2.");
+            }
+
+            foreach (var evidenceField in new[]
+                     {
+                         "evidence_id",
+                         "evidence_handler_version",
+                         "evidence_parameter_profile",
+                         "evidence_solid_works_version",
+                         "evidence_diagnostic_run_path",
+                         "evidence_source_revision"
+                     })
+            {
+                if (!result.TryGetProperty(evidenceField, out var evidenceValue) ||
+                    string.IsNullOrWhiteSpace(evidenceValue.GetString()))
+                {
+                    issues.Add(
+                        $"{reportName} feature result {index} must bind {evidenceField}.");
+                }
+            }
+
+            var featureType = ReadString(result, "feature_type");
+            var handlerName = ReadString(result, "handler_name");
+            var evidenceHandlerVersion = ReadString(result, "evidence_handler_version");
+            var evidenceSolidWorksVersion = ReadString(
+                result,
+                "evidence_solid_works_version");
+            var evidenceDiagnosticRunPath = ReadString(
+                result,
+                "evidence_diagnostic_run_path");
+            var evidenceSourceRevision = ReadString(
+                result,
+                "evidence_source_revision");
+            if (string.IsNullOrWhiteSpace(handlerName) ||
+                string.IsNullOrWhiteSpace(evidenceHandlerVersion) ||
+                !handlerName.Contains(
+                    $"@{evidenceHandlerVersion}",
+                    StringComparison.Ordinal))
+            {
+                issues.Add(
+                    $"{reportName} feature result {index} handler version does not match its evidence.");
+            }
+
+            if (string.IsNullOrWhiteSpace(runtimeVersion) ||
+                !string.Equals(
+                    runtimeVersion,
+                    evidenceSolidWorksVersion,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add(
+                    $"{reportName} feature result {index} evidence SolidWorks version " +
+                    "does not match the connected runtime.");
+            }
+
+            ValidateDiagnosticEvidence(
+                reportName,
+                index,
+                featureType,
+                handlerName,
+                evidenceHandlerVersion,
+                evidenceSolidWorksVersion,
+                evidenceDiagnosticRunPath,
+                evidenceSourceRevision,
+                adapterId,
+                adapterVersion,
+                issues);
+
+            if (result.TryGetProperty("failure_stage", out var failureStage) &&
+                failureStage.ValueKind != JsonValueKind.Null &&
+                !string.IsNullOrWhiteSpace(failureStage.GetString()))
+            {
+                issues.Add($"{reportName} feature result {index} contains failure_stage={failureStage.GetString()}.");
+            }
+
+            index++;
+        }
+    }
+
+    private static void ValidateDiagnosticEvidence(
+        string reportName,
+        int index,
+        string? featureType,
+        string? handlerName,
+        string? handlerVersion,
+        string? solidWorksVersion,
+        string? diagnosticRunPath,
+        string? sourceRevision,
+        string? adapterId,
+        string? adapterVersion,
+        List<string> issues)
+    {
+        if (string.IsNullOrWhiteSpace(diagnosticRunPath))
+        {
+            return;
+        }
+
+        string path;
+        try
+        {
+            path = Path.IsPathFullyQualified(diagnosticRunPath)
+                ? Path.GetFullPath(diagnosticRunPath)
+                : Path.GetFullPath(Path.Combine(
+                    FindProjectRootForEvidence(),
+                    diagnosticRunPath.Replace('/', Path.DirectorySeparatorChar)));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+        {
+            issues.Add(
+                $"{reportName} feature result {index} has invalid diagnostic path: {ex.Message}.");
+            return;
+        }
+
+        if (!File.Exists(path))
+        {
+            issues.Add(
+                $"{reportName} feature result {index} diagnostic evidence does not exist: {path}.");
+            return;
+        }
+
+        try
+        {
+            using var diagnostic = JsonDocument.Parse(File.ReadAllText(path));
+            var root = diagnostic.RootElement;
+            if (!IsBoolean(root, "candidate_only", true) ||
+                !IsBoolean(root, "main_workflow_accepted", false) ||
+                !IsBoolean(root, "quality_gate_passed", false) ||
+                !IsBoolean(root, "solid_works_connected", true) ||
+                !IsBoolean(root, "real_cad_executed", true) ||
+                !StringEquals(root, "final_status", "CandidatePassed") ||
+                !StringEquals(root, "deliverable_status", "NotDeliverable") ||
+                !StringEquals(root, "solid_works_version", solidWorksVersion))
+            {
+                issues.Add(
+                    $"{reportName} feature result {index} diagnostic is not a valid " +
+                    "CandidatePassed/NotDeliverable run for the same SolidWorks version.");
+                return;
+            }
+
+            if (!root.TryGetProperty("feature_handler_reports", out var featureReports) ||
+                featureReports.ValueKind != JsonValueKind.Array)
+            {
+                issues.Add(
+                    $"{reportName} feature result {index} diagnostic feature results are missing.");
+                return;
+            }
+
+            var matching = featureReports.EnumerateArray().Where(candidate =>
+                StringEquals(candidate, "feature_type", featureType) &&
+                StringEquals(candidate, "adapter_id", adapterId) &&
+                StringEquals(candidate, "adapter_version", adapterVersion) &&
+                StringEquals(
+                    candidate,
+                    "evidence_solid_works_version",
+                    solidWorksVersion) &&
+                StringEquals(
+                    candidate,
+                    "evidence_source_revision",
+                    sourceRevision) &&
+                IsBoolean(candidate, "result_object_validated", true) &&
+                IsBoolean(candidate, "rebuild_passed", true) &&
+                IsBoolean(candidate, "geometry_change_validated", true) &&
+                string.IsNullOrWhiteSpace(ReadString(candidate, "failure_stage")) &&
+                (ReadString(candidate, "handler_name")?.Contains(
+                    $"@{handlerVersion}",
+                    StringComparison.Ordinal) == true));
+            if (!matching.Any())
+            {
+                issues.Add(
+                    $"{reportName} feature result {index} diagnostic does not bind the same " +
+                    $"feature/handler/adapter/runtime/source revision as {handlerName}.");
+            }
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            issues.Add(
+                $"{reportName} feature result {index} diagnostic evidence is invalid: {ex.Message}.");
+        }
+    }
+
+    private static string FindProjectRootForEvidence()
+    {
+        foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        {
+            var directory = new DirectoryInfo(Path.GetFullPath(start));
+            while (directory is not null)
+            {
+                if (File.Exists(Path.Combine(
+                        directory.FullName,
+                        "AI_Mechanical_Engineering_Agent_Platform.sln")))
+                {
+                    return directory.FullName;
+                }
+
+                directory = directory.Parent;
+            }
+        }
+
+        throw new DirectoryNotFoundException(
+            "Project root is unavailable for feature evidence validation.");
+    }
+
+    private static string? ReadString(JsonElement root, string propertyName) =>
+        root.TryGetProperty(propertyName, out var value) &&
+        value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static bool StringEquals(
+        JsonElement root,
+        string propertyName,
+        string? expected) =>
+        !string.IsNullOrWhiteSpace(expected) &&
+        string.Equals(
+            ReadString(root, propertyName),
+            expected,
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsBoolean(
+        JsonElement root,
+        string propertyName,
+        bool expected) =>
+        root.TryGetProperty(propertyName, out var value) &&
+        value.ValueKind == (expected ? JsonValueKind.True : JsonValueKind.False);
+
+    private static void RequireTrue(
+        JsonElement root,
+        string propertyName,
+        string reportName,
+        List<string> issues)
+    {
+        if (!root.TryGetProperty(propertyName, out var value) ||
+            value.ValueKind != JsonValueKind.True)
+        {
+            issues.Add($"{reportName} {propertyName} must be true.");
+        }
+    }
+
+    private static void RequireString(
+        JsonElement root,
+        string propertyName,
+        string expected,
+        string reportName,
+        List<string> issues)
+    {
+        if (!root.TryGetProperty(propertyName, out var value) ||
+            !string.Equals(value.GetString(), expected, StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add($"{reportName} {propertyName} must be {expected}.");
         }
     }
 

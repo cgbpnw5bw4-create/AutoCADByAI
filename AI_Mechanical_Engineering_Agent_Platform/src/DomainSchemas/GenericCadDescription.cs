@@ -501,7 +501,7 @@ public class BuildPlanCompiler
             [FeatureTypes.RevolveCut] = "RevolveCut",
             [FeatureTypes.Fillet] = "AddFillet",
             [FeatureTypes.Chamfer] = "AddChamfer",
-            [FeatureTypes.Hole] = "AddHoleWizardHole",
+            [FeatureTypes.Hole] = "CreateSimpleHole",
             [FeatureTypes.LinearPattern] = "LinearPattern",
             [FeatureTypes.CircularPattern] = "CircularPattern",
             [FeatureTypes.Mirror] = "MirrorFeature"

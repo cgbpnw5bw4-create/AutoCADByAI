@@ -211,3 +211,37 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 ### 禁止事项
 
 禁止为单个失败增加大型 `switch(feature_type)`，禁止部分执行图，禁止把 Fake Worker 或历史零件族产物当作通用真实成功，禁止未经独立诊断将状态改为 `verified`，禁止复制第三方代码，也不得借修复扩展装配体、BOM、队列或后续阶段。
+
+## V2.0-C Feature Adapter 失败修复
+
+### 输入与输出
+
+输入为同次 FeatureGraph、Handler validation、Adapter 解析结果、逐特征执行结果、`feature_execution_report.json` 和产物校验。输出必须是以下单一 `failure_stage`、直接原因、证据路径、修复动作和重跑入口。
+
+| `failure_stage` | 直接原因 | 修复动作 | 关闭条件 |
+|---|---|---|---|
+| `feature_adapter_missing` | Worker 无真实 Adapter 或注入失败 | 修复组合根和接口注册；不在 Handler 内创建实现 | Worker 解析同一 Adapter，测试仍可注入 fake |
+| `sketch_execution_failed` | 基准选择、进入/退出草图或事务失败 | 先修引用和草图状态，再运行专用 diagnostic | 草图事务和重建均通过 |
+| `sketch_geometry_create_failed` | line、rectangle 或 circle 返回无效 | 核对坐标、米制转换和返回对象 | 每个实体有效且可被后续特征消费 |
+| `extrude_execution_failed` | blind extrude 调用、返回或重建失败 | 核对闭合草图、深度与长参数 | 返回有效 Feature，重建和实体结果通过 |
+| `cut_execution_failed` | blind `FeatureCut4` 失败 | 核对切割草图、深度、目标和选择状态 | 返回有效 Feature，切除结果通过 |
+| `hole_execution_failed` | 圆草图加 blind `FeatureCut4` 的任一步失败 | 分开记录圆草图与切除子步骤；不切换 Hole Wizard | 孔组合结果和几何审查通过 |
+| `feature_result_invalid` | API 未抛异常但返回对象、依赖或重建无效 | 拒绝假成功，补结果和重建校验 | 所有特征结果具备有效标识、顺序和状态 |
+| `feature_artifact_missing` | SLDPRT、STEP 或报告缺失/为空/陈旧 | 修复保存、导出或报告；禁止复用历史 latest | 三个当次输出存在、非空且运行标识一致 |
+| `feature_api_unverified` | API 仅为 `diagnostic_candidate` / `unverified` | 停止生产，先运行和审查专用 diagnostic | 同 Adapter/版本/参数轮廓证据为 `verified` |
+
+### 修复顺序
+
+1. 先确认 Handler 未直接访问 COM，并验证 `ISolidWorksFeatureAdapter` 注入。
+2. 输入或 Registry 失败先在无 COM 层修复。
+3. API 候选未验证时以 `feature_api_unverified` 停止，不得主 Worker 盲试。
+4. Adapter 执行问题进入专用 diagnostic，并只读取 `output/solidworks/features/<timestamp>/` 当次报告和产物。
+5. diagnostic 通过后先完成 evidence 审查，再从 `run-cad-workflow` 重跑最终主流程。
+
+禁止用 `SimpleHole2` / Hole Wizard 修孔，禁止 diagnostic 替代 QualityGate，禁止空 Feature 或空文件成功，禁止进入 V2.0-D。
+
+### 旧 run 假成功修复结论
+
+`20260730_073759_9143941` 证明“Feature 非空 + 重建通过 + 文件非空”仍可能是假成功：Cut/Hole 的人工复核未见孔。遇到同类情况必须返回 `feature_result_invalid`，并增加特征前后体积变化、特征树和视图检查，不能保留原 evidence 为 `verified`。
+
+修复后采用 `20260730_085830_6592380`：Cut 和 Hole 均产生严格递减体积，特征树包含两个 `ICE`，等轴测/俯视确认两个孔。该结果只关闭精确 blind profile 的假成功问题；diagnostic 仍为 `NotDeliverable`，最终关闭条件是 `run-cad-workflow` 主流程通过。

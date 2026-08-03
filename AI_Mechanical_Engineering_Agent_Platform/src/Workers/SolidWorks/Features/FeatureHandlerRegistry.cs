@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using DomainSchemas;
 using SolidWorksWorker.Features.Cut;
 using SolidWorksWorker.Features.Extrude;
@@ -88,8 +90,68 @@ public sealed class FeatureHandlerRegistry
         ArgumentNullException.ThrowIfNull(plan);
         var issues = new List<string>();
         var features = new List<FeatureDefinition>();
+        var adaptedByOperationId = new Dictionary<string, FeatureDefinition>(
+            StringComparer.OrdinalIgnoreCase);
         string? firstFailureStage = null;
 
+        foreach (var operation in plan.Operations.Where(operation =>
+                     !NonFeatureOperations.Contains(operation.OperationType)))
+        {
+            var adaptation = FeatureHandlerPlanAdapter.Adapt(operation);
+            if (adaptation.Feature is null)
+            {
+                firstFailureStage ??= adaptation.FailureStage;
+                issues.AddRange(adaptation.Issues);
+                continue;
+            }
+
+            features.Add(adaptation.Feature);
+            adaptedByOperationId[operation.OperationId] = adaptation.Feature;
+            var resolution = Resolve(adaptation.Feature);
+            if (!resolution.IsSuccess)
+            {
+                firstFailureStage ??= resolution.FailureStage;
+                issues.AddRange(resolution.Issues);
+                continue;
+            }
+
+            var validation = resolution.Handler!.Validate(adaptation.Feature);
+            if (!validation.IsValid)
+            {
+                firstFailureStage ??= validation.FailureStage;
+                issues.AddRange(validation.Issues);
+            }
+
+            var evidenceValidation =
+                resolution.Handler.ValidateEvidenceForRealExecution(adaptation.Feature);
+            if (!evidenceValidation.IsValid)
+            {
+                firstFailureStage ??= evidenceValidation.FailureStage;
+                issues.AddRange(evidenceValidation.Issues);
+            }
+        }
+
+        ValidateGraphEvidenceProfiles(
+            plan,
+            adaptedByOperationId,
+            issues,
+            ref firstFailureStage);
+
+        return new(
+            issues.Count == 0,
+            firstFailureStage,
+            issues.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+            features);
+    }
+
+    public FeatureHandlerGraphPreflightResult ValidateRuntimeForRealExecution(
+        SolidWorksBuildPlan plan,
+        string? actualSolidWorksVersion)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        var features = new List<FeatureDefinition>();
+        var issues = new List<string>();
+        string? firstFailureStage = null;
         foreach (var operation in plan.Operations.Where(operation =>
                      !NonFeatureOperations.Contains(operation.OperationType)))
         {
@@ -110,20 +172,12 @@ public sealed class FeatureHandlerRegistry
                 continue;
             }
 
-            var validation = resolution.Handler!.Validate(adaptation.Feature);
+            var validation = resolution.Handler!.ValidateRuntimeForRealExecution(
+                actualSolidWorksVersion);
             if (!validation.IsValid)
             {
                 firstFailureStage ??= validation.FailureStage;
                 issues.AddRange(validation.Issues);
-            }
-
-            if (!resolution.Handler.ApiEvidence.AllowsRealExecution)
-            {
-                firstFailureStage ??= PartFamilyFailureStages.FeatureApiEvidenceInsufficient;
-                issues.Add(
-                    $"{PartFamilyFailureStages.FeatureApiEvidenceInsufficient}: " +
-                    $"{adaptation.Feature.FeatureId}/{adaptation.Feature.FeatureType} " +
-                    $"has api_evidence_status = {resolution.Handler.ApiEvidence.Status}.");
             }
         }
 
@@ -132,6 +186,132 @@ public sealed class FeatureHandlerRegistry
             firstFailureStage,
             issues.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
             features);
+    }
+
+    private static void ValidateGraphEvidenceProfiles(
+        SolidWorksBuildPlan plan,
+        IReadOnlyDictionary<string, FeatureDefinition> adaptedByOperationId,
+        List<string> issues,
+        ref string? firstFailureStage)
+    {
+        foreach (var operation in plan.Operations)
+        {
+            if (!adaptedByOperationId.TryGetValue(operation.OperationId, out var feature) ||
+                !feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var sketchId = feature.Parameters.GetValueOrDefault("sketch_id");
+            var sketchEntry = adaptedByOperationId
+                .FirstOrDefault(entry =>
+                    entry.Value.FeatureType.Equals(
+                        FeatureHandlerTypes.Sketch,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    entry.Value.FeatureId.Equals(sketchId, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(sketchId) ||
+                string.IsNullOrWhiteSpace(sketchEntry.Key) ||
+                !operation.DependsOn.Contains(
+                    sketchEntry.Key,
+                    StringComparer.OrdinalIgnoreCase))
+            {
+                AddGraphIssue(
+                    feature,
+                    "hole must directly depend on its declared sketch_id.",
+                    issues,
+                    ref firstFailureStage);
+                continue;
+            }
+
+            if (!TryReadSingleCircleDiameter(sketchEntry.Value, out var sketchDiameter) ||
+                !TryReadHoleDiameter(feature, out var requestedDiameter) ||
+                Math.Abs(sketchDiameter - requestedDiameter) > 1e-6)
+            {
+                AddGraphIssue(
+                    feature,
+                    "diameter_matches_single_circle requires one dependency circle whose diameter equals the requested hole diameter.",
+                    issues,
+                    ref firstFailureStage);
+            }
+        }
+    }
+
+    private static void AddGraphIssue(
+        FeatureDefinition feature,
+        string message,
+        List<string> issues,
+        ref string? firstFailureStage)
+    {
+        firstFailureStage ??= PartFamilyFailureStages.FeatureApiUnverified;
+        issues.Add(
+            $"{PartFamilyFailureStages.FeatureApiUnverified}: " +
+            $"{feature.FeatureId}/{feature.FeatureType}: {message}");
+    }
+
+    private static bool TryReadSingleCircleDiameter(
+        FeatureDefinition sketch,
+        out double diameter)
+    {
+        diameter = 0d;
+        if (!sketch.Parameters.TryGetValue("entities", out var entitiesJson))
+        {
+            return false;
+        }
+
+        try
+        {
+            var entities = JsonSerializer.Deserialize<SketchEntity[]>(entitiesJson) ?? [];
+            if (entities.Length != 1 ||
+                !entities[0].EntityType.Equals(
+                    SketchEntityTypes.Circle,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var parameters = entities[0].Parameters;
+            if (parameters.TryGetValue("radius_mm", out var radiusText) &&
+                double.TryParse(
+                    radiusText,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var radius) &&
+                double.IsFinite(radius) &&
+                radius > 0)
+            {
+                diameter = radius * 2d;
+                return true;
+            }
+
+            return parameters.TryGetValue("diameter_mm", out var diameterText) &&
+                   double.TryParse(
+                       diameterText,
+                       NumberStyles.Float,
+                       CultureInfo.InvariantCulture,
+                       out diameter) &&
+                   double.IsFinite(diameter) &&
+                   diameter > 0;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static bool TryReadHoleDiameter(
+        FeatureDefinition feature,
+        out double diameter)
+    {
+        var text =
+            feature.Parameters.GetValueOrDefault("hole_diameter_mm") ??
+            feature.Parameters.GetValueOrDefault("diameter_mm");
+        return double.TryParse(
+                   text,
+                   NumberStyles.Float,
+                   CultureInfo.InvariantCulture,
+                   out diameter) &&
+               double.IsFinite(diameter) &&
+               diameter > 0;
     }
 }
 
@@ -149,7 +329,7 @@ public static class FeatureHandlerPlanAdapter
             ["CreateCenterLine"] = FeatureHandlerTypes.Sketch,
             ["ExtrudeBoss"] = FeatureTypes.ExtrudeBoss,
             ["CutExtrude"] = FeatureTypes.ExtrudeCut,
-            ["AddHoleWizardHole"] = FeatureTypes.Hole,
+            ["CreateSimpleHole"] = FeatureTypes.Hole,
             ["RevolveBoss"] = FeatureTypes.RevolveBoss
         };
 

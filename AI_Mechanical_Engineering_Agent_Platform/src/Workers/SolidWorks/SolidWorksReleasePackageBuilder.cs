@@ -635,6 +635,31 @@ public sealed class SolidWorksReleasePackageValidator
         var evidence = manifest.SourceExecutionEvidence;
         if (!manifest.RequiresDrawingDeliverables)
         {
+            if (manifest.BuildExecutionStrategy.Equals(
+                    SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var featureReport = manifest.Reports.FirstOrDefault(item =>
+                    item.Name.Equals("feature_execution_report.json", StringComparison.OrdinalIgnoreCase));
+                return evidence.Count == 1 &&
+                       evidence.All(item =>
+                           string.Equals(item.Stage, "build", StringComparison.OrdinalIgnoreCase) &&
+                           string.Equals(item.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase) &&
+                           string.Equals(item.ExecutionMode, PartFamilyExecutionModes.GenericFeatureGraph, StringComparison.OrdinalIgnoreCase) &&
+                           item.RealCadExecuted &&
+                           item.RealCadConnected &&
+                           item.QualityGatePassed &&
+                           string.IsNullOrWhiteSpace(item.FailureStage)) &&
+                       featureReport is
+                       {
+                           Exists: true,
+                           SizeBytes: > 0,
+                           FinalStatus: not null
+                       } &&
+                       featureReport.FinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
+                       string.IsNullOrWhiteSpace(featureReport.FailureStage);
+            }
+
             var registry = PartFamilyBuilderRegistry.CreateDefault();
             return registry.TryGetBuilder(manifest.PartName, out var builder) &&
                    evidence.Count == 1 &&

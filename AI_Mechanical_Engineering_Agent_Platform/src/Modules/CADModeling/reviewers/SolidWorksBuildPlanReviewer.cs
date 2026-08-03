@@ -29,7 +29,18 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
             return Report(issues, fatal: true);
         }
 
-        issues.AddRange(definition.ReviewBuildPlan(plan));
+        if (plan.ExecutionStrategy.Equals(
+                SolidWorksBuildExecutionStrategies.PartFamilyBuilder,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            issues.AddRange(definition.ReviewBuildPlan(plan));
+        }
+        else if (!plan.ExecutionStrategy.Equals(
+                     SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add($"unsupported execution_strategy: {plan.ExecutionStrategy}.");
+        }
         if (!plan.ExpectedArtifacts.Any(artifact => string.Equals(artifact.ExpectedExtension, ".SLDPRT", StringComparison.OrdinalIgnoreCase)) ||
             !plan.ExpectedArtifacts.Any(artifact => string.Equals(artifact.ExpectedExtension, ".STEP", StringComparison.OrdinalIgnoreCase)) ||
             !plan.ExpectedArtifacts.Any(artifact => artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase)))

@@ -503,4 +503,37 @@ public sealed record PlatformSelfCheckReport(
 
     [JsonPropertyName("v2_0_b_documented")]
     public bool V20BDocumented { get; init; }
+
+    [JsonPropertyName("feature_adapter_layer_exists")]
+    public bool FeatureAdapterLayerExists { get; init; }
+
+    [JsonPropertyName("feature_handler_no_direct_com_access")]
+    public bool FeatureHandlerNoDirectComAccess { get; init; }
+
+    [JsonPropertyName("solidworks_feature_adapter_exists")]
+    public bool SolidWorksFeatureAdapterExists { get; init; }
+
+    [JsonPropertyName("sketch_real_execution_supported")]
+    public bool SketchRealExecutionSupported { get; init; }
+
+    [JsonPropertyName("extrude_real_execution_supported")]
+    public bool ExtrudeRealExecutionSupported { get; init; }
+
+    [JsonPropertyName("cut_real_execution_supported")]
+    public bool CutRealExecutionSupported { get; init; }
+
+    [JsonPropertyName("hole_real_execution_supported")]
+    public bool HoleRealExecutionSupported { get; init; }
+
+    [JsonPropertyName("feature_pipeline_end_to_end_supported")]
+    public bool FeaturePipelineEndToEndSupported { get; init; }
+
+    [JsonPropertyName("feature_result_validation_supported")]
+    public bool FeatureResultValidationSupported { get; init; }
+
+    [JsonPropertyName("feature_fake_success_guard_supported")]
+    public bool FeatureFakeSuccessGuardSupported { get; init; }
+
+    [JsonPropertyName("v2_0_c_documented")]
+    public bool V20CDocumented { get; init; }
 }

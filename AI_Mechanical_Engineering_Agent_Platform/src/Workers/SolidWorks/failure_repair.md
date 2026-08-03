@@ -246,3 +246,39 @@ flange 首次 diagnostic 在保存阶段返回 `part_save_failed`。修复复用
 首次主流程的发布包阶段遇到瞬时源文件哈希读锁并返回 `artifact_copy_failed`。修复后的顺序是先复制、再校验目标，只有两步均成功且源读锁属于已恢复状态时才记录 warning。最终 flange 与 shaft metadata 回填运行均为 `Passed`、`Deliverable`、QualityGate `Passed`。
 
 任何复制失败、目标缺失、空文件或目标校验失败仍是阻断项。禁止把已验证的瞬时读锁分支泛化为发布包错误豁免，也不进入 V2.0。
+
+## V2.0-C Feature Adapter 失败修复
+
+### 目标与证据入口
+
+输入为同次 `feature_execution_report.json`、Handler/Adapter 版本、API evidence、逐步返回结果、重建状态和产物。先确认失败属于纯逻辑 Handler、Adapter、Worker、产物还是证据门禁；不得通过 Handler 直接 COM 临时绕过。
+
+| `failure_stage` | Worker/Adapter 证据 | 修复与回填条件 |
+|---|---|---|
+| `feature_adapter_missing` | 组合根、接口注册、Worker 注入结果 | 恢复 `ISolidWorksFeatureAdapter` 注入；Handler 仍不创建 Adapter。 |
+| `sketch_execution_failed` | 基准选择、草图进入/退出、活动文档和重建 | 草图事务在专用 diagnostic 中完整通过。 |
+| `sketch_geometry_create_failed` | line / rectangle / circle 参数、米制转换和返回对象 | 每个预期实体有效并可被后续特征引用。 |
+| `extrude_execution_failed` | 闭合草图、blind 参数、Feature 返回和重建 | 有效实体 Feature 与重建结果同时通过。 |
+| `cut_execution_failed` | 切割草图、blind 深度、目标选择、`FeatureCut4` 返回 | 切除 Feature、重建和几何结果通过。 |
+| `hole_execution_failed` | 圆草图子步骤和 blind `FeatureCut4` 子步骤 | 两个子步骤及孔几何都通过；不改用 Hole Wizard。 |
+| `feature_result_invalid` | API 返回、结果标识、依赖、重建和错误集合 | 拒绝“未抛异常”成功，补全结构化结果校验。 |
+| `feature_artifact_missing` | 当次 SLDPRT、STEP、报告路径和大小 | 三项同次输出存在、非空且运行标识一致。 |
+| `feature_api_unverified` | evidence 状态、Adapter/Handler 版本和参数轮廓 | 先完成专用 diagnostic 与证据审查；`verified` 前不回填生产。 |
+
+### 修复顺序
+
+1. 输入/注册问题先在无 COM 层修复。
+2. Adapter 缺失先修组合根和可注入接口。
+3. evidence 未验证时停止生产，只允许显式专用 diagnostic。
+4. API 问题在 `output/solidworks/features/<timestamp>/` 中隔离复现，不扫描历史 latest。
+5. diagnostic 通过后审查证据，再从 `run-cad-workflow` 重跑最终主流程。
+
+禁止在 Handler 内加 COM，禁止用 `SimpleHole2` / Hole Wizard，禁止放宽 Feature 或文件有效性，禁止以 diagnostic 替代 Validator、Reviewer、QualityGate，也不进入 V2.0-D。
+
+### 防假成功证据回填
+
+旧 run `20260730_073759_9143941` 的 Cut/Hole 被人工判定为无孔假成功。非空 COM Feature、`rebuild_passed=true`、非空 SLDPRT/STEP 不能单独关闭 `feature_result_invalid`；该 run 必须从 verified evidence 中撤销。
+
+修复验证使用 `20260730_085830_6592380`，要求 Cut/Hole 各自产生严格体积下降、特征树新增对应 `ICE`，并由等轴测/俯视确认两孔。若任何一项缺失，继续返回 `feature_result_invalid`，不得用 `CandidatePassed` 覆盖。证据 revision、Handler/Adapter 版本、诊断报告或 SolidWorks 版本任一不一致时，返回 `feature_api_unverified`。
+
+新 run 已关闭四个精确 profile 的证据缺口，但仍为 `NotDeliverable`。任何超出 profile 的调用继续使用 `feature_api_unverified`；最终关闭交付问题必须通过 `run-cad-workflow`。

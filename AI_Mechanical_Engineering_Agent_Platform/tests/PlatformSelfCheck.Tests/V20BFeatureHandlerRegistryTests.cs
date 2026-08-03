@@ -105,7 +105,11 @@ public sealed class V20BFeatureHandlerRegistryTests
             new FeatureDefinition(
                 "hole-1",
                 FeatureTypes.Hole,
-                new Dictionary<string, string> { ["hole_diameter_mm"] = "8" }),
+                new Dictionary<string, string>
+                {
+                    ["hole_diameter_mm"] = "8",
+                    ["depth_mm"] = "12"
+                }),
             new FeatureDefinition(
                 "revolve-1",
                 FeatureTypes.RevolveBoss,
@@ -145,18 +149,22 @@ public sealed class V20BFeatureHandlerRegistryTests
     [Fact]
     public void CompleteGraphPreflightCollectsUnverifiedEvidenceBeforeExecution()
     {
-        var plan = GenericPlatePlan();
+        var plan = UnverifiedRevolvePlan();
         var registry = FeatureHandlerRegistry.CreateDefault();
 
         var preflight = registry.ValidateForRealExecution(plan);
 
         Assert.False(preflight.IsPassed);
-        Assert.Equal(PartFamilyFailureStages.FeatureApiEvidenceInsufficient, preflight.FailureStage);
+        Assert.Equal(PartFamilyFailureStages.FeatureApiUnverified, preflight.FailureStage);
         Assert.NotEmpty(preflight.Features);
         Assert.Contains(
             preflight.Issues,
-            issue => issue.Contains("api_evidence_status = unverified", StringComparison.OrdinalIgnoreCase));
-        Assert.All(registry.GetAll(), handler => Assert.False(handler.ApiEvidence.AllowsRealExecution));
+            issue => issue.Contains("unverified API evidence", StringComparison.OrdinalIgnoreCase));
+        Assert.False(Resolve(registry, FeatureTypes.RevolveBoss).ApiEvidence.AllowsRealExecution);
+        Assert.All(
+            registry.GetAll().Where(handler =>
+                !handler.FeatureType.Equals(FeatureTypes.RevolveBoss, StringComparison.OrdinalIgnoreCase)),
+            handler => Assert.True(handler.ApiEvidence.AllowsRealExecution));
     }
 
     [Fact]
@@ -184,12 +192,12 @@ public sealed class V20BFeatureHandlerRegistryTests
             var result = await worker.ExecuteAsync(
                 new SolidWorksWorkerRequest(
                     "v20-b-precom",
-                    GenericPlatePlan(),
+                    UnverifiedRevolvePlan(),
                     output,
                     DryRun: false));
 
             Assert.Equal("Rejected", result.Status);
-            Assert.Equal(PartFamilyFailureStages.FeatureApiEvidenceInsufficient, result.FailureStage);
+            Assert.Equal(PartFamilyFailureStages.FeatureApiUnverified, result.FailureStage);
             Assert.False(result.RealCadConnected);
             Assert.False(result.RealCadExecuted);
             Assert.Equal(0, session.ConnectCount);
@@ -233,6 +241,32 @@ public sealed class V20BFeatureHandlerRegistryTests
         Assert.Equal(SolidWorksBuildExecutionStrategies.FeatureHandlerGraph, plan.ExecutionStrategy);
         return plan;
     }
+
+    private static SolidWorksBuildPlan UnverifiedRevolvePlan() =>
+        new(
+            "v20-b-unverified-revolve-plan",
+            "v20-b-unverified-revolve-spec",
+            "SolidWorks",
+            "generic_cad_model",
+            "mm",
+            [
+                new SolidWorksOperation(
+                "v20-b-unverified-revolve",
+                "RevolveBoss",
+                "TopPlane",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["feature_id"] = "v20-b-unverified-revolve",
+                    ["feature_type"] = FeatureTypes.RevolveBoss,
+                    ["angle_degrees"] = "360"
+                },
+                [],
+                "Unverified revolve evidence probe.")
+            ],
+            [],
+            [],
+            ["Self-check must reject before COM."],
+            ExecutionStrategy: SolidWorksBuildExecutionStrategies.FeatureHandlerGraph);
 
     private static CADModelSpec SourcePlate() =>
         new(

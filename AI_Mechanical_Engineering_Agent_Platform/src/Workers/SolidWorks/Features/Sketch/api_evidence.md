@@ -2,7 +2,7 @@
 
 ## 状态与范围
 
-`FeatureType=sketch`，`HandlerVersion=2.0-b.1`，`api_evidence_status=unverified`。本文只记录通用草图 Handler 的候选 API、受限历史证据和验证缺口，不授权真实 COM 执行。
+`FeatureType=sketch`，`HandlerVersion=2.0-c.2`。V2.0-C 专用诊断已把严格参数轮廓 `standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres` 提升为 `api_evidence_status=verified`；任意面、arc、slot、约束和尺寸执行仍未授权。
 
 V1.9 零件族诊断只覆盖固定基准上的部分直线、圆和矩形组合；它没有验证通用引用解析、全部草图实体、约束、尺寸或轮廓闭合性，因此不能提升本 Handler 的状态。
 
@@ -49,3 +49,35 @@ V1.9 零件族诊断只覆盖固定基准上的部分直线、圆和矩形组合
 ## 禁止事项
 
 禁止把 V1.9 专用草图路径视为通用授权，禁止用实体非空代替轮廓有效性，禁止猜测任意面引用，禁止复制第三方代码或接入第三方脚本。
+
+## V2.0-C Adapter 诊断证据回填
+
+### 状态与边界
+
+V2.0-C 专用诊断已在 SolidWorks `33.5.0` 中验证 TopPlane 上的 line、center rectangle 与 circle。`SketchHandler` 仍保持纯逻辑，只做 Schema、参数校验和命令生成；所有基准选择、`InsertSketch`、实体创建和 COM 返回解释都属于 Adapter。
+
+### 最小候选
+
+| 实体 | 候选官方 API | 最小参数轮廓 |
+|---|---|---|
+| line | `ISketchManager.CreateLine` | 受控标准基准、两个端点、毫米到米转换 |
+| rectangle | `ISketchManager.CreateCenterRectangle` | 明确中心/角点合同、毫米到米转换 |
+| circle | `ISketchManager.CreateCircle` | 圆心与圆周点、毫米到米转换 |
+
+arc、slot、任意面引用、通用 constraints 和 dimensions 不在 V2.0-C 候选内。Adapter 不得从未支持输入推断默认行为。
+
+### diagnostic 与生产门禁
+
+专用 diagnostic 必须记录标准基准选择、草图进入/退出、每个实体的参数和返回对象、重建及下游特征消费结果，并输出：
+
+```text
+output/solidworks/features/<timestamp>/model.SLDPRT
+output/solidworks/features/<timestamp>/model.STEP
+output/solidworks/features/<timestamp>/feature_execution_report.json
+```
+
+旧 run `20260730_073759_9143941` 不再作为权威证据，因为同次 Cut/Hole 的非空结果被人工判定为无孔假成功。Sketch 的权威证据标识为 `v2.0-c-20260730-085830-sketch`，诊断报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`，完整执行链源码 revision 为 `71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`。
+
+该 run 验证 TopPlane line、center rectangle、circle，SLDPRT/STEP 哈希分别为 `E411188A101E49EFB1BD835E9BEF3A16EA0EE3BB124A873FFB96EDC5E72012E3` 和 `EF532158373D512CF31A76FE930CD90FBF21A913E52608CF9A04805F0590CE06`。只授权 `standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres`；任意面、arc、slot、constraints 和 dimensions 仍为 `unverified`。
+
+新 diagnostic 仍是 `CandidatePassed` / `NotDeliverable`。最终验收必须从 `run-cad-workflow` 运行完整主流程；禁止 Handler COM、空实体成功、扩大参数轮廓和进入 V2.0-D。

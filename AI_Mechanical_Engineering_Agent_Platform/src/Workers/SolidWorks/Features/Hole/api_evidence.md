@@ -2,9 +2,9 @@
 
 ## 状态与范围
 
-`FeatureType=hole`，`HandlerVersion=2.0-b.1`，`api_evidence_status=unverified`。当前没有被项目接受的通用 Hole API 映射，也没有授权的返回合同。
+`FeatureType=hole`，`HandlerVersion=2.0-c.2`。圆草图直径匹配加正深度 blind `FeatureCut4` 的组合轮廓已在 V2.0-C 专用诊断中提升为 `api_evidence_status=verified`；这不是 Hole Wizard 或 `SimpleHole2` 授权。
 
-BuildPlan operation 名称 `AddHoleWizardHole` 只是内部语义标签，不是 API 成功证据。V1.9 明确使用草图圆加 `FeatureCut4`，没有验证通用 Hole Wizard Handler。
+历史 BuildPlan operation 名称 `AddHoleWizardHole` 只是内部语义标签，不是 API 成功证据；V2.0-C 当前 operation 为 `CreateSimpleHole`，同样不授权 SolidWorks `SimpleHole2`。V1.9 明确使用草图圆加 `FeatureCut4`，没有验证通用 Hole Wizard Handler。
 
 ## 参数 Schema
 
@@ -12,6 +12,7 @@ BuildPlan operation 名称 `AddHoleWizardHole` 只是内部语义标签，不是
 |---|---|---|---|
 | `hole_diameter_mm` | positive number | 条件必需 | 与兼容别名至少提供一个有限正数。 |
 | `diameter_mm` | positive number | 条件必需 | `hole_diameter_mm` 缺失时作为兼容别名。 |
+| `depth_mm` | positive number | V2.0-C 必需 | blind `FeatureCut4` 的有限正深度。 |
 | `end_condition` | text | 否 | 当前没有已授权的真实映射。 |
 
 没有有效正直径时返回 `invalid_feature_parameter`。即使参数合法，孔位置、方向、终止、标准和类型仍未解析，不允许真实执行。
@@ -38,3 +39,35 @@ BuildPlan operation 名称 `AddHoleWizardHole` 只是内部语义标签，不是
 ## 禁止事项
 
 禁止因 operation 名称含 Hole Wizard 就调用 `HoleWizard5`，禁止复用 V1.9 草图切除结果宣称 Hole Handler 已验证，禁止猜测标准或终止枚举，禁止复制第三方代码。
+
+## V2.0-C 圆草图加 blind cut 证据回填
+
+### 选定策略与状态
+
+V2.0-C 选定唯一 diagnostic 候选，2026-07-30 新 run 已把其精确 profile 提升为 `verified`：
+
+```text
+孔位置与正直径
+→ RealSolidWorksFeatureAdapter 创建独立圆草图
+→ 精确保持或恢复该切割草图选择
+→ 正深度 blind FeatureCut4
+→ 校验返回 Feature、重建和孔几何
+```
+
+这是组合策略，不是 `SimpleHole2`，也不是 Hole Wizard。内部 operation `CreateSimpleHole` 不得被解释为同名或近名真实 API 选择；历史 `AddHoleWizardHole` 已退出当前适配映射。专用诊断已验证直径 10 mm 圆草图和深度 20 mm blind cut 的精确轮廓。
+
+### API 与参数轮廓
+
+圆草图使用 [`ISketchManager.CreateCircle`](https://help.solidworks.com/2025/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateCircle.html)，切除使用 [`IFeatureManager.FeatureCut4`](https://help.solidworks.com/2024/english/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureCut4.html)。参数必须包含受控基准/位置、正直径、毫米到米转换和明确正数 blind 深度。
+
+`HoleHandler` 只校验并生成组合命令，不得引用 COM。`SimpleHole2`、`HoleWizard5`、孔标准/类型枚举、贯穿猜测和不可审计的超深默认值均被拒绝。
+
+### diagnostic 与回填
+
+专用 diagnostic 必须把圆草图子步骤和 `FeatureCut4` 子步骤分别记录到 `output/solidworks/features/<timestamp>/feature_execution_report.json`，并同时生成非空 `model.SLDPRT` 和 `model.STEP`。任一子步骤失败使用 `hole_execution_failed`，返回或重建无效使用 `feature_result_invalid`。
+
+旧 run `20260730_073759_9143941` 的 Hole 虽返回非空 Feature 且重建通过，人工复核却没有孔，因此是明确假成功，不得保留为 verified。
+
+权威证据标识为 `v2.0-c-20260730-085830-simple-hole`，报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`。直径 10 mm 圆草图加 20 mm blind `FeatureCut4` 使体积从 `5.92146018366025E-05` 降至 `5.84292036732051E-05` m³；特征树出现第二个 `ICE`，等轴测和俯视确认第二个孔。Registry 在 `ConnectAsync` 前验证依赖草图恰为一个等径圆。
+
+只授权 `simple_circular_cut_blind;diameter_matches_single_circle;positive_depth_mm;no_wizard`。原生 `SimpleHole2`、Hole Wizard、其他终止条件和任意放置引用仍为 `unverified`。新 diagnostic 仍为 `CandidatePassed` / `NotDeliverable`；最终验收必须从 `run-cad-workflow` 进入完整主流程。禁止更换 API、Handler COM、扩大参数轮廓或进入 V2.0-D。

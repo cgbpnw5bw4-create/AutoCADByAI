@@ -39,7 +39,8 @@ public sealed class SolidWorksE2EReleasePackageBuilder
             SourceRoot = root,
             OutputDirectory = releaseDirectory,
             RequireRealExecutionEvidence = sources.RequireRealExecutionEvidence,
-            RequiresDrawingDeliverables = sources.RequireDrawingDeliverables
+            RequiresDrawingDeliverables = sources.RequireDrawingDeliverables,
+            BuildExecutionStrategy = sources.BuildExecutionStrategy
         };
         manifest.SourceExecutionEvidence.AddRange(sources.ExecutionEvidence);
         manifest.Warnings.AddRange(sources.Warnings ?? Array.Empty<string>());
@@ -53,6 +54,19 @@ public sealed class SolidWorksE2EReleasePackageBuilder
         }
 
         AddItem(manifest.Reports, "build_report.json", "Report", sources.BuildReportPath, Path.Combine(reportsDirectory, "build_report.json"), issues, readReportStatus: true);
+        if (sources.BuildExecutionStrategy.Equals(
+                SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            AddItem(
+                manifest.Reports,
+                "feature_execution_report.json",
+                "Report",
+                sources.FeatureExecutionReportPath,
+                Path.Combine(reportsDirectory, "feature_execution_report.json"),
+                issues,
+                readReportStatus: true);
+        }
         if (sources.RequireDrawingDeliverables)
         {
             AddItem(manifest.Reports, "drawing_report.json", "Report", sources.DrawingReportPath, Path.Combine(reportsDirectory, "drawing_report.json"), issues, readReportStatus: true);
@@ -212,6 +226,20 @@ public sealed class SolidWorksE2EReleasePackageBuilder
         var evidence = manifest.SourceExecutionEvidence;
         if (!manifest.RequiresDrawingDeliverables)
         {
+            if (manifest.BuildExecutionStrategy.Equals(
+                    SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return evidence.Count == 1 &&
+                       evidence.All(item =>
+                           string.Equals(item.Stage, "build", StringComparison.OrdinalIgnoreCase) &&
+                           string.Equals(item.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase) &&
+                           string.Equals(item.ExecutionMode, PartFamilyExecutionModes.GenericFeatureGraph, StringComparison.OrdinalIgnoreCase) &&
+                           item.RealCadExecuted && item.RealCadConnected && item.QualityGatePassed &&
+                           string.IsNullOrWhiteSpace(item.FailureStage)) &&
+                       GenericFeatureReportPassed(manifest);
+            }
+
             var registry = PartFamilyBuilderRegistry.CreateDefault();
             return registry.TryGetBuilder(manifest.PartName, out var builder) &&
                    evidence.Count == 1 &&
@@ -235,6 +263,19 @@ public sealed class SolidWorksE2EReleasePackageBuilder
             string.Equals(item.WorkerName, "RealSolidWorksWorker", StringComparison.OrdinalIgnoreCase) &&
             string.Equals(item.ExecutionMode, mode, StringComparison.OrdinalIgnoreCase) &&
             item.RealCadExecuted && item.RealCadConnected && item.QualityGatePassed && string.IsNullOrWhiteSpace(item.FailureStage));
+    }
+
+    private static bool GenericFeatureReportPassed(SolidWorksReleaseManifest manifest)
+    {
+        var report = manifest.Reports.FirstOrDefault(item =>
+            item.Name.Equals("feature_execution_report.json", StringComparison.OrdinalIgnoreCase));
+        return report is
+        {
+            Exists: true,
+            SizeBytes: > 0,
+            FinalStatus: not null
+        } && report.FinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
+             string.IsNullOrWhiteSpace(report.FailureStage);
     }
 
     private static string? DetermineFailureStage(SolidWorksReleaseManifest manifest, IReadOnlyList<string> issues)

@@ -30,7 +30,13 @@ public sealed record FeatureApiEvidence(
     string? SourceRevision = null)
 {
     public bool AllowsRealExecution =>
-        string.Equals(Status, FeatureApiEvidenceStatuses.Verified, StringComparison.OrdinalIgnoreCase);
+        string.Equals(Status, FeatureApiEvidenceStatuses.Verified, StringComparison.OrdinalIgnoreCase) &&
+        !string.IsNullOrWhiteSpace(EvidenceId) &&
+        !string.IsNullOrWhiteSpace(HandlerVersion) &&
+        !string.IsNullOrWhiteSpace(ParameterProfile) &&
+        !string.IsNullOrWhiteSpace(SolidWorksVersion) &&
+        !string.IsNullOrWhiteSpace(DiagnosticRunPath) &&
+        !string.IsNullOrWhiteSpace(SourceRevision);
 }
 
 public sealed record FeatureHandlerParameterDefinition(
@@ -74,8 +80,7 @@ public sealed class FeatureHandlerExecutionState
 }
 
 public sealed record FeatureHandlerExecutionContext(
-    object Model,
-    ISolidWorksComFacade Com,
+    ISolidWorksFeatureAdapter Adapter,
     FeatureDefinition Feature,
     SolidWorksOperation Operation,
     FeatureHandlerExecutionState State);
@@ -103,7 +108,63 @@ public sealed record FeatureHandlerReport(
     string ApiEvidenceStatus,
     string? FailureStage,
     IReadOnlyList<string> Logs,
-    IReadOnlyList<string> Issues);
+    IReadOnlyList<string> Issues,
+    string? AdapterId = null,
+    string? AdapterVersion = null,
+    bool ResultObjectValidated = false,
+    bool RebuildPassed = false,
+    string? EvidenceId = null,
+    string? EvidenceHandlerVersion = null,
+    string? EvidenceParameterProfile = null,
+    string? EvidenceSolidWorksVersion = null,
+    string? EvidenceDiagnosticRunPath = null,
+    string? EvidenceSourceRevision = null,
+    bool GeometryChangeValidated = false,
+    double? VolumeBeforeCubicMeters = null,
+    double? VolumeAfterCubicMeters = null);
+
+public sealed record FeatureAdapterArtifact(
+    string OperationId,
+    string FeatureId,
+    string FeatureType,
+    string AdapterId,
+    string AdapterVersion,
+    bool ResultObjectValidated,
+    bool RebuildPassed,
+    bool GeometryChangeValidated = false,
+    double? VolumeBeforeCubicMeters = null,
+    double? VolumeAfterCubicMeters = null);
+
+public interface ISolidWorksFeatureAdapter : IDisposable
+{
+    string AdapterId { get; }
+
+    string AdapterVersion { get; }
+
+    Task<FeatureHandlerExecutionResult> ExecuteSketchAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteExtrudeBossAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteExtrudeCutAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteHoleAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+}
 
 public interface IFeatureHandler
 {
@@ -122,6 +183,14 @@ public interface IFeatureHandler
     bool CanHandle(FeatureDefinition feature);
 
     FeatureHandlerValidationResult Validate(FeatureDefinition feature);
+
+    FeatureHandlerValidationResult ValidateParameterProfileForRealExecution(
+        FeatureDefinition feature);
+
+    FeatureHandlerValidationResult ValidateEvidenceForRealExecution(FeatureDefinition feature);
+
+    FeatureHandlerValidationResult ValidateRuntimeForRealExecution(
+        string? actualSolidWorksVersion);
 
     FeatureHandlerBuildPlanResult BuildPlan(
         FeatureDefinition feature,
@@ -144,7 +213,7 @@ public abstract class FeatureHandlerBase : IFeatureHandler
 
     public virtual string HandlerId => $"solidworks.{FeatureType}";
 
-    public virtual string HandlerVersion => "2.0-b.1";
+    public virtual string HandlerVersion => "2.0-c.2";
 
     public virtual string FailureStage => PartFamilyFailureStages.InvalidFeatureParameter;
 
@@ -157,6 +226,26 @@ public abstract class FeatureHandlerBase : IFeatureHandler
         feature.FeatureType.Equals(FeatureType, StringComparison.OrdinalIgnoreCase);
 
     public abstract FeatureHandlerValidationResult Validate(FeatureDefinition feature);
+
+    public virtual FeatureHandlerValidationResult ValidateParameterProfileForRealExecution(
+        FeatureDefinition feature) =>
+        Validate(feature);
+
+    public virtual FeatureHandlerValidationResult ValidateEvidenceForRealExecution(
+        FeatureDefinition feature)
+    {
+        var validation = ValidateParameterProfileForRealExecution(feature);
+        if (!validation.IsValid)
+        {
+            return validation;
+        }
+
+        return FeatureExecutionEvidencePolicy.ValidateEvidence(this, feature);
+    }
+
+    public virtual FeatureHandlerValidationResult ValidateRuntimeForRealExecution(
+        string? actualSolidWorksVersion) =>
+        FeatureExecutionEvidencePolicy.ValidateRuntimeVersion(this, actualSolidWorksVersion);
 
     public virtual FeatureHandlerBuildPlanResult BuildPlan(
         FeatureDefinition feature,
@@ -191,18 +280,73 @@ public abstract class FeatureHandlerBase : IFeatureHandler
 
     public FeatureHandlerReport GenerateReport(
         FeatureDefinition feature,
-        FeatureHandlerExecutionResult result) =>
-        new(
+        FeatureHandlerExecutionResult result)
+    {
+        var artifact = result.CreatedObject as FeatureAdapterArtifact;
+        return new(
             feature.FeatureId,
             feature.FeatureType,
             $"{HandlerId}@{HandlerVersion}",
             ApiEvidence.Status,
             result.FailureStage,
             result.Logs,
-            result.Issues);
+            result.Issues,
+            artifact?.AdapterId,
+            artifact?.AdapterVersion,
+            artifact?.ResultObjectValidated ?? false,
+            artifact?.RebuildPassed ?? false,
+            ApiEvidence.EvidenceId,
+            ApiEvidence.HandlerVersion,
+            ApiEvidence.ParameterProfile,
+            ApiEvidence.SolidWorksVersion,
+            ApiEvidence.DiagnosticRunPath,
+            ApiEvidence.SourceRevision,
+            artifact?.GeometryChangeValidated ?? false,
+            artifact?.VolumeBeforeCubicMeters,
+            artifact?.VolumeAfterCubicMeters);
+    }
 
     protected FeatureHandlerExecutionResult EvidenceBlocked(FeatureDefinition feature) =>
         FeatureHandlerExecutionResult.Failed(
-            PartFamilyFailureStages.FeatureApiEvidenceInsufficient,
-            $"{PartFamilyFailureStages.FeatureApiEvidenceInsufficient}: {feature.FeatureId}/{FeatureType} has api_evidence_status = {ApiEvidence.Status}.");
+            PartFamilyFailureStages.FeatureApiUnverified,
+            $"{PartFamilyFailureStages.FeatureApiUnverified}: {feature.FeatureId}/{FeatureType} has api_evidence_status = {ApiEvidence.Status}.");
+
+    protected static FeatureHandlerValidationResult EvidenceProfileBlocked(
+        FeatureDefinition feature,
+        string message) =>
+        FeatureHandlerValidationResult.Failed(
+            PartFamilyFailureStages.FeatureApiUnverified,
+            $"{PartFamilyFailureStages.FeatureApiUnverified}: " +
+            $"{feature.FeatureId}/{feature.FeatureType}: {message}");
+
+    protected static FeatureHandlerExecutionResult AdapterMissing(FeatureDefinition feature) =>
+        FeatureHandlerExecutionResult.Failed(
+            PartFamilyFailureStages.FeatureAdapterMissing,
+            $"{PartFamilyFailureStages.FeatureAdapterMissing}: no SolidWorks feature adapter is available for {feature.FeatureId}/{feature.FeatureType}.");
+
+    protected static FeatureHandlerValidationResult RejectUnknownParameters(
+        FeatureDefinition feature,
+        params string[] allowedParameters)
+    {
+        var allowed = new HashSet<string>(
+            allowedParameters.Concat(
+            [
+                "feature_id",
+                "feature_type",
+                "sketch_id",
+                "referenced_sketches",
+                "target_reference"
+            ]),
+            StringComparer.OrdinalIgnoreCase);
+        var unknown = feature.Parameters.Keys
+            .Where(parameter => !allowed.Contains(parameter))
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return unknown.Length == 0
+            ? FeatureHandlerValidationResult.Passed()
+            : FeatureHandlerValidationResult.Failed(
+                PartFamilyFailureStages.InvalidFeatureParameter,
+                $"{PartFamilyFailureStages.InvalidFeatureParameter}: {feature.FeatureId} contains " +
+                $"parameters outside the authorized profile: {string.Join(", ", unknown)}.");
+    }
 }
