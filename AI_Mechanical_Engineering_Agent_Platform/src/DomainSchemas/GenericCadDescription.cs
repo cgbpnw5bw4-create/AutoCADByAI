@@ -809,6 +809,57 @@ public class BuildPlanCompiler
         var outputRequirements = spec.OutputRequirements.Count == 0
             ? new[] { "SLDPRT", "STEP", "build_report.json" }
             : spec.OutputRequirements.ToArray();
+        var expectedArtifacts = new List<SolidWorksArtifact>
+        {
+            new(
+                "expected-part",
+                "Part",
+                $"output/solidworks/artifacts/{safeModelId}.SLDPRT",
+                ".SLDPRT",
+                false,
+                0,
+                "Compiled SolidWorks part output."),
+            new(
+                "expected-step",
+                "Step",
+                $"output/solidworks/artifacts/{safeModelId}.STEP",
+                ".STEP",
+                false,
+                0,
+                "Compiled STEP output."),
+            new(
+                "expected-build-report",
+                "BuildReport",
+                "output/solidworks/reports/build_report.json",
+                ".json",
+                false,
+                0,
+                "Compiled build report.")
+        };
+        if (outputRequirements.Contains("geometry_validation_report.json", StringComparer.OrdinalIgnoreCase))
+        {
+            expectedArtifacts.Add(new SolidWorksArtifact(
+                "expected-geometry-validation-report",
+                "GeometryValidationReport",
+                "output/solidworks/reports/geometry_validation_report.json",
+                ".json",
+                false,
+                0,
+                "Compiled geometry validation report."));
+        }
+
+        if (outputRequirements.Contains("rebuild_report.json", StringComparer.OrdinalIgnoreCase))
+        {
+            expectedArtifacts.Add(new SolidWorksArtifact(
+                "expected-rebuild-report",
+                "RebuildReport",
+                "output/solidworks/reports/rebuild_report.json",
+                ".json",
+                false,
+                0,
+                "Compiled parameter rebuild report."));
+        }
+
         var plan = new SolidWorksBuildPlan(
             $"solidworks-build-plan-{SafeFileName(taskId)}",
             spec.ModelId,
@@ -816,32 +867,7 @@ public class BuildPlanCompiler
             spec.ModelType,
             spec.Unit,
             operations,
-            [
-                new SolidWorksArtifact(
-                    "expected-part",
-                    "Part",
-                    $"output/solidworks/artifacts/{safeModelId}.SLDPRT",
-                    ".SLDPRT",
-                    false,
-                    0,
-                    "Compiled SolidWorks part output."),
-                new SolidWorksArtifact(
-                    "expected-step",
-                    "Step",
-                    $"output/solidworks/artifacts/{safeModelId}.STEP",
-                    ".STEP",
-                    false,
-                    0,
-                    "Compiled STEP output."),
-                new SolidWorksArtifact(
-                    "expected-build-report",
-                    "BuildReport",
-                    "output/solidworks/reports/build_report.json",
-                    ".json",
-                    false,
-                    0,
-                    "Compiled build report.")
-            ],
+            expectedArtifacts,
             [
                 "feature dependencies must form a directed acyclic graph",
                 "execution_order must be positive, unique and dependency-consistent",

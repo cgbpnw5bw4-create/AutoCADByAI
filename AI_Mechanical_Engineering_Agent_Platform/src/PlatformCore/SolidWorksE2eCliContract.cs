@@ -9,6 +9,7 @@ public static class SolidWorksE2eCliContract
     public const string InputOption = "--input";
     public const string CompleteDrawingPackageOperation = "build_complete_drawing_package";
     public const string PartFamilyReleasePackageOperation = "build_part_family_release_package";
+    public const string ModelUpdateReleasePackageOperation = "rebuild_parameter_update";
 
     public static bool IsInvocation(IReadOnlyList<string> arguments) =>
         arguments.Count == 3 &&
@@ -18,8 +19,12 @@ public static class SolidWorksE2eCliContract
 
     public static bool IsSupportedOperation(string? operation) =>
         string.Equals(operation, CompleteDrawingPackageOperation, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(operation, PartFamilyReleasePackageOperation, StringComparison.OrdinalIgnoreCase);
+        string.Equals(operation, PartFamilyReleasePackageOperation, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(operation, ModelUpdateReleasePackageOperation, StringComparison.OrdinalIgnoreCase);
 
     public static bool IsPartFamilyReleasePackage(string? operation) =>
         string.Equals(operation, PartFamilyReleasePackageOperation, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsModelUpdateReleasePackage(string? operation) =>
+        string.Equals(operation, ModelUpdateReleasePackageOperation, StringComparison.OrdinalIgnoreCase);
 }

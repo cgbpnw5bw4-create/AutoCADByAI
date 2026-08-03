@@ -399,6 +399,8 @@ public sealed class SolidWorksReleaseManifest
 
     public bool RequiresDrawingDeliverables { get; set; } = true;
 
+    public bool RequireGeometryValidationReports { get; set; }
+
     public string BuildExecutionStrategy { get; set; } =
         SolidWorksBuildExecutionStrategies.PartFamilyBuilder;
 
@@ -554,7 +556,10 @@ public sealed record SolidWorksReleasePackageSourceSet(
     string? RequestId = null,
     bool RequireDrawingDeliverables = true,
     string BuildExecutionStrategy = SolidWorksBuildExecutionStrategies.PartFamilyBuilder,
-    string? FeatureExecutionReportPath = null);
+    string? FeatureExecutionReportPath = null,
+    string? GeometryValidationReportPath = null,
+    string? RebuildReportPath = null,
+    bool RequireGeometryValidationReports = false);
 
 /// <summary>
 /// Runtime evidence from a stage that was executed through the controlled

@@ -40,6 +40,7 @@ public sealed class SolidWorksE2EReleasePackageBuilder
             OutputDirectory = releaseDirectory,
             RequireRealExecutionEvidence = sources.RequireRealExecutionEvidence,
             RequiresDrawingDeliverables = sources.RequireDrawingDeliverables,
+            RequireGeometryValidationReports = sources.RequireGeometryValidationReports,
             BuildExecutionStrategy = sources.BuildExecutionStrategy
         };
         manifest.SourceExecutionEvidence.AddRange(sources.ExecutionEvidence);
@@ -64,6 +65,25 @@ public sealed class SolidWorksE2EReleasePackageBuilder
                 "Report",
                 sources.FeatureExecutionReportPath,
                 Path.Combine(reportsDirectory, "feature_execution_report.json"),
+                issues,
+                readReportStatus: true);
+        }
+        if (sources.RequireGeometryValidationReports)
+        {
+            AddItem(
+                manifest.Reports,
+                "geometry_validation_report.json",
+                "Report",
+                sources.GeometryValidationReportPath,
+                Path.Combine(reportsDirectory, "geometry_validation_report.json"),
+                issues,
+                readReportStatus: true);
+            AddItem(
+                manifest.Reports,
+                "rebuild_report.json",
+                "Report",
+                sources.RebuildReportPath,
+                Path.Combine(reportsDirectory, "rebuild_report.json"),
                 issues,
                 readReportStatus: true);
         }
@@ -269,13 +289,33 @@ public sealed class SolidWorksE2EReleasePackageBuilder
     {
         var report = manifest.Reports.FirstOrDefault(item =>
             item.Name.Equals("feature_execution_report.json", StringComparison.OrdinalIgnoreCase));
-        return report is
+        var featureReportPassed = report is
         {
             Exists: true,
             SizeBytes: > 0,
             FinalStatus: not null
         } && report.FinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
              string.IsNullOrWhiteSpace(report.FailureStage);
+        if (!featureReportPassed)
+        {
+            return false;
+        }
+
+        if (!manifest.RequireGeometryValidationReports)
+        {
+            return true;
+        }
+
+        return new[] { "geometry_validation_report.json", "rebuild_report.json" }
+            .Select(name => manifest.Reports.FirstOrDefault(item =>
+                item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            .All(item => item is
+            {
+                Exists: true,
+                SizeBytes: > 0,
+                FinalStatus: not null
+            } && item.FinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
+                 string.IsNullOrWhiteSpace(item.FailureStage));
     }
 
     private static string? DetermineFailureStage(SolidWorksReleaseManifest manifest, IReadOnlyList<string> issues)
@@ -316,7 +356,7 @@ public sealed class SolidWorksE2EReleasePackageBuilder
     private static string BuildSummary(SolidWorksReleaseManifest manifest)
     {
         var text = new StringBuilder();
-        text.AppendLine("# V1.9 SolidWorks 受控主工作流发布包摘要");
+        text.AppendLine("# SolidWorks 受控主工作流发布包摘要");
         text.AppendLine();
         text.AppendLine($"- request_id：`{manifest.RequestId ?? "unknown"}`");
         text.AppendLine($"- part_type：`{manifest.PartName}`");

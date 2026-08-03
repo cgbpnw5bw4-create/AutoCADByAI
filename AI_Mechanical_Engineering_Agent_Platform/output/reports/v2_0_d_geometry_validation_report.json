@@ -1,0 +1,174 @@
+{
+  "model_id": "plate_basic_4holes_parameter_update",
+  "input_parameters": {
+    "length_mm": "200",
+    "width_mm": "100",
+    "thickness_mm": "15",
+    "hole_count": "4",
+    "hole_diameter_mm": "10"
+  },
+  "measured_geometry": {
+    "rebuild_passed": true,
+    "bounding_box": {
+      "min_xmm": 0,
+      "min_ymm": 0,
+      "min_zmm": 0,
+      "max_xmm": 200,
+      "max_ymm": 100,
+      "max_zmm": 15
+    },
+    "exact_extents": {
+      "min_xmm": 0,
+      "min_ymm": 0,
+      "min_zmm": 0,
+      "max_xmm": 200,
+      "max_ymm": 100,
+      "max_zmm": 15
+    },
+    "body_count": 1,
+    "volume_cubic_millimeters": 295287.6110196153,
+    "mass_kilograms": 2.3,
+    "mass_property_volume_cubic_millimeters": 295287.6110196153,
+    "feature_types": [
+      "ProfileFeature",
+      "BossExtrude",
+      "CutExtrude"
+    ],
+    "features": null,
+    "cylindrical_diameters_mm": [
+      10,
+      10,
+      10,
+      10
+    ],
+    "cylinders": [
+      {
+        "diameter_mm": 10,
+        "origin_xmm": -80,
+        "origin_ymm": -30,
+        "origin_zmm": 0,
+        "axis_x": 0,
+        "axis_y": 0,
+        "axis_z": 1
+      },
+      {
+        "diameter_mm": 10,
+        "origin_xmm": 80,
+        "origin_ymm": -30,
+        "origin_zmm": 0,
+        "axis_x": 0,
+        "axis_y": 0,
+        "axis_z": 1
+      },
+      {
+        "diameter_mm": 10,
+        "origin_xmm": -80,
+        "origin_ymm": 30,
+        "origin_zmm": 0,
+        "axis_x": 0,
+        "axis_y": 0,
+        "axis_z": 1
+      },
+      {
+        "diameter_mm": 10,
+        "origin_xmm": 80,
+        "origin_ymm": 30,
+        "origin_zmm": 0,
+        "axis_x": 0,
+        "axis_y": 0,
+        "axis_z": 1
+      }
+    ],
+    "read_issues": [],
+    "solid_works_version": null,
+    "geometry_evidence_source_revision": null
+  },
+  "expected_geometry": {
+    "length_mm": 200,
+    "width_mm": 100,
+    "thickness_mm": 15,
+    "diameter_mm": 10,
+    "expected_hole_count": 4,
+    "expected_volume_cubic_millimeters": 295287.6110196153,
+    "expected_feature_kinds": [
+      "sketch",
+      "extrude_boss",
+      "extrude_cut",
+      "hole"
+    ],
+    "expected_body_count": 1
+  },
+  "deviations": [
+    {
+      "check": "length_mm",
+      "expected": 200,
+      "measured": 200,
+      "tolerance": 0.05,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "width_mm",
+      "expected": 100,
+      "measured": 100,
+      "tolerance": 0.05,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "thickness_mm",
+      "expected": 15,
+      "measured": 15,
+      "tolerance": 0.05,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "mass_property_volume",
+      "expected": 295287.6110196153,
+      "measured": 295287.6110196153,
+      "tolerance": 590.5752220392307,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "volume_cubic_mm",
+      "expected": 295287.6110196153,
+      "measured": 295287.6110196153,
+      "tolerance": 590.5752220392307,
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "diameter_mm",
+      "expected": 10,
+      "measured": 10,
+      "tolerance": 0.02,
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "passed_checks": [
+    "solidworks_rebuild",
+    "bounding_box",
+    "exact_extents",
+    "parameter_geometry:length_mm",
+    "parameter_geometry:width_mm",
+    "parameter_geometry:thickness_mm",
+    "body_count",
+    "volume",
+    "mass_property_volume",
+    "volume_expected_geometry",
+    "feature_result:sketch",
+    "feature_result:extrude",
+    "feature_result:cut",
+    "feature_result:hole",
+    "parameter_geometry:diameter_mm"
+  ],
+  "failed_checks": [],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-08-03T07:13:16.3442353+00:00",
+  "solid_works_version": null,
+  "geometry_evidence_source_revision": null
+}

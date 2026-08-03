@@ -273,3 +273,25 @@ markdown_chinese_check_passed
 - `review_artifact/feature_pipeline_plate_artifact_review_report.json`：100 分、`pass`；一个 `Extrusion` 加两个 `ICE`；人工确认两个孔。
 
 审查结论：四个精确 profile 已通过完整主流程并形成 `Deliverable`，同时保持 diagnostic 与交付判定分离；不扩大到未验证 profile，不进入 V2.0-D。
+
+## V2.0-D 重建与几何验证审查清单
+
+以下任一项均为 Blocker：
+
+- 参数变更未经 `CADModelSpec`、`ModelUpdateService`、`BuildPlanCompiler`、`FeatureExecutionPipeline`、`SolidWorks Rebuild` 的闭环，或绕过了 `FeatureHandlerRegistry` / `FeatureHandler`。
+- `ModelUpdateService` 或 `GeometryValidator` 直接访问 `COM`，或者 `GeometryReader` 没有独立读取当前受控模型。
+- `old_parameters`、`new_parameters`、`changed_features`、`rebuild_result` 未记录，或参数更新破坏 `FeatureGraph` 节点、依赖、拓扑顺序。
+- 未读取真实包围盒、实体数量、体积、可用质量属性、草图、拉伸、切除、孔、实际 `length_mm`、`diameter_mm` / 轴径。
+- 使用 `COM` 成功、空错误、非空文件、历史产物或诊断结果证明几何成功。
+- `geometry_validation_report.json` 或 `rebuild_report.json` 缺失、不可解析、未带输入/测量/期望/偏差/通过/失败/阶段/最终状态，或未加入同次 `QualityGate`。
+- 发生 `rebuild_failed`、`geometry_read_failed`、`bounding_box_invalid`、`volume_validation_failed`、`parameter_geometry_mismatch`、`feature_missing_after_rebuild`、`geometry_report_failed` 后仍交付。
+- `plate_basic_4holes` 未由真实读数证明四孔，或以新增 CAD Feature、零件族、未证实阵列、孔向导、贯穿或对称拉伸绕开既有 `FeatureHandler`。
+- 未通过 `run-cad-workflow --input examples/parameter_update_plate.json` 的 160×80×12 初始建模和 200×100×15 更新重建，就声称完成或进入 V2.0-E。
+
+通过要求是：同一次真实主流程输出 `SLDPRT`、`STEP`、`geometry_validation_report.json` 和 `rebuild_report.json`；`GeometryValidator`、`Artifact Validator`、`Reviewer`、`QualityGate` 全部通过；`FeatureGraph` 完整且实际尺寸随参数正确变化。直接构建器、独立诊断或文件存在检查均不可替代该验收。
+## V2.0-D 三圆切除复核
+
+- 确认 `FeatureHandlerRegistry` 先于 `V20DThreeCircleCutEvidencePolicy` 通过，且 worker 日志记录 `v2_0_d_three_circle_cut_evidence_verified`；没有该记录不得视为真实重建可验收。
+- 确认策略仍在 COM 连接前运行，且只绑定 `plate_basic_4holes` 的既有 sketch / boss / cut / hole 组合，未引入新的 CAD Feature、零件族或 direct Builder。
+- 对照 `parameter_update_plate.json` 和受绑定候选报告：`cut_profile` 三个 Φ10 圆、`hole_profile` 一个 Φ10 圆、20 mm 边距、160×80×12 与 200×100×15 两个状态、盲切体积变化和候选报告哈希均必须一致。
+- 确认最终结论来自同次 `run-cad-workflow` 的 GeometryReport、RebuildReport、E2E 与 Package QualityGate；`CandidatePassed` 永远不等于 Deliverable。

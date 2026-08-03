@@ -1,0 +1,186 @@
+{
+  "operation": "rebuild_parameter_update",
+  "cad_model_spec": {
+    "model_id": "plate_basic_4holes_parameter_update",
+    "model_type": "plate_basic_4holes",
+    "unit": "mm",
+    "parameters": {
+      "length_mm": "160",
+      "width_mm": "80",
+      "thickness_mm": "12",
+      "hole_count": "4",
+      "hole_diameter_mm": "10"
+    },
+    "reference_geometry": {
+      "primary_plane": "TopPlane"
+    },
+    "sketches": [
+      {
+        "sketch_id": "plate_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 1,
+        "entities": [
+          {
+            "entity_id": "plate_rectangle",
+            "entity_type": "rectangle",
+            "parameters": {
+              "center_x_mm": "0",
+              "center_y_mm": "0",
+              "length_mm": "160",
+              "width_mm": "80"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      },
+      {
+        "sketch_id": "cut_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 2,
+        "entities": [
+          {
+            "entity_id": "cut_hole_1",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "-60",
+              "center_y_mm": "-20",
+              "radius_mm": "5"
+            }
+          },
+          {
+            "entity_id": "cut_hole_2",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "60",
+              "center_y_mm": "-20",
+              "radius_mm": "5"
+            }
+          },
+          {
+            "entity_id": "cut_hole_3",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "-60",
+              "center_y_mm": "20",
+              "radius_mm": "5"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      },
+      {
+        "sketch_id": "hole_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 3,
+        "entities": [
+          {
+            "entity_id": "hole_4",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "60",
+              "center_y_mm": "20",
+              "radius_mm": "5"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      }
+    ],
+    "features": [
+      {
+        "feature_id": "plate_boss",
+        "feature_type": "extrude_boss",
+        "parameters": {
+          "depth_mm": "12",
+          "direction": "blind"
+        },
+        "dependencies": [],
+        "referenced_sketches": [
+          "plate_profile"
+        ],
+        "referenced_features": [],
+        "execution_order": 1
+      },
+      {
+        "feature_id": "plate_cut",
+        "feature_type": "extrude_cut",
+        "parameters": {
+          "depth_mm": "24",
+          "through_all": "false"
+        },
+        "dependencies": [
+          "plate_boss"
+        ],
+        "referenced_sketches": [
+          "cut_profile"
+        ],
+        "referenced_features": [
+          "plate_boss"
+        ],
+        "execution_order": 2
+      },
+      {
+        "feature_id": "plate_hole",
+        "feature_type": "hole",
+        "parameters": {
+          "diameter_mm": "10",
+          "depth_mm": "24",
+          "strategy": "simple_circular_cut_blind"
+        },
+        "dependencies": [
+          "plate_cut"
+        ],
+        "referenced_sketches": [
+          "hole_profile"
+        ],
+        "referenced_features": [
+          "plate_cut"
+        ],
+        "execution_order": 3
+      }
+    ],
+    "material": "Q235",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "feature_execution_report.json",
+      "build_report.json",
+      "geometry_validation_report.json",
+      "rebuild_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json",
+      "package_quality_report.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    }
+  },
+  "parameter_update": {
+    "old_parameters": {
+      "length_mm": "160",
+      "width_mm": "80",
+      "thickness_mm": "12",
+      "hole_count": "4",
+      "hole_diameter_mm": "10"
+    },
+    "new_parameters": {
+      "length_mm": "200",
+      "width_mm": "100",
+      "thickness_mm": "15"
+    }
+  },
+  "dry_run": false,
+  "generate_drawing": false,
+  "generate_dimensions": false,
+  "generate_title_block": false,
+  "generate_release_package": true
+}

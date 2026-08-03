@@ -4,6 +4,7 @@ using AgentGatewayHost;
 using AgentRuntime.Microsoft;
 using DomainSchemas;
 using PlatformCore;
+using PlatformCore.Modules.CADModeling;
 
 if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.OrdinalIgnoreCase))
 {
@@ -117,6 +118,7 @@ Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- self-check")
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_flange_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_shaft_request.json");
+Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/parameter_update_plate.json");
 return 1;
 
 static IReadOnlyList<string> Validate(CadWorkflowInput? input, CADModelSpec? modelSpec)
@@ -130,7 +132,7 @@ static IReadOnlyList<string> Validate(CadWorkflowInput? input, CADModelSpec? mod
 
     if (!SolidWorksE2eCliContract.IsSupportedOperation(input.Operation))
     {
-        issues.Add($"operation must be {SolidWorksE2eCliContract.CompleteDrawingPackageOperation} or {SolidWorksE2eCliContract.PartFamilyReleasePackageOperation}.");
+        issues.Add($"operation must be {SolidWorksE2eCliContract.CompleteDrawingPackageOperation}, {SolidWorksE2eCliContract.PartFamilyReleasePackageOperation}, or {SolidWorksE2eCliContract.ModelUpdateReleasePackageOperation}.");
     }
 
     if (modelSpec is null || string.IsNullOrWhiteSpace(modelSpec.PartType))
@@ -160,6 +162,26 @@ static IReadOnlyList<string> Validate(CadWorkflowInput? input, CADModelSpec? mod
         if (!generateReleasePackage)
             issues.Add("build_part_family_release_package requires generate_release_package=true.");
     }
+    else if (SolidWorksE2eCliContract.IsModelUpdateReleasePackage(input.Operation))
+    {
+        if (!string.Equals(modelSpec.PartType, PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase))
+            issues.Add("rebuild_parameter_update remains restricted to plate_basic_4holes.");
+        if (!HasExactPlateRegressionDimensions(modelSpec))
+            issues.Add("the controlled V2.0-D baseline requires 160x80x12 mm with four 10 mm holes.");
+        if (modelSpec.Sketches.Count == 0 || modelSpec.Features.Count == 0)
+            issues.Add("rebuild_parameter_update requires an explicit FeatureGraph so execution cannot bypass FeatureHandler.");
+        if (input.ParameterUpdate is null || input.ParameterUpdate.NewParameters.Count == 0 || input.ParameterUpdate.OldParameters is null)
+            issues.Add("rebuild_parameter_update requires explicit old_parameters and new_parameters.");
+        else if (!HasParameterValue(input.ParameterUpdate.NewParameters, "length_mm", "200") ||
+                 !HasParameterValue(input.ParameterUpdate.NewParameters, "width_mm", "100") ||
+                 !HasParameterValue(input.ParameterUpdate.NewParameters, "thickness_mm", "15"))
+            issues.Add("the controlled V2.0-D update requires 200x100x15 mm.");
+        if (!modelSpec.OutputRequirements.Contains("geometry_validation_report.json", StringComparer.OrdinalIgnoreCase) ||
+            !modelSpec.OutputRequirements.Contains("rebuild_report.json", StringComparer.OrdinalIgnoreCase))
+            issues.Add("rebuild_parameter_update requires geometry_validation_report.json and rebuild_report.json outputs.");
+        if (generateDrawing || generateDimensions || generateTitleBlock || !generateReleasePackage)
+            issues.Add("rebuild_parameter_update is build-only and requires generate_release_package=true.");
+    }
 
     return issues;
 }
@@ -184,7 +206,10 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
         ["structured_input_received"] = "true",
         ["gateway_invoked"] = "true",
         ["project_root"] = projectRoot,
-        ["solidworks_output_directory"] = outputDirectory
+        ["solidworks_output_directory"] = outputDirectory,
+        ["parameter_update_json"] = input.ParameterUpdate is null
+            ? string.Empty
+            : JsonSerializer.Serialize(input.ParameterUpdate, JsonOptions())
     };
 
 static CADModelSpec? ResolveModelSpec(CadWorkflowInput? input)
@@ -250,6 +275,12 @@ static bool HasValue(CADModelSpec spec, string name, string expected) =>
     decimal.TryParse(expected, NumberStyles.Float, CultureInfo.InvariantCulture, out var target) &&
     actual == target;
 
+static bool HasParameterValue(IReadOnlyDictionary<string, string> values, string name, string expected) =>
+    values.TryGetValue(name, out var actual) &&
+    decimal.TryParse(actual, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedActual) &&
+    decimal.TryParse(expected, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedExpected) &&
+    parsedActual == parsedExpected;
+
 static JsonSerializerOptions JsonOptions() => new()
 {
     PropertyNameCaseInsensitive = true,
@@ -293,4 +324,5 @@ internal sealed class CadWorkflowInput
     public bool? GenerateDimensions { get; init; }
     public bool? GenerateTitleBlock { get; init; }
     public bool? GenerateReleasePackage { get; init; }
+    public ModelParameterUpdateRequest? ParameterUpdate { get; init; }
 }

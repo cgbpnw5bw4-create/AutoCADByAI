@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DomainSchemas;
+using PlatformCore.Modules.CADModeling;
 using QualityGate;
 
 namespace PlatformCore;
@@ -124,6 +125,217 @@ public sealed partial class SolidWorksMainWorkflowRunner
             stageResults,
             package,
             build.WorkflowResult,
+            finalGate,
+            finalIssues,
+            failureStage,
+            cancellationToken,
+            packageOutcome);
+    }
+
+    private async Task<SolidWorksMainWorkflowResult> ExecuteModelUpdateReleasePackageAsync(
+        SolidWorksMainWorkflowRequest request,
+        CancellationToken cancellationToken)
+    {
+        var releaseDirectory = Path.GetFullPath(request.OutputDirectory);
+        Directory.CreateDirectory(Path.Combine(releaseDirectory, "reports"));
+        if (request.ModelSpec is null || request.ParameterUpdate is null)
+        {
+            var issues = new[] { "invalid_cad_model_spec: model_update_release requires cad_model_spec and parameter_update." };
+            var failedWorkflow = await _workflowEngine.ExecuteAsync(
+                [
+                    new WorkflowStep(
+                        "V2.0-D model-update eligibility",
+                        _ => Task.FromResult(StepFailed(
+                            "solidworks-model-update-eligibility",
+                            "The parameter-update request is incomplete.",
+                            issues,
+                            fatal: true)),
+                        "solidworks-model-update-eligibility")
+                ],
+                new WorkflowContext($"solidworks-model-update-{request.TaskId}", new Dictionary<string, object?>()),
+                cancellationToken);
+            return await WriteE2eResultAsync(
+                request,
+                releaseDirectory,
+                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
+                package: null,
+                failedWorkflow,
+                new GateDecision($"gate-solidworks-model-update-{Guid.NewGuid():N}", GateDecisionResult.Failed, "Model update request is incomplete."),
+                issues,
+                PartFamilyFailureStages.InvalidCadModelSpec,
+                cancellationToken);
+        }
+
+        var preparation = new ModelUpdateService().Prepare(
+            $"{request.TaskId}-parameter-update",
+            request.ModelSpec,
+            request.ParameterUpdate);
+        if (!preparation.IsSuccess)
+        {
+            var failedWorkflow = await _workflowEngine.ExecuteAsync(
+                [
+                    new WorkflowStep(
+                        "V2.0-D parameter propagation",
+                        _ => Task.FromResult(StepFailed(
+                            "solidworks-model-update-preparation",
+                            "ModelUpdateService rejected the parameter update.",
+                            preparation.Issues,
+                            fatal: true)),
+                        "solidworks-model-update-preparation")
+                ],
+                new WorkflowContext($"solidworks-model-update-{request.TaskId}", new Dictionary<string, object?>()),
+                cancellationToken);
+            return await WriteE2eResultAsync(
+                request,
+                releaseDirectory,
+                Array.Empty<(string Stage, SolidWorksMainWorkflowResult Result)>(),
+                package: null,
+                failedWorkflow,
+                new GateDecision($"gate-solidworks-model-update-{Guid.NewGuid():N}", GateDecisionResult.Failed, "ModelUpdateService rejected the parameter update."),
+                preparation.Issues,
+                preparation.FailureStage ?? PartFamilyFailureStages.InvalidCadModelSpec,
+                cancellationToken);
+        }
+
+        var partType = request.ModelSpec.PartType;
+        var runSegment = ToSafePathSegment(request.RequestId);
+        var initial = await ExecuteSingleStageAsync(
+            request with
+            {
+                Operation = SolidWorksMainWorkflowOperation.BuildPlate,
+                Stage = SolidWorksMainWorkflowStage.BuildPartFamily,
+                OutputDirectory = Path.Combine(request.ProjectRoot, "output", "solidworks", "real", ToSafePathSegment(partType), runSegment, "initial")
+            },
+            cancellationToken);
+        var stageResults = new List<(string Stage, SolidWorksMainWorkflowResult Result)> { ("initial", initial) };
+
+        SolidWorksMainWorkflowResult? rebuilt = null;
+        if (StagePassedForE2e(initial))
+        {
+            rebuilt = await ExecuteSingleStageAsync(
+                request with
+                {
+                    Operation = SolidWorksMainWorkflowOperation.BuildPlate,
+                    Stage = SolidWorksMainWorkflowStage.BuildPartFamily,
+                    ModelSpec = preparation.UpdatedModelSpec,
+                    OutputDirectory = Path.Combine(request.ProjectRoot, "output", "solidworks", "real", ToSafePathSegment(partType), runSegment, "rebuild")
+                },
+                cancellationToken);
+            stageResults.Add(("rebuild", rebuilt));
+        }
+
+        var initialGeometryPath = FindArtifactPath(initial, "geometry_validation_report.json");
+        var rebuiltGeometryPath = rebuilt is null ? null : FindArtifactPath(rebuilt, "geometry_validation_report.json");
+        var rebuildReportPath = ResolveRebuildReportPath(rebuilt, releaseDirectory);
+        var reportStatusPassed = StagePassedForE2e(initial) &&
+                                 rebuilt is not null &&
+                                 StagePassedForE2e(rebuilt) &&
+                                 preparation.FeatureGraphPreserved;
+        var reportFailureStage = reportStatusPassed
+            ? null
+            : rebuilt?.FailureStage ?? initial.FailureStage ?? PartFamilyFailureStages.RebuildFailed;
+        var rebuildReport = new RebuildReport(
+            request.ModelSpec.ModelId,
+            preparation.OldParameters,
+            preparation.NewParameters,
+            preparation.ChangedFeatures,
+            new RebuildResultSummary(
+                initial.Status,
+                rebuilt?.Status ?? "NotStarted",
+                preparation.FeatureGraphPreserved,
+                initialGeometryPath,
+                rebuiltGeometryPath,
+                "The update path recompiles the explicit FeatureGraph and creates a new controlled model; it does not edit a historical SLDPRT in place."),
+            reportFailureStage,
+            reportStatusPassed ? "Passed" : "Failed",
+            DateTimeOffset.UtcNow);
+        var rebuildReportWritten = TryWriteRebuildReport(rebuildReportPath, rebuildReport, out var rebuildReportIssue);
+        if (rebuilt is not null && rebuildReportWritten)
+        {
+            rebuilt = AddFileArtifact(rebuilt, rebuildReportPath, "RebuildReport");
+            stageResults[^1] = ("rebuild", rebuilt);
+        }
+
+        var finalBuild = rebuilt;
+        var sourceSet = new SolidWorksReleasePackageSourceSet(
+            finalBuild is null ? null : FindArtifactPathByExtension(finalBuild, ".SLDPRT"),
+            finalBuild is null ? null : FindArtifactPathByExtension(finalBuild, ".STEP"),
+            DrawingPath: null,
+            PdfPath: null,
+            BuildReportPath: finalBuild is null ? null : FindArtifactPath(finalBuild, "build_report.json"),
+            DrawingReportPath: null,
+            DimensionReportPath: null,
+            TitleBlockReportPath: null,
+            ExecutionEvidence: finalBuild is null
+                ? Array.Empty<SolidWorksReleaseExecutionEvidence>()
+                : [ToExecutionEvidence(("build", finalBuild))],
+            Warnings: ["V2.0-D release contains the rebuilt SLDPRT/STEP plus geometry and rebuild reports from this request only."],
+            RequireRealExecutionEvidence: true,
+            PartType: partType,
+            RequestId: request.RequestId,
+            RequireDrawingDeliverables: false,
+            BuildExecutionStrategy: SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+            FeatureExecutionReportPath: finalBuild is null ? null : FindArtifactPath(finalBuild, "feature_execution_report.json"),
+            GeometryValidationReportPath: rebuiltGeometryPath,
+            RebuildReportPath: rebuildReportWritten ? rebuildReportPath : null,
+            RequireGeometryValidationReports: true);
+        var package = await BuildE2eReleasePackageAsync(request.ProjectRoot, sourceSet, releaseDirectory, cancellationToken);
+        var packageOutcome = ReadPackageOutcome(package?.QualityReportPath);
+        var allStagesPassed = stageResults.Count == 2 && stageResults.All(item => StagePassedForE2e(item.Result));
+        var finalIssues = preparation.Issues
+            .Concat(stageResults.SelectMany(item => item.Result.Issues))
+            .Concat(string.IsNullOrWhiteSpace(rebuildReportIssue) ? Array.Empty<string>() : [rebuildReportIssue])
+            .Concat(package?.Issues ?? Array.Empty<string>())
+            .Concat(allStagesPassed ? Array.Empty<string>() : ["one_or_more_v2_0_d_rebuild_stages_failed"])
+            .Concat(preparation.FeatureGraphPreserved ? Array.Empty<string>() : ["feature_graph_not_preserved"])
+            .Concat(packageOutcome.AllSourceReportsPassed ? Array.Empty<string>() : ["all_source_reports_passed=false"])
+            .Concat(string.Equals(packageOutcome.DeliverableStatus, "Deliverable", StringComparison.OrdinalIgnoreCase)
+                ? Array.Empty<string>()
+                : ["deliverable_status=NotDeliverable"])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var passed = allStagesPassed &&
+                     rebuildReportWritten &&
+                     rebuildReport.FinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
+                     package is { Status: "Completed" } &&
+                     packageOutcome.AllSourceReportsPassed &&
+                     string.Equals(packageOutcome.DeliverableStatus, "Deliverable", StringComparison.OrdinalIgnoreCase) &&
+                     finalIssues.Length == 0;
+        var finalGate = new DefaultGatekeeper(new GateDecisionPolicy(), new RejectReportBuilder())
+            .Evaluate(new ReviewReport(
+                $"solidworks-v2-0-d-rebuild-review-{Guid.NewGuid():N}",
+                "solidworks-v2-0-d-rebuild-reviewer",
+                passed,
+                passed ? 0.99 : 0.0,
+                finalIssues,
+                RequiresHumanApproval: false,
+                HasFatalError: !passed))
+            .Decision;
+        _auditLog.Record(
+            "quality-gate",
+            "solidworks-v2-0-d-model-update",
+            "quality_gate_after_model_update_rebuild",
+            $"V2.0-D parameter rebuild QualityGate evaluated the run as {finalGate.Result}.");
+
+        var failureStage = passed
+            ? null
+            : FirstFailureStage(stageResults) ??
+              rebuildReport.FailureStage ??
+              (!rebuildReportWritten ? PartFamilyFailureStages.GeometryReportFailed : null) ??
+              packageOutcome.FailureStage ??
+              package?.FailureStage ??
+              PartFamilyFailureStages.QualityGateRejected;
+        var workflow = stageResults.LastOrDefault().Result?.WorkflowResult ??
+            await _workflowEngine.ExecuteAsync(
+                Array.Empty<WorkflowStep>(),
+                new WorkflowContext($"solidworks-model-update-empty-{request.TaskId}", new Dictionary<string, object?>()),
+                cancellationToken);
+        return await WriteE2eResultAsync(
+            request,
+            releaseDirectory,
+            stageResults,
+            package,
+            workflow,
             finalGate,
             finalIssues,
             failureStage,
@@ -325,7 +537,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
         var latestOutputsPath = Path.Combine(releaseDirectory, "latest_real_outputs.md");
         var partType = request.ModelSpec?.PartType ?? PlateBasic4HolesDefinition.Type;
         var requiresDrawingDeliverables = request.Operation == SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage;
-        var expectedStageCount = requiresDrawingDeliverables ? 4 : 1;
+        var requiresGeometryValidationReports = request.Operation == SolidWorksMainWorkflowOperation.BuildModelUpdateReleasePackage;
+        var expectedStageCount = requiresDrawingDeliverables ? 4 : requiresGeometryValidationReports ? 2 : 1;
         var expectedArtifactPaths = new List<string>
         {
             Path.Combine(releaseDirectory, "artifacts", $"{partType}.SLDPRT"),
@@ -335,6 +548,11 @@ public sealed partial class SolidWorksMainWorkflowRunner
         {
             expectedArtifactPaths.Add(Path.Combine(releaseDirectory, "artifacts", $"{partType}.SLDDRW"));
             expectedArtifactPaths.Add(Path.Combine(releaseDirectory, "artifacts", $"{partType}.pdf"));
+        }
+        if (requiresGeometryValidationReports)
+        {
+            expectedArtifactPaths.Add(Path.Combine(releaseDirectory, "reports", "geometry_validation_report.json"));
+            expectedArtifactPaths.Add(Path.Combine(releaseDirectory, "reports", "rebuild_report.json"));
         }
         var generatedArtifacts = expectedArtifactPaths.Where(ExistingNonEmpty).ToArray();
         var allSourceReportsPassed = packageOutcome?.AllSourceReportsPassed ?? false;
@@ -470,6 +688,48 @@ public sealed partial class SolidWorksMainWorkflowRunner
         }
     }
 
+    private static string ResolveRebuildReportPath(
+        SolidWorksMainWorkflowResult? rebuilt,
+        string releaseDirectory)
+    {
+        var buildReportPath = rebuilt is null ? null : FindArtifactPath(rebuilt, "build_report.json");
+        var directory = string.IsNullOrWhiteSpace(buildReportPath)
+            ? Path.Combine(releaseDirectory, "reports")
+            : Path.GetDirectoryName(buildReportPath)!;
+        return Path.Combine(directory, "rebuild_report.json");
+    }
+
+    private static bool TryWriteRebuildReport(
+        string path,
+        RebuildReport report,
+        out string? issue)
+    {
+        try
+        {
+            GeometryValidator.WriteRebuildReport(path, report);
+            var written = File.Exists(path) && new FileInfo(path).Length > 0;
+            issue = written
+                ? null
+                : $"{PartFamilyFailureStages.GeometryReportFailed}: rebuild_report.json was not written as a non-empty file.";
+            return written;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            issue = $"{PartFamilyFailureStages.GeometryReportFailed}: rebuild_report.json could not be written: {exception.GetBaseException().Message}";
+            return false;
+        }
+    }
+
+    private static SolidWorksMainWorkflowResult AddFileArtifact(
+        SolidWorksMainWorkflowResult result,
+        string path,
+        string type) =>
+        result with
+        {
+            Artifacts = result.Artifacts.Append(ToFileArtifact(path, type)).ToArray(),
+            ArtifactPaths = result.ArtifactPaths.Append(path).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+        };
+
     private static bool StagePassedForE2e(SolidWorksMainWorkflowResult result) =>
         result.QualityGatePassed && result.RealCadExecuted && result.RealCadConnected && string.Equals(result.Status, "Completed", StringComparison.OrdinalIgnoreCase);
 
@@ -492,6 +752,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
         FindArtifactPath(result, stage switch
         {
             "build" => "build_report.json",
+            "initial" => "build_report.json",
+            "rebuild" => "build_report.json",
             "drawing" => "drawing_report.json",
             "dimension" => "dimension_report.json",
             "title_block" => "title_block_report.json",

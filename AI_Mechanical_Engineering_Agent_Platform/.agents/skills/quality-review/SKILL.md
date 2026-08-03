@@ -56,3 +56,34 @@ description: "用于项目质量审查，检查架构边界、self-check 字段�
 ### 常见失败与禁止事项
 
 未注册类型回退 plate、非法参数进入 Worker、大型类型 switch、plate 能力退化、flange / shaft dry-run 失败、默认 self-check/CI/单元测试启动 SolidWorks，或以候选 API 冒充真实验收，均为 Blocker。禁止越界实现装配体、BOM、复杂轴特征、键槽、螺纹、法兰密封面、批量任务队列或 V1.9。`flange_basic` 和 `shaft_basic` 本轮只可声称 dry-run 通过；真实验收分别等待独立 flange smoke 与 shaft 旋转专用证据。
+
+## V2.0-D 模型重建与几何验证审查
+
+审查 V2.0-D 时，先确认参数更新闭环严格为：`CADModelSpec` → `ModelUpdateService` → `BuildPlanCompiler` → `FeatureExecutionPipeline` → `SolidWorks Rebuild` → 独立 `GeometryReader` → `GeometryValidator` → `Artifact Validator / Reviewer / QualityGate`。`ModelUpdateService`、`GeometryValidator` 和质量链不得直接读取 `COM`；真实读取只允许发生在独立 `GeometryReader` 的当前受控模型边界。
+
+必须检查：
+
+- 更新审计同时记录 `old_parameters`、`new_parameters`、`changed_features`、`rebuild_result`，且 `FeatureGraph` 未被破坏。
+- `GeometryValidator` 使用真实 `SolidWorks` 输出验证 `BoundingBox`、实体数量、体积、可用质量属性、草图、拉伸、切除、孔，以及 `length_mm`、`diameter_mm` / 轴径。
+- `geometry_validation_report.json` 包含 `model_id`、`input_parameters`、`measured_geometry`、`expected_geometry`、`deviations`、`passed_checks`、`failed_checks`、`failure_stage`、`final_status`；`rebuild_report.json` 与其同次产生，并都被 `QualityGate` 当作源报告。
+- `rebuild_failed`、`geometry_read_failed`、`bounding_box_invalid`、`volume_validation_failed`、`parameter_geometry_mismatch`、`feature_missing_after_rebuild`、`geometry_report_failed` 任一项均失败关闭；`COM` 返回、文件存在、历史产物和诊断结果均不能通过审查。
+- `plate_basic_4holes` 的四个孔必须真实读取并逐个证明；不允许为此新增 CAD Feature 或零件族，也不允许绕过 `FeatureHandler`、`QualityGate` 或使用未取证的阵列、贯穿、对称拉伸、孔向导等策略。
+- 真实验收只能执行 `run-cad-workflow --input examples/parameter_update_plate.json`，覆盖先 160×80×12、后 200×100×15 的变化；禁止直接调用构建器，也不得进入 V2.0-E。
+
+以下 self-check 字段必须全部为 true：
+
+~~~text
+model_rebuild_pipeline_exists
+parameter_update_supported
+solidworks_rebuild_supported
+geometry_validator_exists
+bounding_box_validation_supported
+volume_validation_supported
+parameter_geometry_match_supported
+rebuild_failure_detected
+geometry_report_generated
+v2_0_d_documented
+markdown_chinese_check_passed
+~~~
+
+缺少真实 GeometryReader 数据、任一报告无效、FeatureGraph 损坏、四孔未证明或 QualityGate 未通过，均为 Blocker。

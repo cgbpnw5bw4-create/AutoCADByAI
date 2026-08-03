@@ -194,9 +194,44 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     genericBuilder);
             }
 
-            partFamilyBuilder = new SolidWorksFeatureGraphPartFamilyBuilder(
-                request.BuildPlan.PartType,
-                _featureHandlerRegistry);
+            if (RequiresGeometryValidationReport(request.BuildPlan))
+            {
+                var v20dProfileEvidence = V20DThreeCircleCutEvidencePolicy.ValidateForRealExecution(
+                    request.BuildPlan);
+                if (!v20dProfileEvidence.IsPassed)
+                {
+                    logs.Add(
+                        "COM connection was not attempted because the V2.0-D exact three-circle cut evidence preflight failed after FeatureHandlerRegistry passed.");
+                    issues.AddRange(v20dProfileEvidence.Issues);
+                    var genericBuilder = new SolidWorksFeatureGraphPartFamilyBuilder(
+                        request.BuildPlan.PartType,
+                        _featureHandlerRegistry);
+                    return RealBuildFailureResult(
+                        request,
+                        "Rejected",
+                        logs,
+                        issues,
+                        realCadConnected: false,
+                        preflight,
+                        options,
+                        v20dProfileEvidence.FailureStage ?? PartFamilyFailureStages.FeatureApiUnverified,
+                        genericBuilder);
+                }
+
+                logs.Add(
+                    $"v2_0_d_three_circle_cut_evidence_verified:{V20DThreeCircleCutEvidencePolicy.EvidenceId};" +
+                    $"source_revision={V20DThreeCircleCutEvidencePolicy.SourceRevision}");
+            }
+
+            partFamilyBuilder = RequiresGeometryValidationReport(request.BuildPlan)
+                ? new V20DFeatureGraphPartFamilyBuilder(
+                    request.BuildPlan.PartType,
+                    _featureHandlerRegistry,
+                    request,
+                    options)
+                : new SolidWorksFeatureGraphPartFamilyBuilder(
+                    request.BuildPlan.PartType,
+                    _featureHandlerRegistry);
             logs.Add("Real feature execution was resolved through FeatureHandlerRegistry.");
         }
         else if (isPartFamilyBuild &&
@@ -626,10 +661,27 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             logs.AddRange(buildResult.Logs);
             issues.AddRange(buildResult.Issues);
 
+            var generatedArtifacts = buildResult.Artifacts.ToList();
+            if (RequiresGeometryValidationReport(request.BuildPlan))
+            {
+                var geometryReportPath = Path.Combine(
+                    SolidWorksPartFamilyBuildOutput.ResolveOutputDirectory(
+                        request,
+                        options,
+                        request.BuildPlan.PartType),
+                    "geometry_validation_report.json");
+                generatedArtifacts.Add(SolidWorksPartFamilyBuildOutput.Artifact(
+                    "geometry-validation-report",
+                    "GeometryValidationReport",
+                    geometryReportPath,
+                    ".json",
+                    "V2.0-D SolidWorks geometry validation report."));
+            }
+
             return new SolidWorksWorkerResult(
                 request.RequestId,
                 buildResult.Status,
-                buildResult.Artifacts,
+                generatedArtifacts,
                 logs,
                 issues,
                 buildResult.ExecutionMode,
@@ -683,6 +735,11 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         SolidWorksWorkerRequest request,
         SolidWorksRuntimeOptions options) =>
         !options.ShouldUseRealWorker(request.DryRun);
+
+    private static bool RequiresGeometryValidationReport(SolidWorksBuildPlan plan) =>
+        plan.OutputRequirements?.Contains(
+            "geometry_validation_report.json",
+            StringComparer.OrdinalIgnoreCase) == true;
 
     private static SolidWorksWorkerResult Result(
         SolidWorksWorkerRequest request,

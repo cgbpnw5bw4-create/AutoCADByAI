@@ -528,3 +528,35 @@ Boss、Cut、Hole 的体积依次为 `0→5.9999999999999995E-05`、`5.999999999
 最终 E2E 目录为 `output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260730_090151_162-1b16c3982731423a8ae9a93f1db2dbbe/`。同次 `e2e_execution_report.json` 与 `package_quality_report.json` 记录 `final_status=Passed`、QualityGate `Passed`、`all_source_reports_passed=true` 和 `deliverable_status=Deliverable`。
 
 Feature 报告为 7/7，`all_features_executed`、`all_result_objects_validated`、`all_rebuilds_passed`、`all_geometry_changes_validated`、`artifacts_validated` 均为 `true`，三段体积与 diagnostic 相同。SLDPRT 为 73830 bytes，SHA256 `045A5CF2C445F66B1CE2502065F84805A40CF217600DAD213C68D9EEFBA78612`；STEP 为 26399 bytes，SHA256 `DCAB84553885D804AB961E4BBABB691A7A47C6962D030781211B7B777E1EF7BB`。`review_active_source/feature_pipeline_plate_review_report.json` 审查为 100 分、`pass`，特征树为一个 `Extrusion` 加两个 `ICE`，并人工确认两个孔。四个精确 profile 的完整主流程验收已经关闭，但未扩展到 `through_all`、`mid_plane`、任意面或原生孔 API，且不进入 V2.0-D。
+
+## V2.0-D 参数重建与几何验证执行
+
+V2.0-D 的参数更新只走受控闭环：
+
+~~~text
+CADModelSpec
+  -> ModelUpdateService
+  -> BuildPlanCompiler
+  -> FeatureExecutionPipeline
+  -> SolidWorks Rebuild
+  -> GeometryReader
+  -> GeometryValidator
+  -> Artifact Validator / Reviewer / QualityGate
+~~~
+
+`ModelUpdateService` 必须是纯逻辑层：接收基线 `CADModelSpec` 与参数补丁，计算并写入 `old_parameters`、`new_parameters`、`changed_features`、`rebuild_result`。它必须把受影响的长度、宽度、厚度、孔径或轴径同步映射到既有的 `SketchDefinition` / `FeatureDefinition`，不能只改 `CADModelSpec.Parameters`。初始建模、参数修改和重跑既有 `FeatureGraph` 均走同一条编译与处理器执行路径；不得调用构建器作为捷径，也不得绕过 `FeatureHandlerRegistry` 或 `FeatureHandler`。
+
+GeometryReader 是唯一允许读取 SolidWorks COM 几何的边界，必须把当前受控会话和当前 SLDPRT 的数据转换为 DTO；GeometryValidator 独立、纯逻辑地消费 DTO、输入参数和 FeatureGraph 期望。它必须验证真实 BoundingBox、Body 数量、Volume、可用的 MassProperty、Sketch/Extrude/Cut/Hole 结果，以及 length_mm、diameter_mm 与真实尺寸的一致性。COM 成功返回、文件存在、历史 latest 或 diagnostic 均不是成功证据。
+
+每次重建必须生成同次 rebuild_report.json 与 geometry_validation_report.json，并作为 Artifact Validator、Reviewer、QualityGate 和 ReleasePackage 的源报告；任一报告失败、不可解析或语义不通过均不得交付。最终真实验收只能从：
+
+~~~powershell
+dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/parameter_update_plate.json
+~~~
+
+执行，禁止直接调用 Builder。四孔 plate_basic_4holes 只能复用既有、已注册且已取证的 Feature 类型；不得新增 CAD Feature 或零件族，也不能用模型名、hole_count 或文件存在代替四个真实孔的几何证明。本阶段未通过 QualityGate 前不得进入 V2.0-E。
+## V2.0-D 参数更新与三圆 profile
+
+`ModelUpdateService` 只重绑既有 `plate_profile`、`cut_profile`、`hole_profile` 及 `plate_boss`、`plate_cut`、`plate_hole` 的参数，并由 `BuildPlanCompiler` 重建 FeatureGraph。对本轮样例，长度和宽度变化必须把四个孔重映射到 20 mm 边距；厚度变化必须同时重绑 boss 深度与两个盲切深度。它不读取 COM，也不创建 Feature。
+
+真实 Worker 会在 Handler 预检后对编译计划执行 V2.0-D 三圆证据门禁；因此参数更新不得把 Φ10 三圆/单圆 profile 改成未验证的数量、直径、终止条件或位置。任何不匹配应在 COM 前以 `feature_api_unverified` 停止，而不是把 JSON 参数更新误报为成功。

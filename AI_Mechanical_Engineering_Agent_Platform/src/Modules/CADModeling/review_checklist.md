@@ -213,3 +213,35 @@ markdown_chinese_check_passed
 ```
 
 build、test、默认 self-check 和上述字段全部通过后，V2.0-A 才可进入实现审查。self-check、单元测试与 dry-run 不得连接 COM；本轮不得运行真实 CAD，也不得进入 V2.0-B。
+
+## V2.0-D 模型重建与几何验证审查
+
+### Blockers
+
+- 参数变更未完整经过 `CADModelSpec` → `ModelUpdateService` → `BuildPlanCompiler` → `FeatureExecutionPipeline` → `SolidWorks Rebuild`，或通过构建器、直接 `COM`、未注册处理器绕过该路径。
+- `ModelUpdateService`、`GeometryValidator`、报告或 `QualityGate` 层直接持有 `COM`；真实读取未收敛到独立 `GeometryReader`。
+- 未记录 `old_parameters`、`new_parameters`、`changed_features`、`rebuild_result`，或者 `FeatureGraph` 的节点、依赖、排序在参数更新后被破坏。
+- `GeometryValidator` 未从真实 `SolidWorks` 输出验证包围盒、实体数量、体积、可用质量属性、草图/拉伸/切除/孔，以及参数到实际长度、孔径/轴径的映射。
+- 将 `COM` 返回成功、`SLDPRT`/`STEP` 存在、历史产物或诊断结果当作 `GeometryValidator` / `QualityGate` 成功。
+- 未生成、未解析或未纳入同次 `QualityGate` 的 `geometry_validation_report.json` 与 `rebuild_report.json`。
+- 未以真实几何逐孔证明 `plate_basic_4holes` 的四孔，或以新增 CAD Feature、零件族、阵列、贯穿、对称拉伸或孔向导绕过既有受证 Feature 类型。
+- 未将 `rebuild_failed`、`geometry_read_failed`、`bounding_box_invalid`、`volume_validation_failed`、`parameter_geometry_mismatch`、`feature_missing_after_rebuild`、`geometry_report_failed` 失败关闭。
+- 真实验收不是 `run-cad-workflow --input examples/parameter_update_plate.json`，或试图进入 V2.0-E。
+
+### 必须回填的自检项
+
+~~~text
+model_rebuild_pipeline_exists
+parameter_update_supported
+solidworks_rebuild_supported
+geometry_validator_exists
+bounding_box_validation_supported
+volume_validation_supported
+parameter_geometry_match_supported
+rebuild_failure_detected
+geometry_report_generated
+v2_0_d_documented
+markdown_chinese_check_passed
+~~~
+
+只有第一次 160×80×12 与更新后的 200×100×15 都经同次真实 `GeometryValidator`、`Reviewer` 和 `QualityGate` 通过，且输出 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`，本阶段才可关闭；不得进入 V2.0-E。

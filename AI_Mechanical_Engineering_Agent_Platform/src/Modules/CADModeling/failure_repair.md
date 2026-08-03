@@ -245,3 +245,21 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 `20260730_073759_9143941` 证明“Feature 非空 + 重建通过 + 文件非空”仍可能是假成功：Cut/Hole 的人工复核未见孔。遇到同类情况必须返回 `feature_result_invalid`，并增加特征前后体积变化、特征树和视图检查，不能保留原 evidence 为 `verified`。
 
 修复后采用 `20260730_085830_6592380`：Cut 和 Hole 均产生严格递减体积，特征树包含两个 `ICE`，等轴测/俯视确认两个孔。该结果只关闭精确 blind profile 的假成功问题；diagnostic 仍为 `NotDeliverable`，最终关闭条件是 `run-cad-workflow` 主流程通过。
+
+## V2.0-D 重建与真实几何失败修复
+
+先读取同一次 `rebuild_report.json`、`geometry_validation_report.json`、`FeatureGraph` 快照和端到端 `QualityGate` 结果；不得扫描或复用历史产物。记录的 `failure_stage` 必须是下列七项之一，并由失败闭环驱动修复：
+
+| failure_stage | 触发条件 | 修复边界 |
+|---|---|---|
+| rebuild_failed | SolidWorks 重建失败或存在重建错误 | 修复既有 FeatureGraph 参数映射或已注册 Handler，不直接改 COM 业务逻辑。 |
+| geometry_read_failed | 当前受控模型的真实几何无法读取 | 仅在 GeometryReader 的 COM 边界补 API evidence 或读取封装。 |
+| bounding_box_invalid | BoundingBox 缺失、退化或明显违反期望 | 检查单位、Body 选择和实际几何；BoundingBox 不是精确尺寸的替代物。 |
+| volume_validation_failed | Body 数量或 Volume 不满足期望/单调变化 | 回到产生差异的既有 Feature 及其参数。 |
+| parameter_geometry_mismatch | length_mm、diameter_mm 等未反映到真实几何 | 修复 ModelUpdateService 到既有 Sketch/Feature 的映射。 |
+| feature_missing_after_rebuild | Sketch、Extrude、Cut 或 Hole 在真实特征树中缺失 | 通过 FeatureHandler 重建，禁止绕过 Handler 或新增 Feature 类型。 |
+| geometry_report_failed | 几何报告缺失、不可解析、字段不完整或最终状态失败 | 修复报告契约和 QualityGate 输入，禁止用文件存在替代报告。 |
+
+四孔验收必须逐个证明四个真实孔，不得把旧 V2.0-C 的两个 ICE、单圆草图、文件名或计数字段说成四孔成功。若既有受证 profile 不足以表达目标，保持 feature_api_unverified 并停止，不得静默扩展到 pattern、任意面、through_all、mid_plane、SimpleHole2 或 Hole Wizard。
+
+修复后的最终回归只能运行 run-cad-workflow --input examples/parameter_update_plate.json，并要求 GeometryValidator、Artifact Validator、Reviewer 和 QualityGate 同次通过；不得进入 V2.0-E。

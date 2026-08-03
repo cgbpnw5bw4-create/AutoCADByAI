@@ -282,3 +282,26 @@ flange 首次 diagnostic 在保存阶段返回 `part_save_failed`。修复复用
 修复验证使用 `20260730_085830_6592380`，要求 Cut/Hole 各自产生严格体积下降、特征树新增对应 `ICE`，并由等轴测/俯视确认两孔。若任何一项缺失，继续返回 `feature_result_invalid`，不得用 `CandidatePassed` 覆盖。证据 revision、Handler/Adapter 版本、诊断报告或 SolidWorks 版本任一不一致时，返回 `feature_api_unverified`。
 
 新 run 已关闭四个精确 profile 的证据缺口，但仍为 `NotDeliverable`。任何超出 profile 的调用继续使用 `feature_api_unverified`；最终关闭交付问题必须通过 `run-cad-workflow`。
+
+## V2.0-D 重建与几何读取修复
+
+修复从同一 `request_id` 的重建、`GeometryReader`、`GeometryValidator`、`Artifact Validator`、`Reviewer` 和 `QualityGate` 报告开始，绝不使用历史产物、旧诊断或仅文件大小。`failure_stage` 与最小修复边界如下：
+
+| failure_stage | 先检查 | 允许修复 |
+|---|---|---|
+| rebuild_failed | 当前模型的 Rebuild 错误和 changed_features | 既有 FeatureGraph 参数映射、既有 Handler / Adapter；不新增 Feature。 |
+| geometry_read_failed | 当前会话、当前 SLDPRT 和 GeometryReader 的读取异常 | GeometryReader 封装和有证据的读取 API；不把 COM 读进纯逻辑层。 |
+| bounding_box_invalid | 单位、Body 选择、近似包围盒与模型期望 | 读取转换或模型参数映射；不把近似 Box 当精确尺寸。 |
+| volume_validation_failed | Body 数、逐 Body / 总 Volume 与特征前后变化 | 产生差异的既有 Feature 参数或 Handler 结果。 |
+| parameter_geometry_mismatch | 输入 length_mm、diameter_mm 与真实尺寸 | ModelUpdateService 到 SketchDefinition / FeatureDefinition 的映射。 |
+| feature_missing_after_rebuild | 特征树中的 Sketch、Extrude、Cut、Hole | 既有 FeatureHandler 的图依赖和执行结果。 |
+| geometry_report_failed | 报告字段、可解析性、最终状态和 QualityGate 输入 | 报告契约、DTO 序列化和源报告归集。 |
+
+四孔验证要从真实圆柱几何与特征结果证明四个孔。不能把 V2.0-C 的两孔 evidence、单圆草图、COM 成功或文件存在升级为四孔；若既有受证类型无法表达四孔，返回 feature_api_unverified，而不是调用 pattern、through_all、mid_plane、SimpleHole2 或 Hole Wizard。
+
+修复完成后仅以 `run-cad-workflow --input examples/parameter_update_plate.json` 重新验收。`GeometryValidator`、`Reviewer` 与 `QualityGate` 必须同次通过，才可产生 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`；不得进入 V2.0-E。
+## V2.0-D 三圆 profile 证据失效
+
+若重建在 COM 连接前以 `feature_api_unverified` 停止，先读取本次 build report 的 `v2_0_d_three_circle_cut_evidence_verified` 缺失原因，并检查 `V20DThreeCircleCutEvidencePolicy` 的输入 SHA、候选报告 SHA、V2.0-C source revision、三圆实体数、直径、20 mm 边距、盲切深度和操作依赖。不得在 Handler 中临时放宽 circle count，不得直接改 Builder 或跳过 QualityGate。
+
+若证据源、参数映射或候选诊断确实需要改变，应先以同一精确输入重跑专用候选诊断，更新受审查的证据元数据，再重新执行 `run-cad-workflow`；候选成功本身仍不可交付。

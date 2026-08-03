@@ -1,5 +1,6 @@
 using AgentContracts;
 using DomainSchemas;
+using PlatformCore.Modules.CADModeling;
 using System.Text.Json;
 
 namespace PlatformCore;
@@ -37,6 +38,10 @@ public sealed class SolidWorksWorkflowRouter
             context,
             SolidWorksE2eCliContract.PartFamilyReleasePackageOperation,
             "operation");
+        var isModelUpdateReleasePackage = ContextValueEquals(
+            context,
+            SolidWorksE2eCliContract.ModelUpdateReleasePackageOperation,
+            "operation");
 
         return new SolidWorksMainWorkflowRequest(
             $"solidworks-main-workflow-{context.TaskId}",
@@ -49,7 +54,9 @@ public sealed class SolidWorksWorkflowRouter
             Operation: isCompleteDrawingPackage
                 ? SolidWorksMainWorkflowOperation.BuildCompleteDrawingPackage
                 : isPartFamilyReleasePackage
-                    ? SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage
+                ? SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage
+                : isModelUpdateReleasePackage
+                    ? SolidWorksMainWorkflowOperation.BuildModelUpdateReleasePackage
                     : SolidWorksMainWorkflowOperation.BuildPlate,
             GenerateDrawing: FlagEnabled(context, "generate_drawing"),
             GenerateDimensions: FlagEnabled(context, "generate_dimensions"),
@@ -58,13 +65,15 @@ public sealed class SolidWorksWorkflowRouter
             StructuredInputReceived: FlagEnabled(context, "structured_input_received") || HasExplicitPartType(context),
             ChiefEngineerInvoked: true,
             GatewayInvoked: FlagEnabled(context, "gateway_invoked"),
-            SolidWorksRouterTriggered: true);
+            SolidWorksRouterTriggered: true,
+            ParameterUpdate: ResolveParameterUpdate(context));
     }
 
     public bool ShouldRun(AgentContext context)
     {
         if (ContextValueEquals(context, SolidWorksE2eCliContract.CompleteDrawingPackageOperation, "operation") ||
-            ContextValueEquals(context, SolidWorksE2eCliContract.PartFamilyReleasePackageOperation, "operation"))
+            ContextValueEquals(context, SolidWorksE2eCliContract.PartFamilyReleasePackageOperation, "operation") ||
+            ContextValueEquals(context, SolidWorksE2eCliContract.ModelUpdateReleasePackageOperation, "operation"))
         {
             // Explicit structured CAD operations must enter the workflow so an
             // unknown family returns unsupported_part_type instead of null.
@@ -202,6 +211,28 @@ public sealed class SolidWorksWorkflowRouter
         try
         {
             return JsonSerializer.Deserialize<CADModelSpec>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            });
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static ModelParameterUpdateRequest? ResolveParameterUpdate(AgentContext context)
+    {
+        if (!context.Input.Context.TryGetValue("parameter_update_json", out var json) ||
+            string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<ModelParameterUpdateRequest>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower

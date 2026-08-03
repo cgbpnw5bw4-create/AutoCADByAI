@@ -422,3 +422,37 @@ self-check、CI、单元测试和 dry-run 不启动 SolidWorks。禁止 Handler 
 `feature_execution_report.json` 的预期/执行特征为 7/7，`all_features_executed`、`all_result_objects_validated`、`all_rebuilds_passed`、`all_geometry_changes_validated`、`artifacts_validated` 均为 `true`，Boss/Cut/Hole 三段体积与权威 diagnostic 相同。最终 SLDPRT 为 73830 bytes，SHA256 `045A5CF2C445F66B1CE2502065F84805A40CF217600DAD213C68D9EEFBA78612`；STEP 为 26399 bytes，SHA256 `DCAB84553885D804AB961E4BBABB691A7A47C6962D030781211B7B777E1EF7BB`。
 
 `review_active_source/feature_pipeline_plate_review_report.json` 为 100 分、`pass`，特征树含一个 `Extrusion` 和两个 `ICE`，人工确认两个孔。因此四个精确 profile 已经经过完整主流程并得到 `Passed` / `Deliverable` 结论；这不扩大 evidence 边界，也不进入 V2.0-D。
+
+## V2.0-D Worker 参数重建与几何读取
+
+RealSolidWorksWorker 的 V2.0-D 受控顺序为：
+
+~~~text
+CADModelSpec
+  -> ModelUpdateService
+  -> BuildPlanCompiler
+  -> FeatureExecutionPipeline
+  -> RealSolidWorksWorker / SolidWorks Rebuild
+  -> RealSolidWorksGeometryReader
+  -> GeometryValidator
+  -> Artifact Validator / Reviewer / QualityGate
+~~~
+
+Worker 只执行编译后的既有 `FeatureGraph`，并通过 `FeatureHandlerRegistry` 和已注册 `FeatureHandler` 到特征适配器；不得直接调用构建器、另建 CAD Feature、另建零件族或把 `COM` 业务逻辑移入 Handler。参数更新必须保留并回传 `old_parameters`、`new_parameters`、`changed_features`、`rebuild_result`，随后在当前受控 `SolidWorks` 会话中完成一次真实重建。
+
+RealSolidWorksGeometryReader 是读取当前模型真实几何的唯一 COM 边界。它在 Rebuild 后读取 BoundingBox、Body 数量、Volume、可用 MassProperty、特征树和精确尺寸，输出无 COM 引用的 DTO；GeometryValidator 再独立检查长度、孔径/轴径、Sketch、Extrude、Cut、Hole 与预期是否一致。只获得 COM 成功、非空 Feature、SLDPRT/STEP 存在均不得报告成功。
+
+每次执行必须写出同次 `geometry_validation_report.json` 与 `rebuild_report.json`，并把它们交给 `Artifact Validator`、`Reviewer`、`QualityGate` 和发布包。失败必须停止交付并写入 `rebuild_failed`、`geometry_read_failed`、`bounding_box_invalid`、`volume_validation_failed`、`parameter_geometry_mismatch`、`feature_missing_after_rebuild` 或 `geometry_report_failed`；不得回退到历史产物。
+
+真实验收仅允许：
+
+~~~powershell
+dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/parameter_update_plate.json
+~~~
+
+该输入需先建模 160×80×12，再更新为 200×100×15，并以真实几何验证变化。plate_basic_4holes 必须复用现有经证 Feature 类型且逐个证明四孔；模型名或 hole_count 不可代替几何读取。QualityGate 未通过前不得进入 V2.0-E。
+## V2.0-D 三圆切除执行门禁
+
+参数重建请求进入 `RealSolidWorksWorker` 时，执行顺序固定为：既有 `FeatureHandlerRegistry` 完整预检 → `V20DThreeCircleCutEvidencePolicy` 精确 profile / SHA / 候选诊断预检 → SolidWorks 连接 → `FeatureExecutionPipeline` → rebuild → GeometryReader → GeometryValidator。三圆证据失败时不会建立 COM 连接，也不会改走零件族 Builder、Fake Worker 或旧产物。
+
+此门禁只授权 `examples/parameter_update_plate.json` 的 160×80×12 到 200×100×15 参数更新链；它保留既有 sketch、extrude_boss、extrude_cut、hole Handler，且要求 `cut_profile` 三圆和 `hole_profile` 单圆均为直径 10 mm、20 mm 边距。最终验收仍只能运行 `run-cad-workflow`。

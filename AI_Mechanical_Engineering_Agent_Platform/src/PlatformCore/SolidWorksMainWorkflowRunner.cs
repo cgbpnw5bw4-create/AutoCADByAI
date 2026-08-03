@@ -1,4 +1,5 @@
 using DomainSchemas;
+using PlatformCore.Modules.CADModeling;
 using PlatformCore.Modules.CADModeling.Reviewers;
 using PlatformCore.Modules.CADModeling.Skills;
 using PlatformCore.Modules.CADModeling.Validators;
@@ -22,7 +23,8 @@ public enum SolidWorksMainWorkflowOperation
 {
     BuildPlate,
     BuildCompleteDrawingPackage,
-    BuildPartFamilyReleasePackage
+    BuildPartFamilyReleasePackage,
+    BuildModelUpdateReleasePackage
 }
 
 public sealed record SolidWorksMainWorkflowRequest(
@@ -46,7 +48,8 @@ public sealed record SolidWorksMainWorkflowRequest(
     bool StructuredInputReceived = false,
     bool ChiefEngineerInvoked = false,
     bool GatewayInvoked = false,
-    bool SolidWorksRouterTriggered = false);
+    bool SolidWorksRouterTriggered = false,
+    ModelParameterUpdateRequest? ParameterUpdate = null);
 
 public sealed record SolidWorksMainWorkflowResult(
     string RequestId,
@@ -102,6 +105,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
             ? ExecuteCompleteDrawingPackageAsync(request, cancellationToken)
             : request.Operation == SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage
                 ? ExecutePartFamilyReleasePackageAsync(request, cancellationToken)
+                : request.Operation == SolidWorksMainWorkflowOperation.BuildModelUpdateReleasePackage
+                    ? ExecuteModelUpdateReleasePackageAsync(request, cancellationToken)
                 : ExecuteSingleStageAsync(request, cancellationToken);
 
     private async Task<SolidWorksMainWorkflowResult> ExecuteSingleStageAsync(
@@ -116,6 +121,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
         ReviewReport? buildPlanValidation = null;
         ReviewReport? buildPlanReview = null;
         ReviewReport? artifactValidation = null;
+        GeometryValidationArtifactValidationResult? geometryValidation = null;
         GateEvaluationResult? finalGate = null;
         var logs = new List<string>();
         var issues = new List<string>();
@@ -256,10 +262,15 @@ public sealed partial class SolidWorksMainWorkflowRunner
 
                     artifactValidation = new SolidWorksArtifactValidator(Path.Combine(request.ProjectRoot, "output", "solidworks"))
                         .Validate(workerResult);
+                    if (RequiresGeometryValidationReport(plan))
+                    {
+                        geometryValidation = new GeometryValidationArtifactValidator().Validate(workerResult);
+                    }
                     var finalReview = BuildFinalReview(
                         buildPlanValidation,
                         buildPlanReview,
                         artifactValidation,
+                        geometryValidation?.ReviewReport,
                         workerResult);
                     finalGate = new DefaultGatekeeper(new GateDecisionPolicy(), new RejectReportBuilder()).Evaluate(finalReview);
                     var stepIssues = finalReview.Issues.ToArray();
@@ -345,7 +356,7 @@ public sealed partial class SolidWorksMainWorkflowRunner
                 .ToArray(),
             distinctLogs,
             distinctIssues,
-            ResolveFailureStage(workflowResult, workerResult, artifactValidation),
+            ResolveFailureStage(workflowResult, workerResult, artifactValidation, geometryValidation),
             workflowResult);
     }
 
@@ -413,13 +424,15 @@ public sealed partial class SolidWorksMainWorkflowRunner
         ReviewReport? buildPlanValidation,
         ReviewReport? buildPlanReview,
         ReviewReport? artifactValidation,
+        ReviewReport? geometryValidation,
         SolidWorksWorkerResult workerResult)
     {
         var issues = new[]
             {
                 buildPlanValidation,
                 buildPlanReview,
-                artifactValidation
+                artifactValidation,
+                geometryValidation
             }
             .Where(report => report is not null)
             .SelectMany(report => report!.Issues)
@@ -431,10 +444,12 @@ public sealed partial class SolidWorksMainWorkflowRunner
             buildPlanValidation?.IsPassed == true &&
             buildPlanReview?.IsPassed == true &&
             artifactValidation?.IsPassed == true &&
+            (geometryValidation is null || geometryValidation.IsPassed) &&
             issues.Length == 0;
         var fatal =
             buildPlanValidation?.HasFatalError == true ||
             artifactValidation?.HasFatalError == true ||
+            geometryValidation?.HasFatalError == true ||
             string.Equals(workerResult.Status, "Failed", StringComparison.OrdinalIgnoreCase);
 
         return new ReviewReport(
@@ -553,7 +568,8 @@ public sealed partial class SolidWorksMainWorkflowRunner
     private static string? ResolveFailureStage(
         WorkflowExecutionResult workflowResult,
         SolidWorksWorkerResult? workerResult,
-        ReviewReport? artifactValidation)
+        ReviewReport? artifactValidation,
+        GeometryValidationArtifactValidationResult? geometryValidation)
     {
         if (workflowResult.Status == WorkflowStatus.Passed)
         {
@@ -568,6 +584,11 @@ public sealed partial class SolidWorksMainWorkflowRunner
         if (!string.IsNullOrWhiteSpace(workerResult?.FailureStage))
         {
             return workerResult.FailureStage;
+        }
+
+        if (!string.IsNullOrWhiteSpace(geometryValidation?.FailureStage))
+        {
+            return geometryValidation.FailureStage;
         }
 
         var preciseStage = workflowResult.Steps
@@ -621,7 +642,14 @@ public sealed partial class SolidWorksMainWorkflowRunner
             PartFamilyFailureStages.PartFamilyBuilderMissing,
             PartFamilyFailureStages.FlangeBuildFailed,
             PartFamilyFailureStages.ShaftBuildFailed,
-            PartFamilyFailureStages.ArtifactValidationFailed
+            PartFamilyFailureStages.ArtifactValidationFailed,
+            PartFamilyFailureStages.RebuildFailed,
+            PartFamilyFailureStages.GeometryReadFailed,
+            PartFamilyFailureStages.BoundingBoxInvalid,
+            PartFamilyFailureStages.VolumeValidationFailed,
+            PartFamilyFailureStages.ParameterGeometryMismatch,
+            PartFamilyFailureStages.FeatureMissingAfterRebuild,
+            PartFamilyFailureStages.GeometryReportFailed
         };
 
         return stages.FirstOrDefault(stage =>
@@ -635,4 +663,9 @@ public sealed partial class SolidWorksMainWorkflowRunner
             : extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase)
                 ? "application/pdf"
                 : "text/plain";
+
+    private static bool RequiresGeometryValidationReport(SolidWorksBuildPlan plan) =>
+        plan.OutputRequirements?.Contains(
+            "geometry_validation_report.json",
+            StringComparer.OrdinalIgnoreCase) == true;
 }

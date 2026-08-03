@@ -536,4 +536,34 @@ public sealed record PlatformSelfCheckReport(
 
     [JsonPropertyName("v2_0_c_documented")]
     public bool V20CDocumented { get; init; }
+
+    [JsonPropertyName("model_rebuild_pipeline_exists")]
+    public bool ModelRebuildPipelineExists { get; init; }
+
+    [JsonPropertyName("parameter_update_supported")]
+    public bool ParameterUpdateSupported { get; init; }
+
+    [JsonPropertyName("solidworks_rebuild_supported")]
+    public bool SolidWorksRebuildSupported { get; init; }
+
+    [JsonPropertyName("geometry_validator_exists")]
+    public bool GeometryValidatorExists { get; init; }
+
+    [JsonPropertyName("bounding_box_validation_supported")]
+    public bool BoundingBoxValidationSupported { get; init; }
+
+    [JsonPropertyName("volume_validation_supported")]
+    public bool VolumeValidationSupported { get; init; }
+
+    [JsonPropertyName("parameter_geometry_match_supported")]
+    public bool ParameterGeometryMatchSupported { get; init; }
+
+    [JsonPropertyName("rebuild_failure_detected")]
+    public bool RebuildFailureDetected { get; init; }
+
+    [JsonPropertyName("geometry_report_generated")]
+    public bool GeometryReportGenerated { get; init; }
+
+    [JsonPropertyName("v2_0_d_documented")]
+    public bool V20DDocumented { get; init; }
 }

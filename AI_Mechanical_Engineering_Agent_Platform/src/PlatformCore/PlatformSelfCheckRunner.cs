@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Net;
 using DomainSchemas;
+using PlatformCore.Modules.CADModeling;
 using PlatformCore.Modules.CADModeling.Agents;
 using PlatformCore.Modules.CADModeling.Reviewers;
 using PlatformCore.Modules.CADModeling.Skills;
@@ -216,6 +217,11 @@ public static class PlatformSelfCheckRunner
         var v20AGenericCadModelSpecChecks = RunV20AGenericCadModelSpecChecks(root, versionStageText);
         var v20BFeatureHandlerChecks = RunV20BFeatureHandlerChecks(root, platform, versionStageText);
         var v20CFeatureAdapterChecks = RunV20CFeatureAdapterChecks(root, platform, versionStageText);
+        var v20DModelRebuildChecks = RunV20DModelRebuildChecks(
+            root,
+            outputRoot,
+            versionStageText,
+            markdownChineseCheckPassed);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -439,6 +445,7 @@ public static class PlatformSelfCheckRunner
              v20AGenericCadModelSpecChecks.AllPassed &&
              v20BFeatureHandlerChecks.AllPassed &&
              v20CFeatureAdapterChecks.AllPassed &&
+             v20DModelRebuildChecks.AllPassed &&
              executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
@@ -823,7 +830,17 @@ public static class PlatformSelfCheckRunner
             FeaturePipelineEndToEndSupported = v20CFeatureAdapterChecks.FeaturePipelineEndToEndSupported,
             FeatureResultValidationSupported = v20CFeatureAdapterChecks.FeatureResultValidationSupported,
             FeatureFakeSuccessGuardSupported = v20CFeatureAdapterChecks.FeatureFakeSuccessGuardSupported,
-            V20CDocumented = v20CFeatureAdapterChecks.V20CDocumented
+            V20CDocumented = v20CFeatureAdapterChecks.V20CDocumented,
+            ModelRebuildPipelineExists = v20DModelRebuildChecks.ModelRebuildPipelineExists,
+            ParameterUpdateSupported = v20DModelRebuildChecks.ParameterUpdateSupported,
+            SolidWorksRebuildSupported = v20DModelRebuildChecks.SolidWorksRebuildSupported,
+            GeometryValidatorExists = v20DModelRebuildChecks.GeometryValidatorExists,
+            BoundingBoxValidationSupported = v20DModelRebuildChecks.BoundingBoxValidationSupported,
+            VolumeValidationSupported = v20DModelRebuildChecks.VolumeValidationSupported,
+            ParameterGeometryMatchSupported = v20DModelRebuildChecks.ParameterGeometryMatchSupported,
+            RebuildFailureDetected = v20DModelRebuildChecks.RebuildFailureDetected,
+            GeometryReportGenerated = v20DModelRebuildChecks.GeometryReportGenerated,
+            V20DDocumented = v20DModelRebuildChecks.V20DDocumented
         };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -1861,6 +1878,237 @@ public static class PlatformSelfCheckRunner
             featureResultValidationSupported,
             featureFakeSuccessGuardSupported,
             v20CDocumented);
+    }
+
+    private static V20DModelRebuildSelfCheckResult RunV20DModelRebuildChecks(
+        string projectRoot,
+        string outputRoot,
+        string versionStageText,
+        bool markdownChineseCheckPassed)
+    {
+        var featureRoot = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "Features");
+        var updateServicePath = Path.Combine(projectRoot, "src", "Modules", "CADModeling", "ModelUpdateService.cs");
+        var pipelinePath = Path.Combine(featureRoot, "FeatureExecutionPipeline.cs");
+        var readerPath = Path.Combine(featureRoot, "SolidWorksGeometryReader.cs");
+        var builderPath = Path.Combine(featureRoot, "V20DFeatureGraphPartFamilyBuilder.cs");
+        var profileEvidencePath = Path.Combine(featureRoot, "V20DThreeCircleCutEvidencePolicy.cs");
+        var workerPath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "RealSolidWorksWorker.cs");
+        var validatorPath = Path.Combine(projectRoot, "src", "DomainSchemas", "GeometryValidation.cs");
+        var qualityGateValidatorPath = Path.Combine(
+            projectRoot,
+            "src",
+            "Modules",
+            "CADModeling",
+            "validators",
+            "GeometryValidationArtifactValidator.cs");
+        var runnerPath = Path.Combine(projectRoot, "src", "PlatformCore", "SolidWorksMainWorkflowRunner.E2E.cs");
+        var examplePath = Path.Combine(projectRoot, "examples", "parameter_update_plate.json");
+        var stageDocumentPath = Path.Combine(projectRoot, "docs", "v2_0_d_model_rebuild_geometry_validation.md");
+
+        string Read(string path) => File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+
+        var updateServiceSource = Read(updateServicePath);
+        var pipelineSource = Read(pipelinePath);
+        var readerSource = Read(readerPath);
+        var builderSource = Read(builderPath);
+        var profileEvidenceSource = Read(profileEvidencePath);
+        var workerSource = Read(workerPath);
+        var validatorSource = Read(validatorPath);
+        var runnerSource = Read(runnerPath);
+        var stageDocumentText = Read(stageDocumentPath);
+        var workerAssembly = Type.GetType("SolidWorksWorker.FakeSolidWorksWorker, SolidWorksWorker", throwOnError: false)?.Assembly;
+        var modelRebuildPipelineExists =
+            typeof(ModelUpdateService).GetMethod(nameof(ModelUpdateService.Prepare)) is not null &&
+            workerAssembly?.GetType("SolidWorksWorker.Features.FeatureExecutionPipeline", throwOnError: false) is not null &&
+            workerAssembly.GetType("SolidWorksWorker.Features.V20DFeatureGraphPartFamilyBuilder", throwOnError: false) is not null &&
+            workerAssembly.GetType("SolidWorksWorker.Features.V20DThreeCircleCutEvidencePolicy", throwOnError: false) is not null &&
+            updateServiceSource.Contains("BuildPlanCompiler", StringComparison.Ordinal) &&
+            pipelineSource.Contains("FeatureHandlerRegistry", StringComparison.Ordinal) &&
+            builderSource.Contains("GeometryValidator", StringComparison.Ordinal) &&
+            profileEvidenceSource.Contains("ValidatePlanProfile", StringComparison.Ordinal) &&
+            profileEvidenceSource.Contains("FeatureExecutionEvidencePolicy.ComputeCurrentSourceRevision", StringComparison.Ordinal) &&
+            workerSource.Contains("V20DThreeCircleCutEvidencePolicy.ValidateForRealExecution", StringComparison.Ordinal) &&
+            runnerSource.Contains("ExecuteModelUpdateReleasePackageAsync", StringComparison.Ordinal);
+
+        CADModelSpec? original = null;
+        ModelUpdatePreparationResult? prepared = null;
+        try
+        {
+            using var example = JsonDocument.Parse(Read(examplePath));
+            original = JsonSerializer.Deserialize<CADModelSpec>(
+                example.RootElement.GetProperty("cad_model_spec").GetRawText(),
+                JsonOptions());
+            var update = example.RootElement.GetProperty("parameter_update");
+            var oldParameters = ReadStringDictionary(update.GetProperty("old_parameters"));
+            var newParameters = ReadStringDictionary(update.GetProperty("new_parameters"));
+            if (original is not null)
+            {
+                prepared = new ModelUpdateService().Prepare(
+                    "self-check-v20-d-parameter-update",
+                    original,
+                    new ModelParameterUpdateRequest(newParameters, oldParameters));
+            }
+        }
+        catch (Exception exception) when (exception is IOException or JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            // A failed parse/update is reflected in ParameterUpdateSupported below.
+        }
+
+        var parameterUpdateSupported =
+            prepared?.IsSuccess == true &&
+            prepared.FeatureGraphPreserved &&
+            prepared.UpdatedModelSpec?.Parameters.GetValueOrDefault("length_mm") == "200" &&
+            prepared.UpdatedModelSpec.Parameters.GetValueOrDefault("width_mm") == "100" &&
+            prepared.UpdatedModelSpec.Parameters.GetValueOrDefault("thickness_mm") == "15" &&
+            prepared.ChangedFeatures.Count >= 3 &&
+            prepared.BuildPlan?.Operations.Any(operation =>
+                operation.Parameters.GetValueOrDefault("feature_type") == FeatureTypes.Hole) == true;
+
+        var solidWorksRebuildSupported =
+            workerAssembly?.GetType("SolidWorksWorker.Features.RealSolidWorksGeometryReader", throwOnError: false) is not null &&
+            readerSource.Contains("ForceRebuild3", StringComparison.Ordinal) &&
+            readerSource.Contains("rebuild_failed", StringComparison.Ordinal);
+        var geometryValidatorExists =
+            typeof(GeometryValidator).GetMethod(nameof(GeometryValidator.Validate), [typeof(CADModelSpec), typeof(MeasuredGeometry), typeof(IReadOnlyList<string>)]) is not null &&
+            File.Exists(qualityGateValidatorPath) &&
+            validatorSource.Contains("GeometryValidationReport", StringComparison.Ordinal);
+        var boundingBoxValidationSupported =
+            readerSource.Contains("GetPartBox", StringComparison.Ordinal) &&
+            readerSource.Contains("GetExtremePoint", StringComparison.Ordinal) &&
+            validatorSource.Contains("ValidateBoundingBox", StringComparison.Ordinal) &&
+            validatorSource.Contains(nameof(PartFamilyFailureStages.BoundingBoxInvalid), StringComparison.Ordinal);
+        var volumeValidationSupported =
+            readerSource.Contains("GetBodies2", StringComparison.Ordinal) &&
+            readerSource.Contains("GetMassProperties", StringComparison.Ordinal) &&
+            readerSource.Contains("CreateMassProperty2", StringComparison.Ordinal) &&
+            validatorSource.Contains("ValidateBodiesAndVolume", StringComparison.Ordinal) &&
+            validatorSource.Contains(nameof(PartFamilyFailureStages.VolumeValidationFailed), StringComparison.Ordinal);
+        var parameterGeometryMatchSupported =
+            readerSource.Contains("CylinderParams", StringComparison.Ordinal) &&
+            validatorSource.Contains("ValidateDiameter", StringComparison.Ordinal) &&
+            validatorSource.Contains(nameof(PartFamilyFailureStages.ParameterGeometryMismatch), StringComparison.Ordinal);
+
+        var requiredFailureStages = new[]
+        {
+            PartFamilyFailureStages.RebuildFailed,
+            PartFamilyFailureStages.GeometryReadFailed,
+            PartFamilyFailureStages.BoundingBoxInvalid,
+            PartFamilyFailureStages.VolumeValidationFailed,
+            PartFamilyFailureStages.ParameterGeometryMismatch,
+            PartFamilyFailureStages.FeatureMissingAfterRebuild,
+            PartFamilyFailureStages.GeometryReportFailed
+        };
+        var failedRebuildReport = original is null
+            ? null
+            : new GeometryValidator().Validate(
+                original,
+                new MeasuredGeometry(
+                    RebuildPassed: false,
+                    BoundingBox: null,
+                    ExactExtents: null,
+                    BodyCount: null,
+                    VolumeCubicMillimeters: null,
+                    MassKilograms: null,
+                    MassPropertyVolumeCubicMillimeters: null,
+                    ReadIssues: Array.Empty<string>()));
+        var rebuildFailureDetected =
+            requiredFailureStages.All(stage =>
+                typeof(PartFamilyFailureStages)
+                    .GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Select(field => field.GetRawConstantValue()?.ToString())
+                    .Contains(stage, StringComparer.OrdinalIgnoreCase)) &&
+            string.Equals(
+                failedRebuildReport?.FailureStage,
+                PartFamilyFailureStages.RebuildFailed,
+                StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(failedRebuildReport?.FinalStatus, "Failed", StringComparison.OrdinalIgnoreCase);
+
+        var geometryReportPath = Path.Combine(outputRoot, "reports", "v2_0_d_geometry_validation_report.json");
+        var geometryReportGenerated = false;
+        if (prepared?.UpdatedModelSpec is CADModelSpec updated && parameterUpdateSupported)
+        {
+            var expected = GeometryValidator.BuildExpectedGeometry(updated);
+            var expectedVolume = expected.ExpectedVolumeCubicMillimeters;
+            if (expectedVolume is > 0)
+            {
+                try
+                {
+                    var box = new GeometryBoundingBox(0d, 0d, 0d, 200d, 100d, 15d);
+                    var measured = new MeasuredGeometry(
+                        RebuildPassed: true,
+                        BoundingBox: box,
+                        ExactExtents: box,
+                        BodyCount: 1,
+                        VolumeCubicMillimeters: expectedVolume.Value,
+                        MassKilograms: 2.3d,
+                        MassPropertyVolumeCubicMillimeters: expectedVolume.Value,
+                        FeatureTypes: ["ProfileFeature", "BossExtrude", "CutExtrude"],
+                        CylindricalDiametersMm: [10d, 10d, 10d, 10d],
+                        Cylinders:
+                        [
+                            new MeasuredCylinder(10d, -80d, -30d, 0d, 0d, 0d, 1d),
+                            new MeasuredCylinder(10d, 80d, -30d, 0d, 0d, 0d, 1d),
+                            new MeasuredCylinder(10d, -80d, 30d, 0d, 0d, 0d, 1d),
+                            new MeasuredCylinder(10d, 80d, 30d, 0d, 0d, 0d, 1d)
+                        ],
+                        ReadIssues: Array.Empty<string>());
+                    var validationReport = new GeometryValidator().Validate(
+                        updated,
+                        measured,
+                        new[] { "sketch" }
+                            .Concat(updated.Features.Select(feature => feature.FeatureType))
+                            .ToArray());
+                    GeometryValidator.WriteReport(geometryReportPath, validationReport);
+                    using var reportDocument = JsonDocument.Parse(File.ReadAllText(geometryReportPath));
+                    geometryReportGenerated =
+                        string.Equals(validationReport.FinalStatus, "Passed", StringComparison.OrdinalIgnoreCase) &&
+                        reportDocument.RootElement.TryGetProperty("model_id", out _) &&
+                        reportDocument.RootElement.TryGetProperty("input_parameters", out _) &&
+                        reportDocument.RootElement.TryGetProperty("measured_geometry", out _) &&
+                        reportDocument.RootElement.TryGetProperty("expected_geometry", out _) &&
+                        reportDocument.RootElement.TryGetProperty("deviations", out _) &&
+                        reportDocument.RootElement.TryGetProperty("passed_checks", out _) &&
+                        reportDocument.RootElement.TryGetProperty("failed_checks", out _) &&
+                        reportDocument.RootElement.TryGetProperty("failure_stage", out _) &&
+                        reportDocument.RootElement.TryGetProperty("final_status", out _);
+                }
+                catch (Exception exception) when (exception is IOException or JsonException or UnauthorizedAccessException)
+                {
+                    geometryReportGenerated = false;
+                }
+            }
+        }
+
+        var v20DDocumented =
+            versionStageText.Contains("V2.0-D", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(stageDocumentPath);
+        var markdownChineseCheck =
+            markdownChineseCheckPassed &&
+            stageDocumentText.Any(character => character is >= '\u4e00' and <= '\u9fff');
+
+        return new V20DModelRebuildSelfCheckResult(
+            modelRebuildPipelineExists,
+            parameterUpdateSupported,
+            solidWorksRebuildSupported,
+            geometryValidatorExists,
+            boundingBoxValidationSupported,
+            volumeValidationSupported,
+            parameterGeometryMatchSupported,
+            rebuildFailureDetected,
+            geometryReportGenerated,
+            v20DDocumented,
+            markdownChineseCheck);
+    }
+
+    private static Dictionary<string, string> ReadStringDictionary(JsonElement element)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var property in element.EnumerateObject())
+        {
+            result[property.Name] = property.Value.GetString() ?? string.Empty;
+        }
+
+        return result;
     }
 
     private static bool TryWriteJsonReport<T>(string reportPath, T report, InMemoryAuditLog auditLog)
@@ -6009,6 +6257,33 @@ public static class PlatformSelfCheckRunner
             FeatureResultValidationSupported &&
             FeatureFakeSuccessGuardSupported &&
             V20CDocumented;
+    }
+
+    private sealed record V20DModelRebuildSelfCheckResult(
+        bool ModelRebuildPipelineExists,
+        bool ParameterUpdateSupported,
+        bool SolidWorksRebuildSupported,
+        bool GeometryValidatorExists,
+        bool BoundingBoxValidationSupported,
+        bool VolumeValidationSupported,
+        bool ParameterGeometryMatchSupported,
+        bool RebuildFailureDetected,
+        bool GeometryReportGenerated,
+        bool V20DDocumented,
+        bool MarkdownChineseCheckPassed)
+    {
+        public bool AllPassed =>
+            ModelRebuildPipelineExists &&
+            ParameterUpdateSupported &&
+            SolidWorksRebuildSupported &&
+            GeometryValidatorExists &&
+            BoundingBoxValidationSupported &&
+            VolumeValidationSupported &&
+            ParameterGeometryMatchSupported &&
+            RebuildFailureDetected &&
+            GeometryReportGenerated &&
+            V20DDocumented &&
+            MarkdownChineseCheckPassed;
     }
 
     private static JsonSerializerOptions JsonOptions()

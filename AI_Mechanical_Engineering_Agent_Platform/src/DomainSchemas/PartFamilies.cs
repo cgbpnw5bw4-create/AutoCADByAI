@@ -44,6 +44,13 @@ public static class PartFamilyFailureStages
     public const string StepExportFailed = "step_export_failed";
     public const string ArtifactValidationFailed = "artifact_validation_failed";
     public const string QualityGateRejected = "quality_gate_rejected";
+    public const string RebuildFailed = "rebuild_failed";
+    public const string GeometryReadFailed = "geometry_read_failed";
+    public const string BoundingBoxInvalid = "bounding_box_invalid";
+    public const string VolumeValidationFailed = "volume_validation_failed";
+    public const string ParameterGeometryMismatch = "parameter_geometry_mismatch";
+    public const string FeatureMissingAfterRebuild = "feature_missing_after_rebuild";
+    public const string GeometryReportFailed = "geometry_report_failed";
 }
 
 public static class PartFamilyExecutionModes
@@ -177,6 +184,8 @@ public sealed class CADModelSpecValidator
             "PDF",
             "build_report.json",
             "feature_execution_report.json",
+            "geometry_validation_report.json",
+            "rebuild_report.json",
             "e2e_execution_report.json",
             "release_manifest.json",
             "package_quality_report.json"

@@ -40,3 +40,16 @@ description: "用于 `SolidWorks` `API` 调用失败的证据驱动修复流程�
 - 不默认启动 SolidWorks。
 - 不让 Agent、Gateway 或 LLM 直接调用 Worker。
 - 不新增同职责 Codex Agent；新 API 证据写入本 Skill 或 `api_evidence.md`。
+
+## V2.0-D 参数重建与几何验证修复
+
+适用范围是 V2.0-D 的真实 `SolidWorks` 重建和 `GeometryReader` 读取故障。开始前读取同一次 `rebuild_report.json`、`geometry_validation_report.json`、`FeatureGraph` 快照、接口证据和 `QualityGate` 结果；不扫描历史产物，不使用旧诊断或文件存在替代当前证据。
+
+1. 先固定唯一 `failure_stage`：`rebuild_failed`、`geometry_read_failed`、`bounding_box_invalid`、`volume_validation_failed`、`parameter_geometry_mismatch`、`feature_missing_after_rebuild` 或 `geometry_report_failed`。
+2. 保持边界：`ModelUpdateService` 和 `GeometryValidator` 是纯逻辑层；只有 `ISolidWorksGeometryReader` / `RealSolidWorksGeometryReader` 可以读取 `COM`，并且只读当前受控模型。
+3. 若新增 `IPartDoc.GetBodies2`、`GetPartBox`、`IBody2.GetMassProperties`、质量属性、特征遍历、`GetExtremePoint` 或圆柱面读取，先补官方证据、最小诊断、运行时版本和源码修订；证据不足返回 `feature_api_unverified`。
+4. 修复参数传播时只修 `CADModelSpec` 到既有 `SketchDefinition` / `FeatureDefinition` / `FeatureGraph` 的映射；不得在 Worker 或 Handler 中直接写 `COM` 业务逻辑。
+5. 四孔 `plate_basic_4holes` 必须用真实几何逐孔证明。只能复用已注册、已取证 Feature 类型；禁止新增 CAD Feature、零件族、重复 Agent、阵列、贯穿、对称拉伸或孔向导。
+6. 只有 `run-cad-workflow --input examples/parameter_update_plate.json` 可以关闭真实验收。它必须覆盖 160×80×12 初始建模和 200×100×15 更新重建，并让 `GeometryValidator`、`Reviewer`、`QualityGate` 同次通过。
+
+任何 failure_stage、报告字段、真实几何或 QualityGate 未关闭时都不得交付 SLDPRT/STEP，也不得进入 V2.0-E。

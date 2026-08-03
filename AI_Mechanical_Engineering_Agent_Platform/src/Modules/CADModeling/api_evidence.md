@@ -265,3 +265,18 @@ Boss、Cut、Hole 的体积分别为 `0→5.9999999999999995E-05`、`5.999999999
 ### 失败与禁止事项
 
 未验证使用 `feature_api_unverified`；API 返回但对象或重建无效使用 `feature_result_invalid`；当次 SLDPRT、STEP 或报告缺失使用 `feature_artifact_missing`。禁止 Handler COM、第三方脚本生产路径、`SimpleHole2` / Hole Wizard、历史产物复用和进入 V2.0-D。
+
+## V2.0-D GeometryReader API 证据边界
+
+V2.0-D 新增的真实几何读取必须收敛在 ISolidWorksGeometryReader / RealSolidWorksGeometryReader。ModelUpdateService、GeometryValidator、报告组装器和 QualityGate 只能处理 DTO，不得读取或写入 COM。每一个新增读取 API 都要有独立的官方证据、最小诊断、运行时版本和源码 revision 绑定；变更 V2.0-C 绑定源码时，必须重新诊断、复核并以主流程刷新证据。
+
+候选读取范围包括：
+
+- 实体：`IPartDoc.GetBodies2`，用于真实实体数量与逐实体测量；
+- 包围盒：`IPartDoc.GetPartBox(true)`，仅作近似包围盒检查；
+- 体积：`IBody2.GetMassProperties(1d)` 的体积槽位，或 `IModelDocExtension.CreateMassProperty2` / `IMassProperty2.Volume`；
+- 质量属性：可用时读取 `IMassProperty2.Mass`，不可用必须明确报告为不可用，不能伪造通过；
+- 特征结果：`IFeature.GetTypeName2`、`FirstFeature` / `GetNextFeature` 与 `GetErrorCode2`；
+- 精确尺寸：平面 `plate_basic_4holes` 先以 `IBody2.GetVertices` / `IVertex.GetPoint` 读取真实外轮廓顶点；顶点不可读时回退 `IBody2.GetExtremePoint`。孔径或轴径使用有完整证据的圆柱面参数。两条长度路径均不可用时必须返回 `geometry_read_failed`。
+
+GetPartBox 近似结果、COM 非空返回、Feature 名称或文件大小均不能证明精确长度、孔径或四个孔。四孔 plate_basic_4holes 必须读取并验证四个相应的圆柱几何；不得为了凑数新增 Feature 类型、零件族或使用未证实的 pattern、Hole Wizard / SimpleHole2。任何证据不足都应停止为 feature_api_unverified，最终仍只由 run-cad-workflow 的 QualityGate 判定，且不进入 V2.0-E。
