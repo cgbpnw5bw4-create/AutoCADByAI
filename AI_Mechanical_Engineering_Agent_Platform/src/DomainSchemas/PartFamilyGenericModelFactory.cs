@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace DomainSchemas;
 
 /// <summary>
@@ -264,6 +266,63 @@ public static class PartFamilyGenericModelFactory
             ]);
     }
 
+    public static CADModelSpec CreateJacketBasic(CADModelSpec source)
+    {
+        var outerDiameter = Parameter(source, "outer_diameter_mm");
+        var innerDiameter = Parameter(source, "inner_diameter_mm");
+        var length = Parameter(source, "length_mm");
+        var boreCutDepth = Scale(length, 2d);
+        return Complete(
+            source,
+            [
+                CircleSketch(
+                    "jacket_outer_sketch",
+                    "jacket_outer_circle",
+                    "TopPlane",
+                    "outer_diameter_mm",
+                    outerDiameter,
+                    new Dictionary<string, string> { ["profile"] = "jacket_outer_circle" },
+                    executionOrder: 1),
+                CircleSketch(
+                    "jacket_inner_sketch",
+                    "jacket_inner_circle",
+                    "TopPlane",
+                    "inner_diameter_mm",
+                    innerDiameter,
+                    new Dictionary<string, string> { ["profile"] = "jacket_inner_circle" },
+                    executionOrder: 2)
+            ],
+            [
+                new FeatureDefinition(
+                    "jacket_body_extrude",
+                    FeatureTypes.ExtrudeBoss,
+                    new Dictionary<string, string>
+                    {
+                        ["depth_mm"] = length,
+                        ["direction"] = "blind"
+                    },
+                    dependencies: [],
+                    referencedSketches: ["jacket_outer_sketch"],
+                    referencedFeatures: [],
+                    executionOrder: 1),
+                new FeatureDefinition(
+                    "jacket_inner_cut",
+                    FeatureTypes.ExtrudeCut,
+                    new Dictionary<string, string>
+                    {
+                        ["cut_role"] = "jacket_bore",
+                        ["hole_diameter_mm"] = innerDiameter,
+                        ["depth_mm"] = boreCutDepth,
+                        ["direction"] = "blind",
+                        ["through_all"] = "false"
+                    },
+                    dependencies: ["jacket_body_extrude"],
+                    referencedSketches: ["jacket_inner_sketch"],
+                    referencedFeatures: ["jacket_body_extrude"],
+                    executionOrder: 2)
+            ]);
+    }
+
     private static CADModelSpec Complete(
         CADModelSpec source,
         IReadOnlyList<SketchDefinition> sketches,
@@ -317,4 +376,10 @@ public static class PartFamilyGenericModelFactory
 
     private static string Parameter(CADModelSpec source, string name) =>
         source.TryGetParameter(name, out var value) ? value : string.Empty;
+
+    private static string Scale(string value, double factor) =>
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) &&
+        double.IsFinite(parsed)
+            ? (parsed * factor).ToString("R", CultureInfo.InvariantCulture)
+            : string.Empty;
 }

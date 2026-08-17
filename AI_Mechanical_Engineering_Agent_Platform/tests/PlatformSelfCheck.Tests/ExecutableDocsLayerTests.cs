@@ -172,7 +172,8 @@ public sealed class ExecutableDocsLayerTests
             Assert.True(report.SolidWorksWorkerApiEvidenceDocExists);
             Assert.True(report.SolidWorksWorkerReviewChecklistExists);
             Assert.True(report.MarkdownChineseCheckPassed);
-            Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.FeatureProductionEvidenceActive);
+            Assert.Equal("Failed", report.FinalStatus);
 
             Assert.True(rootElement.TryGetProperty("executable_docs_layer_enabled", out _));
             Assert.True(rootElement.TryGetProperty("codex_agents_configured", out _));

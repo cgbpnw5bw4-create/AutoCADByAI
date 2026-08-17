@@ -2631,7 +2631,8 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.V20ADocumented);
             Assert.True(report.V18VersionStageDocumented);
             Assert.True(report.MarkdownChineseCheckPassed);
-            Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.FeatureProductionEvidenceActive);
+            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {
@@ -2671,7 +2672,8 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.Null(report.SolidWorksRealBuildSmokeTestError);
             Assert.Null(report.SolidWorksRealBuildFailureStage);
             Assert.True(report.SolidWorksRealBuildErrorIsActionable);
-            Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.FeatureProductionEvidenceActive);
+            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {
@@ -3456,7 +3458,10 @@ public sealed class SolidWorksModuleSkeletonTests
             var reportPath = Path.Combine(outputDirectory, "build_report.json");
 
             await File.WriteAllTextAsync(partPath, "fake real SolidWorks part bytes for tests", cancellationToken);
-            await File.WriteAllTextAsync(stepPath, "fake real STEP bytes for tests", cancellationToken);
+            await File.WriteAllTextAsync(
+                stepPath,
+                "ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n",
+                cancellationToken);
             var diagnostics = new SolidWorksPlateBuildDiagnostics
             {
                 SldprtSaveAttempted = true,

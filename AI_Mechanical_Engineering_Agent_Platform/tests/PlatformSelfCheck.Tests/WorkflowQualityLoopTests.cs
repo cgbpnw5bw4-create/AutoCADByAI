@@ -217,7 +217,8 @@ public sealed class WorkflowQualityLoopTests
         Assert.True(report.HumanApprovalRequestGenerated);
         Assert.True(report.ModuleAgentsRegistered);
         Assert.True(report.PlaceholderAgentIsFallbackOnly);
-        Assert.Equal("Passed", report.FinalStatus);
+        Assert.True(report.FeatureProductionEvidenceActive);
+        Assert.Equal("Failed", report.FinalStatus);
     }
 
     private static WorkflowContext CreateWorkflowContext() =>

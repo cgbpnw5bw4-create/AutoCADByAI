@@ -528,6 +528,9 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("feature_pipeline_end_to_end_supported")]
     public bool FeaturePipelineEndToEndSupported { get; init; }
 
+    [JsonPropertyName("feature_production_evidence_active")]
+    public bool FeatureProductionEvidenceActive { get; init; }
+
     [JsonPropertyName("feature_result_validation_supported")]
     public bool FeatureResultValidationSupported { get; init; }
 
@@ -566,4 +569,28 @@ public sealed record PlatformSelfCheckReport(
 
     [JsonPropertyName("v2_0_d_documented")]
     public bool V20DDocumented { get; init; }
+
+    [JsonPropertyName("jacket_part_family_registered")]
+    public bool JacketPartFamilyRegistered { get; init; }
+
+    [JsonPropertyName("jacket_uses_generic_feature_graph")]
+    public bool JacketUsesGenericFeatureGraph { get; init; }
+
+    [JsonPropertyName("jacket_real_builder_implemented")]
+    public bool JacketRealBuilderImplemented { get; init; }
+
+    [JsonPropertyName("jacket_dry_run_passed")]
+    public bool JacketDryRunPassed { get; init; }
+
+    [JsonPropertyName("jacket_real_workflow_supported")]
+    public bool JacketRealWorkflowSupported { get; init; }
+
+    [JsonPropertyName("jacket_api_evidence_documented")]
+    public bool JacketApiEvidenceDocumented { get; init; }
+
+    [JsonPropertyName("jacket_production_evidence_active")]
+    public bool JacketProductionEvidenceActive { get; init; }
+
+    [JsonPropertyName("v2_1_a_jacket_documented")]
+    public bool V21AJacketDocumented { get; init; }
 }

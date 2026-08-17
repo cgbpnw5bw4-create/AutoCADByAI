@@ -22,6 +22,7 @@ public static class PartFamilyFailureStages
     public const string PartFamilyBuilderMissing = "part_family_builder_missing";
     public const string FlangeBuildFailed = "flange_build_failed";
     public const string ShaftBuildFailed = "shaft_build_failed";
+    public const string JacketBuildFailed = "jacket_build_failed";
     public const string PartFamilyApiEvidenceInsufficient = "part_family_api_evidence_insufficient";
     public const string FeatureApiEvidenceInsufficient = "feature_api_evidence_insufficient";
     public const string FeatureAdapterMissing = "feature_adapter_missing";
@@ -40,6 +41,9 @@ public static class PartFamilyFailureStages
     public const string ShaftProfileCreateFailed = "shaft_profile_create_failed";
     public const string ShaftRevolveFailed = "shaft_revolve_failed";
     public const string ShaftStepFeatureFailed = "shaft_step_feature_failed";
+    public const string JacketProfileCreateFailed = "jacket_profile_create_failed";
+    public const string JacketExtrudeFailed = "jacket_extrude_failed";
+    public const string JacketInnerCutFailed = "jacket_inner_cut_failed";
     public const string PartSaveFailed = "part_save_failed";
     public const string StepExportFailed = "step_export_failed";
     public const string ArtifactValidationFailed = "artifact_validation_failed";
@@ -58,6 +62,7 @@ public static class PartFamilyExecutionModes
     public const string PlateBasic4Holes = "RealBuildPlateBasic4Holes";
     public const string FlangeBasic = "RealBuildFlangeBasic";
     public const string ShaftBasic = "RealBuildShaftBasic";
+    public const string JacketBasic = "RealBuildJacketBasic";
     public const string GenericFeatureGraph = "RealBuildGenericFeatureGraph";
 }
 
@@ -136,7 +141,8 @@ public sealed class PartTypeRegistry
         new([
             new PlateBasic4HolesDefinition(),
             new FlangeBasicDefinition(),
-            new ShaftBasicDefinition()
+            new ShaftBasicDefinition(),
+            new JacketBasicDefinition()
         ]);
 
     public void Register(IPartFamilyDefinition definition)
@@ -442,6 +448,48 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
         PartFamilyPlanFactory.ReviewShaft(plan);
 }
 
+public sealed class JacketBasicDefinition : IPartFamilyDefinition
+{
+    public const string Type = "jacket_basic";
+    public const string ProductionEvidenceStatus =
+        "v2_1_a_jacket_structured_runtime_evidence_pending; real execution remains fail-closed";
+
+    public string PartType => Type;
+
+    public IReadOnlyList<PartParameterSchema> ParameterSchema { get; } =
+    [
+        new("outer_diameter_mm", PartParameterValueKind.Number, true, "Jacket outer diameter."),
+        new("inner_diameter_mm", PartParameterValueKind.Number, true, "Jacket inner diameter."),
+        new("length_mm", PartParameterValueKind.Number, true, "Jacket axial length.")
+    ];
+
+    public IPartFamilyValidator Validator { get; } = new JacketBasicValidator();
+
+    public string BuilderFailureStage => PartFamilyFailureStages.JacketBuildFailed;
+
+    public string ApiEvidence => ProductionEvidenceStatus;
+
+    public string RealExecutionMode => PartFamilyExecutionModes.JacketBasic;
+
+    public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
+    {
+        var validation = Validator.Validate(spec);
+        if (!validation.IsValid)
+        {
+            return new(null, validation.FailureStage, validation.Issues);
+        }
+
+        return PartFamilyPlanFactory.CompileGeneric(
+            taskId,
+            PartFamilyPlanFactory.UseProvidedGraphOrCreate(
+                spec,
+                PartFamilyGenericModelFactory.CreateJacketBasic));
+    }
+
+    public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
+        PartFamilyPlanFactory.ReviewJacket(plan);
+}
+
 public sealed class PlateBasic4HolesValidator : IPartFamilyValidator
 {
     public PartFamilyValidationResult Validate(CADModelSpec spec)
@@ -546,6 +594,35 @@ public sealed class ShaftBasicValidator : IPartFamilyValidator
     }
 }
 
+public sealed class JacketBasicValidator : IPartFamilyValidator
+{
+    public PartFamilyValidationResult Validate(CADModelSpec spec)
+    {
+        var required = PartFamilyParameters.Require(
+            spec,
+            "outer_diameter_mm",
+            "inner_diameter_mm",
+            "length_mm");
+        if (required is not null)
+        {
+            return required;
+        }
+
+        if (!PartFamilyParameters.TryPositive(spec, "outer_diameter_mm", out var outer) ||
+            !PartFamilyParameters.TryPositive(spec, "inner_diameter_mm", out var inner) ||
+            !PartFamilyParameters.TryPositive(spec, "length_mm", out _) ||
+            inner >= outer ||
+            (outer - inner) / 2d < 1d)
+        {
+            return PartFamilyValidationResult.Failed(
+                PartFamilyFailureStages.InvalidParameterValue,
+                "invalid_parameter_value: jacket diameters and length must be positive, inner diameter must be smaller than outer diameter, and radial wall thickness must be at least 1 mm.");
+        }
+
+        return PartFamilyValidationResult.Passed();
+    }
+}
+
 internal static class PartFamilyPlanFactory
 {
     public static CADModelSpec UseProvidedGraphOrCreate(
@@ -640,6 +717,47 @@ internal static class PartFamilyPlanFactory
         if (diameters.Count != lengths.Count)
         {
             issues.Add("shaft optional step diameter and length mappings must have equal counts.");
+        }
+
+        return issues;
+    }
+
+    public static IReadOnlyList<string> ReviewJacket(SolidWorksBuildPlan plan)
+    {
+        var issues = ReviewCommon(plan, JacketBasicDefinition.Type).ToList();
+        var outerSketch = OperationAt(plan, 0, "CreateSketch", issues, "jacket outer profile");
+        var extrude = OperationAt(plan, 1, "ExtrudeBoss", issues, "jacket outer extrusion");
+        var innerSketch = OperationAt(plan, 2, "CreateSketch", issues, "jacket inner profile");
+        var innerCut = OperationAt(plan, 3, "CutExtrude", issues, "jacket bore cut");
+
+        RequireMapped(plan, outerSketch, "outer_diameter_mm", "outer_diameter_mm", issues);
+        RequireMapped(plan, extrude, "length_mm", "depth_mm", issues);
+        RequireMapped(plan, innerSketch, "inner_diameter_mm", "inner_diameter_mm", issues);
+        RequireMapped(plan, innerCut, "inner_diameter_mm", "hole_diameter_mm", issues);
+        RequireValue(outerSketch, "profile", "jacket_outer_circle", issues);
+        RequireValue(innerCut, "cut_role", "jacket_bore", issues);
+        RequireValue(innerCut, "direction", "blind", issues);
+        RequireValue(innerCut, "through_all", "false", issues);
+        if (!string.Equals(innerSketch?.SketchPlane, "TopPlane", StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add("jacket inner profile must be created on TopPlane.");
+        }
+
+        if (!double.TryParse(
+                plan.Dimensions?.GetValueOrDefault("length_mm"),
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var length) ||
+            !double.TryParse(
+                innerCut?.Parameters.GetValueOrDefault("depth_mm"),
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var cutDepth) ||
+            !double.IsFinite(length) ||
+            !double.IsFinite(cutDepth) ||
+            Math.Abs(cutDepth - length * 2d) > 1e-6)
+        {
+            issues.Add("jacket bore cut depth_mm must equal two times length_mm for the blind over-depth strategy.");
         }
 
         return issues;

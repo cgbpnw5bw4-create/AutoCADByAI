@@ -16,7 +16,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "2.0-c";
+    private const string SelfCheckSchemaVersion = "2.1-a";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -214,7 +214,7 @@ public static class PlatformSelfCheckRunner
         var v18PartFamilyChecks = await RunV18PartFamilyChecksAsync(root, platform, outputRoot, versionStageText, cancellationToken);
         var v19PartFamilyChecks = RunV19PartFamilyChecks(root, platform, versionStageText, v18PartFamilyChecks);
         var v20SolidWorksDefaultOnChecks = RunV20SolidWorksDefaultOnChecks();
-        var v20AGenericCadModelSpecChecks = RunV20AGenericCadModelSpecChecks(root, versionStageText);
+        var v20AGenericCadModelSpecChecks = RunV20AGenericCadModelSpecChecks(root, platform, versionStageText);
         var v20BFeatureHandlerChecks = RunV20BFeatureHandlerChecks(root, platform, versionStageText);
         var v20CFeatureAdapterChecks = RunV20CFeatureAdapterChecks(root, platform, versionStageText);
         var v20DModelRebuildChecks = RunV20DModelRebuildChecks(
@@ -222,6 +222,11 @@ public static class PlatformSelfCheckRunner
             outputRoot,
             versionStageText,
             markdownChineseCheckPassed);
+        var v21AJacketChecks = await RunV21AJacketChecksAsync(
+            root,
+            platform,
+            versionStageText,
+            cancellationToken);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -444,9 +449,10 @@ public static class PlatformSelfCheckRunner
              v20SolidWorksDefaultOnChecks.AllPassed &&
              v20AGenericCadModelSpecChecks.AllPassed &&
              v20BFeatureHandlerChecks.AllPassed &&
-             v20CFeatureAdapterChecks.AllPassed &&
-             v20DModelRebuildChecks.AllPassed &&
-             executableDocsChecks.ExecutableDocsLayerEnabled &&
+            v20CFeatureAdapterChecks.AllPassed &&
+            v20DModelRebuildChecks.AllPassed &&
+            v21AJacketChecks.AllPassed &&
+            executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
             workflow.FinalStatus == "Passed";
 
@@ -828,6 +834,7 @@ public static class PlatformSelfCheckRunner
             CutRealExecutionSupported = v20CFeatureAdapterChecks.CutRealExecutionSupported,
             HoleRealExecutionSupported = v20CFeatureAdapterChecks.HoleRealExecutionSupported,
             FeaturePipelineEndToEndSupported = v20CFeatureAdapterChecks.FeaturePipelineEndToEndSupported,
+            FeatureProductionEvidenceActive = v20CFeatureAdapterChecks.FeatureProductionEvidenceActive,
             FeatureResultValidationSupported = v20CFeatureAdapterChecks.FeatureResultValidationSupported,
             FeatureFakeSuccessGuardSupported = v20CFeatureAdapterChecks.FeatureFakeSuccessGuardSupported,
             V20CDocumented = v20CFeatureAdapterChecks.V20CDocumented,
@@ -840,7 +847,15 @@ public static class PlatformSelfCheckRunner
             ParameterGeometryMatchSupported = v20DModelRebuildChecks.ParameterGeometryMatchSupported,
             RebuildFailureDetected = v20DModelRebuildChecks.RebuildFailureDetected,
             GeometryReportGenerated = v20DModelRebuildChecks.GeometryReportGenerated,
-            V20DDocumented = v20DModelRebuildChecks.V20DDocumented
+            V20DDocumented = v20DModelRebuildChecks.V20DDocumented,
+            JacketPartFamilyRegistered = v21AJacketChecks.JacketPartFamilyRegistered,
+            JacketUsesGenericFeatureGraph = v21AJacketChecks.JacketUsesGenericFeatureGraph,
+            JacketRealBuilderImplemented = v21AJacketChecks.JacketRealBuilderImplemented,
+            JacketDryRunPassed = v21AJacketChecks.JacketDryRunPassed,
+            JacketRealWorkflowSupported = v21AJacketChecks.JacketRealWorkflowSupported,
+            JacketApiEvidenceDocumented = v21AJacketChecks.JacketApiEvidenceDocumented,
+            JacketProductionEvidenceActive = v21AJacketChecks.JacketProductionEvidenceActive,
+            V21AJacketDocumented = v21AJacketChecks.V21AJacketDocumented
         };
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -918,7 +933,7 @@ public static class PlatformSelfCheckRunner
             builderRegistryType is not null &&
             builderRegistryType.GetMethod("Register", BindingFlags.Public | BindingFlags.Instance) is not null &&
             builderRegistryType.GetMethod("TryGetBuilder", BindingFlags.Public | BindingFlags.Instance) is not null &&
-            definitionPartTypes.Count == 3 &&
+            definitionPartTypes.Count == 4 &&
             definitionPartTypes.SetEquals(builderPartTypes);
 
         var workerMethod = worker?.GetType().GetMethods().SingleOrDefault(method =>
@@ -1202,6 +1217,7 @@ public static class PlatformSelfCheckRunner
 
     private static V20AGenericCadModelSpecSelfCheckResult RunV20AGenericCadModelSpecChecks(
         string projectRoot,
+        PlatformKernel platform,
         string versionStageText)
     {
         var requiredSpecProperties = new[]
@@ -1357,20 +1373,21 @@ public static class PlatformSelfCheckRunner
             shaftSource,
             "shaft_revolve");
 
-        var realWorkerPath = Path.Combine(
-            projectRoot,
-            "src",
-            "Workers",
-            "SolidWorks",
-            "RealSolidWorksWorker.cs");
-        var realWorkerText = File.Exists(realWorkerPath)
-            ? File.ReadAllText(realWorkerPath)
-            : string.Empty;
+        var workerAssembly = platform.WorkerRegistry
+            .GetByName("FakeSolidWorksWorker")?
+            .GetType()
+            .Assembly;
+        var realWorkerType = workerAssembly?.GetType(
+            "SolidWorksWorker.RealSolidWorksWorker",
+            throwOnError: false);
+        var builderRegistryType = workerAssembly?.GetType(
+            "SolidWorksWorker.PartFamilyBuilderRegistry",
+            throwOnError: false);
         var noPartSpecificLogicInRealWorker =
-            realWorkerText.Contains("TryGetBuilder", StringComparison.Ordinal) &&
-            !realWorkerText.Contains(PlateBasic4HolesDefinition.Type, StringComparison.OrdinalIgnoreCase) &&
-            !realWorkerText.Contains(FlangeBasicDefinition.Type, StringComparison.OrdinalIgnoreCase) &&
-            !realWorkerText.Contains(ShaftBasicDefinition.Type, StringComparison.OrdinalIgnoreCase);
+            realWorkerType is not null &&
+            builderRegistryType?.GetMethod("TryGetBuilder", BindingFlags.Public | BindingFlags.Instance) is not null &&
+            realWorkerType.GetConstructors().Any(constructor =>
+                constructor.GetParameters().Any(parameter => parameter.ParameterType == builderRegistryType));
         var v20ADocumented =
             versionStageText.Contains("V2.0-A", StringComparison.OrdinalIgnoreCase) &&
             File.Exists(Path.Combine(projectRoot, "docs", "v2_0_a_generic_cad_model_spec.md"));
@@ -1858,6 +1875,7 @@ public static class PlatformSelfCheckRunner
                 "SolidWorksArtifactValidator.cs")) &&
             builderSource.Contains("FeatureHandlerRegistry", StringComparison.Ordinal) &&
             builderSource.Contains("ISolidWorksFeatureAdapter", StringComparison.Ordinal);
+        var featureProductionEvidenceActive = ValidateProductionFeatureEvidence(workerAssembly);
         var stageDocumentPath = Path.Combine(
             projectRoot,
             "docs",
@@ -1875,9 +1893,63 @@ public static class PlatformSelfCheckRunner
             cutRealExecutionSupported,
             holeRealExecutionSupported,
             featurePipelineEndToEndSupported,
+            featureProductionEvidenceActive,
             featureResultValidationSupported,
             featureFakeSuccessGuardSupported,
             v20CDocumented);
+    }
+
+    private static bool ValidateProductionFeatureEvidence(Assembly? workerAssembly)
+    {
+        try
+        {
+            var registryType = workerAssembly?.GetType(
+                "SolidWorksWorker.Features.FeatureHandlerRegistry",
+                throwOnError: false);
+            var evidencePolicyType = workerAssembly?.GetType(
+                "SolidWorksWorker.Features.FeatureExecutionEvidencePolicy",
+                throwOnError: false);
+            var registry = registryType?
+                .GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static)?
+                .Invoke(null, null);
+            var handlers = (registryType?
+                    .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+                    .Invoke(registry, null) as System.Collections.IEnumerable)?
+                .Cast<object>()
+                .ToArray() ?? [];
+            var validateEvidence = evidencePolicyType?.GetMethod(
+                "ValidateEvidence",
+                BindingFlags.Public | BindingFlags.Static);
+            var expectedTypes = new HashSet<string>(
+                ["sketch", FeatureTypes.ExtrudeBoss, FeatureTypes.ExtrudeCut, FeatureTypes.Hole],
+                StringComparer.OrdinalIgnoreCase);
+            var productionHandlers = handlers
+                .Where(handler => expectedTypes.Contains(
+                    handler.GetType().GetProperty("FeatureType")?.GetValue(handler)?.ToString() ?? string.Empty))
+                .ToArray();
+            if (validateEvidence is null || productionHandlers.Length != expectedTypes.Count)
+            {
+                return false;
+            }
+
+            return productionHandlers.All(handler =>
+            {
+                var featureType = handler.GetType().GetProperty("FeatureType")?.GetValue(handler)?.ToString();
+                if (string.IsNullOrWhiteSpace(featureType))
+                {
+                    return false;
+                }
+
+                var result = validateEvidence.Invoke(
+                    null,
+                    [handler, new FeatureDefinition($"self-check-{featureType}", featureType, new Dictionary<string, string>())]);
+                return result?.GetType().GetProperty("IsValid")?.GetValue(result) is true;
+            });
+        }
+        catch (Exception exception) when (exception is TargetInvocationException or InvalidOperationException or ArgumentException)
+        {
+            return false;
+        }
     }
 
     private static V20DModelRebuildSelfCheckResult RunV20DModelRebuildChecks(
@@ -2098,6 +2170,131 @@ public static class PlatformSelfCheckRunner
             geometryReportGenerated,
             v20DDocumented,
             markdownChineseCheck);
+    }
+
+    private static async Task<V21AJacketSelfCheckResult> RunV21AJacketChecksAsync(
+        string projectRoot,
+        PlatformKernel platform,
+        string versionStageText,
+        CancellationToken cancellationToken)
+    {
+        var registry = PartTypeRegistry.CreateDefault();
+        var definition = registry.GetDefinition(JacketBasicDefinition.Type) as JacketBasicDefinition;
+        var jacketPartFamilyRegistered = definition is not null;
+        var spec = new CADModelSpec(
+            "self-check-v21-a-jacket",
+            JacketBasicDefinition.Type,
+            new Dictionary<string, string>
+            {
+                ["outer_diameter_mm"] = "140",
+                ["inner_diameter_mm"] = "120",
+                ["length_mm"] = "180"
+            },
+            material: "Q235");
+        var planResult = definition?.GenerateBuildPlan("self-check-v21-a-jacket", spec);
+        var plan = planResult?.BuildPlan;
+        var featureIds = plan?.Operations
+            .Select(operation => operation.Parameters.GetValueOrDefault("feature_id"))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var jacketUsesGenericFeatureGraph =
+            planResult?.IsSuccess == true &&
+            plan is not null &&
+            featureIds.SetEquals(["jacket_body_extrude", "jacket_inner_cut"]) &&
+            new SolidWorksBuildPlanReviewer(registry).Review(plan).IsPassed;
+
+        var worker = platform.WorkerRegistry.GetByName("FakeSolidWorksWorker");
+        var workerAssembly = worker?.GetType().Assembly;
+        var builderRegistryType = workerAssembly?.GetType(
+            "SolidWorksWorker.PartFamilyBuilderRegistry",
+            throwOnError: false);
+        var createBuilderRegistry = builderRegistryType?.GetMethod(
+            "CreateDefault",
+            BindingFlags.Public | BindingFlags.Static);
+        var builderRegistry = createBuilderRegistry?.Invoke(
+            null,
+            createBuilderRegistry.GetParameters().Select(_ => (object?)null).ToArray());
+        var builders = (builderRegistryType?
+                .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+                .Invoke(builderRegistry, null) as System.Collections.IEnumerable)?
+            .Cast<object>()
+            .ToArray() ?? [];
+        var jacketBuilder = builders.SingleOrDefault(builder =>
+            string.Equals(
+                builder.GetType().GetProperty("PartType")?.GetValue(builder)?.ToString(),
+                JacketBasicDefinition.Type,
+                StringComparison.OrdinalIgnoreCase));
+        var jacketRealBuilderImplemented =
+            jacketBuilder?.GetType().Name == "JacketFeatureBuilder" &&
+            string.Equals(
+                jacketBuilder.GetType().GetProperty("RealExecutionMode")?.GetValue(jacketBuilder)?.ToString(),
+                PartFamilyExecutionModes.JacketBasic,
+                StringComparison.Ordinal);
+        var jacketProductionEvidenceActive =
+            jacketBuilder?.GetType().GetProperty("SupportsRealExecution")?.GetValue(jacketBuilder) is true;
+
+        var jacketDryRunPassed = false;
+        var workerMethod = worker?.GetType().GetMethods().SingleOrDefault(method =>
+            method.Name == "ExecuteAsync" &&
+            method.GetParameters().Length == 2 &&
+            method.GetParameters()[0].ParameterType == typeof(SolidWorksWorkerRequest));
+        if (worker is not null && workerMethod is not null && plan is not null)
+        {
+            var output = Path.Combine(
+                projectRoot,
+                "output",
+                "solidworks",
+                "self-check",
+                "v2_1_a_jacket");
+            var request = new SolidWorksWorkerRequest(
+                $"self-check-v21-a-jacket-{Guid.NewGuid():N}",
+                plan,
+                output,
+                DryRun: true);
+            var task = workerMethod.Invoke(worker, new object?[] { request, cancellationToken }) as Task<SolidWorksWorkerResult>;
+            if (task is not null)
+            {
+                var result = await task;
+                jacketDryRunPassed =
+                    result.Status == "Completed" &&
+                    result.ExecutionMode == "Fake" &&
+                    !result.RealCadExecuted &&
+                    result.GeneratedArtifacts.Any(artifact =>
+                        artifact.FilePath.EndsWith("fake_jacket_basic.SLDPRT.txt", StringComparison.OrdinalIgnoreCase)) &&
+                    result.GeneratedArtifacts.Any(artifact =>
+                        artifact.FilePath.EndsWith("fake_jacket_basic.STEP.txt", StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        var jacketRealWorkflowSupported =
+            jacketRealBuilderImplemented &&
+            jacketProductionEvidenceActive &&
+            SolidWorksE2eCliContract.IsPartFamilyReleasePackage(
+                SolidWorksE2eCliContract.PartFamilyReleasePackageOperation) &&
+            File.Exists(Path.Combine(projectRoot, "examples", "real_cad_jacket_request.json"));
+        var moduleEvidencePath = Path.Combine(projectRoot, "src", "Modules", "CADModeling", "api_evidence.md");
+        var workerEvidencePath = Path.Combine(projectRoot, "src", "Workers", "SolidWorks", "api_evidence.md");
+        var evidenceText =
+            (File.Exists(moduleEvidencePath) ? File.ReadAllText(moduleEvidencePath) : string.Empty) +
+            (File.Exists(workerEvidencePath) ? File.ReadAllText(workerEvidencePath) : string.Empty);
+        var jacketApiEvidenceDocumented =
+            evidenceText.Contains(JacketBasicDefinition.Type, StringComparison.OrdinalIgnoreCase) &&
+            evidenceText.Contains("FeatureExtrusion2", StringComparison.Ordinal) &&
+            evidenceText.Contains("FeatureCut4", StringComparison.Ordinal);
+        var v21AJacketDocumented =
+            versionStageText.Contains("V2.1-A", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(Path.Combine(projectRoot, "docs", "v2_1_a_jacket_basic.md"));
+
+        return new V21AJacketSelfCheckResult(
+            jacketPartFamilyRegistered,
+            jacketUsesGenericFeatureGraph,
+            jacketRealBuilderImplemented,
+            jacketDryRunPassed,
+            jacketRealWorkflowSupported,
+            jacketApiEvidenceDocumented,
+            jacketProductionEvidenceActive,
+            v21AJacketDocumented);
     }
 
     private static Dictionary<string, string> ReadStringDictionary(JsonElement element)
@@ -6241,6 +6438,7 @@ public static class PlatformSelfCheckRunner
         bool CutRealExecutionSupported,
         bool HoleRealExecutionSupported,
         bool FeaturePipelineEndToEndSupported,
+        bool FeatureProductionEvidenceActive,
         bool FeatureResultValidationSupported,
         bool FeatureFakeSuccessGuardSupported,
         bool V20CDocumented)
@@ -6254,6 +6452,7 @@ public static class PlatformSelfCheckRunner
             CutRealExecutionSupported &&
             HoleRealExecutionSupported &&
             FeaturePipelineEndToEndSupported &&
+            FeatureProductionEvidenceActive &&
             FeatureResultValidationSupported &&
             FeatureFakeSuccessGuardSupported &&
             V20CDocumented;
@@ -6284,6 +6483,27 @@ public static class PlatformSelfCheckRunner
             GeometryReportGenerated &&
             V20DDocumented &&
             MarkdownChineseCheckPassed;
+    }
+
+    private sealed record V21AJacketSelfCheckResult(
+        bool JacketPartFamilyRegistered,
+        bool JacketUsesGenericFeatureGraph,
+        bool JacketRealBuilderImplemented,
+        bool JacketDryRunPassed,
+        bool JacketRealWorkflowSupported,
+        bool JacketApiEvidenceDocumented,
+        bool JacketProductionEvidenceActive,
+        bool V21AJacketDocumented)
+    {
+        public bool AllPassed =>
+            JacketPartFamilyRegistered &&
+            JacketUsesGenericFeatureGraph &&
+            JacketRealBuilderImplemented &&
+            JacketDryRunPassed &&
+            JacketRealWorkflowSupported &&
+            JacketApiEvidenceDocumented &&
+            JacketProductionEvidenceActive &&
+            V21AJacketDocumented;
     }
 
     private static JsonSerializerOptions JsonOptions()

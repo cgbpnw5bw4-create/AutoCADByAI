@@ -166,7 +166,8 @@ public sealed class RealRuntimeIntegrationTests
             Assert.True(report.ChiefEngineerRuntimeThenWorkflowEngine);
             Assert.True(report.QualityGateAfterRealRuntime);
             Assert.True(report.GatewayResponseContainsRuntimeMetadata);
-            Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.FeatureProductionEvidenceActive);
+            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {

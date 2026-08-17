@@ -295,3 +295,12 @@ markdown_chinese_check_passed
 - 确认策略仍在 COM 连接前运行，且只绑定 `plate_basic_4holes` 的既有 sketch / boss / cut / hole 组合，未引入新的 CAD Feature、零件族或 direct Builder。
 - 对照 `parameter_update_plate.json` 和受绑定候选报告：`cut_profile` 三个 Φ10 圆、`hole_profile` 一个 Φ10 圆、20 mm 边距、160×80×12 与 200×100×15 两个状态、盲切体积变化和候选报告哈希均必须一致。
 - 确认最终结论来自同次 `run-cad-workflow` 的 GeometryReport、RebuildReport、E2E 与 Package QualityGate；`CandidatePassed` 永远不等于 Deliverable。
+
+## V2.1-A 夹套复核
+
+- 确认执行模式为 `RealBuildJacketBasic`，Builder 来自 `PartFamilyBuilderRegistry`，未从 CLI 或服务层直接构造。
+- 结构化生产证据未激活时确认在 COM 连接前拒绝；恢复授权前不得用自由文本、历史 run 或版本猜测放行。
+- 确认 TopPlane 外圆盲拉伸和 TopPlane 内圆两倍轴向长度盲切与 BuildPlan 一致，并正确执行毫米到米的单位转换。
+- 确认严格重建通过，且真实 GeometryReader 证明单一同轴圆筒夹套的外径、内径、长度和体积；不把文件存在或非空 COM 返回当作几何成功。
+- 确认 STEP 物理内容包含 ISO 10303-21 头与完整结束标记；仅扩展名和非空文件不得通过。
+- 确认 Artifact Validator、Reviewer、QualityGate 和 ReleasePackage 均使用同一次真实运行报告并最终为 `Deliverable`。

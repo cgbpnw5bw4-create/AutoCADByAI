@@ -71,18 +71,21 @@ public sealed class V18PartFamilyTests
     }
 
     [Fact]
-    public void DefaultRegistryContainsThreeIndependentSchemasAndRejectsDuplicates()
+    public void DefaultRegistryContainsFourIndependentSchemasAndRejectsDuplicates()
     {
         var registry = PartTypeRegistry.CreateDefault();
 
         var plate = Assert.IsType<PlateBasic4HolesDefinition>(registry.GetDefinition(PlateBasic4HolesDefinition.Type));
         var flange = Assert.IsType<FlangeBasicDefinition>(registry.GetDefinition(FlangeBasicDefinition.Type));
         var shaft = Assert.IsType<ShaftBasicDefinition>(registry.GetDefinition(ShaftBasicDefinition.Type));
+        var jacket = Assert.IsType<JacketBasicDefinition>(registry.GetDefinition(JacketBasicDefinition.Type));
         Assert.Equal(5, plate.ParameterSchema.Count);
         Assert.Equal(6, flange.ParameterSchema.Count);
         Assert.Equal(4, shaft.ParameterSchema.Count);
+        Assert.Equal(3, jacket.ParameterSchema.Count);
         Assert.NotSame(plate.Validator, flange.Validator);
         Assert.NotSame(flange.Validator, shaft.Validator);
+        Assert.NotSame(shaft.Validator, jacket.Validator);
         Assert.Throws<InvalidOperationException>(() => registry.Register(new PlateBasic4HolesDefinition()));
     }
 
@@ -104,6 +107,7 @@ public sealed class V18PartFamilyTests
     [InlineData(PlateBasic4HolesDefinition.Type)]
     [InlineData(FlangeBasicDefinition.Type)]
     [InlineData(ShaftBasicDefinition.Type)]
+    [InlineData(JacketBasicDefinition.Type)]
     public async Task RegisteredPartFamiliesGenerateReviewedPlansAndDryRunArtifacts(string partType)
     {
         var outputRoot = TempOutput(partType);
@@ -341,9 +345,9 @@ public sealed class V18PartFamilyTests
     }
 
     [Fact]
-    public async Task FlangeAndShaftRealRequestsWithMissingTemplateFailBeforeSessionConnection()
+    public async Task NonPlateRealRequestsWithMissingTemplateFailBeforeSessionConnection()
     {
-        foreach (var partType in new[] { FlangeBasicDefinition.Type, ShaftBasicDefinition.Type })
+        foreach (var partType in new[] { FlangeBasicDefinition.Type, ShaftBasicDefinition.Type, JacketBasicDefinition.Type })
         {
             var outputRoot = TempOutput($"real-{partType}");
             try
@@ -363,8 +367,17 @@ public sealed class V18PartFamilyTests
                 var result = await new RealSolidWorksWorker(session, options).ExecuteAsync(new SolidWorksWorkerRequest(
                     $"real-{partType}", plan, outputRoot, DryRun: false, AllowRealCadExecution: true));
 
-                Assert.Equal("Failed", result.Status);
-                Assert.Equal("preflight_failed", result.FailureStage);
+                if (partType == JacketBasicDefinition.Type)
+                {
+                    Assert.Equal("Rejected", result.Status);
+                    Assert.Equal(PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient, result.FailureStage);
+                }
+                else
+                {
+                    Assert.Equal("Failed", result.Status);
+                    Assert.Equal("preflight_failed", result.FailureStage);
+                }
+
                 Assert.False(result.RealCadExecuted);
                 Assert.Equal(0, session.ConnectCount);
             }
@@ -493,6 +506,12 @@ public sealed class V18PartFamilyTests
             ["optional_step_diameters"] = "32,24",
             ["optional_step_lengths"] = "40,30"
         }, material: "45 steel"),
+        JacketBasicDefinition.Type => new CADModelSpec("jacket", partType, new Dictionary<string, string>
+        {
+            ["outer_diameter_mm"] = "140",
+            ["inner_diameter_mm"] = "120",
+            ["length_mm"] = "180"
+        }, material: "Q235"),
         _ => throw new ArgumentOutOfRangeException(nameof(partType))
     };
 

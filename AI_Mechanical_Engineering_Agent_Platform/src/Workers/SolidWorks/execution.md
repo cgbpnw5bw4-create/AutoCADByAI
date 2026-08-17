@@ -456,3 +456,9 @@ dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples
 参数重建请求进入 `RealSolidWorksWorker` 时，执行顺序固定为：既有 `FeatureHandlerRegistry` 完整预检 → `V20DThreeCircleCutEvidencePolicy` 精确 profile / SHA / 候选诊断预检 → SolidWorks 连接 → `FeatureExecutionPipeline` → rebuild → GeometryReader → GeometryValidator。三圆证据失败时不会建立 COM 连接，也不会改走零件族 Builder、Fake Worker 或旧产物。
 
 此门禁只授权 `examples/parameter_update_plate.json` 的 160×80×12 到 200×100×15 参数更新链；它保留既有 sketch、extrude_boss、extrude_cut、hole Handler，且要求 `cut_profile` 三圆和 `hole_profile` 单圆均为直径 10 mm、20 mm 边距。最终验收仍只能运行 `run-cad-workflow`。
+
+## V2.1-A 夹套真实执行
+
+`JacketFeatureBuilder` 仅接受 `RealBuildJacketBasic` 模式。它在 TopPlane 创建外圆并用 `FeatureExtrusion2` 形成指定长度的圆柱体，再在 TopPlane 创建同轴内圆并用 `FeatureCut4` 盲切两倍轴向长度；所有长度在进入 COM 前由毫米转换为米。Builder 随后严格重建并用真实 GeometryReader 校验单实体、外包络、内外径和体积；STEP 落盘后还必须通过 ISO 10303-21 内容检查。任一步失败都会写失败构建报告，不会生成成功 Artifact。
+
+当前结构化运行时证据未激活，真实 Worker 会在连接 COM 前以 `part_family_api_evidence_insufficient` 拒绝；dry-run 不受影响。重新采集受控 diagnostic 并恢复授权后，真实命令为 `dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_jacket_request.json`。不得以独立 diagnostic、文件存在或 COM 非空返回替代该主流程。

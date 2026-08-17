@@ -40,12 +40,12 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
             "V2.0-C diagnostic verified a 20 mm blind FeatureCut4 call after reactivating the dependency sketch.",
             "Solid volume decreased from 5.9999999999999995E-05 to 5.9214601836602546E-05 cubic metres; four-view review shows the cut."
         ],
-        EvidenceId: "v2.0-c-20260730-085830-extrude-cut",
+        EvidenceId: "v2.1-a-20260817-030717-extrude-cut",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "blind;single_end;positive_depth_mm;through_all_false;no_thin;single_body_scope",
-        SolidWorksVersion: "33.5.0",
-        DiagnosticRunPath: "output/solidworks/features/20260730_085830_6592380/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918");
+        SolidWorksVersion: "31.5.0",
+        DiagnosticRunPath: "evidence/solidworks/20260817_030717_0748932/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:a518fb8f239a1a122f2f700d6dcb41ec709610f283f7971b13bac219604f88b9");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

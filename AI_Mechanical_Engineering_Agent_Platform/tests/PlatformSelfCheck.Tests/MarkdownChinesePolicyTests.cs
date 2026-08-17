@@ -196,7 +196,8 @@ public sealed class MarkdownChinesePolicyTests
             Assert.True(report.MarkdownChineseCheckPassed);
             Assert.True(report.MarkdownLanguageReportGenerated);
             Assert.True(report.MarkdownEnglishExceptionsSupported);
-            Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.FeatureProductionEvidenceActive);
+            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {

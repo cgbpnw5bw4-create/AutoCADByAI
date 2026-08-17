@@ -560,3 +560,9 @@ dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples
 `ModelUpdateService` 只重绑既有 `plate_profile`、`cut_profile`、`hole_profile` 及 `plate_boss`、`plate_cut`、`plate_hole` 的参数，并由 `BuildPlanCompiler` 重建 FeatureGraph。对本轮样例，长度和宽度变化必须把四个孔重映射到 20 mm 边距；厚度变化必须同时重绑 boss 深度与两个盲切深度。它不读取 COM，也不创建 Feature。
 
 真实 Worker 会在 Handler 预检后对编译计划执行 V2.0-D 三圆证据门禁；因此参数更新不得把 Φ10 三圆/单圆 profile 改成未验证的数量、直径、终止条件或位置。任何不匹配应在 COM 前以 `feature_api_unverified` 停止，而不是把 JSON 参数更新误报为成功。
+
+## V2.1-A 夹套零件族执行链
+
+`jacket_basic` 从 `PartTypeRegistry` 读取外径、内径和长度，经 `JacketBasicValidator` 校验后生成 TopPlane 外圆草图、盲拉伸、TopPlane 内圆草图、两倍轴向长度盲切的通用 FeatureGraph，再由 `BuildPlanCompiler` 编译。真实执行只允许通过 `PartFamilyBuilderRegistry` 解析 `JacketFeatureBuilder`，随后进入 `RealSolidWorksWorker`、Artifact Validator、Reviewer、QualityGate 与 ReleasePackage；CLI 不得直接调用 Builder。结构化生产证据未激活时必须在 COM 连接前拒绝，不能以实现存在或示例文件存在视为工作流可用。
+
+当前范围只生成直筒同轴夹套。封头、接管、膨胀节、支座、加强圈、焊缝和装配关系不在 V2.1-A 内。

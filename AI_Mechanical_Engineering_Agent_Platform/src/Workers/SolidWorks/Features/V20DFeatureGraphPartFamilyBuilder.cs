@@ -42,8 +42,6 @@ public sealed class V20DFeatureGraphPartFamilyBuilder : SolidWorksPartFamilyBuil
 
     public override string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
-    protected override bool RequiresStrictFinalRebuild => true;
-
     protected override void BuildFeatures(
         object model,
         SolidWorksBuildPlan plan,

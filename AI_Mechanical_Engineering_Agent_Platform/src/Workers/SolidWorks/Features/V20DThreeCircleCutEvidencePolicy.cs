@@ -18,7 +18,7 @@ public static partial class V20DThreeCircleCutEvidencePolicy
     public const string EvidenceId = "v2.0-d-20260803-three-circle-blind-cut";
     public const string ParameterProfile =
         "three_circles;diameter_10_mm;blind;single_end;positive_depth_mm;through_all_false;single_body_scope;plate_basic_4holes";
-    public const string SolidWorksVersion = "33.5.0";
+    public const string SolidWorksVersion = "31.5.0";
     public const string SampleInputRelativePath = "examples/parameter_update_plate.json";
     public const string CandidateDiagnosticRelativePath =
         "output/solidworks/features/20260803_064124_6127412/feature_execution_report.json";

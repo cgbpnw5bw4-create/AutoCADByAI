@@ -296,6 +296,15 @@ public sealed class V17RealCadE2eTests
         Assert.DoesNotContain("e2eReleaseBuilderText", source, StringComparison.Ordinal);
         Assert.DoesNotContain("localAuthorizationProfileText", source, StringComparison.Ordinal);
         Assert.DoesNotContain("smokeRunnerText", source, StringComparison.Ordinal);
+        var v20AStart = source.IndexOf(
+            "private static V20AGenericCadModelSpecSelfCheckResult RunV20AGenericCadModelSpecChecks",
+            StringComparison.Ordinal);
+        var v20AEnd = source.IndexOf(
+            "private static V20BFeatureHandlerSelfCheckResult RunV20BFeatureHandlerChecks",
+            v20AStart,
+            StringComparison.Ordinal);
+        Assert.True(v20AStart >= 0 && v20AEnd > v20AStart);
+        Assert.DoesNotContain("File.ReadAllText", source[v20AStart..v20AEnd], StringComparison.Ordinal);
 
         var v18Start = source.IndexOf("RunV18PartFamilyChecksAsync", StringComparison.Ordinal);
         var v18End = source.IndexOf("private static V19PartFamilySelfCheckResult", v18Start, StringComparison.Ordinal);

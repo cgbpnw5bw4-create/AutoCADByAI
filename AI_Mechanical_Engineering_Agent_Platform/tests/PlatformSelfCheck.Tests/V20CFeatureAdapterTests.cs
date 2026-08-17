@@ -292,7 +292,7 @@ public sealed class V20CFeatureAdapterTests
             var evidence = handler.ValidateEvidenceForRealExecution(feature);
             Assert.True(evidence.IsValid, string.Join(Environment.NewLine, evidence.Issues));
             Assert.True(
-                handler.ValidateRuntimeForRealExecution("33.5.0").IsValid);
+                handler.ValidateRuntimeForRealExecution("31.5.0").IsValid);
         }
     }
 
@@ -345,7 +345,7 @@ public sealed class V20CFeatureAdapterTests
         try
         {
             var part = Write(root, "model.SLDPRT", "part");
-            var step = Write(root, "model.STEP", "step");
+            var step = Write(root, "model.STEP", MinimalStepContent);
             const string sourceRevision = "feature-execution-source-sha256:test";
             var diagnosticResult = new
             {
@@ -738,6 +738,9 @@ public sealed class V20CFeatureAdapterTests
         File.WriteAllText(path, value);
         return path;
     }
+
+    private const string MinimalStepContent =
+        "ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n";
 
     private static string WriteJson(string root, string name, object value) =>
         Write(

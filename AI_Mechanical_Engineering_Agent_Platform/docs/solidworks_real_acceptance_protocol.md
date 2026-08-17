@@ -79,6 +79,7 @@ $env:SW_FORCE_FAKE_WORKER="true"      # 强制 Fake Worker
 dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json
 dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_flange_request.json
 dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_shaft_request.json
+dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_jacket_request.json
 ```
 
 ## 产物与真值

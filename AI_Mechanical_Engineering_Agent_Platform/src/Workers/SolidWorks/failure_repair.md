@@ -305,3 +305,7 @@ flange 首次 diagnostic 在保存阶段返回 `part_save_failed`。修复复用
 若重建在 COM 连接前以 `feature_api_unverified` 停止，先读取本次 build report 的 `v2_0_d_three_circle_cut_evidence_verified` 缺失原因，并检查 `V20DThreeCircleCutEvidencePolicy` 的输入 SHA、候选报告 SHA、V2.0-C source revision、三圆实体数、直径、20 mm 边距、盲切深度和操作依赖。不得在 Handler 中临时放宽 circle count，不得直接改 Builder 或跳过 QualityGate。
 
 若证据源、参数映射或候选诊断确实需要改变，应先以同一精确输入重跑专用候选诊断，更新受审查的证据元数据，再重新执行 `run-cad-workflow`；候选成功本身仍不可交付。
+
+## V2.1-A 夹套失败修复
+
+出现 `jacket_profile_create_failed` 时检查 TopPlane 选择、草图激活和圆半径；出现 `jacket_extrude_failed` 时检查 `FeatureExtrusion2` 参数与长度单位；出现 `jacket_inner_cut_failed` 时检查 TopPlane 内圆草图、同轴关系和两倍轴向长度的 `FeatureCut4` 盲切参数。`rebuild_failed`、`geometry_read_failed`、`volume_validation_failed` 或 `parameter_geometry_mismatch` 必须回到当前模型的实测几何；`step_export_failed` 若指出缺少 `ISO-10303-21;`，说明导出物不是有效 STEP，不能只改扩展名或放宽 Validator。结构化证据缺失时保持 `part_family_api_evidence_insufficient`，重新采集后再授权；不得临时改用未验证 API 或伪造证据。

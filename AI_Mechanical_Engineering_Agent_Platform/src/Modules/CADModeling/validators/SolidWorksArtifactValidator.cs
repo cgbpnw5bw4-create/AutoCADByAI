@@ -347,6 +347,14 @@ public sealed class SolidWorksArtifactValidator : IValidator
         if (new FileInfo(fullPath).Length <= 0)
         {
             issues.Add($"{name} artifact is empty: {artifact.FilePath}.");
+            return;
+        }
+
+        if ((fullPath.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase) ||
+             fullPath.EndsWith(".STP", StringComparison.OrdinalIgnoreCase)) &&
+            !CadArtifactContentValidator.TryValidateStepFile(fullPath, out var contentIssue))
+        {
+            issues.Add($"{name} artifact content is not valid STEP: {contentIssue}");
         }
     }
 
@@ -400,11 +408,53 @@ public sealed class SolidWorksArtifactValidator : IValidator
             {
                 issues.Add("build_report final_status must be Passed.");
             }
+
+            if (definition.PartType.Equals(JacketBasicDefinition.Type, StringComparison.OrdinalIgnoreCase))
+            {
+                ValidateJacketGeometryEvidence(root, issues);
+            }
         }
         catch (JsonException ex)
         {
             issues.Add($"build_report.json is invalid: {ex.Message}.");
         }
+    }
+
+    private static void ValidateJacketGeometryEvidence(JsonElement root, List<string> issues)
+    {
+        RequireTrue(root, "step_content_validated", "build_report", issues);
+        RequireTrue(root, "geometry_validation_attempted", "build_report", issues);
+        RequireString(root, "geometry_validation_status", "Passed", "build_report", issues);
+        if (!root.TryGetProperty("measured_body_count", out var bodyCount) ||
+            bodyCount.ValueKind != JsonValueKind.Number ||
+            !bodyCount.TryGetInt32(out var measuredBodies) ||
+            measuredBodies != 1)
+        {
+            issues.Add("build_report measured_body_count must be 1 for jacket_basic.");
+        }
+
+        if (!TryPositiveFiniteNumber(root, "expected_volume_cubic_mm", out var expectedVolume) ||
+            !TryPositiveFiniteNumber(root, "measured_volume_cubic_mm", out var measuredVolume))
+        {
+            issues.Add("build_report jacket volume evidence must contain finite positive expected and measured values.");
+            return;
+        }
+
+        var tolerance = Math.Max(1d, expectedVolume * JacketGeometryValidator.VolumeRelativeTolerance);
+        if (Math.Abs(expectedVolume - measuredVolume) > tolerance)
+        {
+            issues.Add("build_report measured jacket volume is outside the allowed tolerance.");
+        }
+    }
+
+    private static bool TryPositiveFiniteNumber(JsonElement root, string name, out double value)
+    {
+        value = 0d;
+        return root.TryGetProperty(name, out var property) &&
+               property.ValueKind == JsonValueKind.Number &&
+               property.TryGetDouble(out value) &&
+               double.IsFinite(value) &&
+               value > 0d;
     }
 
     private static void ValidateGenericBuildReport(string reportPath, List<string> issues)

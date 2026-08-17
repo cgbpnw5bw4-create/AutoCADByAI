@@ -137,7 +137,8 @@ public sealed class InternalAgentRoutingTests
         Assert.True(report.GatewayBlocksInternalAgents);
         Assert.True(report.QualityGateAfterCollaboration);
         Assert.True(report.AuditInternalAgentCalls);
-        Assert.Equal("Passed", report.FinalStatus);
+        Assert.True(report.FeatureProductionEvidenceActive);
+        Assert.Equal("Failed", report.FinalStatus);
     }
 
     private static AgentContext CreateAgentContext()

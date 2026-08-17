@@ -437,3 +437,7 @@ IPartDoc.GetPartBox、文件存在、COM 返回非空、特征名称或 hole_cou
 固定候选诊断 `output/solidworks/features/20260803_064124_6127412/feature_execution_report.json` 绑定 `examples/parameter_update_plate.json`，在 SolidWorks `33.5.0` 中记录 `plate_cut` 从 `0.00015360000000000002` 下降到 `0.00015077256661176917` m³（3 个直径 10 mm、厚度 12 mm 的盲切），随后 `plate_hole` 再下降到 `0.00014983008881569223` m³。策略同时校验候选文件哈希、实际 SLDPRT/STEP 文件大小、V2.0-C Feature 源码 revision、三圆/第四孔的精确图形和 20 mm 边距映射。
 
 候选诊断只能证明该精确 profile 的 API 行为，不能代替 `run-cad-workflow`、GeometryValidator 或 QualityGate。任何不匹配都以 `feature_api_unverified` 在连接前拒绝，绝不通过修改 Handler、直接 Builder 或伪造文件存在绕过。
+
+## V2.1-A 夹套 API 证据
+
+夹套 Builder 使用 V1.9 法兰路径中的 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4` 调用形状，但该历史自由文本不足以授权 V2.1-A 生产执行。当前实现仅覆盖 TopPlane 单外圆盲拉伸、TopPlane 单内圆盲切两倍轴向长度，并在保存前复用 `RealSolidWorksGeometryReader` 校验单实体、外包络、内外圆柱直径和理论体积。真实执行保持连接前失败关闭，直到重新采集与当前源码修订和实际 SolidWorks 版本绑定的 diagnostic，并证明落盘 STEP 以 `ISO-10303-21;` 开始且含完整结束标记；最终证据仍必须来自 `examples/real_cad_jacket_request.json` 的同次主流程与 QualityGate。

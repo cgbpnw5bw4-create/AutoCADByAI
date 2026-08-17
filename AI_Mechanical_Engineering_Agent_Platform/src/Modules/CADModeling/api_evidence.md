@@ -280,3 +280,7 @@ V2.0-D 新增的真实几何读取必须收敛在 ISolidWorksGeometryReader / Re
 - 精确尺寸：平面 `plate_basic_4holes` 先以 `IBody2.GetVertices` / `IVertex.GetPoint` 读取真实外轮廓顶点；顶点不可读时回退 `IBody2.GetExtremePoint`。孔径或轴径使用有完整证据的圆柱面参数。两条长度路径均不可用时必须返回 `geometry_read_failed`。
 
 GetPartBox 近似结果、COM 非空返回、Feature 名称或文件大小均不能证明精确长度、孔径或四个孔。四孔 plate_basic_4holes 必须读取并验证四个相应的圆柱几何；不得为了凑数新增 Feature 类型、零件族或使用未证实的 pattern、Hole Wizard / SimpleHole2。任何证据不足都应停止为 feature_api_unverified，最终仍只由 run-cad-workflow 的 QualityGate 判定，且不进入 V2.0-E。
+
+## V2.1-A 夹套 API 证据
+
+`jacket_basic` 不扩大写入 COM API 面，Builder 使用 `CreateCircle`、`FeatureExtrusion2` 和 `FeatureCut4`，并复用 `RealSolidWorksGeometryReader` 做实体、外包络、圆柱直径和体积实测。FeatureGraph 固定为 TopPlane 外圆盲拉伸和 TopPlane 内圆盲切，切除深度为两倍轴向长度。V1.9 自由文本和历史产物不包含 V2.1-A 的结构化源码修订、运行时版本、diagnostic 与有效 STEP 内容，当前只允许保留实现和 dry-run，真实执行必须在 COM 连接前返回 `part_family_api_evidence_insufficient`。恢复授权必须重新采集受控证据，不得伪造或把文件扩展名当成交换格式证明。

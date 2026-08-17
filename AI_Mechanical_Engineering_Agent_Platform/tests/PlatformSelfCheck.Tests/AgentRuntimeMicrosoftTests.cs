@@ -288,7 +288,8 @@ public sealed class AgentRuntimeMicrosoftTests
             Assert.True(report.OpenAIClientCancellationSupported);
             Assert.True(report.ProviderErrorsAreStructured);
             Assert.True(report.ApiKeyNotLogged);
-            Assert.Equal("Passed", report.FinalStatus);
+            Assert.True(report.FeatureProductionEvidenceActive);
+            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {

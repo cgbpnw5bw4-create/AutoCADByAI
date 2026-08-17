@@ -63,7 +63,8 @@ public sealed class PartFamilyBuilderRegistry
         new([
             new PlateBasic4HolesPartFamilyBuilder(plateBuilder),
             new FlangeFeatureBuilder(),
-            new ShaftFeatureBuilder()
+            new ShaftFeatureBuilder(),
+            new JacketFeatureBuilder()
         ]);
 
     public void Register(IPartFamilyBuilder builder)

@@ -245,3 +245,10 @@ markdown_chinese_check_passed
 ~~~
 
 只有第一次 160×80×12 与更新后的 200×100×15 都经同次真实 `GeometryValidator`、`Reviewer` 和 `QualityGate` 通过，且输出 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`，本阶段才可关闭；不得进入 V2.0-E。
+
+## V2.1-A 夹套复核
+
+- `jacket_basic` 已注册独立参数 Schema 和 Validator，且 `inner_diameter_mm < outer_diameter_mm`、单边壁厚至少 1 mm。
+- FeatureGraph 与 BuildPlan 顺序为 TopPlane 外圆草图、盲拉伸、TopPlane 内圆草图、两倍轴向长度盲切，特征标识为 `jacket_body_extrude`、`jacket_inner_cut`。
+- dry-run 通过注册表解析；结构化生产证据未激活时，真实 Worker 必须在 COM 连接前拒绝，CLI 没有直接调用 Builder。
+- 真实主流程的 SLDPRT、物理内容有效的 STEP、实测几何、构建报告、Reviewer、QualityGate 与 ReleasePackage 同次通过后才可交付。

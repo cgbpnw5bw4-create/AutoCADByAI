@@ -60,7 +60,7 @@ public sealed class PlatformBootstrapperTests
     }
 
     [Fact]
-    public async Task SelfCheckRunnerCreatesPassedReportWithGatewayDirectory()
+    public async Task SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending()
     {
         var platform = PlatformBootstrapper.CreateDefault();
         var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_tests", Guid.NewGuid().ToString("N"));
@@ -69,8 +69,8 @@ public sealed class PlatformBootstrapperTests
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));
-        Assert.Equal("Passed", report.FinalStatus);
-        Assert.Equal("2.0-c", report.SchemaVersion);
+        Assert.Equal("Failed", report.FinalStatus);
+        Assert.Equal("2.1-a", report.SchemaVersion);
         Assert.StartsWith("platform-self-check-", report.RunId, StringComparison.Ordinal);
         Assert.NotEqual(default, report.GeneratedAt);
         Assert.False(string.IsNullOrWhiteSpace(report.SourceRevision));
@@ -114,6 +114,10 @@ public sealed class PlatformBootstrapperTests
         Assert.True(report.FlangeUsesGenericFeatureGraph);
         Assert.True(report.ShaftUsesGenericFeatureGraph);
         Assert.True(report.NoPartSpecificLogicInRealWorker);
+        Assert.True(report.FeatureProductionEvidenceActive);
+        Assert.True(report.JacketRealBuilderImplemented);
+        Assert.False(report.JacketProductionEvidenceActive);
+        Assert.False(report.JacketRealWorkflowSupported);
         Assert.True(report.V20ADocumented);
         Assert.Equal("chief-engineer", Assert.Single(report.PublicAgents).Id);
         Assert.Equal("chief-engineer", Assert.Single(report.GatewayVisibleAgents).Id);
@@ -122,8 +126,8 @@ public sealed class PlatformBootstrapperTests
 
         using var stream = File.OpenRead(reportPath);
         using var document = await JsonDocument.ParseAsync(stream);
-        Assert.Equal("Passed", document.RootElement.GetProperty("final_status").GetString());
-        Assert.Equal("2.0-c", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.Equal("Failed", document.RootElement.GetProperty("final_status").GetString());
+        Assert.Equal("2.1-a", document.RootElement.GetProperty("schema_version").GetString());
         Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());
         Assert.False(document.RootElement.TryGetProperty("solidworks_com_false_success_tests_added", out _));
     }

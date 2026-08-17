@@ -116,7 +116,8 @@ public sealed class V20AGenericCadModelSpecTests
     [InlineData(PlateBasic4HolesDefinition.Type)]
     [InlineData(FlangeBasicDefinition.Type)]
     [InlineData(ShaftBasicDefinition.Type)]
-    public void ThreePartFamiliesCompileFromGenericFeatureGraph(string partType)
+    [InlineData(JacketBasicDefinition.Type)]
+    public void RegisteredPartFamiliesCompileFromGenericFeatureGraph(string partType)
     {
         var definition = PartTypeRegistry.CreateDefault().GetDefinition(partType);
         Assert.NotNull(definition);
@@ -357,6 +358,15 @@ public sealed class V20AGenericCadModelSpecTests
                 ["length_mm"] = "180",
                 ["optional_step_diameters"] = "32,24",
                 ["optional_step_lengths"] = "40,30"
+            }),
+        JacketBasicDefinition.Type => new CADModelSpec(
+            "jacket-v21-a",
+            partType,
+            new Dictionary<string, string>
+            {
+                ["outer_diameter_mm"] = "140",
+                ["inner_diameter_mm"] = "120",
+                ["length_mm"] = "180"
             }),
         _ => throw new ArgumentOutOfRangeException(nameof(partType))
     };

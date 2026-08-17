@@ -118,6 +118,7 @@ Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- self-check")
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_flange_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_shaft_request.json");
+Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_jacket_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/parameter_update_plate.json");
 return 1;
 

@@ -1,0 +1,33 @@
+{
+  "operation": "build_part_family_release_package",
+  "cad_model_spec": {
+    "model_id": "real-cad-jacket-basic-v2-1-a",
+    "model_type": "jacket_basic",
+    "unit": "mm",
+    "parameters": {
+      "outer_diameter_mm": "140",
+      "inner_diameter_mm": "120",
+      "length_mm": "180"
+    },
+    "reference_geometry": {},
+    "sketches": [],
+    "features": [],
+    "material": "Q235",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    }
+  }
+}

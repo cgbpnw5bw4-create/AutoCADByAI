@@ -27,8 +27,14 @@ public sealed class SolidWorksPartFamilyBuildDiagnostics
     public long SldprtSizeBytes { get; set; }
     public bool StepExportAttempted { get; set; }
     public bool StepExportSuccess { get; set; }
+    public bool StepContentValidated { get; set; }
     public string? StepPath { get; set; }
     public long StepSizeBytes { get; set; }
+    public bool GeometryValidationAttempted { get; set; }
+    public string? GeometryValidationStatus { get; set; }
+    public int? MeasuredBodyCount { get; set; }
+    public double? ExpectedVolumeCubicMillimeters { get; set; }
+    public double? MeasuredVolumeCubicMillimeters { get; set; }
     public string? FailureStage { get; set; }
 }
 
@@ -108,8 +114,14 @@ public static class SolidWorksPartFamilyBuildReportWriter
             sldprt_size_bytes = diagnostics.SldprtSizeBytes,
             step_export_attempted = diagnostics.StepExportAttempted,
             step_export_success = diagnostics.StepExportSuccess,
+            step_content_validated = diagnostics.StepContentValidated,
             step_path = diagnostics.StepPath,
             step_size_bytes = diagnostics.StepSizeBytes,
+            geometry_validation_attempted = diagnostics.GeometryValidationAttempted,
+            geometry_validation_status = diagnostics.GeometryValidationStatus,
+            measured_body_count = diagnostics.MeasuredBodyCount,
+            expected_volume_cubic_mm = diagnostics.ExpectedVolumeCubicMillimeters,
+            measured_volume_cubic_mm = diagnostics.MeasuredVolumeCubicMillimeters,
             failure_stage = diagnostics.FailureStage,
             final_status = finalStatus,
             api_evidence = builder.ApiEvidence,
@@ -514,7 +526,13 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
     protected ISolidWorksComFacade Com { get; }
     protected ISolidWorksFileVerifier FileVerifier { get; }
     protected ISolidWorksPartFamilyPlaneSelector PlaneSelector { get; }
-    protected virtual bool RequiresStrictFinalRebuild => false;
+    /// <summary>
+    /// Every real part-family build must end on a successful final rebuild.
+    /// A family that cannot satisfy this has to relax it explicitly and state
+    /// why, so a silently discarded rebuild result can never be introduced by
+    /// simply adding a new builder.
+    /// </summary>
+    protected virtual bool RequiresStrictFinalRebuild => true;
 
     public override Task<PartFamilyBuildResult> BuildAsync(
         PartFamilyBuildContext context,
@@ -811,7 +829,15 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
             throw Failure(PartFamilyFailureStages.StepExportFailed, "STEP output is missing or empty.");
         }
 
+        if (!CadArtifactContentValidator.TryValidateStepFile(path, out var contentIssue))
+        {
+            throw Failure(
+                PartFamilyFailureStages.StepExportFailed,
+                $"STEP output content validation failed: {contentIssue}");
+        }
+
         diagnostics.StepExportSuccess = true;
+        diagnostics.StepContentValidated = true;
         diagnostics.StepSizeBytes = state.SizeBytes;
         diagnostics.OperationsExecuted.Add("step_export_success");
     }

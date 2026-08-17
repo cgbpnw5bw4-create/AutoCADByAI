@@ -263,3 +263,7 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 四孔验收必须逐个证明四个真实孔，不得把旧 V2.0-C 的两个 ICE、单圆草图、文件名或计数字段说成四孔成功。若既有受证 profile 不足以表达目标，保持 feature_api_unverified 并停止，不得静默扩展到 pattern、任意面、through_all、mid_plane、SimpleHole2 或 Hole Wizard。
 
 修复后的最终回归只能运行 run-cad-workflow --input examples/parameter_update_plate.json，并要求 GeometryValidator、Artifact Validator、Reviewer 和 QualityGate 同次通过；不得进入 V2.0-E。
+
+## V2.1-A 夹套失败修复
+
+夹套参数缺失、非有限正数、内径不小于外径或单边壁厚小于 1 mm 时，在 Validator 阶段拒绝，不得连接 SolidWorks。`jacket_profile_create_failed`、`jacket_extrude_failed`、`jacket_inner_cut_failed` 分别定位外圆草图、实体拉伸和 TopPlane 内圆盲切；重建、实测几何或 STEP 内容不满足合同时必须沿对应失败阶段停止并保留失败构建报告。`part_family_api_evidence_insufficient` 表示受控 diagnostic、源码修订或运行时版本尚未恢复，必须重新采集真实证据，不能把历史自由文本改成授权。最终只用 `real_cad_jacket_request.json` 主流程回归。
