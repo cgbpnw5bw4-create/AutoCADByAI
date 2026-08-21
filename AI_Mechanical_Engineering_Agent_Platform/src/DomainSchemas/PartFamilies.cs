@@ -74,12 +74,50 @@ public enum PartParameterValueKind
     Text
 }
 
+/// <summary>
+/// 零件族输入参数声明。零件族只描述参数本身，不描述执行顺序，也不接触 SolidWorks API。
+/// <paramref name="MinimumValue"/> 与 <paramref name="MaximumValue"/> 为闭区间；
+/// 列表类参数不声明数值区间，由各自 Validator 校验元素。
+/// </summary>
 public sealed record PartParameterSchema(
     string Name,
     PartParameterValueKind ValueKind,
     bool Required,
     string Description,
-    string? DefaultValue = null);
+    string? DefaultValue = null,
+    double? MinimumValue = null,
+    double? MaximumValue = null)
+{
+    public bool HasRange => MinimumValue is not null || MaximumValue is not null;
+
+    public bool IsWithinRange(double value) =>
+        (MinimumValue is null || value >= MinimumValue.Value) &&
+        (MaximumValue is null || value <= MaximumValue.Value);
+}
+
+/// <summary>
+/// 所有零件族共用的输入校验入口：先做零件族自身的语义校验，再按参数区间校验。
+/// 区间规则集中在此处，新增零件族只需在 <see cref="PartParameterSchema"/> 声明区间。
+/// </summary>
+public static class PartFamilyInputValidation
+{
+    public static PartFamilyValidationResult Validate(
+        CADModelSpec spec,
+        IPartFamilyValidator validator,
+        IReadOnlyList<PartParameterSchema> schema)
+    {
+        ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(schema);
+        var semantic = validator.Validate(spec);
+        if (!semantic.IsValid)
+        {
+            return semantic;
+        }
+
+        return PartFamilyParameters.OutOfRange(spec, schema)
+               ?? PartFamilyValidationResult.Passed();
+    }
+}
 
 public sealed record PartFamilyValidationResult(
     bool IsValid,
@@ -118,6 +156,14 @@ public interface IPartFamilyDefinition
     string ApiEvidence { get; }
 
     string RealExecutionMode => "RealBuildPartFamily";
+
+    /// <summary>
+    /// 统一输入校验：先执行零件族自身的语义校验，再按 <see cref="ParameterSchema"/>
+    /// 声明的参数区间校验。区间校验对所有零件族一致，新增零件族只声明区间即可，
+    /// 不需要再写一份区间校验代码。
+    /// </summary>
+    PartFamilyValidationResult ValidateInput(CADModelSpec spec) =>
+        PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);
 
     PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec);
 
@@ -285,11 +331,11 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
 
     public IReadOnlyList<PartParameterSchema> ParameterSchema { get; } =
     [
-        new("length_mm", PartParameterValueKind.Number, true, "Plate length in millimetres.", "160"),
-        new("width_mm", PartParameterValueKind.Number, true, "Plate width in millimetres.", "80"),
-        new("thickness_mm", PartParameterValueKind.Number, true, "Plate thickness in millimetres.", "12"),
-        new("hole_diameter_mm", PartParameterValueKind.Number, true, "Through-hole diameter in millimetres.", "10"),
-        new("hole_count", PartParameterValueKind.Integer, true, "Fixed four-hole count.", "4")
+        new("length_mm", PartParameterValueKind.Number, true, "Plate length in millimetres.", "160", 10d, 2000d),
+        new("width_mm", PartParameterValueKind.Number, true, "Plate width in millimetres.", "80", 10d, 2000d),
+        new("thickness_mm", PartParameterValueKind.Number, true, "Plate thickness in millimetres.", "12", 1d, 200d),
+        new("hole_diameter_mm", PartParameterValueKind.Number, true, "Through-hole diameter in millimetres.", "10", 1d, 100d),
+        new("hole_count", PartParameterValueKind.Integer, true, "Fixed four-hole count.", "4", 4d, 4d)
     ];
 
     public IPartFamilyValidator Validator { get; } = new PlateBasic4HolesValidator();
@@ -302,7 +348,7 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
-        var validation = Validator.Validate(spec);
+        var validation = PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);
         if (!validation.IsValid)
         {
             return new(null, validation.FailureStage, validation.Issues);
@@ -372,12 +418,12 @@ public sealed class FlangeBasicDefinition : IPartFamilyDefinition
 
     public IReadOnlyList<PartParameterSchema> ParameterSchema { get; } =
     [
-        new("outer_diameter_mm", PartParameterValueKind.Number, true, "Outer diameter."),
-        new("inner_diameter_mm", PartParameterValueKind.Number, true, "Inner bore diameter."),
-        new("thickness_mm", PartParameterValueKind.Number, true, "Flange thickness."),
-        new("bolt_hole_count", PartParameterValueKind.Integer, true, "Bolt-hole count."),
-        new("bolt_hole_diameter_mm", PartParameterValueKind.Number, true, "Bolt-hole diameter."),
-        new("bolt_circle_diameter_mm", PartParameterValueKind.Number, true, "Pitch-circle diameter.")
+        new("outer_diameter_mm", PartParameterValueKind.Number, true, "Outer diameter.", "160", 10d, 2000d),
+        new("inner_diameter_mm", PartParameterValueKind.Number, true, "Inner bore diameter.", "80", 1d, 1990d),
+        new("thickness_mm", PartParameterValueKind.Number, true, "Flange thickness.", "20", 1d, 500d),
+        new("bolt_hole_count", PartParameterValueKind.Integer, true, "Bolt-hole count.", "4", 1d, 64d),
+        new("bolt_hole_diameter_mm", PartParameterValueKind.Number, true, "Bolt-hole diameter.", "12", 1d, 200d),
+        new("bolt_circle_diameter_mm", PartParameterValueKind.Number, true, "Pitch-circle diameter.", "120", 5d, 1990d)
     ];
 
     public IPartFamilyValidator Validator { get; } = new FlangeBasicValidator();
@@ -390,7 +436,7 @@ public sealed class FlangeBasicDefinition : IPartFamilyDefinition
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
-        var validation = Validator.Validate(spec);
+        var validation = PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);
         if (!validation.IsValid)
         {
             return new(null, validation.FailureStage, validation.Issues);
@@ -415,8 +461,8 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
 
     public IReadOnlyList<PartParameterSchema> ParameterSchema { get; } =
     [
-        new("diameter_mm", PartParameterValueKind.Number, true, "Base shaft diameter."),
-        new("length_mm", PartParameterValueKind.Number, true, "Overall shaft length."),
+        new("diameter_mm", PartParameterValueKind.Number, true, "Base shaft diameter.", "40", 1d, 1000d),
+        new("length_mm", PartParameterValueKind.Number, true, "Overall shaft length.", "200", 1d, 5000d),
         new("optional_step_diameters", PartParameterValueKind.NumberList, false, "Comma-separated optional step diameters."),
         new("optional_step_lengths", PartParameterValueKind.NumberList, false, "Comma-separated optional step lengths.")
     ];
@@ -431,7 +477,7 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
-        var validation = Validator.Validate(spec);
+        var validation = PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);
         if (!validation.IsValid)
         {
             return new(null, validation.FailureStage, validation.Issues);
@@ -458,9 +504,9 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
 
     public IReadOnlyList<PartParameterSchema> ParameterSchema { get; } =
     [
-        new("outer_diameter_mm", PartParameterValueKind.Number, true, "Jacket outer diameter."),
-        new("inner_diameter_mm", PartParameterValueKind.Number, true, "Jacket inner diameter."),
-        new("length_mm", PartParameterValueKind.Number, true, "Jacket axial length.")
+        new("outer_diameter_mm", PartParameterValueKind.Number, true, "Jacket outer diameter.", "140", 2d, 3000d),
+        new("inner_diameter_mm", PartParameterValueKind.Number, true, "Jacket inner diameter.", "120", 1d, 2990d),
+        new("length_mm", PartParameterValueKind.Number, true, "Jacket axial length.", "180", 1d, 10000d)
     ];
 
     public IPartFamilyValidator Validator { get; } = new JacketBasicValidator();
@@ -473,7 +519,7 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
-        var validation = Validator.Validate(spec);
+        var validation = PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);
         if (!validation.IsValid)
         {
             return new(null, validation.FailureStage, validation.Issues);
@@ -854,6 +900,40 @@ internal static class PartFamilyParameters
             : PartFamilyValidationResult.Failed(
                 PartFamilyFailureStages.MissingRequiredParameter,
                 $"missing_required_parameter: {string.Join(", ", missing)}.");
+    }
+
+    /// <summary>
+    /// 按零件族声明的参数区间校验输入。区间来自 <see cref="PartParameterSchema"/>，
+    /// 因此新增零件族只需声明区间，无需再写一份校验代码。
+    /// </summary>
+    public static PartFamilyValidationResult? OutOfRange(
+        CADModelSpec spec,
+        IReadOnlyList<PartParameterSchema> schema)
+    {
+        var issues = new List<string>();
+        foreach (var parameter in schema.Where(item => item.HasRange))
+        {
+            if (!spec.TryGetParameter(parameter.Name, out var text) || string.IsNullOrWhiteSpace(text))
+            {
+                continue;
+            }
+
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ||
+                !double.IsFinite(value) ||
+                !parameter.IsWithinRange(value))
+            {
+                issues.Add(
+                    $"{parameter.Name}={text} is outside the declared range " +
+                    $"[{parameter.MinimumValue?.ToString(CultureInfo.InvariantCulture) ?? "-inf"}, " +
+                    $"{parameter.MaximumValue?.ToString(CultureInfo.InvariantCulture) ?? "+inf"}].");
+            }
+        }
+
+        return issues.Count == 0
+            ? null
+            : PartFamilyValidationResult.Failed(
+                PartFamilyFailureStages.InvalidParameterValue,
+                $"invalid_parameter_value: {string.Join(" ", issues)}");
     }
 
     public static bool TryPositive(CADModelSpec spec, string name, out double value)
