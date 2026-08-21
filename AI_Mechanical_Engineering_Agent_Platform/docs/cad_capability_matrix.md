@@ -40,7 +40,7 @@
 | `plate_basic_4holes` | `extrude_boss`、`extrude_cut` | 可以 | 所需 Feature 全部 `Supported` |
 | `flange_basic` | `extrude_boss`、`extrude_cut` | 可以 | 所需 Feature 全部 `Supported` |
 | `jacket_basic` | `extrude_boss`、`extrude_cut` | 受零件族证据限制 | Feature 层可用，但零件族结构化运行时证据仍为 pending |
-| `shaft_basic` | `revolve_boss` | **不可以** | `revolve_boss` 证据状态为 `Unverified`，统一内核 fail-closed |
+| `shaft_basic` | `revolve_boss` | **不可以** | `revolve_boss` 证据状态为 `Unverified`；Definition 与统一内核均 fail-closed |
 
 ## 执行步骤
 

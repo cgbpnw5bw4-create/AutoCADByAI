@@ -35,6 +35,20 @@ V2.0-E 将已注册零件族的真实建模入口统一到 `SolidWorksFeatureGra
 - `v2_0_e_step_content_gate_active`
 - `v2_1_a_real_execution_frozen`
 - `v2_0_e_documented`
+- `v2_0_e_capability_regression_gate_passed`
+- `part_family_definition_supported`
+- `plate_uses_part_family_definition`
+- `flange_uses_part_family_definition`
+- `shaft_uses_part_family_definition`
+- `no_part_specific_builder_logic`
+- `feature_graph_template_reuse_supported`
+- `common_feature_templates_exists`
+- `cad_capability_matrix_exists`
+- `regression_models_supported`
+- `flange_regression_passed`
+- `shaft_regression_passed`
 - `v2_0_e_final_status`
 
-全平台 `final_status` 仍会包含 V2.1-A 的冻结状态；它为 `Failed` 时不得被解释为 V2.0-E 已失败，也不得被改写为全平台通过。
+`docs/self_check_capability_baseline.json` 锁定跨阶段必须保持为真的能力字段。任何受保护字段从 `true` 降为 `false`，`v2_0_e_capability_regression_gate_passed` 与 `v2_0_e_final_status` 必须失败，并在 `v2_0_e_capability_regressions` 中列出字段名。该基线只保护能力契约，不记录 CAD smoke 是否在当前机器运行。
+
+全平台 `final_status` 仍会包含 V2.1-A 的冻结状态与其他阶段状态；它为 `Failed` 时不得被解释为 V2.0-E 已失败，也不得被改写为全平台通过。V2.0-E 自身必须由上述字段和回归闸共同裁决，不能只依赖本阶段新增字段。

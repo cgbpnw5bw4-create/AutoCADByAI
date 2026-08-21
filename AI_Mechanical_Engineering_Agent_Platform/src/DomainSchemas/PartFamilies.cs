@@ -481,6 +481,10 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
 
     public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
+    // V2.0-E 的统一执行器仍会在 Handler evidence 门禁再次校验。这里提前声明
+    // revolve_boss 尚未有受控 Feature 证据，避免 Definition 层错误声称 shaft 可真实执行。
+    public bool SupportsRealExecution => false;
+
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
         var validation = PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);

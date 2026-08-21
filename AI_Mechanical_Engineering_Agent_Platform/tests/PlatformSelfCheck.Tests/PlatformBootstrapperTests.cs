@@ -121,6 +121,21 @@ public sealed class PlatformBootstrapperTests
         Assert.True(report.V20EStepContentGateActive);
         Assert.True(report.V21ARealExecutionFrozen);
         Assert.True(report.V20EDocumented);
+        Assert.True(report.V20ECapabilityRegressionGatePassed);
+        Assert.Empty(report.V20ECapabilityRegressions);
+        Assert.True(report.PartFamilyDefinitionSupported);
+        Assert.True(report.PlateUsesPartFamilyDefinition);
+        Assert.True(report.FlangeUsesPartFamilyDefinition);
+        Assert.True(report.ShaftUsesPartFamilyDefinition);
+        Assert.True(report.NoPartSpecificBuilderLogic);
+        Assert.True(report.FeatureGraphTemplateReuseSupported);
+        Assert.True(report.CommonFeatureTemplatesExists);
+        Assert.True(report.CadCapabilityMatrixExists);
+        Assert.True(report.RegressionModelsSupported);
+        Assert.True(report.FlangeRegressionPassed);
+        Assert.True(report.ShaftRegressionPassed);
+        Assert.True(report.FlangeArtifactValidationSupported);
+        Assert.True(report.ShaftArtifactValidationSupported);
         Assert.Equal("Passed", report.V20EFinalStatus);
         Assert.True(report.JacketRealBuilderImplemented);
         Assert.False(report.JacketProductionEvidenceActive);
@@ -136,6 +151,7 @@ public sealed class PlatformBootstrapperTests
         Assert.Equal("Failed", document.RootElement.GetProperty("final_status").GetString());
         Assert.Equal("2.0-e", document.RootElement.GetProperty("schema_version").GetString());
         Assert.Equal("Passed", document.RootElement.GetProperty("v2_0_e_final_status").GetString());
+        Assert.True(document.RootElement.GetProperty("v2_0_e_capability_regression_gate_passed").GetBoolean());
         Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());
         Assert.False(document.RootElement.TryGetProperty("solidworks_com_false_success_tests_added", out _));
     }

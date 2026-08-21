@@ -222,6 +222,8 @@ public static class PlatformSelfCheckRunner
             root,
             platform,
             versionStageText,
+            v18PartFamilyChecks,
+            v19PartFamilyChecks,
             v20CFeatureAdapterChecks,
             v20DModelRebuildChecks);
         var v21AJacketChecks = await RunV21AJacketChecksAsync(
@@ -858,6 +860,19 @@ public static class PlatformSelfCheckRunner
             V20EStepContentGateActive = v20EUnifiedFeatureGraphChecks.StepContentGateActive,
             V21ARealExecutionFrozen = v20EUnifiedFeatureGraphChecks.V21ARealExecutionFrozen,
             V20EDocumented = v20EUnifiedFeatureGraphChecks.V20EDocumented,
+            V20ECapabilityRegressionGatePassed = v20EUnifiedFeatureGraphChecks.CapabilityRegressionGatePassed,
+            V20ECapabilityRegressions = v20EUnifiedFeatureGraphChecks.CapabilityRegressions,
+            PartFamilyDefinitionSupported = v20EUnifiedFeatureGraphChecks.PartFamilyDefinitionSupported,
+            PlateUsesPartFamilyDefinition = v20EUnifiedFeatureGraphChecks.PlateUsesPartFamilyDefinition,
+            FlangeUsesPartFamilyDefinition = v20EUnifiedFeatureGraphChecks.FlangeUsesPartFamilyDefinition,
+            ShaftUsesPartFamilyDefinition = v20EUnifiedFeatureGraphChecks.ShaftUsesPartFamilyDefinition,
+            NoPartSpecificBuilderLogic = v20EUnifiedFeatureGraphChecks.NoPartSpecificBuilderLogic,
+            FeatureGraphTemplateReuseSupported = v20EUnifiedFeatureGraphChecks.FeatureGraphTemplateReuseSupported,
+            CommonFeatureTemplatesExists = v20EUnifiedFeatureGraphChecks.CommonFeatureTemplatesExists,
+            CadCapabilityMatrixExists = v20EUnifiedFeatureGraphChecks.CadCapabilityMatrixExists,
+            RegressionModelsSupported = v20EUnifiedFeatureGraphChecks.RegressionModelsSupported,
+            FlangeRegressionPassed = v20EUnifiedFeatureGraphChecks.FlangeRegressionPassed,
+            ShaftRegressionPassed = v20EUnifiedFeatureGraphChecks.ShaftRegressionPassed,
             V20EFinalStatus = v20EUnifiedFeatureGraphChecks.AllPassed ? "Passed" : "Failed",
             HumanApprovalResumeSupported = workflowQualityChecks.HumanApprovalResumeSupported,
             JacketPartFamilyRegistered = v21AJacketChecks.JacketPartFamilyRegistered,
@@ -1061,7 +1076,6 @@ public static class PlatformSelfCheckRunner
                     StringComparison.OrdinalIgnoreCase));
             return definition is not null &&
                    builder is not null &&
-                   builder.GetType().GetProperty("SupportsRealExecution")?.GetValue(builder) is true &&
                    string.Equals(
                        builder.GetType().GetProperty("RealExecutionMode")?.GetValue(builder)?.ToString(),
                        definition.RealExecutionMode,
@@ -1071,13 +1085,15 @@ public static class PlatformSelfCheckRunner
 
         var flangeRealBuilderImplemented = BuilderImplemented(FlangeBasicDefinition.Type, "FlangeFeatureBuilder");
         var shaftRealBuilderImplemented = BuilderImplemented(ShaftBasicDefinition.Type, "ShaftFeatureBuilder");
+        var flangeDefinition = definitions.Single(item => item.PartType == FlangeBasicDefinition.Type);
+        var shaftDefinition = definitions.Single(item => item.PartType == ShaftBasicDefinition.Type);
         var operationSupported = SolidWorksE2eCliContract.IsPartFamilyReleasePackage(
             SolidWorksE2eCliContract.PartFamilyReleasePackageOperation) &&
             Enum.IsDefined(SolidWorksMainWorkflowOperation.BuildPartFamilyReleasePackage);
         var flangeInputExists = File.Exists(Path.Combine(projectRoot, "examples", "real_cad_flange_request.json"));
         var shaftInputExists = File.Exists(Path.Combine(projectRoot, "examples", "real_cad_shaft_request.json"));
-        var flangeRealWorkflowSupported = operationSupported && flangeInputExists && flangeRealBuilderImplemented;
-        var shaftRealWorkflowSupported = operationSupported && shaftInputExists && shaftRealBuilderImplemented;
+        var flangeRealWorkflowSupported = operationSupported && flangeInputExists && flangeRealBuilderImplemented && flangeDefinition.SupportsRealExecution;
+        var shaftRealWorkflowSupported = operationSupported && shaftInputExists && shaftRealBuilderImplemented && shaftDefinition.SupportsRealExecution;
         var runtimeDefaults = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
         var defaultDisabled = !runtimeDefaults.EnableRealExecution && !runtimeDefaults.MainWorkflowExecutionEnabled;
 
@@ -1095,12 +1111,25 @@ public static class PlatformSelfCheckRunner
 
         var artifactValidatorExists = typeof(Modules.CADModeling.Validators.SolidWorksArtifactValidator)
             .GetMethod("Validate", BindingFlags.Public | BindingFlags.Instance) is not null;
-        var flangeDefinition = definitions.Single(item => item.PartType == FlangeBasicDefinition.Type);
-        var shaftDefinition = definitions.Single(item => item.PartType == ShaftBasicDefinition.Type);
-        var flangeArtifactValidationSupported = artifactValidatorExists &&
-            string.Equals(flangeDefinition.RealExecutionMode, PartFamilyExecutionModes.FlangeBasic, StringComparison.Ordinal);
-        var shaftArtifactValidationSupported = artifactValidatorExists &&
-            string.Equals(shaftDefinition.RealExecutionMode, PartFamilyExecutionModes.ShaftBasic, StringComparison.Ordinal);
+        bool ArtifactValidationSupported(IPartFamilyDefinition definition)
+        {
+            var builder = builders.SingleOrDefault(item =>
+                string.Equals(
+                    item.GetType().GetProperty("PartType")?.GetValue(item)?.ToString(),
+                    definition.PartType,
+                    StringComparison.OrdinalIgnoreCase));
+            return artifactValidatorExists &&
+                   builder is not null &&
+                   string.Equals(definition.RealExecutionMode, PartFamilyExecutionModes.GenericFeatureGraph, StringComparison.Ordinal) &&
+                   string.Equals(
+                       builder.GetType().GetProperty("RealExecutionMode")?.GetValue(builder)?.ToString(),
+                       PartFamilyExecutionModes.GenericFeatureGraph,
+                       StringComparison.Ordinal) &&
+                   builder.GetType().GetMethod("BuildAsync", BindingFlags.Public | BindingFlags.Instance) is not null;
+        }
+
+        var flangeArtifactValidationSupported = ArtifactValidationSupported(flangeDefinition);
+        var shaftArtifactValidationSupported = ArtifactValidationSupported(shaftDefinition);
 
         var builderPartTypes = builders
             .Select(builder => builder.GetType().GetProperty("PartType")?.GetValue(builder)?.ToString())
@@ -2228,6 +2257,8 @@ public static class PlatformSelfCheckRunner
         string projectRoot,
         PlatformKernel platform,
         string versionStageText,
+        V18PartFamilySelfCheckResult v18PartFamilyChecks,
+        V19PartFamilySelfCheckResult v19PartFamilyChecks,
         V20CFeatureAdapterSelfCheckResult v20CFeatureAdapterChecks,
         V20DModelRebuildSelfCheckResult v20DModelRebuildChecks)
     {
@@ -2298,12 +2329,120 @@ public static class PlatformSelfCheckRunner
                 "docs",
                 "v2_0_e_unified_feature_graph_execution.md"));
 
+        var regressionModels = PartFamilyRegressionModels.CreateDefault();
+        var handlerRegistryType = workerAssembly?.GetType(
+            "SolidWorksWorker.Features.FeatureHandlerRegistry",
+            throwOnError: false);
+        var handlerRegistry = handlerRegistryType?.GetMethod(
+            "CreateDefault",
+            BindingFlags.Public | BindingFlags.Static)?.Invoke(null, null);
+        var registeredFeatureTypes = (handlerRegistryType?
+                .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+                .Invoke(handlerRegistry, null) as System.Collections.IEnumerable)?
+            .Cast<object>()
+            .Select(handler => Property(handler, "FeatureType"))
+            .Where(featureType => !string.IsNullOrWhiteSpace(featureType))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+
+        bool RegressionModelCompiles(string partType)
+        {
+            var model = regressionModels.SingleOrDefault(item =>
+                string.Equals(item.PartType, partType, StringComparison.OrdinalIgnoreCase));
+            var definition = definitions.SingleOrDefault(item =>
+                string.Equals(item.PartType, partType, StringComparison.OrdinalIgnoreCase));
+            if (model is null || definition is null || model.Spec.Sketches.Count == 0 || model.Spec.Features.Count == 0)
+            {
+                return false;
+            }
+
+            var buildPlan = definition.GenerateBuildPlan($"self-check-v20-e-{partType}", model.Spec);
+            return buildPlan.IsSuccess &&
+                   buildPlan.BuildPlan is not null &&
+                   model.Spec.Features.All(feature => registeredFeatureTypes.Contains(feature.FeatureType));
+        }
+
+        var plateUsesPartFamilyDefinition = RegressionModelCompiles(PlateBasic4HolesDefinition.Type);
+        var flangeUsesPartFamilyDefinition = RegressionModelCompiles(FlangeBasicDefinition.Type);
+        var shaftUsesPartFamilyDefinition = RegressionModelCompiles(ShaftBasicDefinition.Type);
+        // 回归输入必须覆盖每一个已注册零件族。用覆盖关系而不是硬编码数量：
+        // 硬编码 == 3 会让「补齐第四个族」这件正确的事反而导致自检失败。
+        var regressionCoversEveryRegisteredFamily =
+            definitions.All(item => RegressionModelCompiles(item.PartType));
+        var partFamilyDefinitionSupported =
+            regressionModels.Count >= 3 &&
+            regressionCoversEveryRegisteredFamily &&
+            plateUsesPartFamilyDefinition &&
+            flangeUsesPartFamilyDefinition &&
+            shaftUsesPartFamilyDefinition;
+        var commonFeatureTemplatesExists =
+            typeof(CommonFeatureTemplates).GetMethod(
+                nameof(CommonFeatureTemplates.CreateCircleSketch),
+                BindingFlags.Public | BindingFlags.Static) is not null &&
+            typeof(CommonFeatureTemplates).GetMethod(
+                nameof(CommonFeatureTemplates.CreateDimensionalConstraint),
+                BindingFlags.Public | BindingFlags.Static) is not null;
+        // 模板复用的真实证据：每个零件族的 FeatureGraph 中都必须出现由
+        // CommonFeatureTemplates.CreateDimensionalConstraint 产出的尺寸约束
+        // （dimensional + 携带 parameter 元数据）。原判据比较的是
+        // model.Spec.PartType == model.PartType，构造时两者同源，恒成立，
+        // 只证明了模板方法存在，没有证明模板被消费。
+        bool ConsumesSharedTemplates(PartFamilyRegressionModel model) =>
+            model.Spec.Sketches.Any(sketch =>
+                sketch.Constraints.Any(constraint =>
+                    string.Equals(
+                        constraint.ConstraintType,
+                        SketchConstraintTypes.Dimensional,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    constraint.Parameters.ContainsKey("parameter")));
+
+        var featureGraphTemplateReuseSupported =
+            commonFeatureTemplatesExists &&
+            regressionModels.Count > 0 &&
+            regressionModels.All(ConsumesSharedTemplates);
+        var cadCapabilityMatrixExists = File.Exists(Path.Combine(
+            projectRoot,
+            "docs",
+            "cad_capability_matrix.md"));
+        var regressionModelsSupported =
+            partFamilyDefinitionSupported &&
+            registeredFeatureTypes.Count > 0;
+        var flangeRegressionPassed = flangeUsesPartFamilyDefinition && v18PartFamilyChecks.FlangeDryRunPassed;
+        var shaftRegressionPassed = shaftUsesPartFamilyDefinition && v18PartFamilyChecks.ShaftDryRunPassed;
+        var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(
+            projectRoot,
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["all_part_families_use_registry"] = v19PartFamilyChecks.AllPartFamiliesUseRegistry,
+                ["feature_production_evidence_active"] = v20CFeatureAdapterChecks.FeatureProductionEvidenceActive,
+                ["flange_artifact_validation_supported"] = v19PartFamilyChecks.FlangeArtifactValidationSupported,
+                ["plate_part_family_regression_passed"] = v19PartFamilyChecks.PlatePartFamilyRegressionPassed,
+                ["shaft_artifact_validation_supported"] = v19PartFamilyChecks.ShaftArtifactValidationSupported,
+                ["v2_0_d_production_evidence_active"] = v20DModelRebuildChecks.ProductionEvidenceActive,
+                ["v2_0_e_controlled_plate_evidence_active"] = controlledPlateEvidenceActive,
+                ["v2_0_e_step_content_gate_active"] = stepContentGateActive,
+                ["v2_0_e_unified_part_family_builders"] = unifiedPartFamilyBuilders
+            });
+
         return new(
             unifiedPartFamilyBuilders,
             controlledPlateEvidenceActive,
             stepContentGateActive,
             v21ARealExecutionFrozen,
-            v20EDocumented);
+            v20EDocumented,
+            capabilityRegression.Passed,
+            capabilityRegression.RegressedFields.Concat(capabilityRegression.ConfigurationErrors).ToArray(),
+            partFamilyDefinitionSupported,
+            plateUsesPartFamilyDefinition,
+            flangeUsesPartFamilyDefinition,
+            shaftUsesPartFamilyDefinition,
+            unifiedPartFamilyBuilders,
+            featureGraphTemplateReuseSupported,
+            commonFeatureTemplatesExists,
+            cadCapabilityMatrixExists,
+            regressionModelsSupported,
+            flangeRegressionPassed,
+            shaftRegressionPassed);
     }
 
     private static async Task<V21AJacketSelfCheckResult> RunV21AJacketChecksAsync(
@@ -6647,14 +6786,39 @@ public static class PlatformSelfCheckRunner
         bool ControlledPlateEvidenceActive,
         bool StepContentGateActive,
         bool V21ARealExecutionFrozen,
-        bool V20EDocumented)
+        bool V20EDocumented,
+        bool CapabilityRegressionGatePassed,
+        IReadOnlyList<string> CapabilityRegressions,
+        bool PartFamilyDefinitionSupported,
+        bool PlateUsesPartFamilyDefinition,
+        bool FlangeUsesPartFamilyDefinition,
+        bool ShaftUsesPartFamilyDefinition,
+        bool NoPartSpecificBuilderLogic,
+        bool FeatureGraphTemplateReuseSupported,
+        bool CommonFeatureTemplatesExists,
+        bool CadCapabilityMatrixExists,
+        bool RegressionModelsSupported,
+        bool FlangeRegressionPassed,
+        bool ShaftRegressionPassed)
     {
         public bool AllPassed =>
             UnifiedPartFamilyBuilders &&
             ControlledPlateEvidenceActive &&
             StepContentGateActive &&
             V21ARealExecutionFrozen &&
-            V20EDocumented;
+            V20EDocumented &&
+            CapabilityRegressionGatePassed &&
+            PartFamilyDefinitionSupported &&
+            PlateUsesPartFamilyDefinition &&
+            FlangeUsesPartFamilyDefinition &&
+            ShaftUsesPartFamilyDefinition &&
+            NoPartSpecificBuilderLogic &&
+            FeatureGraphTemplateReuseSupported &&
+            CommonFeatureTemplatesExists &&
+            CadCapabilityMatrixExists &&
+            RegressionModelsSupported &&
+            FlangeRegressionPassed &&
+            ShaftRegressionPassed;
     }
 
     private sealed record V21AJacketSelfCheckResult(

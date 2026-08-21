@@ -33,8 +33,8 @@ public static class PartFamilyGenericModelFactory
                             })
                     ],
                     [
-                        Dimensional("plate_length", "plate_base_rectangle", "length_mm", length),
-                        Dimensional("plate_width", "plate_base_rectangle", "width_mm", width)
+                        CommonFeatureTemplates.CreateDimensionalConstraint("plate_length", "plate_base_rectangle", "length_mm", length),
+                        CommonFeatureTemplates.CreateDimensionalConstraint("plate_width", "plate_base_rectangle", "width_mm", width)
                     ],
                     new Dictionary<string, string>
                     {
@@ -59,7 +59,7 @@ public static class PartFamilyGenericModelFactory
                             })
                     ],
                     [
-                        Dimensional("plate_hole_diameter", "plate_hole_pattern", "hole_diameter_mm", holeDiameter)
+                        CommonFeatureTemplates.CreateDimensionalConstraint("plate_hole_diameter", "plate_hole_pattern", "hole_diameter_mm", holeDiameter)
                     ],
                     new Dictionary<string, string>
                     {
@@ -110,7 +110,7 @@ public static class PartFamilyGenericModelFactory
         return Complete(
             source,
             [
-                CircleSketch(
+                CommonFeatureTemplates.CreateCircleSketch(
                     "flange_outer_sketch",
                     "flange_outer_circle",
                     "TopPlane",
@@ -118,7 +118,7 @@ public static class PartFamilyGenericModelFactory
                     outerDiameter,
                     new Dictionary<string, string> { ["profile"] = "outer_circle" },
                     executionOrder: 1),
-                CircleSketch(
+                CommonFeatureTemplates.CreateCircleSketch(
                     "flange_inner_sketch",
                     "flange_inner_circle",
                     "TopFace",
@@ -142,8 +142,8 @@ public static class PartFamilyGenericModelFactory
                             })
                     ],
                     [
-                        Dimensional("flange_bolt_hole_diameter", "flange_bolt_circle", "bolt_hole_diameter_mm", boltHoleDiameter),
-                        Dimensional("flange_bolt_circle_diameter", "flange_bolt_circle", "bolt_circle_diameter_mm", boltCircleDiameter)
+                        CommonFeatureTemplates.CreateDimensionalConstraint("flange_bolt_hole_diameter", "flange_bolt_circle", "bolt_hole_diameter_mm", boltHoleDiameter),
+                        CommonFeatureTemplates.CreateDimensionalConstraint("flange_bolt_circle_diameter", "flange_bolt_circle", "bolt_circle_diameter_mm", boltCircleDiameter)
                     ],
                     new Dictionary<string, string>
                     {
@@ -236,8 +236,8 @@ public static class PartFamilyGenericModelFactory
                             "shaft_axis_horizontal",
                             SketchConstraintTypes.Horizontal,
                             ["shaft_axis"]),
-                        Dimensional("shaft_diameter", "shaft_half_profile", "diameter_mm", diameter),
-                        Dimensional("shaft_length", "shaft_half_profile", "length_mm", length)
+                        CommonFeatureTemplates.CreateDimensionalConstraint("shaft_diameter", "shaft_half_profile", "diameter_mm", diameter),
+                        CommonFeatureTemplates.CreateDimensionalConstraint("shaft_length", "shaft_half_profile", "length_mm", length)
                     ],
                     new Dictionary<string, string>
                     {
@@ -275,7 +275,7 @@ public static class PartFamilyGenericModelFactory
         return Complete(
             source,
             [
-                CircleSketch(
+                CommonFeatureTemplates.CreateCircleSketch(
                     "jacket_outer_sketch",
                     "jacket_outer_circle",
                     "TopPlane",
@@ -283,7 +283,7 @@ public static class PartFamilyGenericModelFactory
                     outerDiameter,
                     new Dictionary<string, string> { ["profile"] = "jacket_outer_circle" },
                     executionOrder: 1),
-                CircleSketch(
+                CommonFeatureTemplates.CreateCircleSketch(
                     "jacket_inner_sketch",
                     "jacket_inner_circle",
                     "TopPlane",
@@ -339,40 +339,6 @@ public static class PartFamilyGenericModelFactory
             Sketches = sketches,
             Features = features
         };
-
-    private static SketchDefinition CircleSketch(
-        string sketchId,
-        string entityId,
-        string plane,
-        string dimensionName,
-        string dimensionValue,
-        IReadOnlyDictionary<string, string> additions,
-        int executionOrder)
-    {
-        var parameters = new Dictionary<string, string>(additions, StringComparer.OrdinalIgnoreCase)
-        {
-            [dimensionName] = dimensionValue
-        };
-        return new SketchDefinition(
-            sketchId,
-            plane,
-            [new SketchEntity(entityId, SketchEntityTypes.Circle, parameters)],
-            [Dimensional($"{entityId}_dimension", entityId, dimensionName, dimensionValue)],
-            new Dictionary<string, string> { [dimensionName] = dimensionValue },
-            executionOrder);
-    }
-
-    private static SketchConstraint Dimensional(
-        string constraintId,
-        string entityId,
-        string parameterName,
-        string value) =>
-        new(
-            constraintId,
-            SketchConstraintTypes.Dimensional,
-            [entityId],
-            value,
-            new Dictionary<string, string> { ["parameter"] = parameterName });
 
     private static string Parameter(CADModelSpec source, string name) =>
         source.TryGetParameter(name, out var value) ? value : string.Empty;

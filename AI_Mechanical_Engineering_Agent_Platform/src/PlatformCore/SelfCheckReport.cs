@@ -588,6 +588,45 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("v2_0_e_documented")]
     public bool V20EDocumented { get; init; }
 
+    [JsonPropertyName("v2_0_e_capability_regression_gate_passed")]
+    public bool V20ECapabilityRegressionGatePassed { get; init; }
+
+    [JsonPropertyName("v2_0_e_capability_regressions")]
+    public IReadOnlyList<string> V20ECapabilityRegressions { get; init; } = Array.Empty<string>();
+
+    [JsonPropertyName("part_family_definition_supported")]
+    public bool PartFamilyDefinitionSupported { get; init; }
+
+    [JsonPropertyName("plate_uses_part_family_definition")]
+    public bool PlateUsesPartFamilyDefinition { get; init; }
+
+    [JsonPropertyName("flange_uses_part_family_definition")]
+    public bool FlangeUsesPartFamilyDefinition { get; init; }
+
+    [JsonPropertyName("shaft_uses_part_family_definition")]
+    public bool ShaftUsesPartFamilyDefinition { get; init; }
+
+    [JsonPropertyName("no_part_specific_builder_logic")]
+    public bool NoPartSpecificBuilderLogic { get; init; }
+
+    [JsonPropertyName("feature_graph_template_reuse_supported")]
+    public bool FeatureGraphTemplateReuseSupported { get; init; }
+
+    [JsonPropertyName("common_feature_templates_exists")]
+    public bool CommonFeatureTemplatesExists { get; init; }
+
+    [JsonPropertyName("cad_capability_matrix_exists")]
+    public bool CadCapabilityMatrixExists { get; init; }
+
+    [JsonPropertyName("regression_models_supported")]
+    public bool RegressionModelsSupported { get; init; }
+
+    [JsonPropertyName("flange_regression_passed")]
+    public bool FlangeRegressionPassed { get; init; }
+
+    [JsonPropertyName("shaft_regression_passed")]
+    public bool ShaftRegressionPassed { get; init; }
+
     [JsonPropertyName("v2_0_e_final_status")]
     public string V20EFinalStatus { get; init; } = "Failed";
 

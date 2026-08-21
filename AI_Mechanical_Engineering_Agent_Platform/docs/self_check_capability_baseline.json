@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "description": "V2.0-E 迁移必须保持为真的跨阶段能力字段。字段从 true 降为 false 时，阶段自检必须失败。",
+  "protected_capabilities": {
+    "all_part_families_use_registry": true,
+    "feature_production_evidence_active": true,
+    "flange_artifact_validation_supported": true,
+    "plate_part_family_regression_passed": true,
+    "shaft_artifact_validation_supported": true,
+    "v2_0_d_production_evidence_active": true,
+    "v2_0_e_controlled_plate_evidence_active": true,
+    "v2_0_e_step_content_gate_active": true,
+    "v2_0_e_unified_part_family_builders": true
+  }
+}
