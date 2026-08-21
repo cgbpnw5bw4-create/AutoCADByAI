@@ -22,7 +22,7 @@ public sealed class JacketFeatureBuilder : SolidWorksPartFamilyBuilderBase
     public override string FailureStage => PartFamilyFailureStages.JacketBuildFailed;
     public override bool SupportsRealExecution => false;
     public override string ApiEvidence => JacketBasicDefinition.ProductionEvidenceStatus;
-    public override string RealExecutionMode => PartFamilyExecutionModes.JacketBasic;
+    public override string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
     protected override void BuildFeatures(
         object model,

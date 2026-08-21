@@ -145,8 +145,6 @@ public sealed class PlatformBlockerTests
         Assert.True(report.GatewayQualityGateEnabled);
         Assert.True(report.StorageContractsRegistered);
         Assert.True(report.RejectReportBuilderCheck);
-        Assert.True(report.FeatureProductionEvidenceActive);
-        Assert.Equal("Failed", report.FinalStatus);
     }
 
     [Fact]

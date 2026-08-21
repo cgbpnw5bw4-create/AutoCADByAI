@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DomainSchemas\DomainSchemas.csproj" />
     <ProjectReference Include="..\..\src\Workers\SolidWorks\SolidWorksWorker.csproj" />
+    <ProjectReference Include="..\..\src\PlatformCore\PlatformCore.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

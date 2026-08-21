@@ -570,6 +570,30 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("v2_0_d_documented")]
     public bool V20DDocumented { get; init; }
 
+    [JsonPropertyName("v2_0_d_production_evidence_active")]
+    public bool V20DProductionEvidenceActive { get; init; }
+
+    [JsonPropertyName("v2_0_e_unified_part_family_builders")]
+    public bool V20EUnifiedPartFamilyBuilders { get; init; }
+
+    [JsonPropertyName("v2_0_e_controlled_plate_evidence_active")]
+    public bool V20EControlledPlateEvidenceActive { get; init; }
+
+    [JsonPropertyName("v2_0_e_step_content_gate_active")]
+    public bool V20EStepContentGateActive { get; init; }
+
+    [JsonPropertyName("v2_1_a_real_execution_frozen")]
+    public bool V21ARealExecutionFrozen { get; init; }
+
+    [JsonPropertyName("v2_0_e_documented")]
+    public bool V20EDocumented { get; init; }
+
+    [JsonPropertyName("v2_0_e_final_status")]
+    public string V20EFinalStatus { get; init; } = "Failed";
+
+    [JsonPropertyName("workflow_human_approval_resume_supported")]
+    public bool HumanApprovalResumeSupported { get; init; }
+
     [JsonPropertyName("jacket_part_family_registered")]
     public bool JacketPartFamilyRegistered { get; init; }
 

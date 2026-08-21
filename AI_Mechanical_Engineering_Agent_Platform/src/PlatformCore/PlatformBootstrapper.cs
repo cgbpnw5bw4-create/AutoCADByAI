@@ -99,7 +99,8 @@ public static class PlatformBootstrapper
                 platform.SkillRegistry,
                 platform.WorkerRegistry,
                 platform.AuditLog,
-                platform.WorkflowEngine));
+                platform.WorkflowEngine),
+            internalWorkflowRoute: InternalWorkflowRoute.EngineeringDefault);
 
         platform.AgentRegistry.Register(new ChiefEngineerAgent(chiefEngineerOrchestrator));
         platform.AgentRegistry.Register(new MechanicalDesignerAgent());

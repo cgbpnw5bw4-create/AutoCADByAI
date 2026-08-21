@@ -223,15 +223,28 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     $"source_revision={V20DThreeCircleCutEvidencePolicy.SourceRevision}");
             }
 
-            partFamilyBuilder = RequiresGeometryValidationReport(request.BuildPlan)
-                ? new V20DFeatureGraphPartFamilyBuilder(
+            if (RequiresGeometryValidationReport(request.BuildPlan))
+            {
+                partFamilyBuilder = new V20DFeatureGraphPartFamilyBuilder(
                     request.BuildPlan.PartType,
                     _featureHandlerRegistry,
                     request,
-                    options)
-                : new SolidWorksFeatureGraphPartFamilyBuilder(
-                    request.BuildPlan.PartType,
-                    _featureHandlerRegistry);
+                    options);
+            }
+            else if (!_partFamilyBuilderRegistry.TryGetBuilder(request.BuildPlan.PartType, out partFamilyBuilder))
+            {
+                logs.Add("COM connection was not attempted because no part-family builder is registered for the validated FeatureGraph.");
+                issues.Add($"part_family_builder_missing: {request.BuildPlan.PartType} has no registered real SolidWorks builder.");
+                return Result(
+                    request,
+                    "Rejected",
+                    "RealPreflightOnly",
+                    logs,
+                    issues,
+                    realCadConnected: false,
+                    preflight,
+                    PartFamilyFailureStages.PartFamilyBuilderMissing);
+            }
             logs.Add("Real feature execution was resolved through FeatureHandlerRegistry.");
         }
         else if (isPartFamilyBuild &&
@@ -295,7 +308,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                     failedPreflight,
                     options,
                     SolidWorksExecutionEnvironmentProbe.FailureStage,
-                    partFamilyBuilder);
+                partFamilyBuilder);
         }
 
         if (!request.ConnectionSmokeTestOnly &&

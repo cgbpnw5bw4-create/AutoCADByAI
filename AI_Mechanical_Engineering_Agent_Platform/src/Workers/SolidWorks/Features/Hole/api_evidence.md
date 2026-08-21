@@ -68,6 +68,6 @@ V2.0-C 选定唯一 diagnostic 候选，2026-07-30 新 run 已把其精确 profi
 
 旧 run `20260730_073759_9143941` 的 Hole 虽返回非空 Feature 且重建通过，人工复核却没有孔，因此是明确假成功，不得保留为 verified。
 
-权威证据标识为 `v2.0-c-20260730-085830-simple-hole`，报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`。直径 10 mm 圆草图加 20 mm blind `FeatureCut4` 使体积从 `5.92146018366025E-05` 降至 `5.84292036732051E-05` m³；特征树出现第二个 `ICE`，等轴测和俯视确认第二个孔。Registry 在 `ConnectAsync` 前验证依赖草图恰为一个等径圆。
+现行证据标识为 `v2.0-e-20260821-034143-simple-hole`，报告为 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`。直径 10 mm 圆草图加 blind `FeatureCut4` 使 200×100×15 mm 模型体积从 `0.0002964657082647115` 降至 `0.00029528761101961536 m³`；证据绑定 SolidWorks `31.5.0` 与完整执行链源码 revision `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`。Registry 在 `ConnectAsync` 前验证依赖草图恰为一个等径圆。
 
 只授权 `simple_circular_cut_blind;diameter_matches_single_circle;positive_depth_mm;no_wizard`。原生 `SimpleHole2`、Hole Wizard、其他终止条件和任意放置引用仍为 `unverified`。新 diagnostic 仍为 `CandidatePassed` / `NotDeliverable`；最终验收必须从 `run-cad-workflow` 进入完整主流程。禁止更换 API、Handler COM、扩大参数轮廓或进入 V2.0-D。

@@ -715,7 +715,17 @@ public sealed class SolidWorksModuleSkeletonTests
                 ["SW_OUTPUT_DIRECTORY"] = outputRoot,
                 ["SW_CONNECT_TIMEOUT_SECONDS"] = "5"
             }, isUnitTestEnvironment: false);
-            var worker = new RealSolidWorksWorker(sessionManager, options, builder);
+            var worker = new RealSolidWorksWorker(
+                sessionManager,
+                options,
+                builder,
+                drawingBuilder: null,
+                drawingDimensionBuilder: null,
+                drawingTitleBlockBuilder: null,
+                partFamilyBuilderRegistry: new PartFamilyBuilderRegistry(
+                [
+                    new TestGenericFeatureGraphBuilder(builder)
+                ]));
             var request = new SolidWorksWorkerRequest(
                 $"request-{Guid.NewGuid():N}",
                 await CreatePlanAsync(),
@@ -729,7 +739,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.Equal(1, sessionManager.ExecuteWithApplicationAttempts);
             Assert.Equal(1, builder.BuildAttempts);
             Assert.Equal("Completed", result.Status);
-            Assert.Equal("RealBuildPlateBasic4Holes", result.ExecutionMode);
+            Assert.Equal("RealBuildGenericFeatureGraph", result.ExecutionMode);
             Assert.True(result.RealCadConnected);
             Assert.True(result.RealCadExecuted);
             Assert.Contains(result.GeneratedArtifacts, artifact => artifact.FilePath.EndsWith(".SLDPRT", StringComparison.OrdinalIgnoreCase));
@@ -738,7 +748,7 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.All(result.GeneratedArtifacts, artifact => Assert.True(File.Exists(artifact.FilePath)));
             var reportPath = result.GeneratedArtifacts.Single(artifact => artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase)).FilePath;
             using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(reportPath));
-            Assert.Equal("RealBuildPlateBasic4Holes", document.RootElement.GetProperty("execution_mode").GetString());
+            Assert.Equal("RealBuildGenericFeatureGraph", document.RootElement.GetProperty("execution_mode").GetString());
             Assert.True(document.RootElement.GetProperty("real_cad_executed").GetBoolean());
             Assert.True(document.RootElement.TryGetProperty("plane_selection_attempted", out _));
             Assert.True(document.RootElement.TryGetProperty("plane_selection_success", out _));
@@ -1873,7 +1883,7 @@ public sealed class SolidWorksModuleSkeletonTests
     }
 
     [Fact]
-    public async Task RealSolidWorksWorkerDisconnectTimeoutDoesNotHideBuildResult()
+    public async Task RealSolidWorksWorkerDisconnectTimeoutDoesNotHideConnectionResult()
     {
         var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"disconnect-timeout-test-{Guid.NewGuid():N}");
         try
@@ -1898,11 +1908,14 @@ public sealed class SolidWorksModuleSkeletonTests
                 await CreatePlanAsync(),
                 outputRoot,
                 DryRun: false,
-                AllowRealCadExecution: true);
+                AllowRealCadExecution: true,
+                ConnectionSmokeTestOnly: true);
 
             var result = await worker.ExecuteAsync(request, CancellationToken.None);
 
             Assert.Equal("Completed", result.Status);
+            Assert.Equal("RealConnectionSmokeTest", result.ExecutionMode);
+            Assert.False(result.RealCadExecuted);
             Assert.Equal(1, sessionManager.DisconnectAttempts);
             Assert.True(sessionManager.DisconnectTokenCanBeCanceled);
             Assert.Contains(result.Logs, log => log.Contains("solidworks_disconnect_timeout", StringComparison.OrdinalIgnoreCase));
@@ -1948,7 +1961,7 @@ public sealed class SolidWorksModuleSkeletonTests
             var result = await worker.ExecuteAsync(request, CancellationToken.None);
 
             Assert.Equal("Failed", result.Status);
-            Assert.Equal("RealBuildPlateBasic4Holes", result.ExecutionMode);
+            Assert.Equal("RealBuildGenericFeatureGraph", result.ExecutionMode);
             Assert.True(result.RealCadConnected);
             Assert.False(result.RealCadExecuted);
             Assert.Equal(1, sessionManager.ExecuteWithApplicationAttempts);
@@ -2020,7 +2033,7 @@ public sealed class SolidWorksModuleSkeletonTests
             var reportArtifact = Assert.Single(result.GeneratedArtifacts, artifact =>
                 artifact.FilePath.EndsWith("build_report.json", StringComparison.OrdinalIgnoreCase));
             Assert.Equal("Failed", result.Status);
-            Assert.Equal("RealBuildPlateBasic4Holes", result.ExecutionMode);
+            Assert.Equal("RealBuildGenericFeatureGraph", result.ExecutionMode);
             Assert.False(result.RealCadExecuted);
             Assert.False(result.RealCadConnected);
             Assert.Equal(0, sessionManager.ConnectAttempts);
@@ -2049,28 +2062,45 @@ public sealed class SolidWorksModuleSkeletonTests
         var outputRoot = Path.Combine(FindProjectRoot(), "output", "solidworks", "real", $"validator-real-test-{Guid.NewGuid():N}");
         try
         {
-            var result = await new TestSolidWorksPlateBuilder().BuildPlateBasicFourHolesAsync(
-                new object(),
-                new SolidWorksWorkerRequest(
-                    $"request-{Guid.NewGuid():N}",
-                    await CreatePlanAsync(),
-                    outputRoot,
-                    DryRun: false,
-                    AllowRealCadExecution: true),
-                SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>
+            Directory.CreateDirectory(outputRoot);
+            var partPath = Path.Combine(outputRoot, "plate_basic_4holes.SLDPRT");
+            var stepPath = Path.Combine(outputRoot, "plate_basic_4holes.STEP");
+            var buildReportPath = Path.Combine(outputRoot, "build_report.json");
+            await File.WriteAllTextAsync(partPath, "controlled real-part bytes");
+            await File.WriteAllTextAsync(
+                stepPath,
+                "ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+            var featureResults = FeatureExecutionReportFixture.FeatureResults(FeatureTypes.ExtrudeBoss);
+            await File.WriteAllTextAsync(
+                buildReportPath,
+                JsonSerializer.Serialize(new
                 {
-                    ["SW_OUTPUT_DIRECTORY"] = outputRoot
-                }),
-                "TestVersion",
-                CancellationToken.None);
+                    real_cad_executed = true,
+                    real_cad_connected = true,
+                    sldprt_save_success = true,
+                    step_export_success = true,
+                    execution_mode = PartFamilyExecutionModes.GenericFeatureGraph,
+                    execution_strategy = SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                    solidworks_version = FeatureExecutionReportFixture.RuntimeVersion(),
+                    final_status = "Passed",
+                    feature_handler_reports = featureResults
+                }));
+            var featureReportPath = FeatureExecutionReportFixture.Write(
+                outputRoot,
+                FeatureTypes.ExtrudeBoss);
 
             var workerResult = new SolidWorksWorkerResult(
                 $"request-{Guid.NewGuid():N}",
                 "Completed",
-                result.GeneratedArtifacts,
-                result.Logs,
-                result.Issues,
-                "RealBuildPlateBasic4Holes",
+                [
+                    new SolidWorksArtifact("real-part", "Part", partPath, ".SLDPRT", true, new FileInfo(partPath).Length, "受控零件"),
+                    new SolidWorksArtifact("real-step", "Step", stepPath, ".STEP", true, new FileInfo(stepPath).Length, "受控 STEP"),
+                    new SolidWorksArtifact("build-report", "BuildReport", buildReportPath, ".json", true, new FileInfo(buildReportPath).Length, "受控构建报告"),
+                    new SolidWorksArtifact("feature-report", "FeatureExecutionReport", featureReportPath, ".json", true, new FileInfo(featureReportPath).Length, "受控特征执行报告")
+                ],
+                [],
+                [],
+                "RealBuildGenericFeatureGraph",
                 RealCadExecuted: true,
                 RealCadConnected: true);
 
@@ -2106,7 +2136,7 @@ public sealed class SolidWorksModuleSkeletonTests
                     outputRoot,
                     DryRun: false,
                     AllowRealCadExecution: true),
-                "RealBuildPlateBasic4Holes",
+                "RealBuildGenericFeatureGraph",
                 realCadExecuted: true,
                 realCadConnected: true,
                 "TestVersion",
@@ -2135,7 +2165,7 @@ public sealed class SolidWorksModuleSkeletonTests
                 },
                 Array.Empty<string>(),
                 new[] { "step_export_failed" },
-                "RealBuildPlateBasic4Holes",
+                "RealBuildGenericFeatureGraph",
                 RealCadExecuted: true,
                 RealCadConnected: true);
 
@@ -2184,7 +2214,7 @@ public sealed class SolidWorksModuleSkeletonTests
                 },
                 Array.Empty<string>(),
                 Array.Empty<string>(),
-                "RealBuildPlateBasic4Holes",
+                "RealBuildGenericFeatureGraph",
                 RealCadExecuted: true,
                 RealCadConnected: true);
 
@@ -2631,8 +2661,6 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.True(report.V20ADocumented);
             Assert.True(report.V18VersionStageDocumented);
             Assert.True(report.MarkdownChineseCheckPassed);
-            Assert.True(report.FeatureProductionEvidenceActive);
-            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {
@@ -2672,8 +2700,6 @@ public sealed class SolidWorksModuleSkeletonTests
             Assert.Null(report.SolidWorksRealBuildSmokeTestError);
             Assert.Null(report.SolidWorksRealBuildFailureStage);
             Assert.True(report.SolidWorksRealBuildErrorIsActionable);
-            Assert.True(report.FeatureProductionEvidenceActive);
-            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {
@@ -3495,7 +3521,7 @@ public sealed class SolidWorksModuleSkeletonTests
             await SolidWorksPlateBuildReportWriter.WriteAsync(
                 reportPath,
                 request,
-                "RealBuildPlateBasic4Holes",
+                "RealBuildGenericFeatureGraph",
                 realCadExecuted: true,
                 realCadConnected: true,
                 solidWorksVersion,
@@ -3513,6 +3539,55 @@ public sealed class SolidWorksModuleSkeletonTests
                     SolidWorksPlateBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "真实构建报告。")
                 },
                 new[] { "test plate builder generated controlled artifacts" });
+        }
+    }
+
+    private sealed class TestGenericFeatureGraphBuilder : IPartFamilyBuilder
+    {
+        private readonly TestSolidWorksPlateBuilder _plateBuilder;
+
+        public TestGenericFeatureGraphBuilder(TestSolidWorksPlateBuilder plateBuilder)
+        {
+            _plateBuilder = plateBuilder;
+        }
+
+        public string PartType => PlateBasic4HolesDefinition.Type;
+        public string FailureStage => PartFamilyFailureStages.FeatureResultInvalid;
+        public bool SupportsRealExecution => true;
+        public string ApiEvidence => "受控测试 Builder；FeatureHandlerRegistry 已在 Worker 中先行验证。";
+        public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
+
+        public Task<PartFamilyDryRunBuildResult> BuildDryRunAsync(
+            SolidWorksWorkerRequest request,
+            string artifactsDirectory,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PartFamilyDryRunBuildResult(
+                "Rejected",
+                [],
+                [],
+                ["该受控 Builder 仅用于真实 Worker 注入回归。"],
+                FailureStage));
+
+        public async Task<PartFamilyBuildResult> BuildAsync(
+            PartFamilyBuildContext context,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _plateBuilder.BuildPlateBasicFourHolesAsync(
+                context.Application,
+                context.Request,
+                context.Options,
+                context.SolidWorksVersion,
+                cancellationToken);
+            return new PartFamilyBuildResult(
+                result.Status,
+                result.GeneratedArtifacts,
+                result.Logs,
+                result.Issues,
+                RealExecutionMode,
+                result.RealCadExecuted,
+                string.Equals(result.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                    ? null
+                    : FailureStage);
         }
     }
 

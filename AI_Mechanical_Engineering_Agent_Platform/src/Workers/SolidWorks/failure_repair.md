@@ -299,7 +299,7 @@ flange 首次 diagnostic 在保存阶段返回 `part_save_failed`。修复复用
 
 四孔验证要从真实圆柱几何与特征结果证明四个孔。不能把 V2.0-C 的两孔 evidence、单圆草图、COM 成功或文件存在升级为四孔；若既有受证类型无法表达四孔，返回 feature_api_unverified，而不是调用 pattern、through_all、mid_plane、SimpleHole2 或 Hole Wizard。
 
-修复完成后仅以 `run-cad-workflow --input examples/parameter_update_plate.json` 重新验收。`GeometryValidator`、`Reviewer` 与 `QualityGate` 必须同次通过，才可产生 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`；不得进入 V2.0-E。
+修复完成后仅以 `run-cad-workflow --input examples/parameter_update_plate.json` 重新验收。`GeometryValidator`、`Reviewer` 与 `QualityGate` 必须同次通过，才可产生 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`；V2.0-E 不得绕过这条验收链。
 ## V2.0-D 三圆 profile 证据失效
 
 若重建在 COM 连接前以 `feature_api_unverified` 停止，先读取本次 build report 的 `v2_0_d_three_circle_cut_evidence_verified` 缺失原因，并检查 `V20DThreeCircleCutEvidencePolicy` 的输入 SHA、候选报告 SHA、V2.0-C source revision、三圆实体数、直径、20 mm 边距、盲切深度和操作依赖。不得在 Handler 中临时放宽 circle count，不得直接改 Builder 或跳过 QualityGate。

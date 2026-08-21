@@ -421,7 +421,7 @@ V2.0-D 将 COM 读取限定在 ISolidWorksGeometryReader / RealSolidWorksGeometr
 | Feature 结果 | FirstFeature / GetNextFeature / IFeature.GetTypeName2 / GetErrorCode2 | 同时验证 Sketch、Extrude、Cut、Hole 的真实存在与错误状态。 |
 | 长度 / 孔径 | `IBody2.GetVertices` + `IVertex.GetPoint`、`IBody2.GetExtremePoint` 回退、圆柱面参数 | 平面四孔板先以真实 B-rep 顶点计算外包络；顶点不可读时才回退 `GetExtremePoint`。两者都不可用必须失败，不能用近似 BoundingBox 代替。 |
 
-IPartDoc.GetPartBox、文件存在、COM 返回非空、特征名称或 hole_count 都不是实际四孔或尺寸变化的充分证据。plate_basic_4holes 只能复用既有已经注册和取证的 Feature 类型；不要以未证实的 pattern、任意面、through_all、mid_plane、SimpleHole2 或 Hole Wizard 补足结果。证据不足使用 feature_api_unverified，最终交付只由 run-cad-workflow 的 QualityGate 决定，且不进入 V2.0-E。
+IPartDoc.GetPartBox、文件存在、COM 返回非空、特征名称或 hole_count 都不是实际四孔或尺寸变化的充分证据。plate_basic_4holes 只能复用既有已经注册和取证的 Feature 类型；不要以未证实的 pattern、任意面、through_all、mid_plane、SimpleHole2 或 Hole Wizard 补足结果。证据不足使用 feature_api_unverified，最终交付只由 run-cad-workflow 的 QualityGate 决定；V2.0-E 不得绕过这条链。
 
 `GetVertices` / `GetPoint` 只作为平面四孔板的精确外包络来源：该族的四个外轮廓角点给出实际 `length_mm`、`width_mm` 和 `thickness_mm`。这不是曲面外形的通用替代；对于无足够顶点的零件，Reader 必须取得 `GetExtremePoint` 的完整结果，否则返回 `geometry_read_failed`。实际特征树按 `GetTypeName2` 的 API 类型名判断：`ProfileFeature` 为草图、`Extrusion` 为凸台拉伸、`ICE` 为盲切除；不得依赖本地化显示名称。
 
@@ -429,14 +429,18 @@ IPartDoc.GetPartBox、文件存在、COM 返回非空、特征名称或 hole_cou
 
 `run-cad-workflow` 在 SolidWorks `33.5.0` 的同次受控运行中完成基线 `160 x 80 x 12 mm` 与更新后的 `200 x 100 x 15 mm` 四孔板。更新报告证明 FeatureGraph 保持不变，且只重执行既有 `plate_boss`、`plate_cut`、`plate_hole`。
 
-更新后的真实测量为：一个实体、外包络 `200 x 100 x 15 mm`、四个平面法向圆柱面、每孔直径约 `10 mm`、实体体积与质量属性体积均为约 `295287.6110196154 mm³`。`geometry_validation_report.json` 的 `final_status=Passed`，同次 `rebuild_report.json`、SLDPRT、STEP、E2E 和 package QualityGate 均为 `Passed` / `Deliverable`。该记录只证明当前四孔板参数更新轮廓，不扩大 V2.0-C 的其他 Feature profile，也不进入 V2.0-E。
+更新后的真实测量为：一个实体、外包络 `200 x 100 x 15 mm`、四个平面法向圆柱面、每孔直径约 `10 mm`、实体体积与质量属性体积均为约 `295287.6110196154 mm³`。`geometry_validation_report.json` 的 `final_status=Passed`，同次 `rebuild_report.json`、SLDPRT、STEP、E2E 和 package QualityGate 均为 `Passed` / `Deliverable`。该记录只证明当前四孔板参数更新轮廓，不扩大 V2.0-C 的其他 Feature profile；V2.0-E 仍须保持统一 FeatureGraph 和证据门禁。
 ## V2.0-D 三圆 blind cut 的独立授权
 
 `V20DThreeCircleCutEvidencePolicy` 不是新的 CAD Feature 或 COM 调用点。它在 `FeatureHandlerRegistry` 通过后、`ConnectAsync` 前对已编译 `SolidWorksBuildPlan` 和受绑定 JSON 证据做纯读取校验，补足 V2.0-C 单圆 `extrude_cut` profile 不覆盖的三圆 `cut_profile`。
 
-固定候选诊断 `output/solidworks/features/20260803_064124_6127412/feature_execution_report.json` 绑定 `examples/parameter_update_plate.json`，在 SolidWorks `33.5.0` 中记录 `plate_cut` 从 `0.00015360000000000002` 下降到 `0.00015077256661176917` m³（3 个直径 10 mm、厚度 12 mm 的盲切），随后 `plate_hole` 再下降到 `0.00014983008881569223` m³。策略同时校验候选文件哈希、实际 SLDPRT/STEP 文件大小、V2.0-C Feature 源码 revision、三圆/第四孔的精确图形和 20 mm 边距映射。
+固定候选诊断 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json` 绑定 `examples/parameter_update_plate.json`，在 SolidWorks `31.5.0` 中真实应用 200×100×15 的参数更新，记录 `plate_cut` 从 `0.00030000000000000003` 下降到 `0.00029646570826471146` m³，随后 `plate_hole` 再下降到 `0.00029528761101961536` m³。策略同时校验候选报告哈希、实际 SLDPRT/STEP 物理文件及其大小、STEP 内容、V2.0-C Feature 源码 revision、三圆/第四孔的精确图形和 20 mm 边距映射。
 
 候选诊断只能证明该精确 profile 的 API 行为，不能代替 `run-cad-workflow`、GeometryValidator 或 QualityGate。任何不匹配都以 `feature_api_unverified` 在连接前拒绝，绝不通过修改 Handler、直接 Builder 或伪造文件存在绕过。
+
+## V2.0-E 现行 FeatureGraph 证据绑定
+
+历史 V2.0-C/D 记录仅保留为审计背景，不能作为当前源码的生产授权。现行四类 Handler 与 V2.0-D 三圆 profile 统一绑定 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`：SolidWorks `31.5.0`、源码 revision `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`，报告的 `CandidatePassed` / `NotDeliverable` 语义不变。策略逐项读取诊断、校验受绑定物理 SLDPRT、有效 STEP 内容、版本、特征结果和体积变化；任何失配都在 COM 连接前返回 `feature_api_unverified`。
 
 ## V2.1-A 夹套 API 证据
 

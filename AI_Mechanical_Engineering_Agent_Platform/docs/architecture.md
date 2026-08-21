@@ -97,7 +97,7 @@ V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPla
 - `RejectReportBuilder`
 - `RetryPolicy`
 
-`WorkflowEngine` 根据 `GateDecision` 做流程控制：`Passed` 进入下一步，`Rejected` 按策略重试或停止，`Failed` 生成 FailureReport，`NeedsHumanApproval` 生成 HumanApprovalRequest 并暂停。
+`WorkflowEngine` 根据 `GateDecision` 做流程控制：`Passed` 进入下一步，`Rejected` 按策略重试或停止，`Failed` 生成 FailureReport，`NeedsHumanApproval` 生成 HumanApprovalRequest 并暂停。暂停状态由 `IWorkflowApprovalStore` 保存；宿主必须显式提交批准、拒绝或退回决定，批准才会恢复剩余步骤，拒绝和退回会产生 FailureReport 并阻断下游。
 
 ## Interfaces
 

@@ -244,7 +244,7 @@ v2_0_d_documented
 markdown_chinese_check_passed
 ~~~
 
-只有第一次 160×80×12 与更新后的 200×100×15 都经同次真实 `GeometryValidator`、`Reviewer` 和 `QualityGate` 通过，且输出 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`，本阶段才可关闭；不得进入 V2.0-E。
+只有第一次 160×80×12 与更新后的 200×100×15 都经同次真实 `GeometryValidator`、`Reviewer` 和 `QualityGate` 通过，且输出 `SLDPRT`、`STEP`、`geometry_validation_report.json`、`rebuild_report.json`，该受控链才可作为 V2.0-E 的证据基础；候选诊断不能替代最终交付验收。
 
 ## V2.1-A 夹套复核
 

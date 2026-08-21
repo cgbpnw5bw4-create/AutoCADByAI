@@ -36,3 +36,12 @@
 - retry delay 必须写入 AuditLog。
 
 延迟只适用于可重试的 `Rejected` step。`Failed` 和 `NeedsHumanApproval` 是自动流程的终止状态，不能等待 retry delay，也不能自动重试。
+
+## 人工审批提交与恢复
+
+当步骤返回 `NeedsHumanApproval` 时，`SequentialWorkflowEngine` 会保存等待步骤、已完成步骤、剩余步骤、请求和审计片段到 `IWorkflowApprovalStore`。外部宿主必须显式调用 `SubmitHumanApprovalAsync` 提交 `Approve`、`Reject` 或 `RequestRevision`，工作流不会仅因等待而自动恢复。
+
+- `Approve` 将等待步骤转为 `Passed`，再由同一 `WorkflowEngine` 执行未运行的后续步骤。
+- `Reject` 与 `RequestRevision` 立即停止下游，并生成可追踪的 `FailureReport`。
+- 非法决定或不存在的工作流不会消耗待审批项。
+- 默认 `InMemoryWorkflowApprovalStore` 只保证单进程宿主内的提交/恢复闭环；需要跨进程或跨重启恢复时，宿主必须注入满足同一接口的持久化存储，不能把内存状态伪装为已持久化。

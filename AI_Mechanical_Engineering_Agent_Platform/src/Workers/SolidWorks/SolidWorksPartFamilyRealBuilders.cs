@@ -177,6 +177,7 @@ public static class SolidWorksFeatureExecutionReportWriter
             diagnostics.SldprtSaveSuccess &&
             diagnostics.SldprtSizeBytes > 0 &&
             diagnostics.StepExportSuccess &&
+            diagnostics.StepContentValidated &&
             diagnostics.StepSizeBytes > 0;
         var passed =
             requestedFinalStatus.Equals("Passed", StringComparison.OrdinalIgnoreCase) &&
@@ -212,6 +213,7 @@ public static class SolidWorksFeatureExecutionReportWriter
             sldprt_size_bytes = diagnostics.SldprtSizeBytes,
             step_path = diagnostics.StepPath,
             step_size_bytes = diagnostics.StepSizeBytes,
+            step_content_validated = diagnostics.StepContentValidated,
             feature_results = diagnostics.FeatureHandlerReports,
             failure_stage = failureStage,
             final_status = passed ? "Passed" : "Failed",

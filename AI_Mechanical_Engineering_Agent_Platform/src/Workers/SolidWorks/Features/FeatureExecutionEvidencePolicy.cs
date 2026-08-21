@@ -191,8 +191,8 @@ public static partial class FeatureExecutionEvidencePolicy
                 "solid_works_version",
                 evidence.SolidWorksVersion ?? string.Empty,
                 issues);
-            RequirePassedArtifact(root, "model", issues);
-            RequirePassedArtifact(root, "step", issues);
+            RequirePassedArtifact(root, "model", requireStepContent: false, issues);
+            RequirePassedArtifact(root, "step", requireStepContent: true, issues);
 
             if (!root.TryGetProperty("feature_handler_reports", out var reports) ||
                 reports.ValueKind != JsonValueKind.Array)
@@ -279,6 +279,7 @@ public static partial class FeatureExecutionEvidencePolicy
     private static void RequirePassedArtifact(
         JsonElement root,
         string propertyName,
+        bool requireStepContent,
         List<string> issues)
     {
         if (!root.TryGetProperty(propertyName, out var artifact) ||
@@ -289,10 +290,33 @@ public static partial class FeatureExecutionEvidencePolicy
             !size.TryGetInt64(out var sizeBytes) ||
             sizeBytes <= 0 ||
             !TryGetString(artifact, "status", out var status) ||
-            !string.Equals(status, "Passed", StringComparison.OrdinalIgnoreCase))
+            !string.Equals(status, "Passed", StringComparison.OrdinalIgnoreCase) ||
+            !TryGetString(artifact, "file_path", out var path))
         {
             issues.Add(
                 $"{PartFamilyFailureStages.FeatureApiUnverified}: diagnostic {propertyName} artifact is not Passed and non-empty.");
+            return;
+        }
+
+        try
+        {
+            var artifactPath = Path.GetFullPath(path!);
+            if (!File.Exists(artifactPath) || new FileInfo(artifactPath).Length != sizeBytes)
+            {
+                issues.Add(
+                    $"{PartFamilyFailureStages.FeatureApiUnverified}: diagnostic {propertyName} artifact does not physically match its report.");
+            }
+            else if (requireStepContent &&
+                     !CadArtifactContentValidator.TryValidateStepFile(artifactPath, out var contentIssue))
+            {
+                issues.Add(
+                    $"{PartFamilyFailureStages.FeatureApiUnverified}: diagnostic STEP artifact content is invalid: {contentIssue}");
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            issues.Add(
+                $"{PartFamilyFailureStages.FeatureApiUnverified}: diagnostic {propertyName} artifact cannot be verified: {exception.Message}");
         }
     }
 

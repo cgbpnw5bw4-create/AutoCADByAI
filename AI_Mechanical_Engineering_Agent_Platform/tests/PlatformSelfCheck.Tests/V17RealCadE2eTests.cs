@@ -310,11 +310,31 @@ public sealed class V17RealCadE2eTests
         var v18End = source.IndexOf("private static V19PartFamilySelfCheckResult", v18Start, StringComparison.Ordinal);
         Assert.True(v18Start >= 0 && v18End > v18Start);
         Assert.DoesNotContain("File.ReadAllText", source[v18Start..v18End], StringComparison.Ordinal);
+
+        var v20CheckBoundaries = new[]
+        {
+            "private static V20AGenericCadModelSpecSelfCheckResult RunV20AGenericCadModelSpecChecks",
+            "private static V20BFeatureHandlerSelfCheckResult RunV20BFeatureHandlerChecks",
+            "private static V20CFeatureAdapterSelfCheckResult RunV20CFeatureAdapterChecks",
+            "private static V20DModelRebuildSelfCheckResult RunV20DModelRebuildChecks",
+            "private static V20EUnifiedFeatureGraphSelfCheckResult RunV20EUnifiedFeatureGraphChecks",
+            "private static async Task<V21AJacketSelfCheckResult> RunV21AJacketChecksAsync"
+        };
+        for (var index = 0; index < v20CheckBoundaries.Length - 1; index++)
+        {
+            var start = source.IndexOf(v20CheckBoundaries[index], StringComparison.Ordinal);
+            var end = source.IndexOf(v20CheckBoundaries[index + 1], start, StringComparison.Ordinal);
+            Assert.True(start >= 0 && end > start, $"Could not locate {v20CheckBoundaries[index]} self-check boundary.");
+            var section = source[start..end];
+            Assert.DoesNotContain("File.ReadAllText(Path.Combine(projectRoot, \"src\"", section, StringComparison.Ordinal);
+            Assert.DoesNotContain("File.ReadAllText(Path.Combine(root, \"src\"", section, StringComparison.Ordinal);
+            Assert.DoesNotContain("File.ReadAllText(Path.Combine(projectRoot, \"tests\"", section, StringComparison.Ordinal);
+        }
     }
 
     private static IReadOnlyList<SolidWorksReleaseExecutionEvidence> ExpectedEvidence(bool realCadExecuted) =>
     [
-        new("build", "RealSolidWorksWorker", "RealBuildPlateBasic4Holes", realCadExecuted, true, true, realCadExecuted ? null : "fake_execution", null),
+        new("build", "RealSolidWorksWorker", "RealBuildGenericFeatureGraph", realCadExecuted, true, true, realCadExecuted ? null : "fake_execution", null),
         new("drawing", "RealSolidWorksWorker", "RealDrawingBasicViews", realCadExecuted, true, true, realCadExecuted ? null : "fake_execution", null),
         new("dimension", "RealSolidWorksWorker", "RealDrawingDimensions", realCadExecuted, true, true, realCadExecuted ? null : "fake_execution", null),
         new("title_block", "RealSolidWorksWorker", "RealDrawingTitleBlock", realCadExecuted, true, true, realCadExecuted ? null : "fake_execution", null)

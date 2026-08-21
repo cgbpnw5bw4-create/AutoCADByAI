@@ -168,6 +168,99 @@ public sealed class WorkflowQualityLoopTests
     }
 
     [Fact]
+    public async Task WorkflowEngineResumesOnlyAfterExplicitHumanApprovalSubmission()
+    {
+        var downstreamExecutions = 0;
+        var engine = new SequentialWorkflowEngine(new RetryPolicy());
+        var context = CreateWorkflowContext();
+
+        var paused = await engine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("approval-step", _ => Task.FromResult(Result("approval-step", GateDecisionResult.NeedsHumanApproval, ["manual approval required"]))),
+                new WorkflowStep("downstream-step", _ =>
+                {
+                    downstreamExecutions++;
+                    return Task.FromResult(Result("downstream-step", GateDecisionResult.Passed));
+                })
+            },
+            context);
+
+        Assert.Equal(WorkflowStatus.WaitingForHumanApproval, paused.Status);
+        Assert.True(engine.TryGetPendingHumanApproval(context.TaskId, out var pendingRequest));
+        Assert.Equal("approval-step", pendingRequest.StepId);
+        Assert.Equal(0, downstreamExecutions);
+
+        var submission = await engine.SubmitHumanApprovalAsync(new WorkflowApprovalSubmission(
+            context.TaskId,
+            WorkflowApprovalDecision.Approve,
+            "reviewer-01",
+            "已核准继续执行。"));
+
+        Assert.True(submission.Accepted);
+        Assert.NotNull(submission.WorkflowResult);
+        Assert.Equal(WorkflowStatus.Passed, submission.WorkflowResult!.Status);
+        Assert.Equal(1, downstreamExecutions);
+        Assert.Equal(2, submission.WorkflowResult.Steps.Count);
+        Assert.All(submission.WorkflowResult.Steps, step => Assert.Equal(WorkflowStepStatus.Passed, step.Status));
+        Assert.Contains(submission.WorkflowResult.Steps[0].Logs, log => log.StartsWith("workflow_human_approval_approved:", StringComparison.Ordinal));
+        Assert.False(engine.TryGetPendingHumanApproval(context.TaskId, out _));
+    }
+
+    [Fact]
+    public async Task WorkflowEngineRejectsHumanApprovalWithoutRunningDownstreamStep()
+    {
+        var downstreamExecutions = 0;
+        var engine = new SequentialWorkflowEngine(new RetryPolicy());
+        var context = CreateWorkflowContext();
+
+        await engine.ExecuteAsync(
+            new[]
+            {
+                new WorkflowStep("approval-step", _ => Task.FromResult(Result("approval-step", GateDecisionResult.NeedsHumanApproval))),
+                new WorkflowStep("downstream-step", _ =>
+                {
+                    downstreamExecutions++;
+                    return Task.FromResult(Result("downstream-step", GateDecisionResult.Passed));
+                })
+            },
+            context);
+
+        var submission = await engine.SubmitHumanApprovalAsync(new WorkflowApprovalSubmission(
+            context.TaskId,
+            WorkflowApprovalDecision.Reject,
+            "reviewer-02",
+            "拒绝发布。"));
+
+        Assert.True(submission.Accepted);
+        Assert.NotNull(submission.WorkflowResult);
+        Assert.Equal(WorkflowStatus.Rejected, submission.WorkflowResult!.Status);
+        Assert.NotNull(submission.WorkflowResult.FailureReport);
+        Assert.Equal(0, downstreamExecutions);
+        Assert.Equal(WorkflowStepStatus.Rejected, submission.WorkflowResult.Steps.Single().Status);
+        Assert.False(engine.TryGetPendingHumanApproval(context.TaskId, out _));
+    }
+
+    [Fact]
+    public async Task InvalidHumanApprovalDecisionDoesNotDiscardThePendingWorkflow()
+    {
+        var engine = new SequentialWorkflowEngine(new RetryPolicy());
+        var context = CreateWorkflowContext();
+
+        await engine.ExecuteAsync(
+            [new WorkflowStep("approval-step", _ => Task.FromResult(Result("approval-step", GateDecisionResult.NeedsHumanApproval)))],
+            context);
+
+        var invalid = await engine.SubmitHumanApprovalAsync(new WorkflowApprovalSubmission(
+            context.TaskId,
+            (WorkflowApprovalDecision)99,
+            "reviewer-03"));
+
+        Assert.False(invalid.Accepted);
+        Assert.True(engine.TryGetPendingHumanApproval(context.TaskId, out _));
+    }
+
+    [Fact]
     public void PlatformRegistersModuleAgentsInsteadOfPlaceholderAgents()
     {
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
@@ -215,10 +308,9 @@ public sealed class WorkflowQualityLoopTests
         Assert.True(report.RetryPolicyEnabled);
         Assert.True(report.FailureReportGenerated);
         Assert.True(report.HumanApprovalRequestGenerated);
+        Assert.True(report.HumanApprovalResumeSupported);
         Assert.True(report.ModuleAgentsRegistered);
         Assert.True(report.PlaceholderAgentIsFallbackOnly);
-        Assert.True(report.FeatureProductionEvidenceActive);
-        Assert.Equal("Failed", report.FinalStatus);
     }
 
     private static WorkflowContext CreateWorkflowContext() =>

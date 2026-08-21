@@ -59,13 +59,25 @@ public sealed class PartFamilyBuilderRegistry
         }
     }
 
-    public static PartFamilyBuilderRegistry CreateDefault(ISolidWorksPlateBuilder? plateBuilder = null) =>
-        new([
-            new PlateBasic4HolesPartFamilyBuilder(plateBuilder),
-            new FlangeFeatureBuilder(),
-            new ShaftFeatureBuilder(),
-            new JacketFeatureBuilder()
-        ]);
+    /// <summary>
+    /// 统一建模内核入口。每个已注册零件族都绑定同一个通用 FeatureGraph 执行器，
+    /// 不存在零件专用 Builder，也不按 part_type 分支。新增零件族只需在
+    /// <see cref="PartTypeRegistry"/> 注册 Definition，无需新增 Builder。
+    /// </summary>
+    /// <param name="plateBuilder">
+    /// 保留参数以兼容既有调用方。统一内核后已不再使用零件专用的 plate builder。
+    /// </param>
+    public static PartFamilyBuilderRegistry CreateDefault(ISolidWorksPlateBuilder? plateBuilder = null)
+    {
+        _ = plateBuilder;
+        var handlers = Features.FeatureHandlerRegistry.CreateDefault();
+        return new(PartTypeRegistry.CreateDefault()
+            .GetAll()
+            .Select(definition => new Features.SolidWorksFeatureGraphPartFamilyBuilder(
+                definition.PartType,
+                handlers,
+                supportsRealExecution: definition.SupportsRealExecution)));
+    }
 
     public void Register(IPartFamilyBuilder builder)
     {

@@ -15,20 +15,20 @@ namespace SolidWorksWorker.Features;
 /// </summary>
 public static partial class V20DThreeCircleCutEvidencePolicy
 {
-    public const string EvidenceId = "v2.0-d-20260803-three-circle-blind-cut";
+    public const string EvidenceId = "v2.0-e-20260821-three-circle-parameter-rebuild";
     public const string ParameterProfile =
         "three_circles;diameter_10_mm;blind;single_end;positive_depth_mm;through_all_false;single_body_scope;plate_basic_4holes";
     public const string SolidWorksVersion = "31.5.0";
     public const string SampleInputRelativePath = "examples/parameter_update_plate.json";
     public const string CandidateDiagnosticRelativePath =
-        "output/solidworks/features/20260803_064124_6127412/feature_execution_report.json";
+        "evidence/solidworks/20260821_034143_9836278/feature_execution_report.json";
 
     // These values deliberately bind the exact sample and candidate run. They
     // are normalized out of the source-revision calculation below so that a
     // refreshed diagnostic can update them without creating a circular hash.
-    public const string SampleInputSha256 = "6B0B0E66610E1729479A538902D060EB874E0B6EC7FD6726EBA85E2D0D8C9732";
-    public const string CandidateReportSha256 = "9DE2C3399C739017C661AF02AB58ADDC33D5AAB52BF93B7170624F606D203EDF";
-    public const string SourceRevision = "v2.0-d-three-circle-source-sha256:d68c389da475c43e4860573e0543be64895ed381a69395d6c1142cd4ec59e3ba";
+    public const string SampleInputSha256 = "093F7C3A9C7434AFD4EFFF7A9C082AF04F979888EB72C1CE0634A9F2A18E291B";
+    public const string CandidateReportSha256 = "CF230CC199329F0F15A21DC3A5D8D6B5558F3E9A04778EBED3BD47F4CF4DAC56";
+    public const string SourceRevision = "v2.0-d-three-circle-source-sha256:c5b0cacac4506173f214110d04aa33500e815579d55c34380034a3348b038aef";
 
     private const string SourceRevisionPrefix = "v2.0-d-three-circle-source-sha256:";
     private const double Tolerance = 1e-6;
@@ -252,8 +252,8 @@ public static partial class V20DThreeCircleCutEvidencePolicy
             RequireString(root, "final_status", "CandidatePassed", issues);
             RequireString(root, "deliverable_status", "NotDeliverable", issues);
             RequireExactPath(root, "input_path", ResolveProjectPath(SampleInputRelativePath), issues);
-            RequirePassedArtifact(root, "model", issues);
-            RequirePassedArtifact(root, "step", issues);
+            RequirePassedArtifact(root, "model", requireStepContent: false, issues);
+            RequirePassedArtifact(root, "step", requireStepContent: true, issues);
 
             var currentFeatureRevision = FeatureExecutionEvidencePolicy.ComputeCurrentSourceRevision();
             var reports = GetFeatureReports(root, issues);
@@ -262,8 +262,8 @@ public static partial class V20DThreeCircleCutEvidencePolicy
                 "plate_cut",
                 FeatureTypes.ExtrudeCut,
                 currentFeatureRevision,
-                160d * 80d * 12d / CubicMillimetersPerCubicMeter,
-                (160d * 80d * 12d - 3d * Math.PI * Math.Pow(5d, 2d) * 12d) /
+                200d * 100d * 15d / CubicMillimetersPerCubicMeter,
+                (200d * 100d * 15d - 3d * Math.PI * Math.Pow(5d, 2d) * 15d) /
                 CubicMillimetersPerCubicMeter,
                 issues);
             ValidateCandidateFeature(
@@ -271,9 +271,9 @@ public static partial class V20DThreeCircleCutEvidencePolicy
                 "plate_hole",
                 FeatureTypes.Hole,
                 currentFeatureRevision,
-                (160d * 80d * 12d - 3d * Math.PI * Math.Pow(5d, 2d) * 12d) /
+                (200d * 100d * 15d - 3d * Math.PI * Math.Pow(5d, 2d) * 15d) /
                 CubicMillimetersPerCubicMeter,
-                (160d * 80d * 12d - 4d * Math.PI * Math.Pow(5d, 2d) * 12d) /
+                (200d * 100d * 15d - 4d * Math.PI * Math.Pow(5d, 2d) * 15d) /
                 CubicMillimetersPerCubicMeter,
                 issues);
         }
@@ -570,7 +570,11 @@ public static partial class V20DThreeCircleCutEvidencePolicy
     private static bool NearlyEqual(double actual, double expected) =>
         Math.Abs(actual - expected) <= Tolerance * Math.Max(1d, Math.Max(Math.Abs(actual), Math.Abs(expected)));
 
-    private static void RequirePassedArtifact(JsonElement root, string name, List<string> issues)
+    private static void RequirePassedArtifact(
+        JsonElement root,
+        string name,
+        bool requireStepContent,
+        List<string> issues)
     {
         if (!root.TryGetProperty(name, out var artifact) || artifact.ValueKind != JsonValueKind.Object ||
             !artifact.TryGetProperty("exists", out var exists) || exists.ValueKind != JsonValueKind.True ||
@@ -589,6 +593,11 @@ public static partial class V20DThreeCircleCutEvidencePolicy
             if (!IsPathUnderProjectRoot(absolutePath) || !File.Exists(absolutePath) || new FileInfo(absolutePath).Length != sizeBytes)
             {
                 issues.Add($"{PartFamilyFailureStages.FeatureApiUnverified}: V2.0-D candidate {name} artifact does not physically match its report.");
+            }
+            else if (requireStepContent &&
+                     !CadArtifactContentValidator.TryValidateStepFile(absolutePath, out var contentIssue))
+            {
+                issues.Add($"{PartFamilyFailureStages.FeatureApiUnverified}: V2.0-D candidate STEP artifact content is invalid: {contentIssue}");
             }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)

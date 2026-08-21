@@ -102,7 +102,7 @@ public sealed class V20CFeatureExecutionSmokeRunnerTests
                     var stepPath = Path.Combine(invocation.WorkingDirectory, "source.STEP");
                     var buildReportPath = Path.Combine(invocation.WorkingDirectory, "build_report.json");
                     await File.WriteAllTextAsync(partPath, "real-part-candidate", cancellationToken);
-                    await File.WriteAllTextAsync(stepPath, "real-step-candidate", cancellationToken);
+                    await File.WriteAllTextAsync(stepPath, MinimalStepContent, cancellationToken);
                     var featureReports = invocation.BuildPlan.Operations
                         .Where(operation =>
                             !operation.OperationType.Equals("SavePart", StringComparison.OrdinalIgnoreCase) &&
@@ -191,6 +191,149 @@ public sealed class V20CFeatureExecutionSmokeRunnerTests
         }
     }
 
+    [Fact]
+    public async Task CandidateRunAppliesAnExplicitParameterUpdateBeforeBuilding()
+    {
+        var root = TempRoot();
+        var inputPath = Path.Combine(root, "parameter-update.json");
+        Directory.CreateDirectory(root);
+        await File.WriteAllTextAsync(
+            inputPath,
+            JsonSerializer.Serialize(
+                new
+                {
+                    cad_model_spec = CreateInputSpec(),
+                    parameter_update = new
+                    {
+                        old_parameters = new Dictionary<string, string>
+                        {
+                            ["length_mm"] = "100",
+                            ["width_mm"] = "60",
+                            ["thickness_mm"] = "10",
+                            ["hole_count"] = "4",
+                            ["hole_diameter_mm"] = "10"
+                        },
+                        new_parameters = new Dictionary<string, string>
+                        {
+                            ["length_mm"] = "200",
+                            ["width_mm"] = "100",
+                            ["thickness_mm"] = "15"
+                        }
+                    }
+                },
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower }));
+
+        try
+        {
+            CADModelSpec? executed = null;
+            var runner = new FeatureExecutionSmokeRunner(
+                (invocation, _) =>
+                {
+                    executed = invocation.ModelSpec;
+                    return Task.FromResult(new FeatureExecutionSmokeBuildOutcome(
+                        SolidWorksConnected: false,
+                        SolidWorksVersion: null,
+                        BuildResult: null,
+                        FailureStage: "injected_stop",
+                        Logs: [],
+                        Issues: ["injected stop after parameter-update preparation"]));
+                },
+                EnabledRuntime);
+
+            var report = await runner.RunAsync(
+                new FeatureExecutionSmokeRunnerOptions(inputPath, root, Enabled: true, Visible: false),
+                CancellationToken.None);
+
+            Assert.NotNull(executed);
+            Assert.Equal("200", executed!.Parameters["length_mm"]);
+            Assert.Equal("100", executed.Parameters["width_mm"]);
+            Assert.Equal("15", executed.Parameters["thickness_mm"]);
+            Assert.Equal("Failed", report.FinalStatus);
+            Assert.Equal("injected_stop", report.FailureStage);
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
+    [Fact]
+    public async Task CandidateRunRejectsNonStepContentEvenWhenTheBuildSaysCompleted()
+    {
+        var root = TempRoot();
+        var inputPath = Path.Combine(root, "feature-input.json");
+        Directory.CreateDirectory(root);
+        await File.WriteAllTextAsync(inputPath, JsonSerializer.Serialize(CreateInputSpec()));
+
+        try
+        {
+            var runner = new FeatureExecutionSmokeRunner(
+                async (invocation, cancellationToken) =>
+                {
+                    var partPath = Path.Combine(invocation.WorkingDirectory, "source.SLDPRT");
+                    var stepPath = Path.Combine(invocation.WorkingDirectory, "source.STEP");
+                    var reportPath = Path.Combine(invocation.WorkingDirectory, "build_report.json");
+                    await File.WriteAllTextAsync(partPath, "real-part-candidate", cancellationToken);
+                    await File.WriteAllTextAsync(stepPath, "not a STEP physical file", cancellationToken);
+                    var featureReports = invocation.BuildPlan.Operations
+                        .Where(operation =>
+                            !operation.OperationType.Equals("SavePart", StringComparison.OrdinalIgnoreCase) &&
+                            !operation.OperationType.Equals("ExportStep", StringComparison.OrdinalIgnoreCase))
+                        .Select(operation =>
+                        {
+                            var feature = FeatureHandlerPlanAdapter.Adapt(operation).Feature!;
+                            return new FeatureHandlerReport(
+                                feature.FeatureId,
+                                feature.FeatureType,
+                                "diagnostic-handler",
+                                "diagnostic_candidate",
+                                null,
+                                [],
+                                [],
+                                "solidworks.real-feature-adapter",
+                                "2.0-c.1",
+                                ResultObjectValidated: true,
+                                RebuildPassed: true,
+                                GeometryChangeValidated: true);
+                        })
+                        .ToArray();
+                    await File.WriteAllTextAsync(
+                        reportPath,
+                        JsonSerializer.Serialize(new { feature_handler_reports = featureReports }),
+                        cancellationToken);
+
+                    return new FeatureExecutionSmokeBuildOutcome(
+                        SolidWorksConnected: true,
+                        SolidWorksVersion: "test-version",
+                        BuildResult: new PartFamilyBuildResult(
+                            "Completed",
+                            [Artifact(partPath, ".SLDPRT"), Artifact(stepPath, ".STEP"), Artifact(reportPath, ".json")],
+                            [],
+                            [],
+                            "RealBuildGenericFeatureGraph",
+                            RealCadExecuted: true),
+                        FailureStage: null,
+                        Logs: [],
+                        Issues: []);
+                },
+                EnabledRuntime);
+
+            var report = await runner.RunAsync(
+                new FeatureExecutionSmokeRunnerOptions(inputPath, root, Enabled: true, Visible: false),
+                CancellationToken.None);
+
+            Assert.Equal("Failed", report.FinalStatus);
+            Assert.Equal(PartFamilyFailureStages.StepExportFailed, report.FailureStage);
+            Assert.Equal("InvalidContent", report.Step.Status);
+            Assert.Contains(report.Issues, issue =>
+                issue.Contains("ISO-10303-21", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
     private static CADModelSpec CreateInputSpec() =>
         new(
             "model",
@@ -242,6 +385,9 @@ public sealed class V20CFeatureExecutionSmokeRunnerTests
                     executionOrder: 1)
             ],
             outputRequirements: ["SLDPRT", "STEP", "feature_execution_report.json"]);
+
+    private const string MinimalStepContent =
+        "ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n";
 
     private static SolidWorksRuntimeOptions EnabledRuntime() =>
         new(

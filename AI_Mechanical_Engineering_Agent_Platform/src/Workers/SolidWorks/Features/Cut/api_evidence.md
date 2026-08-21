@@ -54,6 +54,6 @@ V2.0-C 专用诊断已在 SolidWorks `33.5.0` 中验证 20 mm blind `FeatureCut4
 
 旧 run `20260730_073759_9143941` 的 Cut 虽返回非空 Feature 且重建通过，人工复核却没有孔，因此是 `feature_result_invalid` 反例，不得保留为 verified。
 
-权威证据标识为 `v2.0-c-20260730-085830-extrude-cut`，报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`。20 mm blind `FeatureCut4` 使体积从 `6E-05` 降至 `5.92146018366025E-05` m³，特征树出现第一个 `ICE`，视觉复核确认切孔。证据绑定完整执行链源码 revision `71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`。
+现行证据标识为 `v2.0-e-20260821-034143-extrude-cut`，报告为 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`。三圆 blind `FeatureCut4` 使 200×100×15 mm 模型体积从 `0.00030000000000000003` 降至 `0.00029646570826471146 m³`。证据绑定 SolidWorks `31.5.0` 与完整执行链源码 revision `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`。
 
 只授权 `blind;single_end;positive_depth_mm;through_all_false;no_thin;single_body_scope`。`through_all`、normal cut、thin 和多实体 scope 仍为 `unverified`。新 diagnostic 仍为 `NotDeliverable`，最终验收待 `run-cad-workflow`。禁止 Handler COM、扩大参数轮廓和无效 Feature 成功。

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DomainSchemas;
+using PlatformCore.Modules.CADModeling;
 using SolidWorksWorker;
 using SolidWorksWorker.Features;
 
@@ -284,6 +285,12 @@ public sealed class FeatureExecutionSmokeRunner
 
             NormalizeArtifact(buildResult, ".SLDPRT", modelPath, issues);
             NormalizeArtifact(buildResult, ".STEP", stepPath, issues);
+            if (!CadArtifactContentValidator.TryValidateStepFile(stepPath, out var stepContentIssue))
+            {
+                issues.Add(
+                    $"{PartFamilyFailureStages.StepExportFailed}: " +
+                    $"normalized STEP artifact failed content validation: {stepContentIssue}");
+            }
             var featureReports = ReadFeatureReports(buildResult, issues)
                 .Select(report => report with
                 {
@@ -323,8 +330,11 @@ public sealed class FeatureExecutionSmokeRunner
                 ? null
                 : outcome.FailureStage ??
                   buildResult?.FailureStage ??
-                  (modelEvidence.Status != "Passed" || stepEvidence.Status != "Passed"
-                      ? PartFamilyFailureStages.ArtifactValidationFailed
+                  (stepEvidence.Status != "Passed" || issues.Any(issue =>
+                          issue.Contains(PartFamilyFailureStages.StepExportFailed, StringComparison.OrdinalIgnoreCase))
+                      ? PartFamilyFailureStages.StepExportFailed
+                      : modelEvidence.Status != "Passed"
+                          ? PartFamilyFailureStages.ArtifactValidationFailed
                       : PartFamilyFailureStages.FeatureResultInvalid);
 
             return await WriteAsync(
@@ -538,10 +548,35 @@ public sealed class FeatureExecutionSmokeRunner
         var modelElement = document.RootElement.TryGetProperty("cad_model_spec", out var nested)
             ? nested
             : document.RootElement;
-        return JsonSerializer.Deserialize<CADModelSpec>(
+        var modelSpec = JsonSerializer.Deserialize<CADModelSpec>(
                    modelElement.GetRawText(),
                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                ?? throw new JsonException("cad_model_spec is missing or invalid.");
+        if (!document.RootElement.TryGetProperty("parameter_update", out var updateElement))
+        {
+            return modelSpec;
+        }
+
+        var request = JsonSerializer.Deserialize<ModelParameterUpdateRequest>(
+                          updateElement.GetRawText(),
+                          new JsonSerializerOptions
+                          {
+                              PropertyNameCaseInsensitive = true,
+                              PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                          })
+                      ?? throw new JsonException("parameter_update is invalid.");
+        var update = new ModelUpdateService().Prepare(
+            $"feature-execution-smoke-{Guid.NewGuid():N}",
+            modelSpec,
+            request);
+        if (!update.IsSuccess || update.UpdatedModelSpec is null)
+        {
+            throw new JsonException(
+                "parameter_update preparation failed: " +
+                string.Join(" ", update.Issues));
+        }
+
+        return update.UpdatedModelSpec;
     }
 
     private static string ResolveInputPath(string? requestedPath)
@@ -675,11 +710,20 @@ public sealed class FeatureExecutionSmokeRunner
     {
         var info = new FileInfo(path);
         var valid = info.Exists && info.Length > 0;
+        var status = valid ? "Passed" : "NotGenerated";
+        if (valid &&
+            path.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase) &&
+            !CadArtifactContentValidator.TryValidateStepFile(path, out _))
+        {
+            valid = false;
+            status = "InvalidContent";
+        }
+
         return new(
             path,
             info.Exists,
             info.Exists ? info.Length : 0,
-            valid ? "Passed" : "NotGenerated");
+            status);
     }
 
     private static async Task<FeatureExecutionReport> WriteAsync(

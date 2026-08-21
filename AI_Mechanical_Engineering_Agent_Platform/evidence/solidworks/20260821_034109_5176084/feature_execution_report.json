@@ -1,0 +1,41 @@
+{
+  "run_id": "feature-execution-20260821_034109_5069360",
+  "execution_mode": "RealBuildGenericFeatureGraph",
+  "candidate_only": true,
+  "dedicated_smoke_flag_enabled": true,
+  "real_execution_allowed": true,
+  "solid_works_connected": false,
+  "real_cad_executed": false,
+  "solid_works_version": null,
+  "input_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+  "build_plan_id": "solidworks-build-plan-feature-execution-smoke-2583c96d990840e19dde224631afa535",
+  "model": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034109_5176084\\model.SLDPRT",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "step": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034109_5176084\\model.STEP",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "feature_handler_reports": [],
+  "main_workflow_accepted": false,
+  "quality_gate_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "failure_stage": "preflight_failed",
+  "final_status": "Failed",
+  "logs": [],
+  "issues": [
+    "template_part_path_required_for_real_build: a valid SolidWorks part template is required.",
+    "artifact_validation_failed: .SLDPRT source artifact is missing or empty.",
+    "artifact_validation_failed: .STEP source artifact is missing or empty.",
+    "step_export_failed: normalized STEP artifact failed content validation: STEP file could not be read: Could not find file \u0027D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034109_5176084\\model.STEP\u0027.",
+    "feature_result_invalid: source build_report.json is missing.",
+    "feature_result_invalid: every executed feature must report a validated result object, successful rebuild, and validated geometry change."
+  ],
+  "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034109_5176084\\feature_execution_report.json",
+  "generated_at": "2026-08-21T03:41:09.6317948+00:00"
+}

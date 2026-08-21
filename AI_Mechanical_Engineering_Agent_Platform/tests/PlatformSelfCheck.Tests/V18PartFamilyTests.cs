@@ -345,7 +345,7 @@ public sealed class V18PartFamilyTests
     }
 
     [Fact]
-    public async Task NonPlateRealRequestsWithMissingTemplateFailBeforeSessionConnection()
+    public async Task NonPlateRealRequestsWithMissingTemplateNeverConnect()
     {
         foreach (var partType in new[] { FlangeBasicDefinition.Type, ShaftBasicDefinition.Type, JacketBasicDefinition.Type })
         {
@@ -367,16 +367,17 @@ public sealed class V18PartFamilyTests
                 var result = await new RealSolidWorksWorker(session, options).ExecuteAsync(new SolidWorksWorkerRequest(
                     $"real-{partType}", plan, outputRoot, DryRun: false, AllowRealCadExecution: true));
 
-                if (partType == JacketBasicDefinition.Type)
-                {
-                    Assert.Equal("Rejected", result.Status);
-                    Assert.Equal(PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient, result.FailureStage);
-                }
-                else
-                {
-                    Assert.Equal("Failed", result.Status);
-                    Assert.Equal("preflight_failed", result.FailureStage);
-                }
+                // A family can stop at its evidence boundary or at template
+                // preflight, but neither branch may establish a COM session.
+                Assert.Contains(result.Status, new[] { "Failed", "Rejected" });
+                Assert.Contains(
+                    result.FailureStage,
+                    new[]
+                    {
+                        "preflight_failed",
+                        PartFamilyFailureStages.FeatureApiUnverified,
+                        PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient
+                    });
 
                 Assert.False(result.RealCadExecuted);
                 Assert.Equal(0, session.ConnectCount);

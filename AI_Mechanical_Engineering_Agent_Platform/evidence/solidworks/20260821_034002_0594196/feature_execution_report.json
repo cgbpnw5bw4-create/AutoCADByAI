@@ -1,0 +1,36 @@
+{
+  "run_id": "feature-execution-20260821_034002_0495289",
+  "execution_mode": "RealBuildGenericFeatureGraph",
+  "candidate_only": true,
+  "dedicated_smoke_flag_enabled": true,
+  "real_execution_allowed": true,
+  "solid_works_connected": false,
+  "real_cad_executed": false,
+  "solid_works_version": null,
+  "input_path": "examples/parameter_update_plate.json",
+  "build_plan_id": null,
+  "model": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034002_0594196\\model.SLDPRT",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "step": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034002_0594196\\model.STEP",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "feature_handler_reports": [],
+  "main_workflow_accepted": false,
+  "quality_gate_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "failure_stage": "invalid_cad_model_spec",
+  "final_status": "Failed",
+  "logs": [],
+  "issues": [
+    "parameter_update preparation failed: invalid_cad_model_spec: parameter update does not change any value."
+  ],
+  "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034002_0594196\\feature_execution_report.json",
+  "generated_at": "2026-08-21T03:40:02.2084841+00:00"
+}

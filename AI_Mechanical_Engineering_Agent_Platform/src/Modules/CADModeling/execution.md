@@ -554,7 +554,7 @@ GeometryReader 是唯一允许读取 SolidWorks COM 几何的边界，必须把�
 dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/parameter_update_plate.json
 ~~~
 
-执行，禁止直接调用 Builder。四孔 plate_basic_4holes 只能复用既有、已注册且已取证的 Feature 类型；不得新增 CAD Feature 或零件族，也不能用模型名、hole_count 或文件存在代替四个真实孔的几何证明。本阶段未通过 QualityGate 前不得进入 V2.0-E。
+执行，禁止直接调用 Builder。四孔 plate_basic_4holes 只能复用既有、已注册且已取证的 Feature 类型；不得新增 CAD Feature 或零件族，也不能用模型名、hole_count 或文件存在代替四个真实孔的几何证明。V2.0-E 只能复用这条受控链，未通过 QualityGate 前不得标记为可交付。
 ## V2.0-D 参数更新与三圆 profile
 
 `ModelUpdateService` 只重绑既有 `plate_profile`、`cut_profile`、`hole_profile` 及 `plate_boss`、`plate_cut`、`plate_hole` 的参数，并由 `BuildPlanCompiler` 重建 FeatureGraph。对本轮样例，长度和宽度变化必须把四个孔重映射到 20 mm 边距；厚度变化必须同时重绑 boss 深度与两个盲切深度。它不读取 COM，也不创建 Feature。

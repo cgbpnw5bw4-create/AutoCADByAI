@@ -215,6 +215,7 @@ body count 与 theoretical volume 仍为 `NotVerified`，继续列为非阻断 I
 - `ISolidWorksFeatureAdapter` 是否可注入，`RealSolidWorksFeatureAdapter` 是否是唯一通用 Feature COM 实现。
 - 所有 Handler 是否保持纯逻辑，源码/项目引用中是否没有 SolidWorks Interop、COM 会话、文档保存或直接 API 调用。
 - Worker 是否负责 Adapter 生命周期、依赖顺序、会话、保存、STEP 导出和报告，而非 Handler 自行执行。
+- 受控文档是否在同一会话回调的 `finally` 中按精确文件名 `CloseDoc`，失败是否有 `solidworks_document_close_warning`；不得使用 `ExitApp` 终止用户拥有的 SolidWorks 进程，发布包也不得收集 `~$` 锁文件。
 - Sketch 是否只候选 line、rectangle、circle 和受控标准基准。
 - Extrude/Cut 是否只候选正深度 blind 轮廓。
 - Hole 是否严格为独立圆草图加 blind `FeatureCut4`，实现和证据是否都不使用 `SimpleHole2` / Hole Wizard。

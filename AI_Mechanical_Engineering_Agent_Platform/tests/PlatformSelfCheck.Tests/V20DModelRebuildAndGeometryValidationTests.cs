@@ -1,5 +1,6 @@
 using DomainSchemas;
 using PlatformCore.Modules.CADModeling;
+using SolidWorksWorker;
 using SolidWorksWorker.Features;
 using System.Text.Json;
 
@@ -148,6 +149,47 @@ public sealed class V20DModelRebuildAndGeometryValidationTests
         Assert.False(result.IsPassed);
         Assert.Equal(PartFamilyFailureStages.FeatureApiUnverified, result.FailureStage);
         Assert.Contains(result.Issues, issue => issue.Contains("three exact cut_profile circles", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void V20DProductionEvidenceBindsTheRealUpdatedCandidate()
+    {
+        var inputPath = Path.Combine(ProjectRoot(), "examples", "parameter_update_plate.json");
+        using var input = JsonDocument.Parse(File.ReadAllText(inputPath));
+        var initial = JsonSerializer.Deserialize<CADModelSpec>(
+            input.RootElement.GetProperty("cad_model_spec").GetRawText(),
+            SnakeCaseJsonOptions());
+        Assert.NotNull(initial);
+
+        var update = input.RootElement.GetProperty("parameter_update");
+        var preparation = new ModelUpdateService().Prepare(
+            "v20-d-production-evidence",
+            initial!,
+            new ModelParameterUpdateRequest(
+                Dictionary(update.GetProperty("new_parameters")),
+                Dictionary(update.GetProperty("old_parameters"))));
+
+        Assert.True(preparation.IsSuccess, string.Join(Environment.NewLine, preparation.Issues));
+        var plan = Assert.IsType<SolidWorksBuildPlan>(preparation.BuildPlan);
+        var evidence = V20DThreeCircleCutEvidencePolicy.ValidateForRealExecution(plan);
+
+        Assert.True(evidence.IsPassed, string.Join(Environment.NewLine, evidence.Issues));
+    }
+
+    [Theory]
+    [InlineData(GeometryReaderFailure.NullBodies, PartFamilyFailureStages.GeometryReadFailed)]
+    [InlineData(GeometryReaderFailure.NonPositiveVolume, PartFamilyFailureStages.VolumeValidationFailed)]
+    [InlineData(GeometryReaderFailure.ExtremePointFailure, PartFamilyFailureStages.GeometryReadFailed)]
+    public void RealGeometryReaderFailsClosedForComReadFailures(
+        GeometryReaderFailure failure,
+        string expectedFailureStage)
+    {
+        var result = new RealSolidWorksGeometryReader(new GeometryReaderFacade(failure))
+            .Read(new object());
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(expectedFailureStage, result.FailureStage);
+        Assert.NotEmpty(result.Issues);
     }
 
     [Fact]
@@ -379,4 +421,86 @@ public sealed class V20DModelRebuildAndGeometryValidationTests
     private static string DoubleThickness(string thickness) =>
         (double.Parse(thickness, System.Globalization.CultureInfo.InvariantCulture) * 2d)
         .ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    private static JsonSerializerOptions SnakeCaseJsonOptions() => new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
+    private static Dictionary<string, string> Dictionary(JsonElement element) =>
+        element.EnumerateObject().ToDictionary(
+            property => property.Name,
+            property => property.Value.GetString() ?? string.Empty,
+            StringComparer.OrdinalIgnoreCase);
+
+    private static string ProjectRoot()
+    {
+        for (var current = new DirectoryInfo(Directory.GetCurrentDirectory()); current is not null; current = current.Parent)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "AI_Mechanical_Engineering_Agent_Platform.sln")))
+            {
+                return current.FullName;
+            }
+        }
+
+        throw new DirectoryNotFoundException("AI_Mechanical_Engineering_Agent_Platform.sln was not found.");
+    }
+
+    public enum GeometryReaderFailure
+    {
+        NullBodies,
+        NonPositiveVolume,
+        ExtremePointFailure
+    }
+
+    private sealed class GeometryReaderFacade(GeometryReaderFailure failure) : ISolidWorksComFacade
+    {
+        private readonly object _body = new();
+
+        public object GetProperty(object target, string name) =>
+            TryGetProperty(target, name) ?? throw new InvalidOperationException(name);
+
+        public object? TryGetProperty(object? target, string name) => null;
+
+        public object? TryGetIndexedProperty(object target, string name, params object?[] args) => null;
+
+        public object? Invoke(object target, string name, params object?[] args) =>
+            TryInvoke(target, name, args);
+
+        public object? InvokeWithArgs(object target, string name, object?[] args) =>
+            TryInvokeWithArgs(target, name, args);
+
+        public object? TryInvoke(object? target, string name, params object?[] args) =>
+            name switch
+            {
+                "GetPartBox" => new double[] { 0d, 0d, 0d, .2d, .1d, .015d },
+                "GetBodies2" when failure == GeometryReaderFailure.NullBodies => null,
+                "GetBodies2" => new[] { _body },
+                "GetMassProperties" when ReferenceEquals(target, _body) =>
+                    new double[] { 0d, 0d, 0d, failure == GeometryReaderFailure.NonPositiveVolume ? 0d : .0003d, 0d, 0d },
+                "GetFaces" when ReferenceEquals(target, _body) => Array.Empty<object>(),
+                "GetVertices" when ReferenceEquals(target, _body) => null,
+                _ => null
+            };
+
+        public object? TryInvokeWithArgs(object? target, string name, object?[] args) =>
+            name == "GetExtremePoint" ? false : TryInvoke(target, name, args);
+
+        public bool TryInvokeBool(object? target, string name, params object?[] args) =>
+            name == "ForceRebuild3";
+
+        public bool TrySetProperty(object target, string name, object? value) => true;
+
+        public bool TryExtensionSaveAs(
+            object model,
+            string path,
+            object? exportData,
+            List<string> errors,
+            List<string> warnings) => false;
+
+        public void ReleaseComObject(object value)
+        {
+        }
+    }
 }

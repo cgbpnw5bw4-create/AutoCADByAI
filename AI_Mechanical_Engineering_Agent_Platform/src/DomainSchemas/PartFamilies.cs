@@ -158,6 +158,12 @@ public interface IPartFamilyDefinition
     string RealExecutionMode => "RealBuildPartFamily";
 
     /// <summary>
+    /// 是否已经具备零件族层面的真实执行授权。通用 Feature Handler 的证据
+    /// 只能授权其自身 API 轮廓，不能替代尚未完成证据闭环的零件族授权。
+    /// </summary>
+    bool SupportsRealExecution => true;
+
+    /// <summary>
     /// 统一输入校验：先执行零件族自身的语义校验，再按 <see cref="ParameterSchema"/>
     /// 声明的参数区间校验。区间校验对所有零件族一致，新增零件族只声明区间即可，
     /// 不需要再写一份区间校验代码。
@@ -344,7 +350,7 @@ public sealed class PlateBasic4HolesDefinition : IPartFamilyDefinition
 
     public string ApiEvidence => "real_solidworks_plate_basic_4holes_smoke_passed";
 
-    public string RealExecutionMode => PartFamilyExecutionModes.PlateBasic4Holes;
+    public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -432,7 +438,7 @@ public sealed class FlangeBasicDefinition : IPartFamilyDefinition
 
     public string ApiEvidence => "v1_9_flange_diagnostic_visual_review_and_main_workflow_passed";
 
-    public string RealExecutionMode => PartFamilyExecutionModes.FlangeBasic;
+    public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -473,7 +479,7 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
 
     public string ApiEvidence => "v1_9_shaft_revolve_diagnostic_visual_review_and_main_workflow_passed";
 
-    public string RealExecutionMode => PartFamilyExecutionModes.ShaftBasic;
+    public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -515,7 +521,11 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
 
     public string ApiEvidence => ProductionEvidenceStatus;
 
-    public string RealExecutionMode => PartFamilyExecutionModes.JacketBasic;
+    public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
+
+    // V2.1-A 保持冻结。它可以继续参与 schema、BuildPlan 与 dry-run，
+    // 但不能因 V2.0-E 的通用 Feature Handler 证据而获得真实 CAD 授权。
+    public bool SupportsRealExecution => false;
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {

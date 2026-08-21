@@ -193,7 +193,7 @@ public sealed class V19MainWorkflowTests
                     ExecutionEvidence:
                     [
                         new SolidWorksReleaseExecutionEvidence(
-                            "build", "RealSolidWorksWorker", PartFamilyExecutionModes.FlangeBasic,
+                            "build", "RealSolidWorksWorker", PartFamilyExecutionModes.GenericFeatureGraph,
                             true, true, true, null, report)
                     ],
                     RequireRealExecutionEvidence: true,

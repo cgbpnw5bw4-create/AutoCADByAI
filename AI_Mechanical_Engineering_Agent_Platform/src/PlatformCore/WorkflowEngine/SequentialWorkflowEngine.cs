@@ -8,6 +8,7 @@ public sealed class SequentialWorkflowEngine
     private readonly IRetryPolicy _retryPolicy;
     private readonly InMemoryAuditLog _auditLog;
     private readonly RejectReportBuilder _rejectReportBuilder;
+    private readonly IWorkflowApprovalStore _approvalStore;
 
     public SequentialWorkflowEngine()
         : this(CreateDefaultRetryPolicy(), new InMemoryAuditLog())
@@ -22,11 +23,71 @@ public sealed class SequentialWorkflowEngine
     {
     }
 
-    public SequentialWorkflowEngine(IRetryPolicy retryPolicy, InMemoryAuditLog auditLog)
+    public SequentialWorkflowEngine(
+        IRetryPolicy retryPolicy,
+        InMemoryAuditLog auditLog,
+        IWorkflowApprovalStore? approvalStore = null)
     {
         _retryPolicy = retryPolicy;
         _auditLog = auditLog;
         _rejectReportBuilder = new RejectReportBuilder();
+        _approvalStore = approvalStore ?? new InMemoryWorkflowApprovalStore();
+    }
+
+    public bool TryGetPendingHumanApproval(
+        string workflowId,
+        out HumanApprovalRequest request)
+    {
+        request = null!;
+        if (string.IsNullOrWhiteSpace(workflowId) ||
+            !_approvalStore.TryGet(workflowId, out var pending))
+        {
+            return false;
+        }
+
+        request = pending.Request;
+        return true;
+    }
+
+    public async Task<WorkflowApprovalSubmissionResult> SubmitHumanApprovalAsync(
+        WorkflowApprovalSubmission submission,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(submission);
+        if (string.IsNullOrWhiteSpace(submission.WorkflowId) ||
+            string.IsNullOrWhiteSpace(submission.SubmittedBy))
+        {
+            return new(false, null, "workflow_approval_invalid_submission: workflow_id and submitted_by are required.");
+        }
+
+        if (!Enum.IsDefined(submission.Decision))
+        {
+            return new(false, null, "workflow_approval_invalid_submission: unsupported approval decision.");
+        }
+
+        if (!_approvalStore.TryTake(submission.WorkflowId, out var pending))
+        {
+            return new(false, null, $"workflow_approval_not_pending: {submission.WorkflowId} has no pending approval request.");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var submittedAt = submission.SubmittedAt ?? DateTimeOffset.UtcNow;
+        _auditLog.Record(
+            "workflow",
+            pending.WaitingStep.StepId,
+            "workflow_human_approval_submitted",
+            $"Workflow {pending.WorkflowId} received {submission.Decision} from {submission.SubmittedBy} at {submittedAt:O}.");
+
+        return submission.Decision switch
+        {
+            WorkflowApprovalDecision.Approve => await ResumeApprovedAsync(
+                pending,
+                submission,
+                cancellationToken),
+            WorkflowApprovalDecision.Reject or WorkflowApprovalDecision.RequestRevision =>
+                CompleteRejectedApproval(pending, submission),
+            _ => new(false, null, "workflow_approval_invalid_submission: unsupported approval decision.")
+        };
     }
 
     public async Task<WorkflowExecutionResult> ExecuteAsync(
@@ -140,6 +201,14 @@ public sealed class SequentialWorkflowEngine
                         results.Add(waiting);
                         var request = BuildHumanApprovalRequest(workflowId, waiting, decision);
                         _auditLog.Record("workflow", waiting.StepId, "workflow_step_waiting_for_human_approval", $"Workflow step '{waiting.StepId}' is waiting for human approval.");
+                        _approvalStore.Save(new PendingWorkflowApproval(
+                            workflowId,
+                            context,
+                            results.Take(results.Count - 1).ToArray(),
+                            waiting,
+                            orderedSteps.Skip(index + 1).ToArray(),
+                            request,
+                            CurrentAuditLogs(auditStartIndex)));
 
                         return new WorkflowExecutionResult(
                             workflowId,
@@ -173,6 +242,89 @@ public sealed class SequentialWorkflowEngine
 
     private IReadOnlyList<AuditLogEntry> CurrentAuditLogs(int auditStartIndex) =>
         _auditLog.GetEntries().Skip(auditStartIndex).ToArray();
+
+    private async Task<WorkflowApprovalSubmissionResult> ResumeApprovedAsync(
+        PendingWorkflowApproval pending,
+        WorkflowApprovalSubmission submission,
+        CancellationToken cancellationToken)
+    {
+        var approvalDecision = new GateDecision(
+            $"gate-{pending.WaitingStep.StepId}-human-approved-{Guid.NewGuid():N}",
+            GateDecisionResult.Passed,
+            $"Human approval granted by {submission.SubmittedBy}.");
+        var approvedStep = pending.WaitingStep with
+        {
+            Status = WorkflowStepStatus.Passed,
+            GateDecision = approvalDecision,
+            NextStepId = pending.RemainingSteps.FirstOrDefault()?.StepId ??
+                         pending.RemainingSteps.FirstOrDefault()?.Name,
+            Logs = pending.WaitingStep.Logs
+                .Append($"workflow_human_approval_approved: submitted_by={submission.SubmittedBy}; comment={submission.Comment ?? string.Empty}")
+                .ToArray()
+        };
+        _auditLog.Record(
+            "workflow",
+            approvedStep.StepId,
+            "workflow_human_approval_approved",
+            $"Workflow {pending.WorkflowId} resumed after approval from {submission.SubmittedBy}.");
+
+        var resumed = pending.RemainingSteps.Count == 0
+            ? new WorkflowExecutionResult(
+                pending.WorkflowId,
+                WorkflowStatus.Passed,
+                Array.Empty<WorkflowStepResult>(),
+                approvalDecision,
+                AuditLogs: Array.Empty<AuditLogEntry>(),
+                FinalMessage: "Workflow completed after human approval.")
+            : await ExecuteAsync(pending.RemainingSteps, pending.Context, cancellationToken);
+        var result = new WorkflowExecutionResult(
+            pending.WorkflowId,
+            resumed.Status,
+            pending.CompletedSteps.Append(approvedStep).Concat(resumed.Steps).ToArray(),
+            resumed.FinalGateDecision ?? approvalDecision,
+            resumed.FailureReport,
+            resumed.HumanApprovalRequest,
+            pending.AuditLogs.Concat(resumed.AuditLogs).ToArray(),
+            resumed.FinalMessage);
+        return new(true, result);
+    }
+
+    private WorkflowApprovalSubmissionResult CompleteRejectedApproval(
+        PendingWorkflowApproval pending,
+        WorkflowApprovalSubmission submission)
+    {
+        var decision = new GateDecision(
+            $"gate-{pending.WaitingStep.StepId}-human-{submission.Decision.ToString().ToLowerInvariant()}-{Guid.NewGuid():N}",
+            GateDecisionResult.Rejected,
+            submission.Decision == WorkflowApprovalDecision.Reject
+                ? $"Human approval rejected by {submission.SubmittedBy}."
+                : $"Human requested revision: {submission.SubmittedBy}.");
+        var rejectedStep = pending.WaitingStep with
+        {
+            Status = WorkflowStepStatus.Rejected,
+            GateDecision = decision,
+            NextStepId = null,
+            Logs = pending.WaitingStep.Logs
+                .Append($"workflow_human_approval_{submission.Decision.ToString().ToLowerInvariant()}: submitted_by={submission.SubmittedBy}; comment={submission.Comment ?? string.Empty}")
+                .ToArray()
+        };
+        var failure = BuildFailureReport(pending.WorkflowId, rejectedStep, decision);
+        _auditLog.Record(
+            "workflow",
+            rejectedStep.StepId,
+            "workflow_human_approval_rejected",
+            $"Workflow {pending.WorkflowId} stopped after {submission.Decision} from {submission.SubmittedBy}.");
+        return new(
+            true,
+            new WorkflowExecutionResult(
+                pending.WorkflowId,
+                WorkflowStatus.Rejected,
+                pending.CompletedSteps.Append(rejectedStep).ToArray(),
+                decision,
+                FailureReport: failure,
+                AuditLogs: pending.AuditLogs,
+                FinalMessage: failure.FailureReason));
+    }
 
     private static WorkflowStepResult Normalize(
         WorkflowStepResult rawResult,

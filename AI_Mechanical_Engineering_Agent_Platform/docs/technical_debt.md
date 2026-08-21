@@ -34,7 +34,7 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 ## V1.6 后续整理
 
 - `SolidWorksFakeSuccessGuard` 当前仍与 COM facade 位于 `SolidWorksComInterop.cs`，后续可纯移动到独立文件，保持行为不变。
-- `InternalRoute` 仍是固定四步流程；动态化需要单独设计路由配置与回归测试，不在防假成功修复中顺带重构。
+- 默认四步工程路由已收口为可注入的 `InternalWorkflowRoute.EngineeringDefault`；动态路由编排仍需要独立设计路由选择策略与回归测试。
 - Router 对不受支持结构化类型的负路径仍需补专门测试，确保不会静默回退到受控零件类型。
 - 平台 self-check 已写入 `schema_version`、`run_id`、`generated_at` 和 `source_revision`；发布包各上游阶段报告的跨产物 provenance 仍需后续统一 schema，才能做完整的运行级交叉校验。
 
@@ -63,7 +63,7 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 - `flange_basic` 真实路径可在独立 smoke 中验证 `CreateCircle`、`FeatureExtrusion2`、`FeatureCut4` 及螺栓孔布置；未完成该 evidence 时保持 dry-run-only。
 - `shaft_basic` 真实路径需要 `CreateLine`、`CreateCenterLine`、`FeatureRevolve2` 的专用诊断 Runner，包括台阶截面、中心线和旋转返回值证据。
 - 发布包、工程图名称和跨阶段 provenance 后续可进一步通用化，但必须保持 V1.7 `plate_basic_4holes` 真实可交付语义不回退。
-- COM 会话复用、动态 `InternalRoute` 和更丰富的零件族工程图仍需要独立设计与回归测试。
+- COM 会话复用、动态路由选择策略和更丰富的零件族工程图仍需要独立设计与回归测试。
 
 ### 验证步骤、常见失败和禁止事项
 
@@ -80,8 +80,8 @@ V1.3 Claude 审查结论为 PASS WITH COMMENTS，未发现 Blockers。以下事�
 ### 不阻塞改进项
 
 - 用源码文本搜索支撑“无大型 `switch(part_type)`”仍是辅助证据；后续可增加更精确的结构化分析，但 V1.9 必须已有 Registry 行为测试。
-- 动态 `InternalRoute` 仍需独立设计，本轮保持现有运行时路由边界。
-- `HumanApproval` 可在后续用于真实 CAD 人工批准挂起，但不代替 V2.0 的统一执行策略和 QualityGate。
+- 内部默认路由已由 `InternalWorkflowRoute` 注入；后续零件或业务域扩展只应提供新的受校验路由定义，不在 Orchestrator 内新增硬编码数组。
+- `HumanApproval` 已具备单进程宿主内的显式提交/恢复闭环，但不代替 V2.0 的统一执行策略和 QualityGate。跨进程或跨重启审批恢复仍需部署方注入持久化 `IWorkflowApprovalStore`。
 - 轴的偏移多段拉伸作为备选方案记入 backlog。V1.9 Phase 1 固定使用闭合轮廓、中心线和 `FeatureRevolve2` 360° 旋转，不混用偏移拉伸。
 
 ### 执行、验证和失败边界

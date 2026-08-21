@@ -31,13 +31,16 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
 
         var isFakeMode = string.Equals(result.ExecutionMode, "Fake", StringComparison.OrdinalIgnoreCase);
-        var partFamilyDefinition = _partTypeRegistry.GetAll().FirstOrDefault(definition =>
-            string.Equals(definition.RealExecutionMode, result.ExecutionMode, StringComparison.OrdinalIgnoreCase));
-        var isRealPartFamilyBuildMode = partFamilyDefinition is not null;
         var isRealGenericFeatureGraphMode = string.Equals(
             result.ExecutionMode,
             PartFamilyExecutionModes.GenericFeatureGraph,
             StringComparison.OrdinalIgnoreCase);
+        var partFamilyDefinition = _partTypeRegistry.GetAll().FirstOrDefault(definition =>
+            string.Equals(definition.RealExecutionMode, result.ExecutionMode, StringComparison.OrdinalIgnoreCase));
+
+        // V2.0-E 起所有零件族统一走通用 FeatureGraph 执行模式。此时必须使用通用分支，
+        // 因为它额外要求 feature_execution_report.json；退回零件族分支会放松校验。
+        var isRealPartFamilyBuildMode = partFamilyDefinition is not null && !isRealGenericFeatureGraphMode;
         var isRealDrawingMode = string.Equals(result.ExecutionMode, "RealDrawingBasicViews", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingDimensionMode = string.Equals(result.ExecutionMode, "RealDrawingDimensions", StringComparison.OrdinalIgnoreCase);
         var isRealDrawingTitleBlockMode = string.Equals(result.ExecutionMode, "RealDrawingTitleBlock", StringComparison.OrdinalIgnoreCase);

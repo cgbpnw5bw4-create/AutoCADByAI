@@ -278,6 +278,8 @@ V2.0 统一策略为本地交互式且 `dry_run=false` 时默认真实执行；d
 
 真实 SolidWorks 操作全局串行，首次验收顺序为 flange → shaft。前一任务释放会话并写完报告后，才允许后一任务连接。
 
+每次受控回调结束都会只关闭本次工作流创建或使用的文档，再在有上限的超时内断开 COM 会话。不会调用 `ExitApp`：该应用可能是用户已打开的可见 SolidWorks 会话，Worker 不得终止用户拥有的进程。关闭失败必须记录 `solidworks_document_close_warning`，不能静默吞掉；发布包只按精确产物文件名收集，不纳入 `~$` 锁文件。
+
 ### 构建策略
 
 - flange：外圆 `CreateCircle` 加 `FeatureExtrusion2`；中心孔独立活动草图 `FeatureCut4`；全部螺栓孔单草图 `FeatureCut4`。不用 `HoleWizard` 或圆周阵列。
@@ -450,7 +452,7 @@ RealSolidWorksGeometryReader 是读取当前模型真实几何的唯一 COM 边�
 dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/parameter_update_plate.json
 ~~~
 
-该输入需先建模 160×80×12，再更新为 200×100×15，并以真实几何验证变化。plate_basic_4holes 必须复用现有经证 Feature 类型且逐个证明四孔；模型名或 hole_count 不可代替几何读取。QualityGate 未通过前不得进入 V2.0-E。
+该输入需先建模 160×80×12，再更新为 200×100×15，并以真实几何验证变化。plate_basic_4holes 必须复用现有经证 Feature 类型且逐个证明四孔；模型名或 hole_count 不可代替几何读取。V2.0-E 只能复用该受控链，最终 QualityGate 未通过前不得标记为可交付。
 ## V2.0-D 三圆切除执行门禁
 
 参数重建请求进入 `RealSolidWorksWorker` 时，执行顺序固定为：既有 `FeatureHandlerRegistry` 完整预检 → `V20DThreeCircleCutEvidencePolicy` 精确 profile / SHA / 候选诊断预检 → SolidWorks 连接 → `FeatureExecutionPipeline` → rebuild → GeometryReader → GeometryValidator。三圆证据失败时不会建立 COM 连接，也不会改走零件族 Builder、Fake Worker 或旧产物。

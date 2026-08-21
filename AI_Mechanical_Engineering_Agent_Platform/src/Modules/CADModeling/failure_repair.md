@@ -262,7 +262,7 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 
 四孔验收必须逐个证明四个真实孔，不得把旧 V2.0-C 的两个 ICE、单圆草图、文件名或计数字段说成四孔成功。若既有受证 profile 不足以表达目标，保持 feature_api_unverified 并停止，不得静默扩展到 pattern、任意面、through_all、mid_plane、SimpleHole2 或 Hole Wizard。
 
-修复后的最终回归只能运行 run-cad-workflow --input examples/parameter_update_plate.json，并要求 GeometryValidator、Artifact Validator、Reviewer 和 QualityGate 同次通过；不得进入 V2.0-E。
+修复后的最终回归只能运行 run-cad-workflow --input examples/parameter_update_plate.json，并要求 GeometryValidator、Artifact Validator、Reviewer 和 QualityGate 同次通过；V2.0-E 不得绕过这些门禁。
 
 ## V2.1-A 夹套失败修复
 

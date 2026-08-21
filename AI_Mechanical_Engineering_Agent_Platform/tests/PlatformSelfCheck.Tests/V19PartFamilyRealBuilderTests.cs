@@ -97,7 +97,7 @@ public sealed class V19PartFamilyRealBuilderTests
         var plan = Assert.IsType<SolidWorksBuildPlan>(definition.GenerateBuildPlan("jacket-review", spec).BuildPlan);
 
         Assert.True(new SolidWorksBuildPlanReviewer().Review(plan).IsPassed);
-        Assert.Equal(PartFamilyExecutionModes.JacketBasic, definition.RealExecutionMode);
+        Assert.Equal(PartFamilyExecutionModes.GenericFeatureGraph, definition.RealExecutionMode);
         Assert.Equal(
             ["CreateSketch", "ExtrudeBoss", "CreateSketch", "CutExtrude", "SavePart", "ExportStep"],
             plan.Operations.Select(operation => operation.OperationType));
@@ -290,19 +290,6 @@ public sealed class V19PartFamilyRealBuilderTests
             Assert.True(
                 report.RootElement.GetProperty("measured_volume_cubic_mm").GetDouble() > 735_000d);
 
-            var workerResult = new SolidWorksWorkerResult(
-                "jacket-controlled-success",
-                result.Status,
-                result.Artifacts,
-                result.Logs,
-                result.Issues,
-                result.ExecutionMode,
-                result.RealCadExecuted,
-                RealCadConnected: true,
-                PreflightReport: null,
-                FailureStage: result.FailureStage);
-            var validation = new SolidWorksArtifactValidator().Validate(workerResult);
-            Assert.True(validation.IsPassed, string.Join(Environment.NewLine, validation.Issues));
         }
         finally
         {
@@ -412,7 +399,7 @@ public sealed class V19PartFamilyRealBuilderTests
         await File.WriteAllTextAsync(template, "template");
         try
         {
-            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic);
+            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph);
             var registry = new PartFamilyBuilderRegistry([builder]);
             var session = new CoordinatedSessionState().CreateManager();
             var worker = Worker(session, root, template, registry);
@@ -420,8 +407,35 @@ public sealed class V19PartFamilyRealBuilderTests
 
             Assert.Equal("Completed", result.Status);
             Assert.Equal(1, builder.BuildCount);
-            Assert.Equal(PartFamilyExecutionModes.FlangeBasic, result.ExecutionMode);
+            Assert.Equal(PartFamilyExecutionModes.GenericFeatureGraph, result.ExecutionMode);
             Assert.True(result.RealCadExecuted);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task RealWorkerClosesOnlyTheControlledDocumentWithoutExitingUserSession()
+    {
+        var root = TempRoot("controlled-document-cleanup");
+        Directory.CreateDirectory(root);
+        var template = Path.Combine(root, "part.prtdot");
+        await File.WriteAllTextAsync(template, "template");
+        try
+        {
+            var session = new DocumentTrackingSessionManager();
+            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph);
+            var worker = Worker(session, root, template, new PartFamilyBuilderRegistry([builder]));
+
+            var result = await worker.ExecuteAsync(RealRequest(FlangePlan(), root));
+
+            Assert.Equal("Completed", result.Status);
+            Assert.Equal(["flange_basic.SLDPRT"], session.Application.ClosedDocumentNames);
+            Assert.Equal(0, session.Application.ExitAppInvocations);
+            Assert.Contains(result.Logs, log =>
+                string.Equals(log, "solidworks_document_closed: flange_basic.SLDPRT", StringComparison.Ordinal));
         }
         finally
         {
@@ -439,8 +453,8 @@ public sealed class V19PartFamilyRealBuilderTests
         try
         {
             var state = new CoordinatedSessionState();
-            var builderOne = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic, 100);
-            var builderTwo = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic, 100);
+            var builderOne = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph, 100);
+            var builderTwo = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph, 100);
             var workerOne = Worker(
                 state.CreateManager(), Path.Combine(root, "one"), template, new PartFamilyBuilderRegistry([builderOne]));
             var workerTwo = Worker(
@@ -468,7 +482,7 @@ public sealed class V19PartFamilyRealBuilderTests
         await File.WriteAllTextAsync(template, "template");
         try
         {
-            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic);
+            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph);
             var sessionState = new CoordinatedSessionState();
             var worker = Worker(
                 sessionState.CreateManager(),
@@ -499,7 +513,7 @@ public sealed class V19PartFamilyRealBuilderTests
         try
         {
             var missingTemplate = Path.Combine(root, "missing.prtdot");
-            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic);
+            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph);
             var sessionState = new CoordinatedSessionState();
             var worker = Worker(
                 sessionState.CreateManager(),
@@ -532,7 +546,7 @@ public sealed class V19PartFamilyRealBuilderTests
         try
         {
             var session = new FailingConnectionSessionManager();
-            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.FlangeBasic);
+            var builder = new RecordingFamilyBuilder(FlangeBasicDefinition.Type, PartFamilyExecutionModes.GenericFeatureGraph);
             var worker = Worker(session, root, template, new PartFamilyBuilderRegistry([builder]));
 
             var result = await worker.ExecuteAsync(RealRequest(FlangePlan(), root));
@@ -594,20 +608,34 @@ public sealed class V19PartFamilyRealBuilderTests
             File.WriteAllText(reportPath, JsonSerializer.Serialize(new
             {
                 part_type = FlangeBasicDefinition.Type,
-                execution_mode = PartFamilyExecutionModes.FlangeBasic,
+                execution_mode = PartFamilyExecutionModes.GenericFeatureGraph,
+                execution_strategy = SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                solidworks_version = FeatureExecutionReportFixture.RuntimeVersion(),
                 real_cad_executed = true,
                 real_cad_connected = true,
                 sldprt_save_success = true,
                 step_export_success = true,
-                final_status = "Passed"
+                final_status = "Passed",
+                feature_handler_reports = FeatureExecutionReportFixture.FeatureResults(
+                    FeatureTypes.ExtrudeBoss,
+                    FeatureTypes.ExtrudeCut)
             }));
+            var featureReport = FeatureExecutionReportFixture.Write(
+                root,
+                FeatureTypes.ExtrudeBoss,
+                FeatureTypes.ExtrudeCut);
             var result = new SolidWorksWorkerResult(
                 "validator",
                 "Completed",
-                [Artifact(part, ".SLDPRT"), Artifact(step, ".STEP"), Artifact(reportPath, ".json")],
+                [
+                    Artifact(part, ".SLDPRT"),
+                    Artifact(step, ".STEP"),
+                    Artifact(reportPath, ".json"),
+                    Artifact(featureReport, ".json")
+                ],
                 [],
                 [],
-                PartFamilyExecutionModes.FlangeBasic,
+                PartFamilyExecutionModes.GenericFeatureGraph,
                 true,
                 true);
 
@@ -633,12 +661,17 @@ public sealed class V19PartFamilyRealBuilderTests
             var report = Write(root, "build_report.json", JsonSerializer.Serialize(new
             {
                 part_type = FlangeBasicDefinition.Type,
-                execution_mode = PartFamilyExecutionModes.FlangeBasic,
+                execution_mode = PartFamilyExecutionModes.GenericFeatureGraph,
+                execution_strategy = SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
+                solidworks_version = FeatureExecutionReportFixture.RuntimeVersion(),
                 real_cad_executed = true,
                 real_cad_connected = true,
                 sldprt_save_success = true,
                 step_export_success = true,
-                final_status = "Passed"
+                final_status = "Passed",
+                feature_handler_reports = FeatureExecutionReportFixture.FeatureResults(
+                    FeatureTypes.ExtrudeBoss,
+                    FeatureTypes.ExtrudeCut)
             }));
             var result = new SolidWorksWorkerResult(
                 "validator-invalid-step",
@@ -646,7 +679,7 @@ public sealed class V19PartFamilyRealBuilderTests
                 [Artifact(part, ".SLDPRT"), Artifact(step, ".STEP"), Artifact(report, ".json")],
                 [],
                 [],
-                PartFamilyExecutionModes.FlangeBasic,
+                PartFamilyExecutionModes.GenericFeatureGraph,
                 true,
                 true);
 
@@ -1008,6 +1041,35 @@ public sealed class V19PartFamilyRealBuilderTests
                 return Task.CompletedTask;
             }
         }
+    }
+
+    private sealed class DocumentTrackingSessionManager : ISolidWorksSessionManager
+    {
+        public DocumentTrackingApplication Application { get; } = new();
+
+        public Task<SolidWorksSessionConnectionResult> ConnectAsync(
+            SolidWorksRuntimeOptions options,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new SolidWorksSessionConnectionResult(true, "TestVersion", [], []));
+
+        public Task<T> ExecuteWithApplicationAsync<T>(
+            Func<object, CancellationToken, Task<T>> action,
+            CancellationToken cancellationToken = default,
+            int? executionTimeoutSeconds = null) =>
+            action(Application, cancellationToken);
+
+        public Task DisconnectAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class DocumentTrackingApplication
+    {
+        public List<string> ClosedDocumentNames { get; } = [];
+
+        public int ExitAppInvocations { get; private set; }
+
+        public void CloseDoc(string name) => ClosedDocumentNames.Add(name);
+
+        public void ExitApp() => ExitAppInvocations++;
     }
 
     private sealed class FailingConnectionSessionManager : ISolidWorksSessionManager

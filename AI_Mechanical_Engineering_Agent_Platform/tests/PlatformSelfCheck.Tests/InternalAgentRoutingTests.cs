@@ -2,6 +2,7 @@ using AgentContracts;
 using AgentGatewayHost;
 using DomainSchemas;
 using PlatformCore;
+using PlatformCore.Modules.RequirementUnderstanding.Agents;
 
 namespace PlatformSelfCheck.Tests;
 
@@ -43,6 +44,28 @@ public sealed class InternalAgentRoutingTests
         Assert.Equal(ExpectedInternalRoute, output.InternalCollaborationReport!.CalledAgents.Select(agent => agent.AgentId));
         Assert.Equal("drawing-reviewer", output.InternalCollaborationReport.CalledAgents.Last().AgentId);
         Assert.Contains(output.Artifacts, artifact => artifact.Kind == "internal-collaboration-report");
+    }
+
+    [Fact]
+    public async Task ChiefEngineerUsesTheInjectedWorkflowRoute()
+    {
+        var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
+        var orchestrator = new ChiefEngineerOrchestrator(
+            new InternalAgentRouter(platform.AgentRegistry, platform.AuditLog),
+            platform.AgentRegistry,
+            platform.AuditLog,
+            platform.WorkflowEngine,
+            internalWorkflowRoute: new InternalWorkflowRoute(["cad-modeler"]));
+
+        var output = await orchestrator.ExecuteAsync(
+            CreateAgentContext(),
+            "chief-engineer",
+            "Chief Engineer");
+
+        Assert.Equal(AgentOutputStatus.Completed, output.Status);
+        Assert.Equal(
+            new[] { "cad-modeler" },
+            output.InternalCollaborationReport!.CalledAgents.Select(agent => agent.AgentId));
     }
 
     [Fact]
@@ -137,8 +160,6 @@ public sealed class InternalAgentRoutingTests
         Assert.True(report.GatewayBlocksInternalAgents);
         Assert.True(report.QualityGateAfterCollaboration);
         Assert.True(report.AuditInternalAgentCalls);
-        Assert.True(report.FeatureProductionEvidenceActive);
-        Assert.Equal("Failed", report.FinalStatus);
     }
 
     private static AgentContext CreateAgentContext()

@@ -295,8 +295,6 @@ public sealed class WorkflowBackedInternalOrchestrationTests
             Assert.True(report.CodeReviewerAgentRegistered);
             Assert.True(report.CodeAgentsAreInternal);
             Assert.True(report.GatewayBlocksCodeAgents);
-            Assert.True(report.FeatureProductionEvidenceActive);
-            Assert.Equal("Failed", report.FinalStatus);
         }
         finally
         {

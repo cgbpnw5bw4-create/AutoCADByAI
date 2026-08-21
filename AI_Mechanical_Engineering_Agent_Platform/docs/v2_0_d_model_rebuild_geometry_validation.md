@@ -4,7 +4,7 @@
 
 V2.0-D 在 V2.0-C 已完成的 Feature Handler 与 Feature Adapter 真实执行边界之上，建立参数驱动的模型重建和真实几何验证闭环。该阶段的通过标准不是 COM 调用未抛异常，也不是 SLDPRT、STEP 或 JSON 文件存在，而是更新后的模型经受控主流程重建后，其真实几何、特征结果、报告语义和 QualityGate 都通过。
 
-本文件定义 V2.0-D 的实现和验收门禁。未完成本文件所列 build、test、self-check 与真实主流程验收前，不得声称 V2.0-D 已关闭，更不得进入 V2.0-E。
+本文件定义 V2.0-D 的实现和验收门禁。V2.0-E 只能复用本文件所述受控参数更新链，不得把候选 diagnostic 改写为交付验收；真实主流程、质量门禁与同次报告仍是唯一交付依据。
 
 ## 范围与边界
 
@@ -142,6 +142,7 @@ dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples
 - `rebuild_failure_detected`
 - `geometry_report_generated`
 - `v2_0_d_documented`
+- `v2_0_d_production_evidence_active`：必须实际执行 `V20DThreeCircleCutEvidencePolicy.ValidateForRealExecution`，而不只检查策略源码或类型存在。受绑定的候选诊断、输入或源码修订缺失、陈旧或不匹配时，该字段必须为 `false`。
 - `markdown_chinese_check_passed`
 
 还必须运行：
@@ -152,7 +153,7 @@ dotnet test
 dotnet run --project src/Interfaces/CliHost -- self-check
 ```
 
-以上命令、真实 `run-cad-workflow` 验收、同次报告和 QualityGate 全部通过前，V2.0-D 不得关闭，也不得进入 V2.0-E。
+以上命令、真实 `run-cad-workflow` 验收、同次报告和 QualityGate 全部通过前，V2.0-D 不得宣称为可交付；V2.0-E 也不得绕过这些门禁。
 ## V2.0-D 三圆切除证据补充
 
 `plate_basic_4holes` 的前三个孔使用既有 `extrude_cut` Handler；因此 V2.0-D 不能把 V2.0-C 的单圆诊断静默扩展为多圆 profile。`RealSolidWorksWorker` 只会在 `FeatureHandlerRegistry.ValidateForRealExecution()` 已通过之后、建立 SolidWorks COM 会话之前调用 `V20DThreeCircleCutEvidencePolicy`。该纯证据预检要求：
@@ -160,6 +161,6 @@ dotnet run --project src/Interfaces/CliHost -- self-check
 - 仅为 `plate_basic_4holes` 的 `feature_handler_graph` 路径；操作顺序必须仍是 sketch、boss、sketch、cut、sketch、simple-hole，不能新增 Feature 或零件族；
 - `cut_profile` 必须恰有三个直径 10 mm 的圆，`hole_profile` 必须恰有第四个直径 10 mm 的圆；四个圆心必须是既有 `ModelUpdateService` 的 20 mm 边距映射；
 - 仅接受本轮 `160 x 80 x 12 mm` 初始状态和 `200 x 100 x 15 mm` 更新状态，盲切深度保持为板厚的两倍，`through_all=false`；
-- `examples/parameter_update_plate.json`、V2.0-D 受绑定源码和候选诊断报告都必须匹配固定 SHA-256；候选报告还必须证明真实 33.5.0 会话、三圆切除体积变化、第四孔、非空 SLDPRT/STEP 和无 Feature 错误。
+- `examples/parameter_update_plate.json`、V2.0-D 受绑定源码和候选诊断报告都必须匹配固定 SHA-256；候选报告还必须证明真实 31.5.0 会话、三圆切除体积变化、第四孔、非空 SLDPRT 与物理内容有效的 STEP，并且没有 Feature 错误。
 
-本补充绑定的候选诊断是 `output/solidworks/features/20260803_064124_6127412/feature_execution_report.json`。它的状态始终只是 `CandidatePassed` / `NotDeliverable`，不是最终验收；最终交付仍只能由 `run-cad-workflow` 生成同次 GeometryReport、RebuildReport 和 QualityGate 结论。任一 profile、源码、输入或候选诊断不匹配都返回 `feature_api_unverified` 并在 COM 连接前停止。
+本补充绑定的候选诊断是 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`。它对 200×100×15 更新后的 `plate_cut` 记录 `0.00030000000000000003 → 0.00029646570826471146 m³`，对 `plate_hole` 记录 `0.0002964657082647115 → 0.00029528761101961536 m³`。状态始终只是 `CandidatePassed` / `NotDeliverable`，不是最终验收；最终交付仍只能由 `run-cad-workflow` 生成同次 GeometryReport、RebuildReport 和 QualityGate 结论。任一 profile、源码、输入或候选诊断不匹配都返回 `feature_api_unverified` 并在 COM 连接前停止。

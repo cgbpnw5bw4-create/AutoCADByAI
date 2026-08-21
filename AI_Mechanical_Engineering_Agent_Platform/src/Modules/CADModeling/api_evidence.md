@@ -279,7 +279,11 @@ V2.0-D 新增的真实几何读取必须收敛在 ISolidWorksGeometryReader / Re
 - 特征结果：`IFeature.GetTypeName2`、`FirstFeature` / `GetNextFeature` 与 `GetErrorCode2`；
 - 精确尺寸：平面 `plate_basic_4holes` 先以 `IBody2.GetVertices` / `IVertex.GetPoint` 读取真实外轮廓顶点；顶点不可读时回退 `IBody2.GetExtremePoint`。孔径或轴径使用有完整证据的圆柱面参数。两条长度路径均不可用时必须返回 `geometry_read_failed`。
 
-GetPartBox 近似结果、COM 非空返回、Feature 名称或文件大小均不能证明精确长度、孔径或四个孔。四孔 plate_basic_4holes 必须读取并验证四个相应的圆柱几何；不得为了凑数新增 Feature 类型、零件族或使用未证实的 pattern、Hole Wizard / SimpleHole2。任何证据不足都应停止为 feature_api_unverified，最终仍只由 run-cad-workflow 的 QualityGate 判定，且不进入 V2.0-E。
+GetPartBox 近似结果、COM 非空返回、Feature 名称或文件大小均不能证明精确长度、孔径或四个孔。四孔 plate_basic_4holes 必须读取并验证四个相应的圆柱几何；不得为了凑数新增 Feature 类型、零件族或使用未证实的 pattern、Hole Wizard / SimpleHole2。任何证据不足都应停止为 feature_api_unverified，最终仍只由 run-cad-workflow 的 QualityGate 判定；V2.0-E 不得绕过这条链。
+
+## V2.0-E 现行 FeatureGraph 证据绑定
+
+历史 V2.0-C/D 记录仅保留为审计背景，不能作为当前源码的生产授权。现行四类 Handler 与 V2.0-D 三圆 profile 统一绑定 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`：SolidWorks `31.5.0`、源码 revision `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`，报告的 `CandidatePassed` / `NotDeliverable` 语义不变。策略逐项读取诊断、校验受绑定物理 SLDPRT、有效 STEP 内容、版本、特征结果和体积变化；任何失配都在 COM 连接前返回 `feature_api_unverified`。
 
 ## V2.1-A 夹套 API 证据
 

@@ -12,6 +12,7 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
     private readonly string _partType;
     private readonly FeatureHandlerRegistry _registry;
     private readonly Func<object, ISolidWorksFeatureAdapter> _adapterFactory;
+    private readonly bool _supportsRealExecution;
 
     public SolidWorksFeatureGraphPartFamilyBuilder(
         string partType,
@@ -19,22 +20,25 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
         ISolidWorksComFacade? comFacade = null,
         ISolidWorksFileVerifier? fileVerifier = null,
         ISolidWorksPartFamilyPlaneSelector? planeSelector = null,
-        Func<object, ISolidWorksFeatureAdapter>? adapterFactory = null)
+        Func<object, ISolidWorksFeatureAdapter>? adapterFactory = null,
+        bool supportsRealExecution = true)
         : base(comFacade, fileVerifier, planeSelector)
     {
         _partType = string.IsNullOrWhiteSpace(partType) ? "generic_cad_model" : partType;
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _adapterFactory = adapterFactory ?? (model => new RealSolidWorksFeatureAdapter(model, Com));
+        _supportsRealExecution = supportsRealExecution;
     }
 
     public override string PartType => _partType;
 
     public override string FailureStage => PartFamilyFailureStages.FeatureApiUnverified;
 
-    public override bool SupportsRealExecution => true;
+    public override bool SupportsRealExecution => _supportsRealExecution;
 
-    public override string ApiEvidence =>
-        "feature_handler_registry_preflight_required; handler evidence is evaluated per node";
+    public override string ApiEvidence => _supportsRealExecution
+        ? "feature_handler_registry_preflight_required; handler evidence is evaluated per node"
+        : "part_family_production_evidence_pending; generic FeatureGraph execution remains fail-closed";
 
     public override string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 

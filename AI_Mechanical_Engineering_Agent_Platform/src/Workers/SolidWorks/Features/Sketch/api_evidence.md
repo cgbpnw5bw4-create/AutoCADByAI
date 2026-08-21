@@ -76,8 +76,8 @@ output/solidworks/features/<timestamp>/model.STEP
 output/solidworks/features/<timestamp>/feature_execution_report.json
 ```
 
-旧 run `20260730_073759_9143941` 不再作为权威证据，因为同次 Cut/Hole 的非空结果被人工判定为无孔假成功。Sketch 的权威证据标识为 `v2.0-c-20260730-085830-sketch`，诊断报告为 `output/solidworks/features/20260730_085830_6592380/feature_execution_report.json`，完整执行链源码 revision 为 `71753c25d516130de0ee657da22ae7452bb0f2f7c9a6f355f69398464afc2918`。
+旧 run `20260730_073759_9143941` 不再作为权威证据，因为同次 Cut/Hole 的非空结果被人工判定为无孔假成功。现行 Sketch 证据标识为 `v2.0-e-20260821-034143-sketch`，诊断报告为 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`，SolidWorks 为 `31.5.0`，完整执行链源码 revision 为 `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`。
 
-该 run 验证 TopPlane line、center rectangle、circle，SLDPRT/STEP 哈希分别为 `E411188A101E49EFB1BD835E9BEF3A16EA0EE3BB124A873FFB96EDC5E72012E3` 和 `EF532158373D512CF31A76FE930CD90FBF21A913E52608CF9A04805F0590CE06`。只授权 `standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres`；任意面、arc、slot、constraints 和 dimensions 仍为 `unverified`。
+该 run 验证 TopPlane line、center rectangle、circle，并将物理 SLDPRT/STEP 路径与大小写入报告；STEP 还必须通过 `ISO-10303-21;`、`ENDSEC;`、`END-ISO-10303-21;` 内容校验。只授权 `standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres`；任意面、arc、slot、constraints 和 dimensions 仍为 `unverified`。
 
 新 diagnostic 仍是 `CandidatePassed` / `NotDeliverable`。最终验收必须从 `run-cad-workflow` 运行完整主流程；禁止 Handler COM、空实体成功、扩大参数轮廓和进入 V2.0-D。

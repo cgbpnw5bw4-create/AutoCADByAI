@@ -6,20 +6,13 @@ namespace PlatformCore.Modules.RequirementUnderstanding.Agents;
 
 public sealed class ChiefEngineerOrchestrator
 {
-    private static readonly string[] InternalRoute =
-    [
-        "mechanical-designer",
-        "cad-modeler",
-        "drawing-engineer",
-        "drawing-reviewer"
-    ];
-
     private readonly InternalAgentRouter _router;
     private readonly AgentRegistry _agentRegistry;
     private readonly InMemoryAuditLog _auditLog;
     private readonly SequentialWorkflowEngine _workflowEngine;
     private readonly SolidWorksMainWorkflowRunner? _solidWorksMainWorkflowRunner;
     private readonly SolidWorksWorkflowRouter _solidWorksWorkflowRouter;
+    private readonly IReadOnlyList<string> _internalRoute;
 
     public ChiefEngineerOrchestrator(
         InternalAgentRouter router,
@@ -27,7 +20,8 @@ public sealed class ChiefEngineerOrchestrator
         InMemoryAuditLog auditLog,
         SequentialWorkflowEngine? workflowEngine = null,
         SolidWorksMainWorkflowRunner? solidWorksMainWorkflowRunner = null,
-        SolidWorksWorkflowRouter? solidWorksWorkflowRouter = null)
+        SolidWorksWorkflowRouter? solidWorksWorkflowRouter = null,
+        InternalWorkflowRoute? internalWorkflowRoute = null)
     {
         _router = router;
         _agentRegistry = agentRegistry;
@@ -35,12 +29,24 @@ public sealed class ChiefEngineerOrchestrator
         _workflowEngine = workflowEngine ?? new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), auditLog);
         _solidWorksMainWorkflowRunner = solidWorksMainWorkflowRunner;
         _solidWorksWorkflowRouter = solidWorksWorkflowRouter ?? new SolidWorksWorkflowRouter();
+        var route = internalWorkflowRoute ?? InternalWorkflowRoute.EngineeringDefault;
+        var routeIssues = route.Validate();
+        if (route.AgentIds.Count == 0 || routeIssues.Count > 0)
+        {
+            throw new ArgumentException(
+                routeIssues.Count == 0
+                    ? "internal_workflow_route must contain at least one internal agent."
+                    : string.Join(" ", routeIssues),
+                nameof(internalWorkflowRoute));
+        }
+
+        _internalRoute = route.AgentIds.ToArray();
     }
 
     public async Task<AgentOutput> ExecuteAsync(AgentContext context, string rootAgentId, string rootAgentName)
     {
         var workflowId = $"internal-collaboration-{context.TaskId}";
-        var workflowSteps = InternalRoute
+        var workflowSteps = _internalRoute
             .Select(agentId => new InternalAgentWorkflowStep(agentId, context, _router, _agentRegistry, _auditLog).ToWorkflowStep())
             .ToArray();
         var workflowResult = await _workflowEngine.ExecuteAsync(
@@ -106,7 +112,7 @@ public sealed class ChiefEngineerOrchestrator
         var artifacts = new List<ArtifactInfo>();
         var issues = new List<string>();
 
-        foreach (var agentId in InternalRoute.Where(finalStepByAgent.ContainsKey))
+        foreach (var agentId in _internalRoute.Where(finalStepByAgent.ContainsKey))
         {
             var agent = _agentRegistry.GetById(agentId)
                 ?? throw new InvalidOperationException($"Internal agent '{agentId}' was not found while building collaboration report.");

@@ -268,4 +268,4 @@ self-check 只验证架构、注入边界、纯逻辑 Handler、失败关闭和�
 - 禁止把 diagnostic `Passed`、候选产物或历史文件解释为主流程通过。
 - 禁止接受空文件、陈旧文件、无效 Feature 或仅“未抛异常”的假成功。
 - 禁止绕过 `run-cad-workflow`、ArtifactValidator、Reviewer 或 QualityGate。
-- 禁止进入 V2.0-D。
+- 禁止以 V2.0-C diagnostic 冒充 V2.0-E 的交付验收；V2.0-E 只能经统一 FeatureGraph、物理 STEP 内容门禁和受绑定候选证据继续执行。
