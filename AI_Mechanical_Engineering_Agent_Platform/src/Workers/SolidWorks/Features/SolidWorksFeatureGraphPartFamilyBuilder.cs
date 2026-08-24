@@ -13,6 +13,7 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
     private readonly FeatureHandlerRegistry _registry;
     private readonly Func<object, ISolidWorksFeatureAdapter> _adapterFactory;
     private readonly bool _supportsRealExecution;
+    private readonly Func<SolidWorksBuildPlan, ExpectedPartGeometry?>? _expectedGeometry;
 
     public SolidWorksFeatureGraphPartFamilyBuilder(
         string partType,
@@ -21,14 +22,23 @@ public sealed class SolidWorksFeatureGraphPartFamilyBuilder : SolidWorksPartFami
         ISolidWorksFileVerifier? fileVerifier = null,
         ISolidWorksPartFamilyPlaneSelector? planeSelector = null,
         Func<object, ISolidWorksFeatureAdapter>? adapterFactory = null,
-        bool supportsRealExecution = true)
-        : base(comFacade, fileVerifier, planeSelector)
+        bool supportsRealExecution = true,
+        Func<SolidWorksBuildPlan, ExpectedPartGeometry?>? expectedGeometry = null,
+        ISolidWorksGeometryReader? geometryReader = null)
+        : base(comFacade, fileVerifier, planeSelector, geometryReader)
     {
         _partType = string.IsNullOrWhiteSpace(partType) ? "generic_cad_model" : partType;
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _adapterFactory = adapterFactory ?? (model => new RealSolidWorksFeatureAdapter(model, Com));
         _supportsRealExecution = supportsRealExecution;
+        _expectedGeometry = expectedGeometry;
     }
+
+    /// <summary>
+    /// 几何期望由零件族 Definition 提供，Worker 不持有任何零件专用几何知识。
+    /// </summary>
+    protected override ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan) =>
+        _expectedGeometry?.Invoke(plan);
 
     public override string PartType => _partType;
 

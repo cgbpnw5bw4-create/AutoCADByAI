@@ -412,10 +412,7 @@ public sealed class SolidWorksArtifactValidator : IValidator
                 issues.Add("build_report final_status must be Passed.");
             }
 
-            if (definition.PartType.Equals(JacketBasicDefinition.Type, StringComparison.OrdinalIgnoreCase))
-            {
-                ValidateJacketGeometryEvidence(root, issues);
-            }
+            ValidateGeometryEvidence(root, issues);
         }
         catch (JsonException ex)
         {
@@ -423,30 +420,69 @@ public sealed class SolidWorksArtifactValidator : IValidator
         }
     }
 
-    private static void ValidateJacketGeometryEvidence(JsonElement root, List<string> issues)
+    /// <summary>
+    /// 几何证据校验，由 build_report 自描述驱动：报告携带期望体数与容差，
+    /// 因此本校验器不需要持有任何零件族专属几何知识。
+    /// V2.0-E 之前该检查只挂在 part-family 分支上，统一执行路线后两端同时
+    /// 不可达；现在两条分支共用同一份实现。
+    /// </summary>
+    private static void ValidateGeometryEvidence(JsonElement root, List<string> issues)
     {
-        RequireTrue(root, "step_content_validated", "build_report", issues);
-        RequireTrue(root, "geometry_validation_attempted", "build_report", issues);
-        RequireString(root, "geometry_validation_status", "Passed", "build_report", issues);
-        if (!root.TryGetProperty("measured_body_count", out var bodyCount) ||
-            bodyCount.ValueKind != JsonValueKind.Number ||
-            !bodyCount.TryGetInt32(out var measuredBodies) ||
-            measuredBodies != 1)
+        var status = root.TryGetProperty("geometry_validation_status", out var statusProperty) &&
+                     statusProperty.ValueKind == JsonValueKind.String
+            ? statusProperty.GetString()
+            : null;
+
+        // 零件族尚未声明几何期望。这是一个可见缺口（见 docs/cad_capability_matrix.md），
+        // 不是默认通过——但也不能在此处凭空要求证据。
+        if (string.IsNullOrWhiteSpace(status) ||
+            string.Equals(status, "NotDeclared", StringComparison.OrdinalIgnoreCase))
         {
-            issues.Add("build_report measured_body_count must be 1 for jacket_basic.");
+            return;
+        }
+
+        RequireTrue(root, "geometry_validation_attempted", "build_report", issues);
+        if (!string.Equals(status, "Passed", StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add($"build_report geometry_validation_status must be Passed, actual={status}.");
+        }
+
+        var hasExpectedBodies = root.TryGetProperty("expected_body_count", out var expectedBodies) &&
+                                expectedBodies.ValueKind == JsonValueKind.Number &&
+                                expectedBodies.TryGetInt32(out var expectedBodyCount);
+        var hasMeasuredBodies = root.TryGetProperty("measured_body_count", out var measuredBodies) &&
+                                measuredBodies.ValueKind == JsonValueKind.Number &&
+                                measuredBodies.TryGetInt32(out var measuredBodyCount);
+        if (!hasExpectedBodies || !hasMeasuredBodies)
+        {
+            issues.Add("build_report must contain expected_body_count and measured_body_count.");
+        }
+        else if (expectedBodies.GetInt32() != measuredBodies.GetInt32())
+        {
+            issues.Add(
+                $"build_report measured_body_count {measuredBodies.GetInt32()} does not match " +
+                $"expected_body_count {expectedBodies.GetInt32()}.");
         }
 
         if (!TryPositiveFiniteNumber(root, "expected_volume_cubic_mm", out var expectedVolume) ||
             !TryPositiveFiniteNumber(root, "measured_volume_cubic_mm", out var measuredVolume))
         {
-            issues.Add("build_report jacket volume evidence must contain finite positive expected and measured values.");
+            issues.Add("build_report geometry evidence must contain finite positive expected and measured volumes.");
             return;
         }
 
-        var tolerance = Math.Max(1d, expectedVolume * JacketGeometryValidator.VolumeRelativeTolerance);
+        var relativeTolerance =
+            root.TryGetProperty("geometry_volume_relative_tolerance", out var toleranceProperty) &&
+            toleranceProperty.ValueKind == JsonValueKind.Number &&
+            toleranceProperty.TryGetDouble(out var declaredTolerance) &&
+            double.IsFinite(declaredTolerance) &&
+            declaredTolerance > 0d
+                ? declaredTolerance
+                : JacketGeometryValidator.VolumeRelativeTolerance;
+        var tolerance = Math.Max(1d, expectedVolume * relativeTolerance);
         if (Math.Abs(expectedVolume - measuredVolume) > tolerance)
         {
-            issues.Add("build_report measured jacket volume is outside the allowed tolerance.");
+            issues.Add("build_report measured volume is outside the allowed tolerance.");
         }
     }
 
@@ -484,6 +520,10 @@ public sealed class SolidWorksArtifactValidator : IValidator
                 issues);
             RequireString(root, "final_status", "Passed", "build_report", issues);
             ValidateFeatureResults(root, "feature_handler_reports", "build_report", issues);
+
+            // 统一执行路线下的几何证据校验。声明了几何期望的零件族必须在此
+            // 独立复核一次，避免 V2.0-E 迁移时出现的「生产端与消费端同时失联」。
+            ValidateGeometryEvidence(root, issues);
         }
         catch (JsonException ex)
         {

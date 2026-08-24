@@ -171,6 +171,13 @@ public interface IPartFamilyDefinition
     PartFamilyValidationResult ValidateInput(CADModelSpec spec) =>
         PartFamilyInputValidation.Validate(spec, Validator, ParameterSchema);
 
+    /// <summary>
+    /// 零件族声明的理论几何期望，供统一建模内核在构建后做几何校验。
+    /// 返回 null 表示该族尚未声明期望，此时跳过几何校验——这是一个
+    /// 可见的能力缺口（见 docs/cad_capability_matrix.md），不是默认通过。
+    /// </summary>
+    ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan) => null;
+
     PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec);
 
     IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan);
@@ -530,6 +537,37 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
     // V2.1-A 保持冻结。它可以继续参与 schema、BuildPlan 与 dry-run，
     // 但不能因 V2.0-E 的通用 Feature Handler 证据而获得真实 CAD 授权。
     public bool SupportsRealExecution => false;
+
+    /// <summary>
+    /// 直筒同轴夹套的理论体积：pi/4 * (Do^2 - Di^2) * L，单实体。
+    /// </summary>
+    public ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan)
+    {
+        var dimensions = plan?.Dimensions;
+        if (dimensions is null ||
+            !TryPositiveDimension(dimensions, "outer_diameter_mm", out var outer) ||
+            !TryPositiveDimension(dimensions, "inner_diameter_mm", out var inner) ||
+            !TryPositiveDimension(dimensions, "length_mm", out var length) ||
+            inner >= outer)
+        {
+            return null;
+        }
+
+        var volume = Math.PI / 4d * ((outer * outer) - (inner * inner)) * length;
+        return new ExpectedPartGeometry(1, volume, JacketGeometryValidator.VolumeRelativeTolerance);
+    }
+
+    private static bool TryPositiveDimension(
+        IReadOnlyDictionary<string, string> dimensions,
+        string name,
+        out double value)
+    {
+        value = 0d;
+        return dimensions.TryGetValue(name, out var text) &&
+               double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value) &&
+               double.IsFinite(value) &&
+               value > 0d;
+    }
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {

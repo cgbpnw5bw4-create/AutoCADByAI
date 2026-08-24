@@ -126,7 +126,8 @@ public sealed class V20ERegressionGateTests
             "v2_0_d_production_evidence_active",
             "v2_0_e_controlled_plate_evidence_active",
             "v2_0_e_step_content_gate_active",
-            "v2_0_e_unified_part_family_builders"
+            "v2_0_e_unified_part_family_builders",
+            "v2_0_e_geometry_validation_platform_wide"
         ];
 
         foreach (var name in required)

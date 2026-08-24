@@ -9,6 +9,7 @@
     "shaft_artifact_validation_supported": true,
     "v2_0_d_production_evidence_active": true,
     "v2_0_e_controlled_plate_evidence_active": true,
+    "v2_0_e_geometry_validation_platform_wide": true,
     "v2_0_e_step_content_gate_active": true,
     "v2_0_e_unified_part_family_builders": true
   }

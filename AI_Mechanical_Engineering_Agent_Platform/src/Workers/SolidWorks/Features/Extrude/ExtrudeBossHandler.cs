@@ -41,12 +41,12 @@ public sealed class ExtrudeBossHandler : FeatureHandlerBase
             "V2.0-C diagnostic verified a 10 mm blind boss from a selected rectangular sketch and measured volume increase from 0 to 5.9999999999999995E-05 cubic metres.",
             "Diagnostic SLDPRT and STEP identity is recorded in the bound diagnostic report; a per-run hash is deliberately not restated here because it cannot be known before the run that this claim is hashed into."
         ],
-        EvidenceId: "v2.0-e-20260821-034143-extrude-boss",
+        EvidenceId: "v2.0-e-20260821-074819-extrude-boss",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "blind;single_end;positive_depth_mm;no_draft;no_thin;merge_result",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/20260821_034143_9836278/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211");
+        DiagnosticRunPath: "evidence/solidworks/20260821_074819_4327602/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:5107d8555b250301768d4f9e5a510e6f2c42aae566e64cf2277cdb42597be0b6");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

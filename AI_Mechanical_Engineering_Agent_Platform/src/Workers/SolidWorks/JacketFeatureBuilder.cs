@@ -6,17 +6,21 @@ namespace SolidWorksWorker;
 public sealed class JacketFeatureBuilder : SolidWorksPartFamilyBuilderBase
 {
     private const double MmToMeters = 0.001;
-    private readonly ISolidWorksGeometryReader _geometryReader;
-
     public JacketFeatureBuilder(
         ISolidWorksComFacade? comFacade = null,
         ISolidWorksFileVerifier? fileVerifier = null,
         ISolidWorksPartFamilyPlaneSelector? planeSelector = null,
         ISolidWorksGeometryReader? geometryReader = null)
-        : base(comFacade, fileVerifier, planeSelector)
+        : base(comFacade, fileVerifier, planeSelector, geometryReader)
     {
-        _geometryReader = geometryReader ?? new RealSolidWorksGeometryReader(Com);
     }
+
+    /// <summary>
+    /// 几何期望委托给零件族 Definition。校验本身由基类的平台级后置阶段执行，
+    /// 这里不再保留第二份实现。
+    /// </summary>
+    protected override ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan) =>
+        new JacketBasicDefinition().DescribeExpectedGeometry(plan);
 
     public override string PartType => JacketBasicDefinition.Type;
     public override string FailureStage => PartFamilyFailureStages.JacketBuildFailed;
@@ -84,37 +88,6 @@ public sealed class JacketFeatureBuilder : SolidWorksPartFamilyBuilderBase
             "FeatureCut4 returned null for the jacket bore.");
         diagnostics.OperationsExecuted.Add("jacket_inner_cut_success");
 
-        diagnostics.GeometryValidationAttempted = true;
-        var measurement = _geometryReader.Read(model);
-        diagnostics.MeasuredBodyCount = measurement.Geometry?.BodyCount;
-        diagnostics.MeasuredVolumeCubicMillimeters = measurement.Geometry?.VolumeCubicMillimeters;
-        if (!measurement.IsSuccess)
-        {
-            diagnostics.GeometryValidationStatus = "Failed";
-            throw Failure(
-                measurement.FailureStage ?? PartFamilyFailureStages.GeometryReadFailed,
-                measurement.Issues.FirstOrDefault() ?? "Jacket geometry could not be read.");
-        }
-
-        var geometryValidation = JacketGeometryValidator.Validate(
-            outerDiameter,
-            innerDiameter,
-            length,
-            measurement.Geometry);
-        diagnostics.ExpectedVolumeCubicMillimeters = geometryValidation.ExpectedVolumeCubicMillimeters;
-        diagnostics.MeasuredVolumeCubicMillimeters = geometryValidation.MeasuredVolumeCubicMillimeters;
-        diagnostics.GeometryValidationStatus = geometryValidation.IsValid ? "Passed" : "Failed";
-        if (!geometryValidation.IsValid)
-        {
-            throw Failure(
-                geometryValidation.FailureStage ?? PartFamilyFailureStages.ParameterGeometryMismatch,
-                geometryValidation.Issues.FirstOrDefault() ?? "Jacket geometry validation did not pass.");
-        }
-
-        diagnostics.OperationsExecuted.Add("jacket_geometry_validation_success");
         logs.Add($"jacket_cylindrical_shell_created: outer={outerDiameter} mm, inner={innerDiameter} mm, length={length} mm");
-        logs.Add(
-            $"jacket_geometry_validated: expected_volume={geometryValidation.ExpectedVolumeCubicMillimeters:R} mm^3, " +
-            $"measured_volume={geometryValidation.MeasuredVolumeCubicMillimeters:R} mm^3");
     }
 }

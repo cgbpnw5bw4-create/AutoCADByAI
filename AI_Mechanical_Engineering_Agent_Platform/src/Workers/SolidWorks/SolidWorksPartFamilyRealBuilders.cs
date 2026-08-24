@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using DomainSchemas;
+using SolidWorksWorker.Features;
 
 namespace SolidWorksWorker;
 
@@ -33,6 +34,8 @@ public sealed class SolidWorksPartFamilyBuildDiagnostics
     public bool GeometryValidationAttempted { get; set; }
     public string? GeometryValidationStatus { get; set; }
     public int? MeasuredBodyCount { get; set; }
+    public int? ExpectedBodyCount { get; set; }
+    public double? GeometryVolumeRelativeTolerance { get; set; }
     public double? ExpectedVolumeCubicMillimeters { get; set; }
     public double? MeasuredVolumeCubicMillimeters { get; set; }
     public string? FailureStage { get; set; }
@@ -120,6 +123,8 @@ public static class SolidWorksPartFamilyBuildReportWriter
             geometry_validation_attempted = diagnostics.GeometryValidationAttempted,
             geometry_validation_status = diagnostics.GeometryValidationStatus,
             measured_body_count = diagnostics.MeasuredBodyCount,
+            expected_body_count = diagnostics.ExpectedBodyCount,
+            geometry_volume_relative_tolerance = diagnostics.GeometryVolumeRelativeTolerance,
             expected_volume_cubic_mm = diagnostics.ExpectedVolumeCubicMillimeters,
             measured_volume_cubic_mm = diagnostics.MeasuredVolumeCubicMillimeters,
             failure_stage = diagnostics.FailureStage,
@@ -515,15 +520,28 @@ public sealed record ShaftProfileSegment(
 
 public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamilyBuilder
 {
+    private readonly ISolidWorksGeometryReader? _geometryReader;
+
     protected SolidWorksPartFamilyBuilderBase(
         ISolidWorksComFacade? comFacade,
         ISolidWorksFileVerifier? fileVerifier,
-        ISolidWorksPartFamilyPlaneSelector? planeSelector)
+        ISolidWorksPartFamilyPlaneSelector? planeSelector,
+        ISolidWorksGeometryReader? geometryReader = null)
     {
         Com = comFacade ?? new LateBoundSolidWorksComFacade();
         FileVerifier = fileVerifier ?? new SolidWorksFileVerifier();
         PlaneSelector = planeSelector ?? new SolidWorksPartFamilyPlaneSelector();
+        _geometryReader = geometryReader;
     }
+
+    protected ISolidWorksGeometryReader GeometryReader =>
+        _geometryReader ?? new RealSolidWorksGeometryReader(Com);
+
+    /// <summary>
+    /// 零件族声明的理论几何期望。返回 null 表示该族未声明，跳过几何校验。
+    /// 判定逻辑本身在 <see cref="PartGeometryValidator"/>，所有零件族共用一份。
+    /// </summary>
+    protected virtual ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan) => null;
 
     protected ISolidWorksComFacade Com { get; }
     protected ISolidWorksFileVerifier FileVerifier { get; }
@@ -651,6 +669,7 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
                     PartFamilyFailureStages.FeatureResultInvalid,
                     "Final ForceRebuild3(false) did not return true.");
             }
+            ValidateExpectedGeometry(model, context.Request.BuildPlan, diagnostics);
             Save(model, partPath, diagnostics);
             Export(context.Application, model, stepPath, diagnostics);
             SolidWorksPartFamilyBuildReportWriter.Write(reportPath, context, this, outputDirectory, diagnostics, "Passed");
@@ -768,6 +787,54 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
             RealExecutionMode,
             diagnostics.RealCadExecuted,
             diagnostics.FailureStage ?? FailureStage);
+    }
+
+    /// <summary>
+    /// 统一建模内核的几何后置校验。V2.0-D 的几何校验原本挂在零件专用 Builder 上，
+    /// V2.0-E 统一执行路线后两端同时不可达；此处把它提升为平台级阶段：
+    /// 读取用通用 GeometryReader，期望值由零件族声明，判定只有一份。
+    /// 未声明期望的零件族跳过校验，并在 diagnostics 中留下可见记录。
+    /// </summary>
+    private void ValidateExpectedGeometry(
+        object model,
+        SolidWorksBuildPlan plan,
+        SolidWorksPartFamilyBuildDiagnostics diagnostics)
+    {
+        var expected = DescribeExpectedGeometry(plan);
+        if (expected is null)
+        {
+            // 不覆盖子类已经得出的结论：只有在无人做过几何校验时才标记未声明。
+            diagnostics.GeometryValidationStatus ??= "NotDeclared";
+            return;
+        }
+
+        diagnostics.GeometryValidationAttempted = true;
+        diagnostics.ExpectedBodyCount = expected.BodyCount;
+        diagnostics.GeometryVolumeRelativeTolerance = expected.VolumeRelativeTolerance;
+        diagnostics.OperationsExecuted.Add("geometry_validation_started");
+        var measurement = GeometryReader.Read(model);
+        diagnostics.MeasuredBodyCount = measurement.Geometry?.BodyCount;
+        diagnostics.MeasuredVolumeCubicMillimeters = measurement.Geometry?.VolumeCubicMillimeters;
+        if (!measurement.IsSuccess)
+        {
+            diagnostics.GeometryValidationStatus = "Failed";
+            throw Failure(
+                measurement.FailureStage ?? PartFamilyFailureStages.GeometryReadFailed,
+                measurement.Issues.FirstOrDefault() ?? $"{PartType} geometry could not be read.");
+        }
+
+        var validation = PartGeometryValidator.Validate(expected, measurement.Geometry);
+        diagnostics.ExpectedVolumeCubicMillimeters = validation.ExpectedVolumeCubicMillimeters;
+        diagnostics.MeasuredVolumeCubicMillimeters = validation.MeasuredVolumeCubicMillimeters;
+        diagnostics.GeometryValidationStatus = validation.IsValid ? "Passed" : "Failed";
+        if (!validation.IsValid)
+        {
+            throw Failure(
+                validation.FailureStage ?? PartFamilyFailureStages.ParameterGeometryMismatch,
+                validation.Issues.FirstOrDefault() ?? $"{PartType} geometry validation failed.");
+        }
+
+        diagnostics.OperationsExecuted.Add("geometry_validation_success");
     }
 
     private void Save(object model, string path, SolidWorksPartFamilyBuildDiagnostics diagnostics)

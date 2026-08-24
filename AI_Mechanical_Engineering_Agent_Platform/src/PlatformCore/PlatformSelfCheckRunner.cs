@@ -861,6 +861,7 @@ public static class PlatformSelfCheckRunner
             V21ARealExecutionFrozen = v20EUnifiedFeatureGraphChecks.V21ARealExecutionFrozen,
             V20EDocumented = v20EUnifiedFeatureGraphChecks.V20EDocumented,
             V20ECapabilityRegressionGatePassed = v20EUnifiedFeatureGraphChecks.CapabilityRegressionGatePassed,
+            V20EGeometryValidationPlatformWide = v20EUnifiedFeatureGraphChecks.GeometryValidationPlatformWide,
             V20ECapabilityRegressions = v20EUnifiedFeatureGraphChecks.CapabilityRegressions,
             PartFamilyDefinitionSupported = v20EUnifiedFeatureGraphChecks.PartFamilyDefinitionSupported,
             PlateUsesPartFamilyDefinition = v20EUnifiedFeatureGraphChecks.PlateUsesPartFamilyDefinition,
@@ -2407,6 +2408,40 @@ public static class PlatformSelfCheckRunner
         var regressionModelsSupported =
             partFamilyDefinitionSupported &&
             registeredFeatureTypes.Count > 0;
+        // 几何校验已从零件专用 Builder 提升为平台级后置阶段。判据必须可鉴别：
+        // 既要证明零件族能声明期望，也要证明判定会拒绝错误几何——否则这个字段
+        // 会退化成「类型存在」的恒真式，而几何校验正是 V2.0-E 迁移时静默失联的能力。
+        var geometryValidationPlatformWide = false;
+        var jacketDefinitionForGeometry = definitions.SingleOrDefault(item =>
+            string.Equals(item.PartType, JacketBasicDefinition.Type, StringComparison.OrdinalIgnoreCase));
+        var jacketGeometryModel = regressionModels.SingleOrDefault(item =>
+            string.Equals(item.PartType, JacketBasicDefinition.Type, StringComparison.OrdinalIgnoreCase));
+        if (jacketDefinitionForGeometry is not null && jacketGeometryModel is not null)
+        {
+            var geometryPlan = jacketDefinitionForGeometry
+                .GenerateBuildPlan("self-check-v20-e-geometry", jacketGeometryModel.Spec)
+                .BuildPlan;
+            var expectedGeometry = geometryPlan is null
+                ? null
+                : jacketDefinitionForGeometry.DescribeExpectedGeometry(geometryPlan);
+            if (expectedGeometry is { BodyCount: 1 } && expectedGeometry.VolumeCubicMillimeters > 0d)
+            {
+                MeasuredGeometry Measured(int bodies, double volume) =>
+                    new(true, null, null, bodies, volume, null, null);
+
+                var accepts = PartGeometryValidator
+                    .Validate(expectedGeometry, Measured(1, expectedGeometry.VolumeCubicMillimeters))
+                    .IsValid;
+                var rejectsVolume = !PartGeometryValidator
+                    .Validate(expectedGeometry, Measured(1, expectedGeometry.VolumeCubicMillimeters * 2d))
+                    .IsValid;
+                var rejectsBodies = !PartGeometryValidator
+                    .Validate(expectedGeometry, Measured(2, expectedGeometry.VolumeCubicMillimeters))
+                    .IsValid;
+                geometryValidationPlatformWide = accepts && rejectsVolume && rejectsBodies;
+            }
+        }
+
         var flangeRegressionPassed = flangeUsesPartFamilyDefinition && v18PartFamilyChecks.FlangeDryRunPassed;
         var shaftRegressionPassed = shaftUsesPartFamilyDefinition && v18PartFamilyChecks.ShaftDryRunPassed;
         var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(
@@ -2418,6 +2453,7 @@ public static class PlatformSelfCheckRunner
                 ["flange_artifact_validation_supported"] = v19PartFamilyChecks.FlangeArtifactValidationSupported,
                 ["plate_part_family_regression_passed"] = v19PartFamilyChecks.PlatePartFamilyRegressionPassed,
                 ["shaft_artifact_validation_supported"] = v19PartFamilyChecks.ShaftArtifactValidationSupported,
+                ["v2_0_e_geometry_validation_platform_wide"] = geometryValidationPlatformWide,
                 ["v2_0_d_production_evidence_active"] = v20DModelRebuildChecks.ProductionEvidenceActive,
                 ["v2_0_e_controlled_plate_evidence_active"] = controlledPlateEvidenceActive,
                 ["v2_0_e_step_content_gate_active"] = stepContentGateActive,
@@ -2442,7 +2478,8 @@ public static class PlatformSelfCheckRunner
             cadCapabilityMatrixExists,
             regressionModelsSupported,
             flangeRegressionPassed,
-            shaftRegressionPassed);
+            shaftRegressionPassed,
+            geometryValidationPlatformWide);
     }
 
     private static async Task<V21AJacketSelfCheckResult> RunV21AJacketChecksAsync(
@@ -6799,7 +6836,8 @@ public static class PlatformSelfCheckRunner
         bool CadCapabilityMatrixExists,
         bool RegressionModelsSupported,
         bool FlangeRegressionPassed,
-        bool ShaftRegressionPassed)
+        bool ShaftRegressionPassed,
+        bool GeometryValidationPlatformWide)
     {
         public bool AllPassed =>
             UnifiedPartFamilyBuilders &&
@@ -6818,7 +6856,8 @@ public static class PlatformSelfCheckRunner
             CadCapabilityMatrixExists &&
             RegressionModelsSupported &&
             FlangeRegressionPassed &&
-            ShaftRegressionPassed;
+            ShaftRegressionPassed &&
+            GeometryValidationPlatformWide;
     }
 
     private sealed record V21AJacketSelfCheckResult(

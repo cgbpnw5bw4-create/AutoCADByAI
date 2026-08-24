@@ -37,12 +37,12 @@ public sealed class HoleHandler : FeatureHandlerBase
             "V2.0-C diagnostic verified a diameter-matched circular sketch plus 20 mm blind FeatureCut4 after reactivating the dependency sketch.",
             "Solid volume decreased from 5.9214601836602546E-05 to 5.84292036732051E-05 cubic metres; no SimpleHole2 or Hole Wizard API was called."
         ],
-        EvidenceId: "v2.0-e-20260821-034143-simple-hole",
+        EvidenceId: "v2.0-e-20260821-074819-simple-hole",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "simple_circular_cut_blind;diameter_matches_single_circle;positive_depth_mm;no_wizard",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/20260821_034143_9836278/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211");
+        DiagnosticRunPath: "evidence/solidworks/20260821_074819_4327602/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:5107d8555b250301768d4f9e5a510e6f2c42aae566e64cf2277cdb42597be0b6");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

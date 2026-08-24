@@ -76,7 +76,8 @@ public sealed class PartFamilyBuilderRegistry
             .Select(definition => new Features.SolidWorksFeatureGraphPartFamilyBuilder(
                 definition.PartType,
                 handlers,
-                supportsRealExecution: definition.SupportsRealExecution)));
+                supportsRealExecution: definition.SupportsRealExecution,
+                expectedGeometry: definition.DescribeExpectedGeometry)));
     }
 
     public void Register(IPartFamilyBuilder builder)

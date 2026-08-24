@@ -627,6 +627,9 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("shaft_regression_passed")]
     public bool ShaftRegressionPassed { get; init; }
 
+    [JsonPropertyName("v2_0_e_geometry_validation_platform_wide")]
+    public bool V20EGeometryValidationPlatformWide { get; init; }
+
     [JsonPropertyName("v2_0_e_final_status")]
     public string V20EFinalStatus { get; init; } = "Failed";
 

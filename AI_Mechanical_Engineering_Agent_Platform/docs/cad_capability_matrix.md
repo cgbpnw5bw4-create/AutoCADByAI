@@ -42,6 +42,38 @@
 | `jacket_basic` | `extrude_boss`、`extrude_cut` | 受零件族证据限制 | Feature 层可用，但零件族结构化运行时证据仍为 pending |
 | `shaft_basic` | `revolve_boss` | **不可以** | `revolve_boss` 证据状态为 `Unverified`；Definition 与统一内核均 fail-closed |
 
+## 几何校验能力
+
+V2.0-D 的几何校验原本挂在零件专用 Builder 上。V2.0-E 统一执行路线后，生产端（`JacketFeatureBuilder`）不再注册、消费端（产物校验器的零件族分支）不再触达，该链路两端同时失联且无人察觉——因为夹套本就 fail-closed。
+
+收尾时已把它提升为**平台级后置阶段**：
+
+| 环节 | 位置 | 说明 |
+|---|---|---|
+| 期望值 | `IPartFamilyDefinition.DescribeExpectedGeometry` | 由零件族从自身参数推导，与 CAD API 无关 |
+| 测量 | `ISolidWorksGeometryReader` | 通用读取，不含零件知识 |
+| 判定 | `PartGeometryValidator` | 全平台唯一一份，可独立单测 |
+| 执行 | `SolidWorksPartFamilyBuilderBase` 构建后、保存前 | 校验失败即 fail-closed，不落盘 |
+| 复核 | `SolidWorksArtifactValidator.ValidateGeometryEvidence` | 由 build_report 自描述驱动，校验器不持有零件知识 |
+
+| 零件族 | 是否声明几何期望 | 期望内容 |
+|---|---|---|
+| `jacket_basic` | 是 | 单实体；体积 `pi/4 * (Do^2 - Di^2) * L` |
+| `plate_basic_4holes` | 否 | 尚未声明 |
+| `flange_basic` | 否 | 尚未声明 |
+| `shaft_basic` | 否 | 尚未声明 |
+
+未声明期望的零件族会跳过几何校验，`build_report` 中记为 `geometry_validation_status = "NotDeclared"`。**这是一个可见缺口，不是默认通过**——跳过的事实会写进产物报告，可被审查发现。
+
+## 基线治理规则
+
+`docs/self_check_capability_baseline.json` 是受版本控制的能力契约，由 `SelfCheckCapabilityRegressionGate` 强制执行。
+
+- 任何能力字段**首次为 true 之后**，必须同步加入基线，否则它不受回归保护。
+- 基线中的值只能是 `true`。写 `false` 会被闸判为配置错误——因为削弱基线是绕过本闸门阻力最小的路径。
+- 需要移除某项保护时必须显式删除字段并说明理由，不得就地改成 `false`。
+- 受保护字段只增不减，由 `V20ERegressionGateTests` 锁定。
+
 ## 执行步骤
 
 1. 新增或修改 FeatureGraph 前，先在本矩阵确认所需 Feature 的验证状态。
