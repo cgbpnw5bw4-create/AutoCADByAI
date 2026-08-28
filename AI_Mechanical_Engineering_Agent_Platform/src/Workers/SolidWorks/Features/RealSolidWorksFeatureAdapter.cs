@@ -14,6 +14,42 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     public const string AdapterIdentifier = "solidworks.real-feature-adapter";
     public const string CurrentAdapterVersion = "2.0-c.2";
 
+    // 取自本机 SDK 反射（SOLIDWORKS 2023 swconst）：
+    // swFeatureFilletOptions_e.swFeatureFilletUniformRadius = 2
+    // swFeatureFilletType_e.swFeatureFilletType_Simple = 0
+    private const int SwFeatureFilletUniformRadius = 2;
+    private const int SwFeatureFilletTypeSimple = 0;
+
+    // 同一来源：swChamferType_e.swChamferAngleDistance = 1。
+    // Options 是 swFeatureChamferOption_e 位标志；本档案不授权 flip(1)、
+    // keep-feature(2)、切线延伸(4) 与 propagate-to-parts(8)，因此取 0。
+    private const int SwChamferAngleDistance = 1;
+    private const int SwFeatureChamferNoOptions = 0;
+
+    // 阵列与镜像的选择集标记。
+    //
+    // 这三个 API 与圆角、倒角一样不收几何引用参数，但它们要区分"哪个是种子、
+    // 哪个是方向"，所以选择时必须打标记。标记值不是从记忆里写的：本项目先试过
+    // IFeatureManager.CreateDefinition + 显式引用属性那条路，实测
+    // ILinearPatternFeatureData.AccessSelections 对尚未归属特征的定义对象返回
+    // false，写进去的 D1Axis 读回来是 null——那条路在"新建"场景走不通。
+    // 因此退回选择集路线，并在创建之后立刻回读特征自身的定义对象校验引用，
+    // 把标记值从"猜测"变成"每次执行都验证一遍的事实"。
+    private const int SeedFeatureSelectionMark = 4;
+    private const int DirectionSelectionMark = 1;
+    private const int MirrorPlaneSelectionMark = 2;
+    private const int MirrorTargetSelectionMark = 1;
+
+    // IFeature.GetTypeName2 对这三类特征的返回值，实测自本机 SOLIDWORKS 2023。
+    private const string SwLinearPatternTypeName = "LPattern";
+    private const string SwCircularPatternTypeName = "CirPattern";
+    private const string SwMirrorPatternTypeName = "MirrorPattern";
+
+    // 方向平行性判据：|cos| 必须达到该阈值才认为解出的边与声明的主轴同向。
+    // 取 0.999 而不是 1.0，是为了容忍浮点与建模公差，但仍能把差 2.6 度以上
+    // 的边判为不匹配——阵列方向错一点，整排实例就全错位置。
+    private const double AxisParallelCosine = 0.999d;
+
     private const double MmToMeters = 0.001d;
     private static readonly double OneDegreeInRadians = Math.PI / 180d;
 
@@ -29,6 +65,9 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     private readonly ISolidWorksComFacade _com;
     private readonly Dictionary<string, SketchComArtifact> _sketches =
         new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>已创建特征的 COM 句柄，按 feature_id 索引。阵列与镜像的种子由此取回。</summary>
+    private readonly Dictionary<string, object> _features = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<object> _ownedReferences = [];
     private readonly HashSet<object> _ownedReferenceSet =
         new(ReferenceEqualityComparer.Instance);
@@ -125,6 +164,567 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                     CloseActiveSketchIfNeeded(sketchManager);
                 }
             }));
+    }
+
+    // V2.1-A 复杂特征执行入口。
+    //
+    // 这五个 API 目前没有本项目的真实执行证据，因此 Adapter 在这一层显式返回
+    // feature_api_unverified，而不是写一段从未运行过的 COM 调用。理由：
+    public Task<FeatureHandlerExecutionResult> ExecuteFilletAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Guard(
+            PartFamilyFailureStages.FeatureResultInvalid,
+            () =>
+            {
+                var radius = RequiredPositive(feature.Parameters, "radius_mm");
+                feature.Parameters.TryGetValue("edge_selection", out var criteriaJson);
+                if (!EdgeSelectionCriteriaParser.TryParse(criteriaJson, out var criteria, out var criteriaIssue) ||
+                    criteria is null)
+                {
+                    throw Stage(
+                        PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                        criteriaIssue ?? "edge_selection criteria are unusable.");
+                }
+
+                SelectEdgesByCriteria(criteria, PartFamilyFailureStages.FeatureResultInvalid);
+
+                var volumeBefore = MeasureSolidVolume();
+                var manager = Own(_com.TryGetProperty(_model, "FeatureManager"))
+                    ?? throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "FeatureManager is unavailable.");
+
+                // FeatureFillet3 的 14 个参数取自本机 SDK 反射，不含任何几何引用：
+                // 目标边完全来自上面 Select4 建立的选择集。
+                // Options = swFeatureFilletUniformRadius(2)，Ftyp = swFeatureFilletType_Simple(0)。
+                var featureObject = Own(_com.InvokeWithArgs(
+                    manager,
+                    "FeatureFillet3",
+                    [
+                        SwFeatureFilletUniformRadius,
+                        radius * MmToMeters,
+                        0d,
+                        0d,
+                        SwFeatureFilletTypeSimple,
+                        0,
+                        0,
+                        null, null, null, null, null, null, null
+                    ]));
+
+                return ValidateFeatureResult(
+                    feature,
+                    operation,
+                    featureObject,
+                    volumeBefore,
+                    VolumeChangeExpectation.Changed);
+            }));
+    }
+
+    /// <summary>
+    /// 按声明式判据选中边。
+    /// <para>
+    /// 这是整条链路的安全关键点：SolidWorks 的圆角、倒角、阵列、镜像都只作用于
+    /// 当前选择集，选错边时 API 依然返回非空 IFeature，产出的是特征打在错误位置
+    /// 的零件。因此判据未唯一命中时必须直接失败，绝不"取第一条"。
+    /// </para>
+    /// </summary>
+    /// <summary>
+    /// 按判据求解边，返回实测数据与 COM 句柄的配对。
+    /// <para>
+    /// 求解与 fail-closed 判定集中在这里，供"选中它"（圆角、倒角）和
+    /// "取它的方向"（线性阵列、圆周阵列）两类用法共用。安全关键逻辑只写一份，
+    /// 否则新增一种用法就多一次漏掉 ExpectedCount 闸的机会。
+    /// </para>
+    /// </summary>
+    private (IReadOnlyList<EnumeratedEdge> Enumerated, EdgeSelectionResult Resolution) ResolveEdges(
+        EdgeSelectionCriteria criteria)
+    {
+        var enumerated = SolidWorksEdgeEnumerator.EnumerateModel(_com, _model);
+        if (enumerated.Count == 0)
+        {
+            throw Stage(PartFamilyFailureStages.EdgeSelectionNotFound, "the model exposed no solid edges to select.");
+        }
+
+        var resolution = EdgeSelectionResolver.Resolve(
+            enumerated.Select(edge => edge.Measured).ToArray(),
+            criteria);
+        if (!resolution.IsResolved)
+        {
+            throw Stage(
+                resolution.FailureStage ?? PartFamilyFailureStages.EdgeSelectionNotFound,
+                resolution.Issues.FirstOrDefault() ?? "edge selection could not be resolved.");
+        }
+
+        return (enumerated, resolution);
+    }
+
+    private void SelectEdgesByCriteria(EdgeSelectionCriteria criteria, string stage)
+    {
+        var (enumerated, resolution) = ResolveEdges(criteria);
+
+        _com.TryInvoke(_model, "ClearSelection2", true);
+        var selectionManager = Own(_com.TryGetProperty(_model, "SelectionManager"))
+            ?? throw Stage(stage, "SelectionManager is unavailable.");
+        var selectData = Own(_com.TryInvoke(selectionManager, "CreateSelectData"))
+            ?? throw Stage(stage, "CreateSelectData returned null for the edge selection.");
+
+        foreach (var match in resolution.Matches)
+        {
+            var comEdge = enumerated[match.Index].ComEdge;
+            if (!_com.TryInvokeBool(comEdge, "Select4", true, selectData))
+            {
+                throw Stage(stage, $"IEntity.Select4 failed for resolved edge index {match.Index}.");
+            }
+        }
+
+        var selectedCount = _com.TryInvoke(selectionManager, "GetSelectedObjectCount2", -1);
+        if (selectedCount is int count && count != resolution.Matches.Count)
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionAmbiguous,
+                $"selection set holds {count} objects but the criteria resolved {resolution.Matches.Count}.");
+        }
+    }
+
+    public Task<FeatureHandlerExecutionResult> ExecuteChamferAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Guard(
+            PartFamilyFailureStages.FeatureResultInvalid,
+            () =>
+            {
+                var distance = RequiredPositive(feature.Parameters, "distance_mm");
+                var angle = RequiredPositive(feature.Parameters, "angle_deg");
+                if (angle >= 90d)
+                {
+                    throw Stage(
+                        PartFamilyFailureStages.InvalidFeatureParameter,
+                        $"angle_deg={angle} is outside the authorized open interval (0, 90).");
+                }
+
+                feature.Parameters.TryGetValue("edge_selection", out var criteriaJson);
+                if (!EdgeSelectionCriteriaParser.TryParse(criteriaJson, out var criteria, out var criteriaIssue) ||
+                    criteria is null)
+                {
+                    throw Stage(
+                        PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                        criteriaIssue ?? "edge_selection criteria are unusable.");
+                }
+
+                SelectEdgesByCriteria(criteria, PartFamilyFailureStages.FeatureResultInvalid);
+
+                var volumeBefore = MeasureSolidVolume();
+                var manager = Own(_com.TryGetProperty(_model, "FeatureManager"))
+                    ?? throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "FeatureManager is unavailable.");
+
+                // InsertFeatureChamfer 的 8 个参数取自本机 SDK 反射，同样不含几何引用：
+                // 目标边完全来自上面 Select4 建立的选择集。角度按 SolidWorks 约定取弧度。
+                // VertexChamDist1/2/3 只对 swChamferVertex 有意义，此档案传 0。
+                var featureObject = Own(_com.InvokeWithArgs(
+                    manager,
+                    "InsertFeatureChamfer",
+                    [
+                        SwFeatureChamferNoOptions,
+                        SwChamferAngleDistance,
+                        distance * MmToMeters,
+                        angle * OneDegreeInRadians,
+                        0d,
+                        0d,
+                        0d,
+                        0d
+                    ]));
+
+                // 与圆角同理：倒角是削料还是补料取决于边的凹凸性，写死方向会在
+                // 凹边上产生假失败，因此只要求体积发生可测变化。
+                return ValidateFeatureResult(
+                    feature,
+                    operation,
+                    featureObject,
+                    volumeBefore,
+                    VolumeChangeExpectation.Changed);
+            }));
+    }
+
+    public Task<FeatureHandlerExecutionResult> ExecuteLinearPatternAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Guard(
+            PartFamilyFailureStages.FeatureResultInvalid,
+            () =>
+            {
+                var instances = RequiredInstanceCount(feature);
+                var spacing = RequiredPositive(feature.Parameters, "spacing_mm");
+                var directionEdge = ResolveAxisEdge(feature, "direction_selection", "direction", EdgeKinds.Line);
+                var seed = ResolveSeedFeatures(feature, "seed_feature");
+
+                var volumeBefore = MeasureSolidVolume();
+                var manager = RequireFeatureManager();
+
+                ClearSelection();
+                SelectFeatures(seed, SeedFeatureSelectionMark, "linear pattern seed");
+                SelectEntity(directionEdge, DirectionSelectionMark, "linear pattern direction");
+
+                // FeatureLinearPattern4 的 20 个参数取自本机 SDK 反射。
+                // 只用第一方向：Num2=1、Spacing2=0 且 CtrlByNum2=true 表示第二方向未启用。
+                var featureObject = Own(_com.InvokeWithArgs(
+                    manager,
+                    "FeatureLinearPattern4",
+                    [
+                        instances, spacing * MmToMeters, 1, 0d,
+                        false, false, string.Empty, string.Empty,
+                        false, false, false, false,
+                        true, true, false, false,
+                        false, false, 0d, 0d
+                    ]));
+
+                VerifyCreatedFeatureKind(featureObject, SwLinearPatternTypeName, "linear pattern");
+                return ValidateFeatureResult(
+                    feature,
+                    operation,
+                    featureObject,
+                    volumeBefore,
+                    VolumeChangeExpectation.Changed);
+            }));
+    }
+
+    public Task<FeatureHandlerExecutionResult> ExecuteCircularPatternAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Guard(
+            PartFamilyFailureStages.FeatureResultInvalid,
+            () =>
+            {
+                var instances = RequiredInstanceCount(feature);
+                var angle = RequiredPositive(feature.Parameters, "angle_deg");
+                if (angle > 360d)
+                {
+                    throw Stage(
+                        PartFamilyFailureStages.InvalidFeatureParameter,
+                        $"angle_deg={angle} exceeds the authorized 360 degree envelope.");
+                }
+
+                var axisEdge = ResolveAxisEdge(feature, "axis_selection", "axis", EdgeKinds.Circle);
+                var seed = ResolveSeedFeatures(feature, "seed_feature");
+
+                var volumeBefore = MeasureSolidVolume();
+                var manager = RequireFeatureManager();
+
+                ClearSelection();
+                SelectFeatures(seed, SeedFeatureSelectionMark, "circular pattern seed");
+                SelectEntity(axisEdge, DirectionSelectionMark, "circular pattern axis");
+
+                // FeatureCircularPattern5 的 14 个参数取自本机 SDK 反射。
+                // EqualSpacing=true 时 Spacing 是总角度，实例在其上等分。
+                var featureObject = Own(_com.InvokeWithArgs(
+                    manager,
+                    "FeatureCircularPattern5",
+                    [
+                        instances, angle * OneDegreeInRadians, false, string.Empty,
+                        false, true, false, false,
+                        false, false, 1, 0d, string.Empty, false
+                    ]));
+
+                VerifyCreatedFeatureKind(featureObject, SwCircularPatternTypeName, "circular pattern");
+                return ValidateFeatureResult(
+                    feature,
+                    operation,
+                    featureObject,
+                    volumeBefore,
+                    VolumeChangeExpectation.Changed);
+            }));
+    }
+
+    public Task<FeatureHandlerExecutionResult> ExecuteMirrorAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Guard(
+            PartFamilyFailureStages.FeatureResultInvalid,
+            () =>
+            {
+                feature.Parameters.TryGetValue("mirror_plane", out var planeName);
+                if (string.IsNullOrWhiteSpace(planeName))
+                {
+                    throw Stage(PartFamilyFailureStages.InvalidFeatureParameter, "mirror_plane is required.");
+                }
+
+                var plane = ResolveStandardPlane(planeName);
+                var targets = ResolveSeedFeatures(feature, "target_features");
+
+                var volumeBefore = MeasureSolidVolume();
+                var manager = RequireFeatureManager();
+
+                ClearSelection();
+                SelectFeatures([plane], MirrorPlaneSelectionMark, "mirror plane");
+                SelectFeatures(targets, MirrorTargetSelectionMark, "mirror target");
+
+                // InsertMirrorFeature2 的 5 个参数取自本机 SDK 反射：
+                // BMirrorBody=false 表示镜像特征而非实体；BMerge=true 保持单实体。
+                var featureObject = Own(_com.InvokeWithArgs(
+                    manager,
+                    "InsertMirrorFeature2",
+                    [false, false, true, false, 0]));
+
+                VerifyCreatedFeatureKind(featureObject, SwMirrorPatternTypeName, "mirror");
+                return ValidateFeatureResult(
+                    feature,
+                    operation,
+                    featureObject,
+                    volumeBefore,
+                    VolumeChangeExpectation.Changed);
+            }));
+    }
+
+    /// <summary>
+    /// 解出一条边并交叉校验它的方向。
+    /// <para>
+    /// 判据负责"选哪条"，声明的主轴负责"应该指向哪儿"。两者必须互相印证：
+    /// 判据可能命中一条完全合法、但不是设计者想要的边，而阵列方向错一点，
+    /// 整排实例的位置就全错——错得还很像成功。
+    /// </para>
+    /// </summary>
+    private object ResolveAxisEdge(
+        FeatureDefinition feature,
+        string criteriaParameter,
+        string axisParameter,
+        string expectedKind)
+    {
+        feature.Parameters.TryGetValue(criteriaParameter, out var criteriaJson);
+        if (!EdgeSelectionCriteriaParser.TryParse(criteriaJson, out var criteria, out var criteriaIssue) ||
+            criteria is null)
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                criteriaIssue ?? $"{criteriaParameter} criteria are unusable.");
+        }
+
+        if (criteria.ExpectedCount != 1)
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                $"{criteriaParameter} must declare expected_count=1; a direction or axis comes from one edge only.");
+        }
+
+        var (enumerated, resolution) = ResolveEdges(criteria);
+        var match = resolution.Matches[0];
+        if (!match.Kind.Equals(expectedKind, StringComparison.OrdinalIgnoreCase))
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionAmbiguous,
+                $"{criteriaParameter} resolved a {match.Kind} edge but {expectedKind} is required.");
+        }
+
+        if (match.Direction is null)
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionNotFound,
+                $"{criteriaParameter} resolved edge index {match.Index}, which exposes no measurable direction.");
+        }
+
+        var declared = RequiredPrincipalAxis(feature, axisParameter);
+        var cosine = Math.Abs(
+            (match.Direction.X * declared.X) +
+            (match.Direction.Y * declared.Y) +
+            (match.Direction.Z * declared.Z));
+        if (cosine < AxisParallelCosine)
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionAmbiguous,
+                $"{criteriaParameter} resolved an edge whose direction " +
+                $"({match.Direction.X:0.###}, {match.Direction.Y:0.###}, {match.Direction.Z:0.###}) " +
+                $"is not parallel to the declared {axisParameter}={feature.Parameters[axisParameter]} axis; " +
+                "refusing to guess which one the design meant.");
+        }
+
+        return enumerated[match.Index].ComEdge;
+    }
+
+    private static EdgeDirection RequiredPrincipalAxis(FeatureDefinition feature, string parameterName)
+    {
+        feature.Parameters.TryGetValue(parameterName, out var axis);
+        return (axis ?? string.Empty).ToLowerInvariant() switch
+        {
+            "x" => new EdgeDirection(1d, 0d, 0d),
+            "y" => new EdgeDirection(0d, 1d, 0d),
+            "z" => new EdgeDirection(0d, 0d, 1d),
+            _ => throw Stage(
+                PartFamilyFailureStages.InvalidFeatureParameter,
+                $"{parameterName} must be one of x, y or z.")
+        };
+    }
+
+    /// <summary>
+    /// 按 feature_id 取回执行链里已创建的特征对象。
+    /// <para>
+    /// 取不到必须失败而不是跳过：一个没有种子的阵列在 SolidWorks 里可能照样
+    /// 返回非空对象，产出的却是"什么都没阵列"的零件。
+    /// </para>
+    /// </summary>
+    private object[] ResolveSeedFeatures(
+        FeatureDefinition feature,
+        string parameterName)
+    {
+        feature.Parameters.TryGetValue(parameterName, out var text);
+        var ids = (text ?? string.Empty)
+            .Split([';', ','], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (ids.Length == 0)
+        {
+            throw Stage(
+                PartFamilyFailureStages.InvalidFeatureParameter,
+                $"{parameterName} must reference at least one previously created feature.");
+        }
+
+        var resolved = new List<object>(ids.Length);
+        foreach (var id in ids)
+        {
+            if (!_features.TryGetValue(id, out var created))
+            {
+                throw Stage(
+                    PartFamilyFailureStages.FeatureResultInvalid,
+                    $"{parameterName} references {id}, which this adapter never created.");
+            }
+
+            resolved.Add(created);
+        }
+
+        return [.. resolved];
+    }
+
+    private static int RequiredInstanceCount(FeatureDefinition feature)
+    {
+        if (!feature.Parameters.TryGetValue("instance_count", out var text) ||
+            !int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) ||
+            count < 2)
+        {
+            throw Stage(
+                PartFamilyFailureStages.InvalidFeatureParameter,
+                "instance_count must be an integer of at least 2.");
+        }
+
+        return count;
+    }
+
+    private object RequireFeatureManager() =>
+        Own(_com.TryGetProperty(_model, "FeatureManager"))
+        ?? throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "FeatureManager is unavailable.");
+
+    /// <summary>
+    /// 按标记把若干特征加入选择集，并逐个确认加入成功。
+    /// </summary>
+    private void SelectFeatures(object[] features, int mark, string what)
+    {
+        foreach (var item in features)
+        {
+            if (!_com.TryInvokeBool(item, "Select2", true, mark))
+            {
+                throw Stage(
+                    PartFamilyFailureStages.FeatureResultInvalid,
+                    $"IFeature.Select2 failed for a {what} with mark {mark}.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 按标记把一个实体（边、面）加入选择集。
+    /// </summary>
+    private void SelectEntity(object entity, int mark, string what)
+    {
+        var selectionManager = Own(_com.TryGetProperty(_model, "SelectionManager"))
+            ?? throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "SelectionManager is unavailable.");
+        var selectData = Own(_com.TryInvoke(selectionManager, "CreateSelectData"))
+            ?? throw Stage(
+                PartFamilyFailureStages.FeatureResultInvalid,
+                $"CreateSelectData returned null for the {what} selection.");
+
+        if (!_com.TrySetProperty(selectData, "Mark", mark) ||
+            !_com.TryInvokeBool(entity, "Select4", true, selectData))
+        {
+            throw Stage(
+                PartFamilyFailureStages.FeatureResultInvalid,
+                $"IEntity.Select4 failed for the {what} with mark {mark}.");
+        }
+    }
+
+    /// <summary>
+    /// 创建之后确认 SolidWorks 真的建出了我们要的那类特征。
+    /// <para>
+    /// 标记值决定了 SolidWorks 把哪个选中项当成种子、哪个当成方向或基准面。
+    /// 标记错了，这些 API 未必报错——可能建出别的东西，或者什么都没阵列。
+    /// GetTypeName2 是能在执行期廉价拿到的最强判据：它由 SolidWorks 自己给出，
+    /// 只有选择集被正确解读时才会是预期的那一类。
+    /// </para>
+    /// <para>
+    /// 曾尝试回读 IXxxPatternFeatureData 上的 D1Axis / Axis / Plane 做更强的引用校验，
+    /// 实测本机后期绑定下 AccessSelections 一律被拒（对新建定义对象和已归属特征都是），
+    /// 因此改为"特征类别 + 几何变化"这一对可稳定获得的判据；实例落点的正确性由
+    /// 采证时的只读拓扑探针独立复核，并由源码 revision 绑定锁住。
+    /// </para>
+    /// </summary>
+    private void VerifyCreatedFeatureKind(object? featureObject, string expectedTypeName, string what)
+    {
+        if (featureObject is null)
+        {
+            return;
+        }
+
+        var typeName = _com.TryInvoke(featureObject, "GetTypeName2")?.ToString();
+        if (!string.Equals(typeName, expectedTypeName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw Stage(
+                PartFamilyFailureStages.FeatureResultInvalid,
+                $"the created {what} reports feature type {typeName ?? "unknown"} " +
+                $"but {expectedTypeName} was expected; the selection marks did not bind what was intended.");
+        }
+    }
+
+    /// <summary>
+    /// 按标准名解析基准面并返回其对象。基准面名称是稳定的，
+    /// 不属于会漂移的自动生成名，因此这里按名查找是安全的。
+    /// </summary>
+    private object ResolveStandardPlane(string requestedPlane)
+    {
+        if (!PlaneAliases.TryGetValue(requestedPlane, out var aliases))
+        {
+            throw Stage(
+                PartFamilyFailureStages.InvalidFeatureParameter,
+                $"{requestedPlane} is not an authorized standard plane.");
+        }
+
+        var current = Own(_com.TryInvoke(_model, "FirstFeature"));
+        while (current is not null)
+        {
+            var name = _com.TryGetProperty(current, "Name")?.ToString();
+            var typeName = _com.TryInvoke(current, "GetTypeName2")?.ToString();
+            if (aliases.Contains(name ?? string.Empty, StringComparer.OrdinalIgnoreCase) &&
+                string.Equals(typeName, "RefPlane", StringComparison.OrdinalIgnoreCase))
+            {
+                return current;
+            }
+
+            current = Own(_com.TryInvoke(current, "GetNextFeature"));
+        }
+
+        throw Stage(
+            PartFamilyFailureStages.FeatureResultInvalid,
+            $"standard plane {requestedPlane} was not found in the feature tree.");
     }
 
     public Task<FeatureHandlerExecutionResult> ExecuteHoleAsync(
@@ -389,6 +989,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
         {
             VolumeChangeExpectation.Increase => volumeAfter > volumeBefore + tolerance,
             VolumeChangeExpectation.Decrease => volumeBefore > 0d && volumeAfter < volumeBefore - tolerance,
+            VolumeChangeExpectation.Changed => volumeBefore > 0d && Math.Abs(volumeAfter - volumeBefore) > tolerance,
             _ => false
         };
         if (!geometryChanged)
@@ -398,6 +999,13 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                 $"Solid-body volume did not {volumeChangeExpectation.ToString().ToLowerInvariant()}: " +
                 $"before={volumeBefore:R}, after={volumeAfter:R} cubic metres.");
         }
+
+        // 记下 feature_id 到 COM 特征对象的映射，供阵列与镜像取种子。
+        // 映射留在 Adapter 内部而不是放进共享的执行状态：执行状态会跨越
+        // Adapter 边界被 Handler 与流水线读到，而本项目明令 Handler 不得拿到
+        // 原始特征 RCW。CreatedObject 里放的是纯数据 FeatureAdapterArtifact，
+        // 正是为此——它不能用来选中特征。
+        _features[feature.FeatureId] = featureObject;
 
         return Passed(
             feature,
@@ -850,7 +1458,14 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     private enum VolumeChangeExpectation
     {
         Increase,
-        Decrease
+        Decrease,
+
+        /// <summary>
+        /// 只要求体积发生变化，不限方向。圆角/倒角作用在凸边时去料、
+        /// 作用在凹边时加料，方向由边的凸凹性决定而非特征类型决定，
+        /// 因此断言固定方向会产生假失败。
+        /// </summary>
+        Changed
     }
 
     private sealed class FeatureAdapterException(string stage, string message) : Exception(message)

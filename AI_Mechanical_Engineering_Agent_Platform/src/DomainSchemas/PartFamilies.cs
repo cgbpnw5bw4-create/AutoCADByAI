@@ -55,6 +55,9 @@ public static class PartFamilyFailureStages
     public const string ParameterGeometryMismatch = "parameter_geometry_mismatch";
     public const string FeatureMissingAfterRebuild = "feature_missing_after_rebuild";
     public const string GeometryReportFailed = "geometry_report_failed";
+    public const string EdgeSelectionInvalidCriteria = "edge_selection_invalid_criteria";
+    public const string EdgeSelectionNotFound = "edge_selection_not_found";
+    public const string EdgeSelectionAmbiguous = "edge_selection_ambiguous";
 }
 
 public static class PartFamilyExecutionModes

@@ -75,6 +75,7 @@ public sealed class RealSolidWorksGeometryReader : ISolidWorksGeometryReader
                 Features: featureMeasurements,
                 CylindricalDiametersMm: bodyMeasurements.CylindricalDiametersMm,
                 Cylinders: bodyMeasurements.Cylinders,
+                Edges: ReadEdges(bodies),
                 ReadIssues: Array.Empty<string>(),
                 SolidWorksVersion: null,
                 GeometryEvidenceSourceRevision: GeometryValidationEvidencePolicy.ComputeSourceRevision());
@@ -110,6 +111,20 @@ public sealed class RealSolidWorksGeometryReader : ISolidWorksGeometryReader
             coordinates[0], coordinates[1], coordinates[2],
             coordinates[3], coordinates[4], coordinates[5]);
     }
+
+    /// <summary>
+    /// 枚举实体边，供声明式边选择判据求解。测量逻辑集中在
+    /// <see cref="SolidWorksEdgeEnumerator"/>，与 FeatureAdapter 共用同一份，
+    /// 保证"读取器看到的边"与"真实选中的边"不会出现分歧。
+    /// <para>
+    /// 读取失败不抛异常：边信息是增量能力，缺失时返回空集合，
+    /// 由上层判据以 edge_selection_not_found 显式失败，而不是让几何校验整体崩掉。
+    /// </para>
+    /// </summary>
+    private IReadOnlyList<MeasuredEdge> ReadEdges(IReadOnlyList<object> bodies) =>
+        SolidWorksEdgeEnumerator.Enumerate(_com, bodies)
+            .Select(edge => edge.Measured)
+            .ToArray();
 
     private IReadOnlyList<object> ReadBodies(object model)
     {

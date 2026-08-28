@@ -46,7 +46,12 @@ public sealed class FeatureHandlerRegistry
             new ExtrudeBossHandler(),
             new ExtrudeCutHandler(),
             new HoleHandler(),
-            new RevolveBossHandler()
+            new RevolveBossHandler(),
+            new Fillet.FilletHandler(),
+            new Chamfer.ChamferHandler(),
+            new Pattern.LinearPatternHandler(),
+            new Pattern.CircularPatternHandler(),
+            new Mirror.MirrorHandler()
         ]);
 
     public void Register(IFeatureHandler handler)

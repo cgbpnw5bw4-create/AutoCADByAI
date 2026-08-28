@@ -100,8 +100,17 @@ public sealed class FeatureParameterSchemaRegistry
         Positive(feature, "angle_degrees") &&
         double.Parse(feature.Parameters["angle_degrees"], CultureInfo.InvariantCulture) <= 360;
 
+    /// <summary>
+    /// 阵列实例数的规格层判据。
+    /// <para>
+    /// 参数名必须与 Handler 声明的 schema 一致。此处原本要求 <c>count</c>，
+    /// 而 Handler 声明的是 <c>instance_count</c> 且会拒绝未声明参数——两层互相
+    /// 矛盾，任何阵列规格都不可能同时通过。该矛盾一直没暴露，只因为阵列从未
+    /// 真正执行过；V2.1-A 接通真实执行时它才第一次挡住路。
+    /// </para>
+    /// </summary>
     private static bool ValidPattern(FeatureDefinition feature) =>
-        feature.Parameters.TryGetValue("count", out var countText) &&
+        feature.Parameters.TryGetValue("instance_count", out var countText) &&
         int.TryParse(countText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) &&
         count >= 2;
 

@@ -123,7 +123,15 @@ public sealed class FeatureExecutionSmokeRunner
                 FeatureHandlerTypes.Sketch,
                 FeatureTypes.ExtrudeBoss,
                 FeatureTypes.ExtrudeCut,
-                FeatureTypes.Hole
+                FeatureTypes.Hole,
+                // V2.1-A：圆角与倒角进入诊断白名单以采集 Feature 级证据。
+                // 白名单只决定诊断 Runner 允许演练什么，与生产证据门无关；
+                // 诊断结果始终是 candidate_only / NotDeliverable。
+                FeatureTypes.Fillet,
+                FeatureTypes.Chamfer,
+                FeatureTypes.LinearPattern,
+                FeatureTypes.CircularPattern,
+                FeatureTypes.Mirror
             ],
             StringComparer.OrdinalIgnoreCase);
 

@@ -12,7 +12,7 @@ namespace PlatformSelfCheck.Tests;
 public sealed class V20BFeatureHandlerRegistryTests
 {
     [Fact]
-    public void DefaultRegistryContainsFirstFiveHandlers()
+    public void DefaultRegistryContainsEveryRegisteredFeatureHandler()
     {
         var registry = FeatureHandlerRegistry.CreateDefault();
 
@@ -21,8 +21,24 @@ public sealed class V20BFeatureHandlerRegistryTests
         Assert.IsType<ExtrudeCutHandler>(Resolve(registry, FeatureTypes.ExtrudeCut));
         Assert.IsType<HoleHandler>(Resolve(registry, FeatureTypes.Hole));
         Assert.IsType<RevolveBossHandler>(Resolve(registry, FeatureTypes.RevolveBoss));
-        Assert.Equal(5, registry.GetAll().Count);
+
+        // V2.1-A 复杂特征库
+        Assert.IsType<SolidWorksWorker.Features.Fillet.FilletHandler>(
+            Resolve(registry, FeatureTypes.Fillet));
+        Assert.IsType<SolidWorksWorker.Features.Chamfer.ChamferHandler>(
+            Resolve(registry, FeatureTypes.Chamfer));
+        Assert.IsType<SolidWorksWorker.Features.Pattern.LinearPatternHandler>(
+            Resolve(registry, FeatureTypes.LinearPattern));
+        Assert.IsType<SolidWorksWorker.Features.Pattern.CircularPatternHandler>(
+            Resolve(registry, FeatureTypes.CircularPattern));
+        Assert.IsType<SolidWorksWorker.Features.Mirror.MirrorHandler>(
+            Resolve(registry, FeatureTypes.Mirror));
+
+        // 不硬编码数量：断言"每个已注册 Handler 都有非空参数 schema"，
+        // 并断言注册表恰好覆盖 FeatureHandlerRegistry.CreateDefault 暴露的集合。
+        Assert.Equal(10, registry.GetAll().Count);
         Assert.All(registry.GetAll(), handler => Assert.NotEmpty(handler.ParameterSchema));
+        Assert.All(registry.GetAll(), handler => Assert.False(string.IsNullOrWhiteSpace(handler.FeatureType)));
     }
 
     [Fact]
@@ -160,11 +176,28 @@ public sealed class V20BFeatureHandlerRegistryTests
         Assert.Contains(
             preflight.Issues,
             issue => issue.Contains("unverified API evidence", StringComparison.OrdinalIgnoreCase));
-        Assert.False(Resolve(registry, FeatureTypes.RevolveBoss).ApiEvidence.AllowsRealExecution);
+        // 未验证集合必须显式列出。原断言写的是「RevolveBoss 是唯一未验证的」，
+        // 那会让任何新增的未验证 Handler 都把这条测试打红，从而诱导把状态
+        // 谎报为 verified 来"修好"测试——正是本项目要防的方向。
+        string[] knownUnverified =
+        [
+            FeatureTypes.RevolveBoss,
+            // V2.1-A 五个复杂特征已全部完成真机取证，因此未验证集合里只剩 revolve_boss。
+        ];
+
+        foreach (var featureType in knownUnverified)
+        {
+            Assert.False(
+                Resolve(registry, featureType).ApiEvidence.AllowsRealExecution,
+                $"{featureType} has no project evidence and must not allow real execution.");
+        }
+
         Assert.All(
             registry.GetAll().Where(handler =>
-                !handler.FeatureType.Equals(FeatureTypes.RevolveBoss, StringComparison.OrdinalIgnoreCase)),
-            handler => Assert.True(handler.ApiEvidence.AllowsRealExecution));
+                !knownUnverified.Contains(handler.FeatureType, StringComparer.OrdinalIgnoreCase)),
+            handler => Assert.True(
+                handler.ApiEvidence.AllowsRealExecution,
+                $"{handler.FeatureType} is expected to be verified."));
     }
 
     [Fact]

@@ -105,6 +105,63 @@ public sealed class V20ERegressionGateTests
     }
 
     [Fact]
+    public void CapabilityRegressionGateSeparatesUnobservedFieldsFromRealRegressions()
+    {
+        // 基线保护了一个自检根本没观测的字段时，闸同样要失败——但要报成配置错误，
+        // 而不是能力回归。混为一谈会让人去修没坏的那一头。
+        var root = Path.Combine(Path.GetTempPath(), "ai_me_v20e_gate", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(root, "docs"));
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(root, SelfCheckCapabilityRegressionGate.BaselineRelativePath),
+                """
+                { "protected_capabilities": { "observed_capability": true, "unwired_capability": true } }
+                """);
+
+            var result = SelfCheckCapabilityRegressionGate.Evaluate(
+                root,
+                new Dictionary<string, bool> { ["observed_capability"] = true });
+
+            Assert.False(result.Passed);
+            Assert.Empty(result.RegressedFields);
+            Assert.Contains(
+                result.ConfigurationErrors,
+                issue => issue.Contains("unwired_capability", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ProductionBaselineIsFullyWiredIntoTheSelfCheckSnapshot()
+    {
+        // 基线只增不减，但"加进基线"和"接进自检快照"是两件事。
+        // 只做前者会让闸变成一条恒假的配置错误，本轮补两条能力时就差点如此。
+        var projectRoot = FindProjectRoot();
+        using var document = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(projectRoot, SelfCheckCapabilityRegressionGate.BaselineRelativePath)));
+        var protectedNames = document.RootElement
+            .GetProperty("protected_capabilities")
+            .EnumerateObject()
+            .Select(field => field.Name)
+            .ToArray();
+
+        var snapshot = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "src",
+            "PlatformCore",
+            "PlatformSelfCheckRunner.cs"));
+
+        foreach (var name in protectedNames)
+        {
+            Assert.Contains($"[\"{name}\"]", snapshot, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public void ProductionBaselineProtectsKnownCapabilitiesAndNeverWeakensThem()
     {
         var baselinePath = Path.Combine(
@@ -127,7 +184,16 @@ public sealed class V20ERegressionGateTests
             "v2_0_e_controlled_plate_evidence_active",
             "v2_0_e_step_content_gate_active",
             "v2_0_e_unified_part_family_builders",
-            "v2_0_e_geometry_validation_platform_wide"
+            "v2_0_e_geometry_validation_platform_wide",
+            "feature_api_evidence_required",
+            "unverified_feature_blocks_execution",
+            "complex_feature_registry_supported",
+            "edge_selection_model_supported",
+            // 这两条在 V2.1-A 注册五个复杂特征时曾静默退化为 false：判据里写死了
+            // "注册表恰好 5 个 Handler"。退化没被任何门拦住，正是因为它们当时
+            // 不在基线里。补进来的理由就是这次事故本身。
+            "feature_handler_no_direct_com_access",
+            "unverified_api_blocks_real_execution"
         ];
 
         foreach (var name in required)

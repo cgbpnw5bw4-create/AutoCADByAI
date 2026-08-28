@@ -218,14 +218,18 @@ public static class PlatformSelfCheckRunner
             outputRoot,
             versionStageText,
             markdownChineseCheckPassed);
+        // V2.1-A 复杂特征检查必须先于 V2.0-E：回归闸的当前值字典需要它的结果。
+        var v21AComplexFeatureChecks = RunV21AComplexFeatureChecks(root, platform, versionStageText);
         var v20EUnifiedFeatureGraphChecks = RunV20EUnifiedFeatureGraphChecks(
             root,
             platform,
             versionStageText,
             v18PartFamilyChecks,
             v19PartFamilyChecks,
+            v20BFeatureHandlerChecks,
             v20CFeatureAdapterChecks,
-            v20DModelRebuildChecks);
+            v20DModelRebuildChecks,
+            v21AComplexFeatureChecks);
         var v21AJacketChecks = await RunV21AJacketChecksAsync(
             root,
             platform,
@@ -457,6 +461,7 @@ public static class PlatformSelfCheckRunner
             v20CFeatureAdapterChecks.AllPassed &&
             v20DModelRebuildChecks.AllPassed &&
             v20EUnifiedFeatureGraphChecks.AllPassed &&
+            v21AComplexFeatureChecks.AllPassed &&
             v21AJacketChecks.AllPassed &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
@@ -862,6 +867,17 @@ public static class PlatformSelfCheckRunner
             V20EDocumented = v20EUnifiedFeatureGraphChecks.V20EDocumented,
             V20ECapabilityRegressionGatePassed = v20EUnifiedFeatureGraphChecks.CapabilityRegressionGatePassed,
             V20EGeometryValidationPlatformWide = v20EUnifiedFeatureGraphChecks.GeometryValidationPlatformWide,
+            FilletHandlerRegistered = v21AComplexFeatureChecks.FilletHandlerRegistered,
+            ChamferHandlerRegistered = v21AComplexFeatureChecks.ChamferHandlerRegistered,
+            LinearPatternHandlerRegistered = v21AComplexFeatureChecks.LinearPatternHandlerRegistered,
+            CircularPatternHandlerRegistered = v21AComplexFeatureChecks.CircularPatternHandlerRegistered,
+            MirrorHandlerRegistered = v21AComplexFeatureChecks.MirrorHandlerRegistered,
+            ComplexFeatureRegistrySupported = v21AComplexFeatureChecks.ComplexFeatureRegistrySupported,
+            UnverifiedFeatureBlocksExecution = v21AComplexFeatureChecks.UnverifiedFeatureBlocksExecution,
+            FeatureLibraryDocumented = v21AComplexFeatureChecks.FeatureLibraryDocumented,
+            FeatureRegressionTestsPassed = v21AComplexFeatureChecks.FeatureRegressionTestsPassed,
+            V21ADocumented = v21AComplexFeatureChecks.V21ADocumented,
+            EdgeSelectionModelSupported = v21AComplexFeatureChecks.EdgeSelectionModelSupported,
             V20ECapabilityRegressions = v20EUnifiedFeatureGraphChecks.CapabilityRegressions,
             PartFamilyDefinitionSupported = v20EUnifiedFeatureGraphChecks.PartFamilyDefinitionSupported,
             PlateUsesPartFamilyDefinition = v20EUnifiedFeatureGraphChecks.PlateUsesPartFamilyDefinition,
@@ -1536,7 +1552,7 @@ public static class PlatformSelfCheckRunner
             validationResultType.GetProperty(
                 "FailureStage",
                 BindingFlags.Public | BindingFlags.Instance) is not null &&
-            handlers.Length == 5 &&
+            handlers.Length > 0 &&
             handlers.All(handler =>
                 handler.GetType().GetMethod(
                     "Validate",
@@ -1561,7 +1577,7 @@ public static class PlatformSelfCheckRunner
             handlerContractType?.GetProperty(
                 "ApiEvidence",
                 BindingFlags.Public | BindingFlags.Instance) is not null &&
-            handlers.Length == 5 &&
+            handlers.Length > 0 &&
             handlers.All(handler =>
                 EvidenceFor(handler) is not null &&
                 !string.IsNullOrWhiteSpace(EvidenceStatus(handler)));
@@ -1701,8 +1717,11 @@ public static class PlatformSelfCheckRunner
                 !issue.Contains(
                     PartFamilyFailureStages.UnsupportedFeatureType,
                     StringComparison.OrdinalIgnoreCase));
+        // 判据是"注册表里存在未取证 Handler，且它在连接 COM 之前被拒绝"，
+        // 不是"注册表恰好有 5 个 Handler"。写死数量会在每次注册新 Handler 时
+        // 把这条保护悄悄关掉——V2.1-A 注册五个复杂特征后就真的发生过。
         var hasUnverifiedHandlerEvidence =
-            handlers.Length == 5 &&
+            handlers.Length > 0 &&
             handlers.Any(handler =>
                 string.Equals(
                     EvidenceStatus(handler),
@@ -1830,10 +1849,12 @@ public static class PlatformSelfCheckRunner
             .Cast<object>()
             .Select(handler => handler.GetType())
             .ToArray() ?? [];
+        // 同上：判据是"每一个已注册 Handler 都不持有 COM 门面"，
+        // 覆盖全部注册项而不是某个历史数量。
         var featureHandlerNoDirectComAccess =
             handlerContract is not null &&
             comFacadeContract is not null &&
-            handlers.Length == 5 &&
+            handlers.Length > 0 &&
             handlers.All(handlerType =>
                 handlerContract.IsAssignableFrom(handlerType) &&
                 !handlerType.GetConstructors(
@@ -2254,14 +2275,259 @@ public static class PlatformSelfCheckRunner
         }
     }
 
+    /// <summary>
+    /// V2.1-A 复杂特征库自检。判据全部为行为式：注册用反射解析，
+    /// dry-run 真实编译计划，"未验证禁止真实执行"真实调用证据校验，
+    /// 不使用任何 .cs 源码字符串匹配。
+    /// </summary>
+    private static V21AComplexFeatureSelfCheckResult RunV21AComplexFeatureChecks(
+        string projectRoot,
+        PlatformKernel platform,
+        string versionStageText)
+    {
+        // PlatformCore 不引用 SolidWorksWorker，因此通过 Worker 程序集反射访问，
+        // 与 V2.0-C 判据同一模式。
+        var workerAssembly = platform.WorkerRegistry.GetByName("FakeSolidWorksWorker")?.GetType().Assembly;
+        var registryType = workerAssembly?.GetType("SolidWorksWorker.Features.FeatureHandlerRegistry", false);
+        var contextType = workerAssembly?.GetType("SolidWorksWorker.Features.FeatureHandlerBuildPlanContext", false);
+        var registry = registryType?
+            .GetMethod("CreateDefault", BindingFlags.Public | BindingFlags.Static)?
+            .Invoke(null, null);
+        var handlers = (registryType?
+                .GetMethod("GetAll", BindingFlags.Public | BindingFlags.Instance)?
+                .Invoke(registry, null) as System.Collections.IEnumerable)?
+            .Cast<object>()
+            .ToArray() ?? [];
+
+        object? Handler(string featureType) => handlers.SingleOrDefault(item =>
+            string.Equals(
+                item.GetType().GetProperty("FeatureType")?.GetValue(item)?.ToString(),
+                featureType,
+                StringComparison.OrdinalIgnoreCase));
+
+        bool HandlerRegistered(string featureType, string expectedTypeName)
+        {
+            var handler = Handler(featureType);
+            if (handler is null || handler.GetType().Name != expectedTypeName)
+            {
+                return false;
+            }
+
+            var schema = handler.GetType().GetProperty("ParameterSchema")?.GetValue(handler)
+                as System.Collections.ICollection;
+            var evidence = handler.GetType().GetProperty("ApiEvidence")?.GetValue(handler);
+            var apiName = evidence?.GetType().GetProperty("ApiName")?.GetValue(evidence)?.ToString();
+            return schema is { Count: > 0 } && !string.IsNullOrWhiteSpace(apiName);
+        }
+
+        var filletRegistered = HandlerRegistered(FeatureTypes.Fillet, "FilletHandler");
+        var chamferRegistered = HandlerRegistered(FeatureTypes.Chamfer, "ChamferHandler");
+        var linearPatternRegistered = HandlerRegistered(FeatureTypes.LinearPattern, "LinearPatternHandler");
+        var circularPatternRegistered = HandlerRegistered(FeatureTypes.CircularPattern, "CircularPatternHandler");
+        var mirrorRegistered = HandlerRegistered(FeatureTypes.Mirror, "MirrorHandler");
+        var complexFeatureRegistrySupported =
+            filletRegistered &&
+            chamferRegistered &&
+            linearPatternRegistered &&
+            circularPatternRegistered &&
+            mirrorRegistered;
+
+        // dry-run：用合法参数真实走一遍 Validate + BuildPlan，证明计划链路可编译。
+        var regressionPassed = complexFeatureRegistrySupported && contextType is not null;
+        // 证据门必须双向可鉴别：未取证的能力即使参数完全合法也要被拒绝，
+        // 已取证的能力必须真的过得了自己的证据门。
+        var unverifiedBlocksExecution = complexFeatureRegistrySupported;
+        foreach (var (featureType, parameters) in ComplexFeatureSamples())
+        {
+            var handler = Handler(featureType);
+            if (handler is null || contextType is null)
+            {
+                regressionPassed = false;
+                unverifiedBlocksExecution = false;
+                continue;
+            }
+
+            var feature = new FeatureDefinition(
+                $"selfcheck_{featureType}",
+                featureType,
+                parameters,
+                referencedFeatures: ["seed_boss"]);
+
+            var validation = handler.GetType().GetMethod("Validate")?.Invoke(handler, [feature]);
+            var context = Activator.CreateInstance(
+                contextType,
+                [$"selfcheck-op-{featureType}", "TopPlane", (IReadOnlyList<string>)Array.Empty<string>()]);
+            var plan = handler.GetType().GetMethod("BuildPlan")?.Invoke(handler, [feature, context]);
+            if (validation?.GetType().GetProperty("IsValid")?.GetValue(validation) is not true ||
+                plan?.GetType().GetProperty("Operation")?.GetValue(plan) is null ||
+                plan.GetType().GetProperty("FailureStage")?.GetValue(plan) is not null)
+            {
+                regressionPassed = false;
+            }
+
+            var evidence = handler.GetType().GetProperty("ApiEvidence")?.GetValue(handler);
+            var allowsReal = evidence?.GetType().GetProperty("AllowsRealExecution")?.GetValue(evidence) is true;
+            var evidenceCheck = handler.GetType()
+                .GetMethod("ValidateEvidenceForRealExecution")?
+                .Invoke(handler, [feature]);
+            var evidenceValid = evidenceCheck?.GetType().GetProperty("IsValid")?.GetValue(evidenceCheck) is true;
+            var evidenceStage = evidenceCheck?.GetType()
+                .GetProperty("FailureStage")?.GetValue(evidenceCheck)?.ToString();
+
+            // 期望方向取自 Handler 自报的证据状态，而不是写死的特征清单：
+            // 每补一个真机证据就要改一次判据，正是"保护随迁移消失"的老毛病。
+            // PlatformCore 不引用 SolidWorksWorker，所以此处比较字面量而非
+            // FeatureApiEvidenceStatuses 常量。只把状态改成 verified 却不补
+            // 证据绑定的伪装取证，会在下面的 verified 分支上失败。
+            var status = evidence?.GetType().GetProperty("Status")?.GetValue(evidence)?.ToString();
+            var declaresVerified = string.Equals(status, "verified", StringComparison.OrdinalIgnoreCase);
+            if (declaresVerified)
+            {
+                if (!allowsReal || !evidenceValid)
+                {
+                    unverifiedBlocksExecution = false;
+                }
+            }
+            else if (allowsReal ||
+                evidenceValid ||
+                !string.Equals(evidenceStage, PartFamilyFailureStages.FeatureApiUnverified, StringComparison.Ordinal))
+            {
+                unverifiedBlocksExecution = false;
+            }
+        }
+
+        // 边选择模型：判据必须可鉴别——既要能唯一命中，也要在不唯一时拒绝。
+        // 用固定夹具而非真实 CAD，因此自检不依赖 SolidWorks。
+        MeasuredEdge Rim(int index, double x, double y) =>
+            new(index, EdgeKinds.Circle, 31.4159d, x, y, 0d, 5d, [SurfaceKinds.Cylinder, SurfaceKinds.Plane]);
+        var edgeFixture = new[] { Rim(0, -20d, 10d), Rim(1, 20d, 10d), Rim(2, -20d, 0d), Rim(3, 20d, 0d) };
+
+        var uniqueHit = EdgeSelectionResolver.Resolve(
+            edgeFixture,
+            new EdgeSelectionCriteria(
+                Kind: EdgeKinds.Circle,
+                AdjacentSurfaceKinds: [SurfaceKinds.Cylinder, SurfaceKinds.Plane],
+                AnchorYMm: 10d,
+                ExpectedCount: 2));
+        var ambiguousRejected = EdgeSelectionResolver.Resolve(
+            edgeFixture,
+            new EdgeSelectionCriteria(Kind: EdgeKinds.Circle, ExpectedCount: 1));
+        var unconstrainedRejected = EdgeSelectionResolver.Resolve(edgeFixture, new EdgeSelectionCriteria());
+
+        var edgeSelectionModelSupported =
+            uniqueHit.IsResolved &&
+            uniqueHit.Matches.Count == 2 &&
+            !ambiguousRejected.IsResolved &&
+            string.Equals(
+                ambiguousRejected.FailureStage,
+                PartFamilyFailureStages.EdgeSelectionAmbiguous,
+                StringComparison.Ordinal) &&
+            !unconstrainedRejected.IsResolved &&
+            string.Equals(
+                unconstrainedRejected.FailureStage,
+                PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                StringComparison.Ordinal) &&
+            EdgeSelectionCriteriaParser.TryParse(
+                """{"kind":"circle","expected_count":2}""", out _, out _) &&
+            !EdgeSelectionCriteriaParser.TryParse("top_outer_edges", out _, out _);
+
+        string[] documentationFiles =
+        [
+            "src/Workers/SolidWorks/Features/Fillet/api_evidence.md",
+            "src/Workers/SolidWorks/Features/Fillet/failure_repair.md",
+            "src/Workers/SolidWorks/Features/Chamfer/api_evidence.md",
+            "src/Workers/SolidWorks/Features/Chamfer/failure_repair.md",
+            "src/Workers/SolidWorks/Features/Pattern/api_evidence_linear_pattern.md",
+            "src/Workers/SolidWorks/Features/Pattern/failure_repair_linear_pattern.md",
+            "src/Workers/SolidWorks/Features/Pattern/api_evidence_circular_pattern.md",
+            "src/Workers/SolidWorks/Features/Pattern/failure_repair_circular_pattern.md",
+            "src/Workers/SolidWorks/Features/Mirror/api_evidence.md",
+            "src/Workers/SolidWorks/Features/Mirror/failure_repair.md"
+        ];
+        var featureLibraryDocumented = documentationFiles.All(relative =>
+            File.Exists(Path.Combine(projectRoot, relative.Replace('/', Path.DirectorySeparatorChar))));
+
+        var v21ADocumented =
+            versionStageText.Contains("V2.1-A", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(Path.Combine(projectRoot, "docs", "v2_1_a_complex_feature_library.md"));
+
+        return new(
+            filletRegistered,
+            chamferRegistered,
+            linearPatternRegistered,
+            circularPatternRegistered,
+            mirrorRegistered,
+            complexFeatureRegistrySupported,
+            unverifiedBlocksExecution,
+            featureLibraryDocumented,
+            regressionPassed,
+            v21ADocumented,
+            edgeSelectionModelSupported);
+    }
+
+    private static IEnumerable<(string FeatureType, Dictionary<string, string> Parameters)> ComplexFeatureSamples()
+    {
+        yield return (FeatureTypes.Fillet, new Dictionary<string, string>
+        {
+            ["radius_mm"] = "3",
+            // 结构化判据：顶面孔口（圆边 + 圆柱面/平面相交 + y=10），恰好两条。
+            ["edge_selection"] =
+                """
+                {"kind":"circle","adjacent_surface_kinds":["cylinder","plane"],"anchor_y_mm":10,"expected_count":2}
+                """
+        });
+        yield return (FeatureTypes.Chamfer, new Dictionary<string, string>
+        {
+            ["distance_mm"] = "2",
+            ["angle_deg"] = "45",
+            // 另一侧孔口（圆边 + 圆柱面/平面相交 + y=0），恰好两条。
+            // 与圆角样本只差定位点，用来证明判据真的按位置区分。
+            ["edge_selection"] =
+                """
+                {"kind":"circle","adjacent_surface_kinds":["cylinder","plane"],"anchor_y_mm":0,"expected_count":2}
+                """
+        });
+        yield return (FeatureTypes.LinearPattern, new Dictionary<string, string>
+        {
+            ["direction"] = "x",
+            // 方向边：板顶面沿 X 的那条 100 mm 棱。
+            ["direction_selection"] =
+                """
+                {"kind":"line","length_mm":100,"anchor_x_mm":0,"anchor_y_mm":10,"anchor_z_mm":30,"expected_count":1}
+                """,
+            ["instance_count"] = "4",
+            ["spacing_mm"] = "20",
+            ["seed_feature"] = "seed_boss"
+        });
+        yield return (FeatureTypes.CircularPattern, new Dictionary<string, string>
+        {
+            ["axis"] = "y",
+            // 轴边：中心 Ø10 孔的顶面孔口，其法向即阵列轴。
+            ["axis_selection"] =
+                """
+                {"kind":"circle","radius_mm":5,"anchor_x_mm":0,"anchor_y_mm":10,"anchor_z_mm":0,"expected_count":1}
+                """,
+            ["instance_count"] = "6",
+            ["angle_deg"] = "360",
+            ["seed_feature"] = "seed_boss"
+        });
+        yield return (FeatureTypes.Mirror, new Dictionary<string, string>
+        {
+            ["mirror_plane"] = "FrontPlane",
+            ["target_features"] = "seed_boss"
+        });
+    }
+
     private static V20EUnifiedFeatureGraphSelfCheckResult RunV20EUnifiedFeatureGraphChecks(
         string projectRoot,
         PlatformKernel platform,
         string versionStageText,
         V18PartFamilySelfCheckResult v18PartFamilyChecks,
         V19PartFamilySelfCheckResult v19PartFamilyChecks,
+        V20BFeatureHandlerSelfCheckResult v20BFeatureHandlerChecks,
         V20CFeatureAdapterSelfCheckResult v20CFeatureAdapterChecks,
-        V20DModelRebuildSelfCheckResult v20DModelRebuildChecks)
+        V20DModelRebuildSelfCheckResult v20DModelRebuildChecks,
+        V21AComplexFeatureSelfCheckResult v21AComplexFeatureChecks)
     {
         var definitions = PartTypeRegistry.CreateDefault().GetAll();
         var workerAssembly = platform.WorkerRegistry
@@ -2454,6 +2720,14 @@ public static class PlatformSelfCheckRunner
                 ["plate_part_family_regression_passed"] = v19PartFamilyChecks.PlatePartFamilyRegressionPassed,
                 ["shaft_artifact_validation_supported"] = v19PartFamilyChecks.ShaftArtifactValidationSupported,
                 ["v2_0_e_geometry_validation_platform_wide"] = geometryValidationPlatformWide,
+                ["feature_api_evidence_required"] = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
+                // 这两条在 V2.1-A 注册五个复杂特征时曾静默退化：判据里写死了
+                // "注册表恰好 5 个 Handler"。没有任何门拦住，因为它们当时不在基线里。
+                ["unverified_api_blocks_real_execution"] = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
+                ["feature_handler_no_direct_com_access"] = v20CFeatureAdapterChecks.FeatureHandlerNoDirectComAccess,
+                ["unverified_feature_blocks_execution"] = v21AComplexFeatureChecks.UnverifiedFeatureBlocksExecution,
+                ["complex_feature_registry_supported"] = v21AComplexFeatureChecks.ComplexFeatureRegistrySupported,
+                ["edge_selection_model_supported"] = v21AComplexFeatureChecks.EdgeSelectionModelSupported,
                 ["v2_0_d_production_evidence_active"] = v20DModelRebuildChecks.ProductionEvidenceActive,
                 ["v2_0_e_controlled_plate_evidence_active"] = controlledPlateEvidenceActive,
                 ["v2_0_e_step_content_gate_active"] = stepContentGateActive,
@@ -6816,6 +7090,33 @@ public static class PlatformSelfCheckRunner
             V20DDocumented &&
             ProductionEvidenceActive &&
             MarkdownChineseCheckPassed;
+    }
+
+    private sealed record V21AComplexFeatureSelfCheckResult(
+        bool FilletHandlerRegistered,
+        bool ChamferHandlerRegistered,
+        bool LinearPatternHandlerRegistered,
+        bool CircularPatternHandlerRegistered,
+        bool MirrorHandlerRegistered,
+        bool ComplexFeatureRegistrySupported,
+        bool UnverifiedFeatureBlocksExecution,
+        bool FeatureLibraryDocumented,
+        bool FeatureRegressionTestsPassed,
+        bool V21ADocumented,
+        bool EdgeSelectionModelSupported)
+    {
+        public bool AllPassed =>
+            FilletHandlerRegistered &&
+            ChamferHandlerRegistered &&
+            LinearPatternHandlerRegistered &&
+            CircularPatternHandlerRegistered &&
+            MirrorHandlerRegistered &&
+            ComplexFeatureRegistrySupported &&
+            UnverifiedFeatureBlocksExecution &&
+            FeatureLibraryDocumented &&
+            FeatureRegressionTestsPassed &&
+            V21ADocumented &&
+            EdgeSelectionModelSupported;
     }
 
     private sealed record V20EUnifiedFeatureGraphSelfCheckResult(

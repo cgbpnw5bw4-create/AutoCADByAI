@@ -1,0 +1,125 @@
+{
+  "operation": "build_part_family_release_package",
+  "cad_model_spec": {
+    "model_id": "feature_pipeline_plate_mirror",
+    "model_type": "plate_basic_4holes",
+    "unit": "mm",
+    "parameters": {
+      "length_mm": "100",
+      "width_mm": "60",
+      "thickness_mm": "10",
+      "hole_count": "4",
+      "hole_diameter_mm": "10"
+    },
+    "reference_geometry": {
+      "primary_plane": "TopPlane"
+    },
+    "sketches": [
+      {
+        "sketch_id": "plate_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 1,
+        "entities": [
+          {
+            "entity_id": "plate_rectangle",
+            "entity_type": "rectangle",
+            "parameters": {
+              "center_x_mm": "0",
+              "center_y_mm": "0",
+              "width_mm": "100",
+              "height_mm": "60"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      },
+      {
+        "sketch_id": "seed_cut_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 2,
+        "entities": [
+          {
+            "entity_id": "seed_circle",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "25",
+              "center_y_mm": "15",
+              "radius_mm": "3"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      }
+    ],
+    "features": [
+      {
+        "feature_id": "plate_boss",
+        "feature_type": "extrude_boss",
+        "parameters": {
+          "depth_mm": "10",
+          "direction": "blind"
+        },
+        "dependencies": [],
+        "referenced_sketches": [
+          "plate_profile"
+        ],
+        "referenced_features": [],
+        "execution_order": 1
+      },
+      {
+        "feature_id": "seed_cut",
+        "feature_type": "extrude_cut",
+        "parameters": {
+          "depth_mm": "20",
+          "through_all": "false"
+        },
+        "dependencies": [
+          "plate_boss"
+        ],
+        "referenced_sketches": [
+          "seed_cut_profile"
+        ],
+        "referenced_features": [
+          "plate_boss"
+        ],
+        "execution_order": 2
+      },
+      {
+        "feature_id": "seed_cut_mirror",
+        "feature_type": "mirror",
+        "parameters": {
+          "mirror_plane": "RightPlane",
+          "target_features": "seed_cut"
+        },
+        "dependencies": [
+          "seed_cut"
+        ],
+        "referenced_sketches": [],
+        "referenced_features": [
+          "seed_cut"
+        ],
+        "execution_order": 3
+      }
+    ],
+    "material": "Q235",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "feature_execution_report.json",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    }
+  }
+}

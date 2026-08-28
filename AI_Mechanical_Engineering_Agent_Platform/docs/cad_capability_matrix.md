@@ -27,11 +27,96 @@
 | `hole` | `HoleHandler` | `FeatureCut4` 配单圆草图 | `Partial` | 以圆草图加 blind 切除实现；依赖草图恰为一个等径圆；不使用 `SimpleHole2` 与 Hole Wizard |
 | `revolve_boss` | `RevolveBossHandler` | `FeatureRevolve2` 已接线但无 Feature 级证据 | `Unverified` | 缺少独立 diagnostic 与几何复核，真实执行被证据策略拒绝；`shaft_basic` 因此 fail-closed |
 | `revolve_cut` | 无 | 未接线 | `Unsupported` | 无 Handler，`FeatureHandlerRegistry` 无法解析 |
-| `fillet` | 无 | 未接线 | `Unsupported` | 无 Handler；圆角涉及边选择，需要独立选择模型 |
-| `chamfer` | 无 | 未接线 | `Unsupported` | 无 Handler；倒角与圆角共用边选择问题 |
-| `linear_pattern` | 无 | 未接线 | `Unsupported` | 无 Handler；阵列需要特征引用与方向参考 |
-| `circular_pattern` | 无 | 未接线 | `Unsupported` | 无 Handler；四孔目前由四个独立圆草图实现，不走阵列 |
-| `mirror` | 无 | 未接线 | `Unsupported` | 无 Handler |
+| `fillet` | `FilletHandler` | `FeatureFillet3` 已实调 | `Supported` | 仅等半径边圆角；边由 `EdgeSelectionCriteria` 判据求解，命中数不符即拒绝；不支持变半径、setback、面圆角与 conic |
+| `chamfer` | `ChamferHandler` | `InsertFeatureChamfer` 已实调 | `Supported` | 仅距离-角度边倒角；边由 `EdgeSelectionCriteria` 判据求解，命中数不符即拒绝；不支持顶点倒角、等距倒角与切线延伸 |
+| `linear_pattern` | `LinearPatternHandler` | `FeatureLinearPattern4` 已实调 | `Supported` | 仅单方向；方向边由判据求解并与声明主轴交叉校验；不支持第二方向、跳过实例与 VaryInstance |
+| `circular_pattern` | `CircularPatternHandler` | `FeatureCircularPattern5` 已实调 | `Supported` | 仅等角单方向；轴由圆边法向求解并与声明主轴交叉校验；不支持双方向、对称与跳过实例 |
+| `mirror` | `MirrorHandler` | `InsertMirrorFeature2` 已实调 | `Supported` | 仅关于标准基准面镜像特征；不支持镜像实体、镜像面与曲面缝合 |
+
+## 实体引用模型
+
+V2.1-A 新增的四个特征与既有的 `revolve_boss` 曾卡在同一个根因上：**通用 FeatureGraph 无法表达稳定的实体引用**。该缺口现已在模型层解决。
+
+### 为什么这不是"查文档"能解决的
+
+本机 SDK（`C:\Program Files\SOLIDWORKS2023\SOLIDWORKS\api\redist`）反射确认，这些 API **不接受任何几何引用参数**：
+
+| API | 参数数 | 是否含几何引用 |
+|---|---|---|
+| `FeatureFillet3` | 14 | 无 |
+| `InsertFeatureChamfer` | 8 | 无 |
+| `InsertMirrorFeature2` | 5 | 无 |
+| `FeatureLinearPattern4` | 20 | 仅 `DName1/2` 名称字符串 |
+| `FeatureCircularPattern5` | 14 | 仅 `DName` / `DName2` 名称字符串 |
+
+它们只作用于**当前选择集**。而选中一条边只有两条路：`SelectByID2` 依赖会漂移的自动生成名称或需先算出的坐标；`Select4` 要求已经持有实体对象。因此缺的是"如何在声明式图里稳定指认一条边"，属于拓扑命名问题。
+
+### 已建立的机制
+
+| 环节 | 位置 | 说明 |
+|---|---|---|
+| 判据声明 | `EdgeSelectionCriteria` | 按边类型、长度、半径、定位点、相邻面性质声明；CAD 无关，可独立单测 |
+| 判据解析 | `EdgeSelectionCriteriaParser` | 解析 JSON（snake_case），并在 `Validate` 阶段对空拓扑试解一次，非法判据不拖到 COM 之后 |
+| 拓扑枚举 | `SolidWorksEdgeEnumerator` | 由 `IBody2.GetEdges` 实测，同时产出 `MeasuredEdge` 纯数据与 COM 句柄；`SolidWorksGeometryReader.ReadEdges` 复用同一实现 |
+| 求解 | `EdgeSelectionResolver` | 对实测边求解判据 |
+| 安全闸 | 同上 | **匹配数不等于 `ExpectedCount` 即 fail-closed** |
+| 选择集复核 | `RealSolidWorksFeatureAdapter.SelectEdgesByCriteria` | 逐条 `Select4` 后用 `GetSelectedObjectCount2(-1)` 反查选择集大小是否等于求解数量 |
+
+`ExpectedCount` 那条闸是整套机制存在的理由：`FeatureFillet3` 在选错边时同样返回非空 `IFeature`，产出的是圆角打在错误位置的零件。宁可拒绝执行，也不允许在选择不确定时继续。
+
+### 真机验证结论
+
+对 `evidence/solidworks/20260824_072219_4629586/model.SLDPRT`（100×60×10 板，两个 Ø10 通孔）实测：
+
+- 枚举出 16 条边：12 条直线 + 4 条孔口圆，与独立探查逐条一致
+- 判据"圆边 + 圆柱面/平面相交 + `anchor_y=10`"解析出**恰好 2 条**顶面孔口
+- 判据"圆边"（未加位置约束）匹配 4 条却声明要 1 条时，返回 `edge_selection_ambiguous` 拒绝执行
+
+另有两条实测结论已固化为设计约束：
+
+- `IEdge.GetID()` 对所有边返回 **0**，不具区分度，不可用于识别
+- 闭合圆边**没有起止顶点**，因此定位点对圆边取圆心、对直线边取两端点中点
+
+### 完成进度
+
+V2.1-A 的五个复杂特征**全部完成真机取证**。
+
+| Feature | API | 诊断报告 | 独立复核 |
+|---|---|---|---|
+| `fillet` | `FeatureFillet3` | `evidence/solidworks/20260828_014622_5303003/…` | 体积减少 14.09 立方毫米 |
+| `chamfer` | `InsertFeatureChamfer` | `evidence/solidworks/20260828_014630_2660931/…` | 减少 33.5，与 Pappus 闭式解 33.51 一致；探针量到 radius=6.00 的 `plane+cone` 圆边 |
+| `linear_pattern` | `FeatureLinearPattern4` | `evidence/solidworks/20260828_014638_3133239/…` | 减少 848.23，等于 3 个 Ø6 通孔；探针量到孔心 x = -30/-10/10/30 |
+| `circular_pattern` | `FeatureCircularPattern5` | `evidence/solidworks/20260828_014645_3608011/…` | 减少 848.23；探针量到孔心 (20,0)、(0,-20)、(-20,0)、(0,20)，每 90 度一个 |
+| `mirror` | `InsertMirrorFeature2` | `evidence/solidworks/20260828_014652_1288900/…` | 减少 282.74，等于 1 个 Ø6 通孔；探针量到新孔 (-25,-15)，只有 x 变号 |
+
+每一条的判据都不是"体积变了"，而是**实测值与闭式解一致**加上**探针复核落点**。
+前者证明数量对，后者证明位置对；只有两者同时成立才谈得上特征打对了地方。
+
+### 从边判据到方向与轴
+
+五个特征最终共用同一套选择模型，没有为每种特征各造一套引用机制：
+
+| 需要什么 | 怎么来的 |
+|---|---|
+| 圆角、倒角的目标边 | `EdgeSelectionCriteria` 直接解出的边 |
+| 线性阵列的方向 | 解出一条**直线边**，取其单位方向 |
+| 圆周阵列的轴 | 解出一条**圆边**，取其法向（`ICurve.CircleParams` 的 3-5 位，此前一直被丢弃） |
+| 镜像的基准面 | 标准基准面按名解析——这类名称稳定，不属于会漂移的自动生成名 |
+| 阵列与镜像的种子 | 适配器内部按 `feature_id` 维护的 COM 句柄映射 |
+
+方向与轴额外带一道**平行性交叉校验**：规格里声明的主轴（x/y/z）与解出的边方向必须
+|cos| ≥ 0.999，否则拒绝执行。判据负责"选哪条"，声明负责"应该指向哪儿"，两者互相印证。
+只有判据时，一条合法但不是设计者想要的边会让整排实例静默错位。
+
+### 走过的弯路：CreateDefinition 显式引用
+
+本机 SDK 显示另有 `IFeatureManager.CreateDefinition` / `CreateFeature` 一条路，
+其 FeatureData 对象带 `D1Axis`、`Axis`、`Plane` 等**显式几何引用属性**，看起来能一举绕开选择标记。
+实测走不通：对新建定义对象 `AccessSelections` 返回 false，不调它直接写引用则
+`TrySetProperty` 不报错但属性**读回来是 null**。
+
+这个弯路留下了一条有用的纪律：**设置成功不等于写进去了**。适配器里的读回校验就是为此存在的，
+也正是它把这次静默丢弃当场抓了出来，而不是让一个没有方向引用的定义走到 `CreateFeature`。
 
 ## 零件族能力映射
 
@@ -73,6 +158,7 @@ V2.0-D 的几何校验原本挂在零件专用 Builder 上。V2.0-E 统一执行
 - 基线中的值只能是 `true`。写 `false` 会被闸判为配置错误——因为削弱基线是绕过本闸门阻力最小的路径。
 - 需要移除某项保护时必须显式删除字段并说明理由，不得就地改成 `false`。
 - 受保护字段只增不减，由 `V20ERegressionGateTests` 锁定。
+- 受保护字段必须同时接进自检快照；只加进基线不接线，闸会报配置错误而不是恒真通过。
 
 ## 执行步骤
 

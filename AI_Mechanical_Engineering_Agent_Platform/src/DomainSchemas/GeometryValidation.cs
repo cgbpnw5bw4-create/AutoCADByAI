@@ -22,7 +22,8 @@ public sealed record MeasuredGeometry(
     IReadOnlyList<MeasuredCylinder>? Cylinders = null,
     IReadOnlyList<string>? ReadIssues = null,
     string? SolidWorksVersion = null,
-    string? GeometryEvidenceSourceRevision = null);
+    string? GeometryEvidenceSourceRevision = null,
+    IReadOnlyList<MeasuredEdge>? Edges = null);
 
 public sealed record GeometryBoundingBox(
     double MinXmm,

@@ -164,6 +164,38 @@ public interface ISolidWorksFeatureAdapter : IDisposable
         SolidWorksOperation operation,
         FeatureHandlerExecutionState state,
         CancellationToken cancellationToken = default);
+
+    // V2.1-A 复杂特征执行入口。契约在此声明，使 Handler 有确定的调用目标；
+    // 具体 API 是否已取证由 Adapter 实现负责回答，Handler 不感知 COM。
+    Task<FeatureHandlerExecutionResult> ExecuteFilletAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteChamferAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteLinearPatternAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteCircularPatternAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
+
+    Task<FeatureHandlerExecutionResult> ExecuteMirrorAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IFeatureHandler

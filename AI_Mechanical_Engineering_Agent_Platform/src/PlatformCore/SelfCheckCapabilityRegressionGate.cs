@@ -61,7 +61,18 @@ public static class SelfCheckCapabilityRegressionGate
                 }
 
                 protectedCount++;
-                if (!currentCapabilities.TryGetValue(baselineField.Name, out var currentValue) || !currentValue)
+                if (!currentCapabilities.TryGetValue(baselineField.Name, out var currentValue))
+                {
+                    // 基线保护了一个自检根本没有观测的字段。两者都会让闸失败，
+                    // 但必须和真实回归区分开：前者是判据接线漏了，后者是能力掉了，
+                    // 混为一谈会让人照着修错的那一头。
+                    configurationErrors.Add(
+                        $"baseline field {baselineField.Name} is not observed by the self-check; " +
+                        "wire it into the capability snapshot or remove it from the baseline.");
+                    continue;
+                }
+
+                if (!currentValue)
                 {
                     regressions.Add(baselineField.Name);
                 }

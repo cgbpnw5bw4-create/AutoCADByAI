@@ -1,0 +1,182 @@
+{
+  "operation": "build_part_family_release_package",
+  "cad_model_spec": {
+    "model_id": "feature_pipeline_plate_chamfer",
+    "model_type": "plate_basic_4holes",
+    "unit": "mm",
+    "parameters": {
+      "length_mm": "100",
+      "width_mm": "60",
+      "thickness_mm": "10",
+      "hole_count": "4",
+      "hole_diameter_mm": "10"
+    },
+    "reference_geometry": {
+      "primary_plane": "TopPlane"
+    },
+    "sketches": [
+      {
+        "sketch_id": "plate_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 1,
+        "entities": [
+          {
+            "entity_id": "plate_rectangle",
+            "entity_type": "rectangle",
+            "parameters": {
+              "center_x_mm": "0",
+              "center_y_mm": "0",
+              "width_mm": "100",
+              "height_mm": "60"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      },
+      {
+        "sketch_id": "cut_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 2,
+        "entities": [
+          {
+            "entity_id": "cut_circle",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "-20",
+              "center_y_mm": "0",
+              "radius_mm": "5"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      },
+      {
+        "sketch_id": "hole_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 3,
+        "entities": [
+          {
+            "entity_id": "hole_circle",
+            "entity_type": "circle",
+            "parameters": {
+              "center_x_mm": "20",
+              "center_y_mm": "0",
+              "radius_mm": "5"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      },
+      {
+        "sketch_id": "line_probe",
+        "reference_plane": "TopPlane",
+        "execution_order": 4,
+        "entities": [
+          {
+            "entity_id": "verification_line",
+            "entity_type": "line",
+            "parameters": {
+              "x1_mm": "-10",
+              "y1_mm": "-20",
+              "x2_mm": "10",
+              "y2_mm": "-20"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      }
+    ],
+    "features": [
+      {
+        "feature_id": "plate_boss",
+        "feature_type": "extrude_boss",
+        "parameters": {
+          "depth_mm": "10",
+          "direction": "blind"
+        },
+        "dependencies": [],
+        "referenced_sketches": [
+          "plate_profile"
+        ],
+        "referenced_features": [],
+        "execution_order": 1
+      },
+      {
+        "feature_id": "plate_cut",
+        "feature_type": "extrude_cut",
+        "parameters": {
+          "depth_mm": "20",
+          "through_all": "false"
+        },
+        "dependencies": [
+          "plate_boss"
+        ],
+        "referenced_sketches": [
+          "cut_profile"
+        ],
+        "referenced_features": [
+          "plate_boss"
+        ],
+        "execution_order": 2
+      },
+      {
+        "feature_id": "plate_hole",
+        "feature_type": "hole",
+        "parameters": {
+          "diameter_mm": "10",
+          "depth_mm": "20",
+          "strategy": "simple_circular_cut_blind"
+        },
+        "dependencies": [
+          "plate_cut"
+        ],
+        "referenced_sketches": [
+          "hole_profile"
+        ],
+        "referenced_features": [
+          "plate_cut"
+        ],
+        "execution_order": 3
+      },
+      {
+        "feature_id": "plate_hole_chamfer",
+        "feature_type": "chamfer",
+        "parameters": {
+          "distance_mm": "1",
+          "angle_deg": "45",
+          "edge_selection": "{\"kind\": \"circle\", \"adjacent_surface_kinds\": [\"cylinder\", \"plane\"], \"anchor_y_mm\": 0, \"expected_count\": 2}"
+        },
+        "dependencies": [
+          "plate_hole"
+        ],
+        "referenced_sketches": [],
+        "referenced_features": [
+          "plate_hole"
+        ],
+        "execution_order": 4
+      }
+    ],
+    "material": "Q235",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "feature_execution_report.json",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    }
+  }
+}

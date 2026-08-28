@@ -627,6 +627,39 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("shaft_regression_passed")]
     public bool ShaftRegressionPassed { get; init; }
 
+    [JsonPropertyName("fillet_handler_registered")]
+    public bool FilletHandlerRegistered { get; init; }
+
+    [JsonPropertyName("chamfer_handler_registered")]
+    public bool ChamferHandlerRegistered { get; init; }
+
+    [JsonPropertyName("linear_pattern_handler_registered")]
+    public bool LinearPatternHandlerRegistered { get; init; }
+
+    [JsonPropertyName("circular_pattern_handler_registered")]
+    public bool CircularPatternHandlerRegistered { get; init; }
+
+    [JsonPropertyName("mirror_handler_registered")]
+    public bool MirrorHandlerRegistered { get; init; }
+
+    [JsonPropertyName("complex_feature_registry_supported")]
+    public bool ComplexFeatureRegistrySupported { get; init; }
+
+    [JsonPropertyName("unverified_feature_blocks_execution")]
+    public bool UnverifiedFeatureBlocksExecution { get; init; }
+
+    [JsonPropertyName("feature_library_documented")]
+    public bool FeatureLibraryDocumented { get; init; }
+
+    [JsonPropertyName("feature_regression_tests_passed")]
+    public bool FeatureRegressionTestsPassed { get; init; }
+
+    [JsonPropertyName("edge_selection_model_supported")]
+    public bool EdgeSelectionModelSupported { get; init; }
+
+    [JsonPropertyName("v2_1_a_documented")]
+    public bool V21ADocumented { get; init; }
+
     [JsonPropertyName("v2_0_e_geometry_validation_platform_wide")]
     public bool V20EGeometryValidationPlatformWide { get; init; }
 
