@@ -309,3 +309,19 @@ flange 首次 diagnostic 在保存阶段返回 `part_save_failed`。修复复用
 ## V2.1-A 夹套失败修复
 
 出现 `jacket_profile_create_failed` 时检查 TopPlane 选择、草图激活和圆半径；出现 `jacket_extrude_failed` 时检查 `FeatureExtrusion2` 参数与长度单位；出现 `jacket_inner_cut_failed` 时检查 TopPlane 内圆草图、同轴关系和两倍轴向长度的 `FeatureCut4` 盲切参数。`rebuild_failed`、`geometry_read_failed`、`volume_validation_failed` 或 `parameter_geometry_mismatch` 必须回到当前模型的实测几何；`step_export_failed` 若指出缺少 `ISO-10303-21;`，说明导出物不是有效 STEP，不能只改扩展名或放宽 Validator。结构化证据缺失时保持 `part_family_api_evidence_insufficient`，重新采集后再授权；不得临时改用未验证 API 或伪造证据。
+
+## V2.1-B 孔失败路由
+
+### 目标、适用范围与输入输出
+
+适用四类孔的前置拒绝、Adapter 执行与几何失败。输入为请求、编译计划、当次报告和证据；输出为直接原因、失败阶段、证据路径、修复和下一步验证。专门手册为 `src/Workers/SolidWorks/Features/Hole/failure_repair.md`。
+
+### 执行步骤与验证标准
+
+按类型 → 参数 → 引用 → API evidence → 独立几何 → QualityGate 排查。`unsupported_hole_type`、`invalid_hole_parameter`、`hole_reference_face_missing` 必须在 Worker 前拒绝；`simple_hole_execution_failed`、`counterbore_execution_failed`、`countersink_execution_failed`、`tapped_hole_execution_failed` 保留实际类型；`hole_geometry_validation_failed` 阻断后续交付；`tapped_hole_api_unverified` 与其他类型的 `feature_api_unverified` 必须在 COM 前失败关闭。
+
+修复输入后重跑四个 dry-run 和负例；涉及 API 时先隔离诊断、再回填准确证据，最后执行 build、test、self-check 与所需完整主流程。通过须有实际读数与同次报告，不能仅凭 Feature 存在。
+
+### 常见失败与禁止事项
+
+孔位越界、数量不符、未知面、盲孔穿底、沉孔/沉头非法比例、螺纹目录或深度错误、缺少测量、证据源码不匹配均须保留原因。禁止静默转普通孔、以 Cut 替代攻丝、改写历史报告、猜 API 参数、绕过质量链或进入 V2.1-C。

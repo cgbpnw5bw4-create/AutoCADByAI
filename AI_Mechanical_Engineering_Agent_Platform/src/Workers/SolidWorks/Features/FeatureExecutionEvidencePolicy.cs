@@ -26,6 +26,14 @@ public static partial class FeatureExecutionEvidencePolicy
         "src/Workers/SolidWorks/Features/Extrude/ExtrudeBossHandler.cs",
         "src/Workers/SolidWorks/Features/Cut/ExtrudeCutHandler.cs",
         "src/Workers/SolidWorks/Features/Hole/HoleHandler.cs",
+        "src/Workers/SolidWorks/Features/Hole/HoleExecutionStrategies.cs",
+        "src/DomainSchemas/HoleFeatureDefinition.cs",
+        "src/DomainSchemas/HolePlanValidation.cs",
+        "src/DomainSchemas/HoleGeometryValidation.cs",
+        "src/DomainSchemas/FeatureParameterSchemaRegistry.cs",
+        "src/DomainSchemas/GenericCadDescription.cs",
+        "src/DomainSchemas/GeometryValidation.cs",
+        "src/Modules/CADModeling/validators/SolidWorksBuildPlanValidator.cs",
         // V2.1-A：圆角取证后必须同样绑定其源码，否则改动 FilletHandler
         // 不会让证据失效，等于给它开了一个别人没有的后门。
         "src/Workers/SolidWorks/Features/Fillet/FilletHandler.cs",

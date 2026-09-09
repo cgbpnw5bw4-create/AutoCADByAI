@@ -33,6 +33,9 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
         cancellationToken.ThrowIfCancellationRequested();
 
         var issues = new List<string>();
+        var holeValidation = HolePlanValidation.Validate(request.BuildPlan);
+        if (holeValidation is not null)
+            return Rejected(request, holeValidation.FailureStage!, holeValidation.Issues.ToArray());
         if (!request.DryRun)
         {
             issues.Add("FakeSolidWorksWorker only supports dry_run=true.");
@@ -54,7 +57,9 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
                 $"part_family_builder_missing: no dry-run builder is registered for {request.BuildPlan.PartType}.");
         }
 
-        var planIssues = definition.ReviewBuildPlan(request.BuildPlan);
+        // 通用图与主流程 Reviewer 使用同一分界，不把任意 FeatureGraph 当作零件族固定操作列表。
+        var planIssues = request.BuildPlan.ExecutionStrategy.Equals(SolidWorksBuildExecutionStrategies.FeatureHandlerGraph, StringComparison.OrdinalIgnoreCase)
+            ? ValidateGenericPlan(request.BuildPlan) : definition.ReviewBuildPlan(request.BuildPlan);
         if (planIssues.Count > 0)
         {
             return Rejected(
@@ -160,6 +165,14 @@ public sealed class FakeSolidWorksWorker : ISolidWorksWorker
             RealCadConnected: false,
             PreflightReport: null,
             FailureStage: null);
+    }
+
+    private static IReadOnlyList<string> ValidateGenericPlan(SolidWorksBuildPlan plan)
+    {
+        var graph = new FeatureGraph(plan.Operations.Select(o => new FeatureDefinition(o.OperationId,
+            o.OperationType, o.Parameters, o.DependsOn))).ValidateAndSort();
+        if (!graph.IsValid) return graph.Issues;
+        return HolePlanValidation.Validate(plan)?.Issues ?? [];
     }
 
     public Task<WorkerOutput> ExecuteAsync(WorkerInput input) =>

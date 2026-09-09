@@ -82,7 +82,8 @@
     "read_issues": [],
     "solid_works_version": null,
     "geometry_evidence_source_revision": null,
-    "edges": null
+    "edges": null,
+    "holes": null
   },
   "expected_geometry": {
     "length_mm": 200,
@@ -97,7 +98,8 @@
       "extrude_cut",
       "hole"
     ],
-    "expected_body_count": 1
+    "expected_body_count": 1,
+    "explicit_hole_definitions": false
   },
   "deviations": [
     {
@@ -169,7 +171,7 @@
   "failed_checks": [],
   "failure_stage": null,
   "final_status": "Passed",
-  "generated_at": "2026-08-28T01:49:10.4571504+00:00",
+  "generated_at": "2026-09-07T01:53:06.1003243+00:00",
   "solid_works_version": null,
   "geometry_evidence_source_revision": null
 }

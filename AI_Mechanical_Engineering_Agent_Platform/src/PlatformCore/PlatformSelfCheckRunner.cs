@@ -220,6 +220,7 @@ public static class PlatformSelfCheckRunner
             markdownChineseCheckPassed);
         // V2.1-A 复杂特征检查必须先于 V2.0-E：回归闸的当前值字典需要它的结果。
         var v21AComplexFeatureChecks = RunV21AComplexFeatureChecks(root, platform, versionStageText);
+        var v21BHoleChecks = await V21BHoleSelfCheck.RunAsync(root, platform, cancellationToken);
         var v20EUnifiedFeatureGraphChecks = RunV20EUnifiedFeatureGraphChecks(
             root,
             platform,
@@ -229,7 +230,8 @@ public static class PlatformSelfCheckRunner
             v20BFeatureHandlerChecks,
             v20CFeatureAdapterChecks,
             v20DModelRebuildChecks,
-            v21AComplexFeatureChecks);
+            v21AComplexFeatureChecks,
+            v21BHoleChecks);
         var v21AJacketChecks = await RunV21AJacketChecksAsync(
             root,
             platform,
@@ -462,6 +464,7 @@ public static class PlatformSelfCheckRunner
             v20DModelRebuildChecks.AllPassed &&
             v20EUnifiedFeatureGraphChecks.AllPassed &&
             v21AComplexFeatureChecks.AllPassed &&
+            v21BHoleChecks.Values.All(value => value) &&
             v21AJacketChecks.AllPassed &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
@@ -877,6 +880,17 @@ public static class PlatformSelfCheckRunner
             FeatureLibraryDocumented = v21AComplexFeatureChecks.FeatureLibraryDocumented,
             FeatureRegressionTestsPassed = v21AComplexFeatureChecks.FeatureRegressionTestsPassed,
             V21ADocumented = v21AComplexFeatureChecks.V21ADocumented,
+            SimpleHoleSupported = v21BHoleChecks["simple_hole_supported"],
+            CounterboreHoleSupported = v21BHoleChecks["counterbore_hole_supported"],
+            CountersinkHoleSupported = v21BHoleChecks["countersink_hole_supported"],
+            TappedHoleSupported = v21BHoleChecks["tapped_hole_supported"],
+            HoleTypeValidationSupported = v21BHoleChecks["hole_type_validation_supported"],
+            HoleGeometryValidationSupported = v21BHoleChecks["hole_geometry_validation_supported"],
+            TappedHoleSemanticsSeparatedFromSimpleCut = v21BHoleChecks["tapped_hole_semantics_separated_from_simple_cut"],
+            HoleApiEvidenceRequired = v21BHoleChecks["hole_api_evidence_required"],
+            UnverifiedHoleBlocksRealExecution = v21BHoleChecks["unverified_hole_blocks_real_execution"],
+            HoleFeatureRegressionTestsPassed = v21BHoleChecks["hole_feature_regression_tests_passed"],
+            V21BDocumented = v21BHoleChecks["v2_1_b_documented"],
             EdgeSelectionModelSupported = v21AComplexFeatureChecks.EdgeSelectionModelSupported,
             V20ECapabilityRegressions = v20EUnifiedFeatureGraphChecks.CapabilityRegressions,
             PartFamilyDefinitionSupported = v20EUnifiedFeatureGraphChecks.PartFamilyDefinitionSupported,
@@ -2527,7 +2541,8 @@ public static class PlatformSelfCheckRunner
         V20BFeatureHandlerSelfCheckResult v20BFeatureHandlerChecks,
         V20CFeatureAdapterSelfCheckResult v20CFeatureAdapterChecks,
         V20DModelRebuildSelfCheckResult v20DModelRebuildChecks,
-        V21AComplexFeatureSelfCheckResult v21AComplexFeatureChecks)
+        V21AComplexFeatureSelfCheckResult v21AComplexFeatureChecks,
+        IReadOnlyDictionary<string, bool> v21BHoleChecks)
     {
         var definitions = PartTypeRegistry.CreateDefault().GetAll();
         var workerAssembly = platform.WorkerRegistry
@@ -2712,7 +2727,7 @@ public static class PlatformSelfCheckRunner
         var shaftRegressionPassed = shaftUsesPartFamilyDefinition && v18PartFamilyChecks.ShaftDryRunPassed;
         var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(
             projectRoot,
-            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+            new Dictionary<string, bool>(v21BHoleChecks, StringComparer.OrdinalIgnoreCase)
             {
                 ["all_part_families_use_registry"] = v19PartFamilyChecks.AllPartFamiliesUseRegistry,
                 ["feature_production_evidence_active"] = v20CFeatureAdapterChecks.FeatureProductionEvidenceActive,

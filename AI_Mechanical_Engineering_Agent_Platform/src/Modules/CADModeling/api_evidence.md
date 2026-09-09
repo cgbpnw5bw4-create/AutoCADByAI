@@ -288,3 +288,19 @@ GetPartBox 近似结果、COM 非空返回、Feature 名称或文件大小均不
 ## V2.1-A 夹套 API 证据
 
 `jacket_basic` 不扩大写入 COM API 面，Builder 使用 `CreateCircle`、`FeatureExtrusion2` 和 `FeatureCut4`，并复用 `RealSolidWorksGeometryReader` 做实体、外包络、圆柱直径和体积实测。FeatureGraph 固定为 TopPlane 外圆盲拉伸和 TopPlane 内圆盲切，切除深度为两倍轴向长度。V1.9 自由文本和历史产物不包含 V2.1-A 的结构化源码修订、运行时版本、diagnostic 与有效 STEP 内容，当前只允许保留实现和 dry-run，真实执行必须在 COM 连接前返回 `part_family_api_evidence_insufficient`。恢复授权必须重新采集受控证据，不得伪造或把文件扩展名当成交换格式证明。
+
+## V2.1-B 孔类型证据补充
+
+### 目标、适用范围与输入输出
+
+本节覆盖 `SimpleHole`、`CounterboreHole`、`CountersinkHole`、`TappedHole`；输入是四类参数、选择、官方资料、SDK、宏与同次诊断，输出是逐类型证据状态和执行门禁。完整 API 名称、来源、参数映射、单位、前置选择、返回、已知失败和宏证据集中于 `src/Workers/SolidWorks/Features/Hole/api_evidence.md`。
+
+### 执行步骤与验证标准
+
+先核对类型与图引用，再按官方孔向导资料研究 `CreateDefinition` / `InitializeHole` / `CreateFeature`，`HoleWizard5` 只作长参数对照。新增显式四类均 `unverified`，SDK 反射不等于 COM 取证，未验证不得真实执行。历史普通孔仅为圆加 blind `FeatureCut4`；任何源码绑定变化必须重新采证，不能改写旧报告修订冒充新证据。
+
+几何孔、`Cosmetic Thread`、`Hole Wizard / Tapped Hole` 与真实建模螺纹必须分别记录。攻丝最低真实语义要求孔向导类型与标准/规格/螺距/深度/底孔读回；仅圆柱几何或装饰螺纹不充分。孔数量、直径、深度、两级沉孔、沉头锥面也须独立测量，缺失即失败。诊断通过后仍需同次主流程质量门禁决定交付。
+
+### 常见失败与禁止事项
+
+标准/尺寸映射、选择、坐标变换、单位、终止、空返回、重建与读回任一失败均保留专用阶段。禁止把 `thread_pitch` 写入槽长、猜数据库枚举、以普通 Cut 冒充攻丝、复制第三方脚本或进入 V2.1-C。历史章节中的 verified 只描述当时源码，当前授权以证据策略和能力矩阵为准。

@@ -428,6 +428,34 @@ public sealed class SolidWorksArtifactValidator : IValidator
     /// </summary>
     private static void ValidateGeometryEvidence(JsonElement root, List<string> issues)
     {
+        var featureReports = root.TryGetProperty("feature_handler_reports", out var reportArray) && reportArray.ValueKind == JsonValueKind.Array
+            ? reportArray.EnumerateArray().ToArray() : [];
+        if (featureReports.Any(r => r.TryGetProperty("hole_parameters", out var p) && p.ValueKind == JsonValueKind.Object && p.TryGetProperty("hole_type", out _)) ||
+            root.TryGetProperty("hole_model_spec", out var typedSpec) && typedSpec.ValueKind == JsonValueKind.Object ||
+            root.TryGetProperty("hole_geometry_validation", out var typedGeometry) && typedGeometry.ValueKind == JsonValueKind.Object)
+        {
+            if (!root.TryGetProperty("hole_model_spec", out var specElement) || specElement.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("hole_geometry_validation", out var holeElement) || holeElement.ValueKind != JsonValueKind.Object)
+                issues.Add("hole_geometry_validation_failed: 必须提供同次逐孔定义、实测几何与验证报告。");
+            else
+            {
+                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, PropertyNameCaseInsensitive = true };
+                var spec = specElement.Deserialize<CADModelSpec>(options);
+                var holeReport = holeElement.Deserialize<GeometryValidationReport>(options);
+                var executed = featureReports.Select(r => r.TryGetProperty("feature_type", out var t) ? t.GetString() ?? "" : "").ToArray();
+                var reportedHoles = featureReports
+                    .Where(r => r.TryGetProperty("hole_parameters", out var p) && p.ValueKind == JsonValueKind.Object && p.TryGetProperty("hole_type", out _))
+                    .Select(r => new HoleReportedDefinition(r.TryGetProperty("feature_id", out var id) ? id.GetString() ?? "" : "",
+                        r.TryGetProperty("hole_type", out var ht) ? ht.GetString() ?? "" : "",
+                        r.GetProperty("hole_parameters").Deserialize<Dictionary<string, string>>(options)!)).ToArray();
+                if (spec is null || holeReport is null || holeReport.FinalStatus != "Passed" ||
+                    !spec.Features.Any(HoleGeometryValidation.IsExplicitHole) ||
+                    holeReport.ModelId != spec.ModelId ||
+                    !HoleGeometryValidation.ReportDefinitionsMatch(spec, reportedHoles) ||
+                    new GeometryValidator().Validate(spec, holeReport.MeasuredGeometry, executed).FinalStatus != "Passed")
+                    issues.Add("hole_geometry_validation_failed: 重新计算的逐孔几何验证未通过。");
+            }
+        }
         var status = root.TryGetProperty("geometry_validation_status", out var statusProperty) &&
                      statusProperty.ValueKind == JsonValueKind.String
             ? statusProperty.GetString()

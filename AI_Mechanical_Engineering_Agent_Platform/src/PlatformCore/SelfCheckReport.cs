@@ -660,6 +660,39 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("v2_1_a_documented")]
     public bool V21ADocumented { get; init; }
 
+    [JsonPropertyName("simple_hole_supported")]
+    public bool SimpleHoleSupported { get; init; }
+
+    [JsonPropertyName("counterbore_hole_supported")]
+    public bool CounterboreHoleSupported { get; init; }
+
+    [JsonPropertyName("countersink_hole_supported")]
+    public bool CountersinkHoleSupported { get; init; }
+
+    [JsonPropertyName("tapped_hole_supported")]
+    public bool TappedHoleSupported { get; init; }
+
+    [JsonPropertyName("hole_type_validation_supported")]
+    public bool HoleTypeValidationSupported { get; init; }
+
+    [JsonPropertyName("hole_geometry_validation_supported")]
+    public bool HoleGeometryValidationSupported { get; init; }
+
+    [JsonPropertyName("tapped_hole_semantics_separated_from_simple_cut")]
+    public bool TappedHoleSemanticsSeparatedFromSimpleCut { get; init; }
+
+    [JsonPropertyName("hole_api_evidence_required")]
+    public bool HoleApiEvidenceRequired { get; init; }
+
+    [JsonPropertyName("unverified_hole_blocks_real_execution")]
+    public bool UnverifiedHoleBlocksRealExecution { get; init; }
+
+    [JsonPropertyName("hole_feature_regression_tests_passed")]
+    public bool HoleFeatureRegressionTestsPassed { get; init; }
+
+    [JsonPropertyName("v2_1_b_documented")]
+    public bool V21BDocumented { get; init; }
+
     [JsonPropertyName("v2_0_e_geometry_validation_platform_wide")]
     public bool V20EGeometryValidationPlatformWide { get; init; }
 

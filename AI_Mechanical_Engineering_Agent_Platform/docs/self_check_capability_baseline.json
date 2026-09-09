@@ -17,6 +17,17 @@
     "v2_0_e_controlled_plate_evidence_active": true,
     "v2_0_e_geometry_validation_platform_wide": true,
     "v2_0_e_step_content_gate_active": true,
-    "v2_0_e_unified_part_family_builders": true
+    "v2_0_e_unified_part_family_builders": true,
+    "simple_hole_supported": true,
+    "counterbore_hole_supported": true,
+    "countersink_hole_supported": true,
+    "tapped_hole_supported": true,
+    "hole_type_validation_supported": true,
+    "hole_geometry_validation_supported": true,
+    "tapped_hole_semantics_separated_from_simple_cut": true,
+    "hole_api_evidence_required": true,
+    "unverified_hole_blocks_real_execution": true,
+    "hole_feature_regression_tests_passed": true,
+    "v2_1_b_documented": true
   }
 }

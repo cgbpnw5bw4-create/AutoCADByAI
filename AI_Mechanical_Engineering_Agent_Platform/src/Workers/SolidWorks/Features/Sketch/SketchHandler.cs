@@ -43,12 +43,12 @@ public sealed class SketchHandler : FeatureHandlerBase
             "V2.0-C diagnostic verified TopPlane line, center rectangle and circle creation with non-null geometry and successful rebuild.",
             "Diagnostic SLDPRT and STEP identity is recorded in the bound diagnostic report; a per-run hash is deliberately not restated here because it cannot be known before the run that this claim is hashed into."
         ],
-        EvidenceId: "v2.1-a-20260828-014622-sketch",
+        EvidenceId: "v2.1-b-20260907-refresh-SketchHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/20260828_014622_5303003/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:533b14e951348372edee939de64e411663a94fbd2dc49ac60c18ee63c298cd54");
+        DiagnosticRunPath: "evidence/solidworks/v2_1_b_refresh/20260907_013221_3210868/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

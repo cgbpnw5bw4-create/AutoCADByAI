@@ -34,3 +34,11 @@ Codex 不允许在未读取相关说明文件的情况下直接修改核心逻�
 ## 失败流程
 
 出现失败时先定位 `failure_stage`。如果涉及 API，必须查官方资料、本地参考资料和 evidence 报告，再提出候选策略。不能只记录 `Failed` 后停止。
+
+## V2.1-B 执行补充
+
+目标是四类通用孔增强，适用定义、验证、Adapter 与文档，不改变 Handler 架构。输入为当前图、协议、前置审查及 API evidence；输出为标准化请求、失败阶段、几何检查、回归和中文文档。
+
+执行时先读 `docs/v2_1_b_hole_features.md`，确认复杂特征库审查 `HEAD=bbeafc9` 无 Blockers；全部 Improvements 保留于 `docs/technical_debt.md`，不顺带实施。既有六个 canonical agent 足以覆盖职责，不新增 Hole Agent。四个样例默认 dry-run，实际参数与面引用在 Worker 前校验，未验证 API 在连接前拒绝，缺独立几何不得通过 QualityGate。
+
+验证须运行完整 build、test、self-check 并逐项回填十二个孔字段，分开说明总体失败与阶段通过。API 失败按孔手册隔离取证，禁止复制脚本、Handler COM、Cut 冒充攻丝、旧 evidence 换绑或进入 V2.1-C。

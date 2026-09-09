@@ -53,3 +53,17 @@ description: "用于 `SolidWorks` `API` 调用失败的证据驱动修复流程�
 6. 只有 `run-cad-workflow --input examples/parameter_update_plate.json` 可以关闭真实验收。它必须覆盖 160×80×12 初始建模和 200×100×15 更新重建，并让 `GeometryValidator`、`Reviewer`、`QualityGate` 同次通过。
 
 任何 failure_stage、报告字段、真实几何或 QualityGate 未关闭时都不得交付 SLDPRT/STEP，也不得进入 V2.0-E。
+
+## V2.1-B 孔证据修复补充
+
+### 目标、范围与输入输出
+
+处理四类孔的 API、引用和几何证据缺口。输入为 `HoleFeatureDefinition`、当次诊断/几何报告与当前源码；输出为逐类型证据和受控失败结论。先读 `src/Workers/SolidWorks/Features/Hole/api_evidence.md`、`failure_repair.md` 及 `docs/v2_1_b_hole_features.md`。
+
+### 执行与验证
+
+先区分普通孔、沉孔、沉头孔与攻丝孔，再验证 API 名称、官方来源、参数映射、单位、前置选择、返回、状态、失败模式和宏证据。保持唯一 Handler 和统一 Adapter；新显式四类未取证时在 COM 前拒绝，攻丝使用 `tapped_hole_api_unverified`。修改绑定源码须重新采证，不能直接改旧报告修订。真实几何须逐孔证明数量、直径、深度、沉孔台阶、沉头锥面和攻丝孔向导元数据；诊断不能代替最终 QualityGate。
+
+### 失败与禁止
+
+普通圆加 Cut、装饰螺纹、孔向导攻丝、真实建模螺纹分开取证。不得将 `thread_pitch` 放入 `HoleWizard5.Length`，不得猜标准数据库枚举、复制脚本、Handler COM、伪造读回或进入 V2.1-C。修复后执行完整 build、test、self-check，保留总体失败与本阶段结果的区别。

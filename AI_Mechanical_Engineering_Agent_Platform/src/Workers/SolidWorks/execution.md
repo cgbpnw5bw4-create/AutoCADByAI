@@ -464,3 +464,22 @@ dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples
 `JacketFeatureBuilder` 仅接受 `RealBuildJacketBasic` 模式。它在 TopPlane 创建外圆并用 `FeatureExtrusion2` 形成指定长度的圆柱体，再在 TopPlane 创建同轴内圆并用 `FeatureCut4` 盲切两倍轴向长度；所有长度在进入 COM 前由毫米转换为米。Builder 随后严格重建并用真实 GeometryReader 校验单实体、外包络、内外径和体积；STEP 落盘后还必须通过 ISO 10303-21 内容检查。任一步失败都会写失败构建报告，不会生成成功 Artifact。
 
 当前结构化运行时证据未激活，真实 Worker 会在连接 COM 前以 `part_family_api_evidence_insufficient` 拒绝；dry-run 不受影响。重新采集受控 diagnostic 并恢复授权后，真实命令为 `dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_jacket_request.json`。不得以独立 diagnostic、文件存在或 COM 非空返回替代该主流程。
+
+## V2.1-B 孔特征执行
+
+### 目标、适用范围与输入输出
+
+本节适用于普通孔、沉孔、沉头孔、攻丝孔的通用图定义。输入为 `HoleFeatureDefinition`、图引用和标准化参数；输出为 `CreateHole` BuildPlan、实际类型/参数报告与孔几何判定。完整合同和本轮结果见 `docs/v2_1_b_hole_features.md`。
+
+### 执行步骤与验证标准
+
+1. 先确认复杂特征库审查 `HEAD=bbeafc9` 无 Blockers；改进项见 `docs/technical_debt.md`，本轮仅登记。
+2. 在 Worker 前运行 `HoleValidator` 与实际计划的图重构校验，检查有限正尺寸、类型特有关系、螺纹目录、数量/点集、有效材料内孔位和 `reference_face`。
+3. 仅复用既有 `HoleHandler` 和 `ExecuteHoleAsync`；类型策略记录各自失败阶段与 evidence，Handler 不持有 COM。
+4. 四个 `examples/hole_*_plate.json` 使用 `dotnet run --project src/Interfaces/CliHost -- dry-run-cad --input examples/hole_simple_plate.json`，其余类型替换输入文件；入口强制 `dry_run=true`，输入与环境不能开启真实执行。报告为 `output/solidworks/dry-run/<runId>/dry_run_report.json`，模拟通过仍是 `NotDeliverable`、`real_cad_executed=false`。显式四类型真实证据均 `unverified`，在连接 COM 前拒绝；历史单圆盲切不授权新档案。
+5. 通用 Worker 通过 `ValidateExpectedGeometry` 核对逐孔数量、位置、直径、深度、沉孔/沉头及攻丝元数据，写入 `hole_model_spec` / `hole_geometry_validation`；ArtifactValidator 重算并比对 Handler 报告，再进入 Reviewer、QualityGate。当前生产 Reader 尚无新四类实测 `Holes`，独立测试夹具不是真机证据，非空 Feature 不足以通过。
+6. 运行完整 build、test、self-check，逐项核对阶段说明中的十二个自检字段，分别报告本阶段与总体状态。
+
+### 常见失败与禁止事项
+
+失败按 `src/Workers/SolidWorks/Features/Hole/failure_repair.md` 路由；攻丝证据不足用 `tapped_hole_api_unverified`，其余新档案用 `feature_api_unverified`。禁止猜测实体面、未证实 API 实调、Cut 冒充攻丝、请求值冒充测量、重复 Agent/Handler、第三方脚本复制和进入 V2.1-C。

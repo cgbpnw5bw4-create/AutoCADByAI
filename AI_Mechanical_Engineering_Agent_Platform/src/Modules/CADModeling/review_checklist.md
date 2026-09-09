@@ -252,3 +252,23 @@ markdown_chinese_check_passed
 - FeatureGraph 与 BuildPlan 顺序为 TopPlane 外圆草图、盲拉伸、TopPlane 内圆草图、两倍轴向长度盲切，特征标识为 `jacket_body_extrude`、`jacket_inner_cut`。
 - dry-run 通过注册表解析；结构化生产证据未激活时，真实 Worker 必须在 COM 连接前拒绝，CLI 没有直接调用 Builder。
 - 真实主流程的 SLDPRT、物理内容有效的 STEP、实测几何、构建报告、Reviewer、QualityGate 与 ReleasePackage 同次通过后才可交付。
+
+## V2.1-B 孔特征审查
+
+### 目标、适用范围与输入输出
+
+审查四类孔定义、Worker 前拒绝、统一 Handler/Adapter、evidence、几何与质量链。输入为源码、四个样例、测试、自检、能力矩阵及当次证据；输出为 Blockers、Improvements、验证限制和 Claude 审查结论。V2.1-A 前置报告无 Blockers 且独立性受限，改进项仅登记于 `docs/technical_debt.md`。
+
+### 执行步骤与验证标准
+
+- 确认只有一个 `HoleHandler`，类型注册表不含 COM、不堆大型 switch，无零件名称特判。
+- 确认四类类型参数和实际编译计划均校验；未知孔型、非法尺寸、未知面、越界/相交位置、数量/点集、螺纹错误在 Worker 前拒绝。
+- 确认 `GenerateReport` 记录实际孔型与参数，新档案没有继承旧普通孔 evidence 的假授权。
+- 确认四种增强 profile 均 `unverified`，真实执行连接前拒绝，攻丝使用 `tapped_hole_api_unverified`；历史档案重新采证也不扩大到新档案。
+- 确认普通几何孔、装饰螺纹、孔向导攻丝、真实螺旋实体四层分开；真实攻丝必须读回孔向导类型与标准/规格/有效深度/底孔元数据。
+- 检查独立孔数量、直径、深度、位置、沉孔、沉头与攻丝 DTO 正反例；缺读数或只有非空 Feature 必须 `hole_geometry_validation_failed`，不能回填请求值为测量。
+- 运行 build、test、self-check；检查四个默认 dry-run、全部十二个阶段字段和中文 Markdown；总体自检失败须单独列出，不制造全通过。
+
+### 常见失败、阻断与禁止事项
+
+非法参数进入 Worker、无证据实调、COM 进入 Handler、Cut 冒充攻丝、非空 Feature 假成功、缺失同次质量报告均为 Blockers。前置审查的既有 Improvements 不重新归类为本阶段 Blockers。禁止修改 `reviewrep`、复制第三方脚本、削弱证据/能力基线或进入 V2.1-C；本轮最多进入 Claude 审查，不据此声明新四类已真机交付。

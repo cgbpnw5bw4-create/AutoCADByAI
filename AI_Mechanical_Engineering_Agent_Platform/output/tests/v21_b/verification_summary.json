@@ -1,0 +1,110 @@
+{
+  "stage": "V2.1-B",
+  "generated_at": "2026-09-07T01:48:47.9061479Z",
+  "build": {
+    "log": "output/tests/v21_b/build_final.log",
+    "command": "dotnet build AI_Mechanical_Engineering_Agent_Platform.sln",
+    "warnings": 0,
+    "errors": 0,
+    "exit_code": 0
+  },
+  "test": {
+    "skipped": 0,
+    "failed": 0,
+    "total": 449,
+    "hole_cases_passed": 63,
+    "passed": 449,
+    "command": "dotnet test --logger \"trx;LogFileName=v21_b_full.trx\" --results-directory output/tests/v21_b",
+    "exit_code": 0,
+    "trx": "output/tests/v21_b/v21_b_full.trx",
+    "log": "output/tests/v21_b/test_final.log"
+  },
+  "self_check": {
+    "jacket_production_evidence_active": false,
+    "required_hole_fields": {
+      "simple_hole_supported": true,
+      "counterbore_hole_supported": true,
+      "countersink_hole_supported": true,
+      "tapped_hole_supported": true,
+      "hole_type_validation_supported": true,
+      "hole_geometry_validation_supported": true,
+      "tapped_hole_semantics_separated_from_simple_cut": true,
+      "hole_api_evidence_required": true,
+      "unverified_hole_blocks_real_execution": true,
+      "hole_feature_regression_tests_passed": true,
+      "v2_1_b_documented": true,
+      "markdown_chinese_check_passed": true
+    },
+    "jacket_real_workflow_supported": false,
+    "command": "dotnet run --project src/Interfaces/CliHost -- self-check",
+    "exit_code": 2,
+    "capability_regression_gate": "Passed",
+    "capability_regressions": [],
+    "log": "output/tests/v21_b/self_check_final.log",
+    "final_status": "Failed"
+  },
+  "cli_runs": [
+    {
+      "case": "simple",
+      "exit_code": 0,
+      "log_path": "output/tests/v21_b/cli_simple_final.log",
+      "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\dry-run\\cad-dry-run-20260907_014436_834-7606887d6bbd475db557d7e45a4baf5f\\dry_run_report.json",
+      "simulation_status": "Passed",
+      "real_cad_executed": false,
+      "deliverable_status": "NotDeliverable"
+    },
+    {
+      "case": "counterbore",
+      "exit_code": 0,
+      "log_path": "output/tests/v21_b/cli_counterbore_final.log",
+      "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\dry-run\\cad-dry-run-20260907_014439_172-bb13636fe22547729bd55f778f7c41c6\\dry_run_report.json",
+      "simulation_status": "Passed",
+      "real_cad_executed": false,
+      "deliverable_status": "NotDeliverable"
+    },
+    {
+      "case": "countersink",
+      "exit_code": 0,
+      "log_path": "output/tests/v21_b/cli_countersink_final.log",
+      "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\dry-run\\cad-dry-run-20260907_014441_422-72ceb6421e93483292f9c7501d9c6c35\\dry_run_report.json",
+      "simulation_status": "Passed",
+      "real_cad_executed": false,
+      "deliverable_status": "NotDeliverable"
+    },
+    {
+      "case": "tapped",
+      "exit_code": 0,
+      "log_path": "output/tests/v21_b/cli_tapped_final.log",
+      "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\dry-run\\cad-dry-run-20260907_014443_627-3b651fb756c944dca8fa405c1072b49f\\dry_run_report.json",
+      "simulation_status": "Passed",
+      "real_cad_executed": false,
+      "deliverable_status": "NotDeliverable"
+    },
+    {
+      "case": "contradictory",
+      "exit_code": 0,
+      "log_path": "output/tests/v21_b/cli_contradictory_final.log",
+      "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\dry-run\\cad-dry-run-20260907_014511_274-e1a215cea28b483bbce1d886fb6425f3\\dry_run_report.json",
+      "simulation_status": "Passed",
+      "real_cad_executed": false,
+      "deliverable_status": "NotDeliverable"
+    }
+  ],
+  "api_evidence": {
+    "legacy_simple_blind_cut": "verified，仅既有精确 profile，不能授权新显式孔",
+    "TappedHole": "unverified",
+    "CountersinkHole": "unverified",
+    "SimpleHole": "unverified",
+    "legacy_refresh": "evidence/solidworks/v2_1_b_refresh/independent_verification.json",
+    "new_typed_hole_real_execution_attempted": false,
+    "CounterboreHole": "unverified"
+  },
+  "v2_1_c_started": false,
+  "markdown_after_final_docs": {
+    "final_status": "Passed",
+    "scanned_files": 83,
+    "passed_files": 83,
+    "warnings": 0,
+    "failed_files": 0
+  }
+}

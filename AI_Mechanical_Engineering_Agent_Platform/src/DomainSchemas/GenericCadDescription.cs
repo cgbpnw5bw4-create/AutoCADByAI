@@ -599,6 +599,12 @@ public class BuildPlanCompiler
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var feature in graphResult.OrderedFeatures)
         {
+            if (feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase) && feature.Parameters.ContainsKey("hole_type"))
+            {
+                var holeValidation = new HoleValidator().Validate(feature, spec);
+                if (!holeValidation.IsValid)
+                    return new(null, holeValidation.FailureStage, holeValidation.Issues);
+            }
             if (!FeatureOperationMappings.ContainsKey(feature.FeatureType))
             {
                 return Failed(
@@ -736,6 +742,9 @@ public class BuildPlanCompiler
                 ["feature_id"] = feature.FeatureId,
                 ["feature_type"] = feature.FeatureType
             };
+            if (feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase) && feature.Parameters.ContainsKey("hole_type"))
+                foreach (var parameter in new HoleValidator().Validate(feature).Definition!.ToParameters())
+                    parameters[parameter.Key] = parameter.Value;
             if (feature.ReferencedSketches.Count > 0)
             {
                 parameters["sketch_id"] = feature.ReferencedSketches[0];
@@ -751,7 +760,8 @@ public class BuildPlanCompiler
             dependencies.AddRange(featureDependencyOperations);
             operations.Add(new SolidWorksOperation(
                 operationId,
-                FeatureOperationMappings[feature.FeatureType],
+                feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase) && feature.Parameters.ContainsKey("hole_type")
+                    ? "CreateHole" : FeatureOperationMappings[feature.FeatureType],
                 feature.ReferencedSketches.Count == 0
                     ? feature.TargetReference ?? string.Empty
                     : sketchesById[feature.ReferencedSketches[0]].ReferencePlane,

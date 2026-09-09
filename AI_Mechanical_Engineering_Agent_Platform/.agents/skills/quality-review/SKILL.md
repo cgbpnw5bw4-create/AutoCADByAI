@@ -87,3 +87,17 @@ markdown_chinese_check_passed
 ~~~
 
 缺少真实 GeometryReader 数据、任一报告无效、FeatureGraph 损坏、四孔未证明或 QualityGate 未通过，均为 Blocker。
+
+## V2.1-B 孔增强审查补充
+
+### 目标、范围与输入输出
+
+审查四类孔的定义、参数、引用、标准化、证据和后置几何链。输入为当前代码、测试、自检、能力矩阵与诊断；输出为可行动阻断、改进和验证边界。以 `docs/v2_1_b_hole_features.md` 与两层 `review_checklist.md` 为详细清单。
+
+### 执行与验证
+
+确认复用 canonical agents 与唯一 `HoleHandler`；所有非法类型/尺寸/孔位/面/数量/螺纹请求和编译计划篡改在 Worker 前拒绝。四个 dry-run 及十二个自检字段应有行为证据。新四类显式孔 API 未取证时必须真实失败关闭；旧简单孔的重新采证不能自动授权新 profile。孔几何检查必须使用独立 DTO，覆盖缺值、错数量、错尺寸、沉孔/沉头失配及缺失攻丝元数据反例，并进入 QualityGate。
+
+### 失败与禁止
+
+Handler COM、未证实 API 实调、普通 Cut 冒充攻丝、非空 Feature 冒充几何、期望值充当测量、能力基线削弱均为阻断。V2.1-A 报告独立性受限且无 Blockers，其改进按用户要求仅登记 backlog，不阻塞本轮。必须分开报告阶段、自检总体和真实验收状态；本轮不进入 V2.1-C。

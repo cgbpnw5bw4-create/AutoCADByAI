@@ -24,7 +24,10 @@ public static class GeometryValidationEvidencePolicy
                 "src/Workers/SolidWorks/Features/V20DFeatureGraphPartFamilyBuilder.cs",
                 "src/Workers/SolidWorks/Features/V20DThreeCircleCutEvidencePolicy.cs",
                 "src/Modules/CADModeling/ModelUpdateService.cs",
-                "src/DomainSchemas/GeometryValidation.cs"
+                "src/DomainSchemas/GeometryValidation.cs",
+                "src/DomainSchemas/HoleFeatureDefinition.cs",
+                "src/DomainSchemas/HoleGeometryValidation.cs",
+                "src/DomainSchemas/HolePlanValidation.cs"
             };
             using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
             foreach (var path in paths)

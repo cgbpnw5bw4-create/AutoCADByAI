@@ -23,7 +23,8 @@ public sealed record MeasuredGeometry(
     IReadOnlyList<string>? ReadIssues = null,
     string? SolidWorksVersion = null,
     string? GeometryEvidenceSourceRevision = null,
-    IReadOnlyList<MeasuredEdge>? Edges = null);
+    IReadOnlyList<MeasuredEdge>? Edges = null,
+    IReadOnlyList<MeasuredHole>? Holes = null);
 
 public sealed record GeometryBoundingBox(
     double MinXmm,
@@ -71,7 +72,8 @@ public sealed record GeometryExpectedGeometry(
     int? ExpectedHoleCount,
     double? ExpectedVolumeCubicMillimeters,
     IReadOnlyList<string> ExpectedFeatureKinds,
-    int ExpectedBodyCount = 1);
+    int ExpectedBodyCount = 1,
+    bool ExplicitHoleDefinitions = false);
 
 public sealed record GeometryDeviation(
     string Check,
@@ -166,6 +168,7 @@ public sealed class GeometryValidator
             ValidateBodiesAndVolume(measured, expected, deviations, passed, Fail);
             ValidateFeatureResults(measured, expected, executedFeatureTypes, passed, Fail);
             ValidateDiameter(measured, expected, deviations, passed, Fail);
+            HoleGeometryValidation.Validate(spec, measured, executedFeatureTypes, deviations, passed, Fail);
         }
 
         var finalStatus = failed.Count == 0 ? "Passed" : "Failed";
@@ -190,6 +193,8 @@ public sealed class GeometryValidator
         IReadOnlyList<string>? executedFeatureTypes = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
+        if (plan.Operations.Any(o => o.Parameters.ContainsKey("hole_type")))
+            return Validate(HolePlanValidation.Reconstruct(plan), measured, executedFeatureTypes);
         var features = plan.Operations
             .Where(operation =>
                 !operation.OperationType.Equals("SavePart", StringComparison.OrdinalIgnoreCase) &&
@@ -219,6 +224,7 @@ public sealed class GeometryValidator
         var thickness = ReadNumber(spec, "thickness_mm");
         var diameter = ReadNumber(spec, "diameter_mm") ?? ReadNumber(spec, "hole_diameter_mm");
         var count = ReadInteger(spec, "hole_count");
+        var explicitHoles = spec.Features.Where(HoleGeometryValidation.IsExplicitHole).ToArray();
         double? expectedVolume = null;
         if (length is > 0 && width is > 0 && thickness is > 0)
         {
@@ -227,6 +233,27 @@ public sealed class GeometryValidator
             {
                 expectedVolume -= count.Value * Math.PI * Math.Pow(diameter.Value / 2d, 2d) * thickness.Value;
             }
+        }
+
+        if (explicitHoles.Length > 0)
+        {
+            var first = new HoleValidator().Validate(explicitHoles[0], spec);
+            diameter = null;
+            if (first.IsValid && HoleValidator.TryResolveFace(explicitHoles[0], spec, first.Definition!, out var face))
+            {
+                var spans = new[] { face!.Width, face.Height, face.Depth }.OrderDescending().ToArray();
+                length = spans[0]; width = spans[1]; thickness = spans[2];
+                expectedVolume = (face.IsCircle ? Math.PI * Math.Pow(face.Width / 2, 2) : face.Width * face.Height) * face.Depth;
+                count = 0;
+                foreach (var feature in explicitHoles)
+                {
+                    var result = new HoleValidator().Validate(feature, spec);
+                    if (!result.IsValid) { expectedVolume = null; break; }
+                    count += result.Definition!.Quantity;
+                    expectedVolume -= HoleGeometryValidation.RemovedVolume(result.Definition, face.Depth);
+                }
+            }
+            else expectedVolume = null;
         }
 
         var kinds = new List<string> { "sketch", "extrude_boss" };
@@ -240,7 +267,8 @@ public sealed class GeometryValidator
             kinds.Add("hole");
         }
 
-        return new GeometryExpectedGeometry(length, width, thickness, diameter, count, expectedVolume, kinds);
+        return new GeometryExpectedGeometry(length, width, thickness, diameter, count, expectedVolume, kinds,
+            ExplicitHoleDefinitions: explicitHoles.Length > 0);
     }
 
     public static void WriteReport(string path, GeometryValidationReport report)
@@ -412,7 +440,7 @@ public sealed class GeometryValidator
             ValidateFeature("cut", cutExists, executed, FeatureTypes.ExtrudeCut, passed, fail);
         }
 
-        if (expected.ExpectedFeatureKinds.Contains("hole", StringComparer.OrdinalIgnoreCase))
+        if (!expected.ExplicitHoleDefinitions && expected.ExpectedFeatureKinds.Contains("hole", StringComparer.OrdinalIgnoreCase))
         {
             var handlerExecuted = executed.Contains(FeatureTypes.Hole, StringComparer.OrdinalIgnoreCase);
             var expectedHoleCount = expected.ExpectedHoleCount ?? 1;

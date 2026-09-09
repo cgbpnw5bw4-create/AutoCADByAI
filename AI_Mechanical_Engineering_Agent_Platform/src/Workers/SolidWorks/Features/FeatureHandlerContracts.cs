@@ -121,7 +121,9 @@ public sealed record FeatureHandlerReport(
     string? EvidenceSourceRevision = null,
     bool GeometryChangeValidated = false,
     double? VolumeBeforeCubicMeters = null,
-    double? VolumeAfterCubicMeters = null);
+    double? VolumeAfterCubicMeters = null,
+    string? HoleType = null,
+    IReadOnlyDictionary<string, string>? HoleParameters = null);
 
 public sealed record FeatureAdapterArtifact(
     string OperationId,
@@ -310,7 +312,7 @@ public abstract class FeatureHandlerBase : IFeatureHandler
         FeatureHandlerExecutionContext context,
         CancellationToken cancellationToken = default);
 
-    public FeatureHandlerReport GenerateReport(
+    public virtual FeatureHandlerReport GenerateReport(
         FeatureDefinition feature,
         FeatureHandlerExecutionResult result)
     {

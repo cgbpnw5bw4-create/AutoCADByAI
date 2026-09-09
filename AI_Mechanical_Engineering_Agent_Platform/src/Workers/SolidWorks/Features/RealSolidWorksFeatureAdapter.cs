@@ -734,6 +734,15 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (feature.Parameters.ContainsKey("hole_type"))
+        {
+            var validation = new HoleValidator().Validate(feature);
+            if (!validation.IsValid)
+                return Task.FromResult(FeatureHandlerExecutionResult.Failed(validation.FailureStage!, validation.Issues.ToArray()));
+            var strategy = Hole.HoleExecutionStrategies.Get(validation.Definition!.HoleType);
+            return Task.FromResult(FeatureHandlerExecutionResult.Failed(strategy.UnverifiedStage,
+                $"{strategy.UnverifiedStage}: {strategy.HoleType} 尚未取证；禁止进入 COM 或降级为普通 Cut。"));
+        }
         return Task.FromResult(Guard(
             PartFamilyFailureStages.HoleExecutionFailed,
             () =>

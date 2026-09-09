@@ -267,3 +267,19 @@ V1.5 主流程失败必须先看 `SolidWorksMainWorkflowRunner` 的工作流步�
 ## V2.1-A 夹套失败修复
 
 夹套参数缺失、非有限正数、内径不小于外径或单边壁厚小于 1 mm 时，在 Validator 阶段拒绝，不得连接 SolidWorks。`jacket_profile_create_failed`、`jacket_extrude_failed`、`jacket_inner_cut_failed` 分别定位外圆草图、实体拉伸和 TopPlane 内圆盲切；重建、实测几何或 STEP 内容不满足合同时必须沿对应失败阶段停止并保留失败构建报告。`part_family_api_evidence_insufficient` 表示受控 diagnostic、源码修订或运行时版本尚未恢复，必须重新采集真实证据，不能把历史自由文本改成授权。最终只用 `real_cad_jacket_request.json` 主流程回归。
+
+## V2.1-B 孔失败路由
+
+### 目标、适用范围与输入输出
+
+适用四类孔的前置拒绝、Adapter 执行与几何失败。输入为请求、编译计划、当次报告和证据；输出为直接原因、失败阶段、证据路径、修复和下一步验证。专门手册为 `src/Workers/SolidWorks/Features/Hole/failure_repair.md`。
+
+### 执行步骤与验证标准
+
+按类型 → 参数 → 引用 → API evidence → 独立几何 → QualityGate 排查。`unsupported_hole_type`、`invalid_hole_parameter`、`hole_reference_face_missing` 必须在 Worker 前拒绝；`simple_hole_execution_failed`、`counterbore_execution_failed`、`countersink_execution_failed`、`tapped_hole_execution_failed` 保留实际类型；`hole_geometry_validation_failed` 阻断后续交付；`tapped_hole_api_unverified` 与其他类型的 `feature_api_unverified` 必须在 COM 前失败关闭。
+
+修复输入后重跑四个 dry-run 和负例；涉及 API 时先隔离诊断、再回填准确证据，最后执行 build、test、self-check 与所需完整主流程。通过须有实际读数与同次报告，不能仅凭 Feature 存在。
+
+### 常见失败与禁止事项
+
+孔位越界、数量不符、未知面、盲孔穿底、沉孔/沉头非法比例、螺纹目录或深度错误、缺少测量、证据源码不匹配均须保留原因。禁止静默转普通孔、以 Cut 替代攻丝、改写历史报告、猜 API 参数、绕过质量链或进入 V2.1-C。

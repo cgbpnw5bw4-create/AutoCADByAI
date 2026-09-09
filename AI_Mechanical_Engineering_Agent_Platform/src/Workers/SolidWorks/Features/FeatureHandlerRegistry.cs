@@ -99,6 +99,10 @@ public sealed class FeatureHandlerRegistry
             StringComparer.OrdinalIgnoreCase);
         string? firstFailureStage = null;
 
+        var holeValidation = HolePlanValidation.Validate(plan);
+        if (holeValidation is not null)
+            return new(false, holeValidation.FailureStage, holeValidation.Issues, []);
+
         foreach (var operation in plan.Operations.Where(operation =>
                      !NonFeatureOperations.Contains(operation.OperationType)))
         {
@@ -335,6 +339,7 @@ public static class FeatureHandlerPlanAdapter
             ["ExtrudeBoss"] = FeatureTypes.ExtrudeBoss,
             ["CutExtrude"] = FeatureTypes.ExtrudeCut,
             ["CreateSimpleHole"] = FeatureTypes.Hole,
+            ["CreateHole"] = FeatureTypes.Hole,
             ["RevolveBoss"] = FeatureTypes.RevolveBoss
         };
 

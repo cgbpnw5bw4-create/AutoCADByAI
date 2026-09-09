@@ -69,6 +69,11 @@ public sealed class FeatureParameterSchemaRegistry
     public FeatureParameterValidationResult Validate(FeatureDefinition feature)
     {
         ArgumentNullException.ThrowIfNull(feature);
+        if (HoleGeometryValidation.IsExplicitHole(feature))
+        {
+            var validation = new HoleValidator().Validate(feature);
+            return new(validation.IsValid, validation.FailureStage, validation.Issues);
+        }
         return _schemas.TryGetValue(feature.FeatureType, out var schema)
             ? schema.Validate(feature)
             : FeatureParameterValidationResult.Passed();

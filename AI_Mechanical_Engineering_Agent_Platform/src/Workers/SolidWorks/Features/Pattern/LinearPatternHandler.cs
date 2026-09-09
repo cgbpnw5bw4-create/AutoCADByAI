@@ -58,12 +58,12 @@ public sealed class LinearPatternHandler : FeatureHandlerBase
             "只读拓扑探针在产出零件上量到孔口圆心 x = -30 / -10 / 10 / 30（z 均为 0，半径均 3.00），",
             "体积减少 848.23 立方毫米，与 3 个 Ø6 通孔的闭式解 3×π×3²×10 = 848.23 完全一致。",
             "创建后 IFeature.GetTypeName2 返回 LPattern，证明选择集标记被按预期解读。"
-        ],        EvidenceId: "v2.1-a-20260828-014638-linear-pattern",
+        ],        EvidenceId: "v2.1-b-20260907-refresh-LinearPatternHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "single_direction_linear_pattern;criteria_resolved_direction;principal_axis_cross_checked",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/20260828_014638_3133239/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:533b14e951348372edee939de64e411663a94fbd2dc49ac60c18ee63c298cd54");
+        DiagnosticRunPath: "evidence/solidworks/v2_1_b_refresh/20260907_013438_4901315/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

@@ -26,6 +26,41 @@ if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.Ord
     return report.FinalStatus == "Passed" ? 0 : 2;
 }
 
+if (CadDryRunCliContract.IsInvocation(args))
+{
+    var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
+    try
+    {
+        var input = JsonSerializer.Deserialize<CadWorkflowInput>(await File.ReadAllTextAsync(Path.GetFullPath(args[2])), JsonOptions());
+        var modelSpec = ResolveModelSpec(input);
+        if (input is null || modelSpec is null) { Console.Error.WriteLine("invalid_cad_model_spec: 缺少模型。"); return 2; }
+        var runId = $"cad-dry-run-{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}-{Guid.NewGuid():N}";
+        var outputDirectory = Path.Combine(projectRoot, "output", "solidworks", "dry-run", runId);
+        var context = CadDryRunCliContract.ForceDryRun(ToGatewayContext(input, modelSpec, projectRoot, outputDirectory, runId));
+        var response = await new AgentMessageDispatcher(RuntimePlatformFactory.CreateDefault(projectRoot)).DispatchAsync(
+            "chief-engineer", new GatewayMessageRequest("CliHost", "cli", runId, Environment.UserName,
+                "验证通用 CAD FeatureGraph 模拟工作流。", [], context));
+        Directory.CreateDirectory(outputDirectory);
+        var passed = response?.Status.Equals("completed", StringComparison.OrdinalIgnoreCase) == true;
+        var reportPath = Path.Combine(outputDirectory, "dry_run_report.json");
+        await File.WriteAllTextAsync(reportPath, JsonSerializer.Serialize(new
+        {
+            run_id = runId, model_id = modelSpec.ModelId, dry_run = true, real_cad_executed = false,
+            simulation_status = passed ? "Passed" : "Failed", deliverable_status = "NotDeliverable",
+            gateway_status = response?.Status, quality_gate = response?.GateDecision, issues = response?.Issues,
+            artifacts = response?.Artifacts
+        }, JsonOptions()));
+        Console.WriteLine($"simulation_status={(passed ? "Passed" : "Failed")}");
+        Console.WriteLine("real_cad_executed=false");
+        Console.WriteLine("deliverable_status=NotDeliverable");
+        Console.WriteLine($"dry_run_report={reportPath}");
+        if (!passed) foreach (var issue in response?.Issues ?? []) Console.Error.WriteLine(issue);
+        return passed ? 0 : 2;
+    }
+    catch (Exception ex) when (ex is IOException or JsonException or ArgumentException)
+    { Console.Error.WriteLine($"invalid_cad_model_spec: {ex.Message}"); return 2; }
+}
+
 if (SolidWorksE2eCliContract.IsInvocation(args))
 {
     var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());

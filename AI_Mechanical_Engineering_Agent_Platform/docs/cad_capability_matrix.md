@@ -2,7 +2,7 @@
 
 ## 目标
 
-记录通用建模内核当前**真实**支持的 Feature 能力边界。本矩阵是判断一个零件族能否进入真实执行的唯一能力依据，不写计划中的能力，只写代码与证据已经支持的能力。
+记录通用建模内核的定义、Handler 与真实 API 能力边界。本矩阵供准入和审查定位，实际授权仍必须通过证据策略的当前源码、精确参数档案、运行时与诊断核验；不能只因表格写过支持就放行。
 
 ## 适用范围
 
@@ -24,7 +24,11 @@
 | `sketch` | `SketchHandler` | `CreateCircle`、`CreateLine`、`CreateCenterRectangle` 已实调 | `Supported` | 仅限标准基准面；仅直线、中心矩形、圆；不支持圆弧、槽、约束与尺寸 |
 | `extrude_boss` | `ExtrudeBossHandler` | `FeatureExtrusion2` 已实调 | `Supported` | 仅 blind 单向拉伸；不支持 `mid_plane`、拔模、薄壁与多实体 |
 | `extrude_cut` | `ExtrudeCutHandler` | `FeatureCut4` 已实调 | `Supported` | 仅 blind 切除；不支持 `through_all`、反向切除、薄壁与多实体范围 |
-| `hole` | `HoleHandler` | `FeatureCut4` 配单圆草图 | `Partial` | 以圆草图加 blind 切除实现；依赖草图恰为一个等径圆；不使用 `SimpleHole2` 与 Hole Wizard |
+| `hole` 历史隐式普通孔 | 既有 `HoleHandler` | 历史 `FeatureCut4` 配单圆草图已实调 | `Partial`，须当前源码证据有效 | 仅不带 `hole_type` 的原 `simple_circular_cut_blind` 档案；不得授权新增面引用、数量、贯穿或孔向导 |
+| `SimpleHole` | 同一 `HoleHandler`；类型化定义、标准化、前置校验与 dry-run | 新显式档案为 `unverified`；孔向导 API 为研究候选 | `Unverified`，本轮增强档案无真机验证 | `through_all`、显式位置/参考面/数量不得复用历史盲切证据，真实执行连接前拒绝 |
+| `CounterboreHole` | 同一 Handler 保留主孔与大径台阶参数 | 孔向导候选 `unverified` | `Unverified`，无本机创建与读回证据 | 两级几何须独立验证，当前仅定义、校验和 dry-run；连接前拒绝 |
+| `CountersinkHole` | 同一 Handler 保留入口径与全夹角 | 孔向导候选 `unverified` | `Unverified`，无本机创建与锥面读回证据 | 入口径、锥角与终止尚未实证；当前仅定义、校验和 dry-run；连接前拒绝 |
+| `TappedHole` | 同一 Handler 保留标准、规格、螺距、螺纹深度与底孔 | `IWizardHoleFeatureData2` / 孔向导候选 `unverified` | `Unverified`，无标准攻丝孔真机证据 | 有限 `ISO_METRIC` 粗牙与候选底孔目录；必须区分几何孔、装饰螺纹、孔向导攻丝与实体螺纹；`tapped_hole_api_unverified` 阻断 |
 | `revolve_boss` | `RevolveBossHandler` | `FeatureRevolve2` 已接线但无 Feature 级证据 | `Unverified` | 缺少独立 diagnostic 与几何复核，真实执行被证据策略拒绝；`shaft_basic` 因此 fail-closed |
 | `revolve_cut` | 无 | 未接线 | `Unsupported` | 无 Handler，`FeatureHandlerRegistry` 无法解析 |
 | `fillet` | `FilletHandler` | `FeatureFillet3` 已实调 | `Supported` | 仅等半径边圆角；边由 `EdgeSelectionCriteria` 判据求解，命中数不符即拒绝；不支持变半径、setback、面圆角与 conic |
@@ -33,7 +37,21 @@
 | `circular_pattern` | `CircularPatternHandler` | `FeatureCircularPattern5` 已实调 | `Supported` | 仅等角单方向；轴由圆边法向求解并与声明主轴交叉校验；不支持双方向、对称与跳过实例 |
 | `mirror` | `MirrorHandler` | `InsertMirrorFeature2` 已实调 | `Supported` | 仅关于标准基准面镜像特征；不支持镜像实体、镜像面与曲面缝合 |
 
-## 实体引用模型
+## V2.1-B 孔合同与真实边界
+
+输入为单位 `mm` 的 FeatureGraph 孔定义，输出为 `CreateHole` 标准化操作、实际类型/参数报告和独立孔几何判定。四种显式类型复用 `HoleHandler` 与 `ExecuteHoleAsync`，新档案均没有真实授权。`simple_hole_supported` 等自检字段表示定义与模拟能力，不表示矩阵中的真实 `Supported`。四个样例通过 `dry-run-cad --input examples/hole_<type>_plate.json` 强制模拟，即使模拟 `Passed` 也必须保持 `NotDeliverable`、`real_cad_executed=false`；完整命令见阶段说明。
+
+孔面引用当前仅支持单一矩形或圆形盲拉伸实体的 `start_face` / `end_face`，显式局部孔位须完整位于材料内；数量与位置一一对应。`pattern_reference` 仅表示已声明草图圆心点集，不调用阵列 API。无法证明复杂布尔后材料、任意曲面或多实体引用时拒绝。攻丝底孔目录是项目候选白名单，不是完整标准数据库。
+
+孔几何判定覆盖数量、位置、主孔直径/深度、沉孔大径/台阶、沉头入口径/锥角和实际孔向导螺纹元数据，Worker 和 ArtifactValidator 均接入，后者重算并比对 Handler 的孔定义。当前真实 Reader 尚未生成新四类 `Holes`；独立测量夹具仅证明判定规则，缺读数或只有非空 Feature 时失败，不能用输入值填充实测数据。完整合同与验证结果见 [V2.1-B 阶段说明](v2_1_b_hole_features.md)，API、单位、返回、失败与宏见 [孔证据](../src/Workers/SolidWorks/Features/Hole/api_evidence.md)。
+
+### 历史取证与当前授权
+
+下述 V2.1-A 拓扑与 API 记录证明当时的精确档案，不自动证明本轮源码。受 `BoundSourcePaths` 保护的文件变化后，旧复合源码绑定失效；重新采证前必须失败关闭。即使既有九类档案重新验证，也不扩大四类显式孔、`through_all`、`mid_plane`、任意面或 `revolve_boss`。
+
+本轮已经在 `evidence/solidworks/v2_1_b_refresh/` 真实重采基础、圆角、倒角、线性阵列、圆周阵列、镜像和更新后四孔板七份诊断；全部 `CandidatePassed` / `NotDeliverable`，SolidWorks `31.5.0`，并有逐份只读拓扑探针。九个既有 Handler 与三圆策略的当前源码绑定已复核恢复，最终全量测试为 `449/449` 通过。路径、源码修订和独立体积复核集中见 [V2.1-B 重采记录](v2_1_b_hole_features.md#本轮既有参数档案真实重采)。运行时仍须通过证据策略，不能把诊断直接写成主流程交付，新四类显式孔继续 `Unverified`。
+
+## V2.1-A 实体引用模型记录
 
 V2.1-A 新增的四个特征与既有的 `revolve_boss` 曾卡在同一个根因上：**通用 FeatureGraph 无法表达稳定的实体引用**。该缺口现已在模型层解决。
 

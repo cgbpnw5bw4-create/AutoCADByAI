@@ -1,0 +1,691 @@
+{
+  "method": "独立闭式体积与孔口坐标半径逐项匹配，未调用项目GeometryValidator；根PM另行独立核读一致",
+  "all_passed": true,
+  "checks": [
+    {
+      "input": "feature_pipeline_plate.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013221_3210868\\feature_execution_report.json",
+      "report_sha256": "875750ae5660bcc36cd87d4cb12d7c3b10a3c5328cfa67feea47ba245bffc46c",
+      "probe_sha256": "9c296543a939346a9e8333994a022e334a062c7e5fbdab94590fbfe470d76eac",
+      "expected_volume_mm3": 58429.203673205106,
+      "measured_volume_mm3": 58429.2036732051,
+      "volume_error_mm3": -7.275957614183426e-12,
+      "expected_circle_edges": [
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已有精确profile；不授权新显式孔型"
+    },
+    {
+      "input": "feature_pipeline_plate_fillet.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013408_5080299\\feature_execution_report.json",
+      "report_sha256": "c097022ce9a2653483a7ed8adb2f249f21c673d77990d99e7f3e36d75a015d59",
+      "probe_sha256": "0b433a2c95dfafa6ed7f0348df494081070352c1d4da0e06357cc95e20c0c5c8",
+      "expected_volume_mm3": 58415.11747102788,
+      "measured_volume_mm3": 58415.11747102787,
+      "volume_error_mm3": -7.275957614183426e-12,
+      "expected_circle_edges": [
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          -20,
+          9,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          9,
+          0,
+          5
+        ],
+        [
+          -20,
+          10,
+          0,
+          6
+        ],
+        [
+          20,
+          10,
+          0,
+          6
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          -20,
+          9.000000000000002,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          6
+        ],
+        [
+          -20,
+          10,
+          0,
+          6
+        ],
+        [
+          20,
+          9.000000000000002,
+          0,
+          5
+        ],
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已有精确profile；不授权新显式孔型"
+    },
+    {
+      "input": "feature_pipeline_plate_chamfer.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013423_5400787\\feature_execution_report.json",
+      "report_sha256": "49a850a03fbcf54a51f64e0f01f966f3731d9e9e0df18a9707408ce49fbd3835",
+      "probe_sha256": "4ad315a04da739714f37f971c4623e559b5fdd973620a9c7d8b33e21036b388f",
+      "expected_volume_mm3": 58395.69335156681,
+      "measured_volume_mm3": 58395.693351566806,
+      "volume_error_mm3": -7.275957614183426e-12,
+      "expected_circle_edges": [
+        [
+          -20,
+          1,
+          0,
+          5
+        ],
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          1,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ],
+        [
+          -20,
+          0,
+          0,
+          6
+        ],
+        [
+          20,
+          0,
+          0,
+          6
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          -20,
+          1.0000000000000113,
+          0,
+          5
+        ],
+        [
+          20,
+          1.0000000000000113,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          6.000000000000005
+        ],
+        [
+          -20,
+          0,
+          0,
+          6.000000000000005
+        ],
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已有精确profile；不授权新显式孔型"
+    },
+    {
+      "input": "feature_pipeline_plate_linear_pattern.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013438_4901315\\feature_execution_report.json",
+      "report_sha256": "f12b10380af9479b13e9e80ce4004aa0de25c2b876164fbd73d13720ef4f9728",
+      "probe_sha256": "590e3088584b9a3de9ef1e7a405b65586209ea6900266c4f8d7d0754e2fc66bf",
+      "expected_volume_mm3": 58869.02664470767,
+      "measured_volume_mm3": 58869.02664470767,
+      "volume_error_mm3": 0.0,
+      "expected_circle_edges": [
+        [
+          -30,
+          0,
+          0,
+          3
+        ],
+        [
+          -30,
+          10,
+          0,
+          3
+        ],
+        [
+          -10,
+          0,
+          0,
+          3
+        ],
+        [
+          -10,
+          10,
+          0,
+          3
+        ],
+        [
+          10,
+          0,
+          0,
+          3
+        ],
+        [
+          10,
+          10,
+          0,
+          3
+        ],
+        [
+          30,
+          0,
+          0,
+          3
+        ],
+        [
+          30,
+          10,
+          0,
+          3
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          29.999999999999996,
+          10,
+          0,
+          3.000000000000001
+        ],
+        [
+          29.999999999999996,
+          0,
+          0,
+          3.000000000000001
+        ],
+        [
+          10.000000000000002,
+          10,
+          0,
+          3.000000000000001
+        ],
+        [
+          10.000000000000002,
+          0,
+          0,
+          3.000000000000001
+        ],
+        [
+          -30,
+          10,
+          0,
+          3.000000000000001
+        ],
+        [
+          -30,
+          0,
+          0,
+          3.000000000000001
+        ],
+        [
+          -9.999999999999998,
+          10,
+          0,
+          3.000000000000001
+        ],
+        [
+          -9.999999999999998,
+          0,
+          0,
+          3.000000000000001
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已有精确profile；不授权新显式孔型"
+    },
+    {
+      "input": "feature_pipeline_plate_circular_pattern.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013451_0073586\\feature_execution_report.json",
+      "report_sha256": "00091dad8ca9901e6becd24b22d450a57cbc841211365b03edf6104b014847a3",
+      "probe_sha256": "d119a0ff4af3e9a36d82bdd98910ce3831a4e13dfcb32234269ba252528b42a1",
+      "expected_volume_mm3": 58083.628481310225,
+      "measured_volume_mm3": 58083.628481310225,
+      "volume_error_mm3": 0.0,
+      "expected_circle_edges": [
+        [
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          0,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          3
+        ],
+        [
+          20,
+          10,
+          0,
+          3
+        ],
+        [
+          0,
+          0,
+          -20,
+          3
+        ],
+        [
+          0,
+          10,
+          -20,
+          3
+        ],
+        [
+          -20,
+          0,
+          0,
+          3
+        ],
+        [
+          -20,
+          10,
+          0,
+          3
+        ],
+        [
+          0,
+          0,
+          20,
+          3
+        ],
+        [
+          0,
+          10,
+          20,
+          3
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          0,
+          10,
+          0,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          2.9999999999999973
+        ],
+        [
+          20,
+          0,
+          0,
+          2.9999999999999973
+        ],
+        [
+          1.2246467991473533e-15,
+          10,
+          -20,
+          2.9999999999999973
+        ],
+        [
+          -20,
+          10,
+          -2.4492935982947065e-15,
+          2.9999999999999973
+        ],
+        [
+          -3.673940397442059e-15,
+          10,
+          20,
+          2.9999999999999973
+        ],
+        [
+          1.2246467991473533e-15,
+          0,
+          -20,
+          2.9999999999999973
+        ],
+        [
+          -20,
+          0,
+          -2.4492935982947065e-15,
+          2.9999999999999973
+        ],
+        [
+          -3.673940397442059e-15,
+          0,
+          20,
+          2.9999999999999973
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已有精确profile；不授权新显式孔型"
+    },
+    {
+      "input": "feature_pipeline_plate_mirror.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013503_7710789\\feature_execution_report.json",
+      "report_sha256": "0ea99f3b285edf679d65198c8cb96c24d991e40efc20749c827e0bad1b5cf449",
+      "probe_sha256": "65bccaaedda22343345f4caf93f16dc0037df2e5f0b4f598a510d9e0b239615c",
+      "expected_volume_mm3": 59434.513322353836,
+      "measured_volume_mm3": 59434.513322353836,
+      "volume_error_mm3": 0.0,
+      "expected_circle_edges": [
+        [
+          25,
+          0,
+          -15,
+          3
+        ],
+        [
+          25,
+          10,
+          -15,
+          3
+        ],
+        [
+          -25,
+          0,
+          -15,
+          3
+        ],
+        [
+          -25,
+          10,
+          -15,
+          3
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          25,
+          10,
+          -15,
+          3.000000000000001
+        ],
+        [
+          25,
+          0,
+          -15,
+          3.000000000000001
+        ],
+        [
+          -25,
+          10,
+          -15,
+          3.000000000000001
+        ],
+        [
+          -25,
+          0,
+          -15,
+          3.000000000000001
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已有精确profile；不授权新显式孔型"
+    },
+    {
+      "input": "parameter_update_plate.json",
+      "report_path": "evidence\\solidworks\\v2_1_b_refresh\\20260907_013514_0906527\\feature_execution_report.json",
+      "report_sha256": "222e4204444fe3924af4d51da9e445ed5070ca34ccd05aea25ed0028cb6cef38",
+      "probe_sha256": "1a825d11ccb2ecd0e19a16acdee538088e9ea87f6a49983bad0f7bb9be622ab1",
+      "expected_volume_mm3": 295287.6110196153,
+      "measured_volume_mm3": 295287.6110196154,
+      "volume_error_mm3": 5.820766091346741e-11,
+      "expected_circle_edges": [
+        [
+          -80,
+          0,
+          -30,
+          5
+        ],
+        [
+          -80,
+          15,
+          -30,
+          5
+        ],
+        [
+          -80,
+          0,
+          30,
+          5
+        ],
+        [
+          -80,
+          15,
+          30,
+          5
+        ],
+        [
+          80,
+          0,
+          -30,
+          5
+        ],
+        [
+          80,
+          15,
+          -30,
+          5
+        ],
+        [
+          80,
+          0,
+          30,
+          5
+        ],
+        [
+          80,
+          15,
+          30,
+          5
+        ]
+      ],
+      "measured_circle_edges": [
+        [
+          -80,
+          15,
+          -30,
+          5.000000000000005
+        ],
+        [
+          80,
+          15,
+          30,
+          5.000000000000004
+        ],
+        [
+          -80,
+          15,
+          30,
+          5.000000000000004
+        ],
+        [
+          -80,
+          0,
+          30,
+          5.000000000000004
+        ],
+        [
+          80,
+          0,
+          30,
+          5.000000000000004
+        ],
+        [
+          -80,
+          0,
+          -30,
+          5.000000000000005
+        ],
+        [
+          80,
+          15,
+          -30,
+          5.000000000000005
+        ],
+        [
+          80,
+          0,
+          -30,
+          5.000000000000005
+        ]
+      ],
+      "body_count": 1,
+      "topology_passed": true,
+      "candidate_only": true,
+      "deliverable_status": "NotDeliverable",
+      "source_revision": "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09",
+      "limitation": "仅已更新模型构建；未证明初始到更新闭环"
+    }
+  ]
+}

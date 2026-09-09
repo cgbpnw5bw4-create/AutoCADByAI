@@ -33,6 +33,8 @@ public sealed class SolidWorksPartFamilyBuildDiagnostics
     public long StepSizeBytes { get; set; }
     public bool GeometryValidationAttempted { get; set; }
     public string? GeometryValidationStatus { get; set; }
+    public CADModelSpec? HoleModelSpec { get; set; }
+    public GeometryValidationReport? HoleGeometryValidation { get; set; }
     public int? MeasuredBodyCount { get; set; }
     public int? ExpectedBodyCount { get; set; }
     public double? GeometryVolumeRelativeTolerance { get; set; }
@@ -122,6 +124,8 @@ public static class SolidWorksPartFamilyBuildReportWriter
             step_size_bytes = diagnostics.StepSizeBytes,
             geometry_validation_attempted = diagnostics.GeometryValidationAttempted,
             geometry_validation_status = diagnostics.GeometryValidationStatus,
+            hole_model_spec = diagnostics.HoleModelSpec,
+            hole_geometry_validation = diagnostics.HoleGeometryValidation,
             measured_body_count = diagnostics.MeasuredBodyCount,
             expected_body_count = diagnostics.ExpectedBodyCount,
             geometry_volume_relative_tolerance = diagnostics.GeometryVolumeRelativeTolerance,
@@ -800,6 +804,26 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         SolidWorksBuildPlan plan,
         SolidWorksPartFamilyBuildDiagnostics diagnostics)
     {
+        if (plan.Operations.Any(o => o.Parameters.ContainsKey("hole_type")))
+        {
+            diagnostics.GeometryValidationAttempted = true;
+            diagnostics.HoleModelSpec = HolePlanValidation.Reconstruct(plan);
+            var read = GeometryReader.Read(model);
+            var holeReport = new GeometryValidator().Validate(diagnostics.HoleModelSpec, read.Geometry,
+                diagnostics.FeatureHandlerReports.Select(r => r.FeatureType).ToArray());
+            diagnostics.HoleGeometryValidation = holeReport;
+            diagnostics.GeometryValidationStatus = holeReport.FinalStatus;
+            diagnostics.ExpectedBodyCount = 1;
+            diagnostics.MeasuredBodyCount = read.Geometry?.BodyCount;
+            diagnostics.ExpectedVolumeCubicMillimeters = holeReport.ExpectedGeometry.ExpectedVolumeCubicMillimeters;
+            diagnostics.MeasuredVolumeCubicMillimeters = read.Geometry?.VolumeCubicMillimeters;
+            diagnostics.GeometryVolumeRelativeTolerance = GeometryValidator.VolumeRelativeTolerance;
+            if (!read.IsSuccess || holeReport.FinalStatus != "Passed")
+                throw Failure(holeReport.FailureStage ?? PartFamilyFailureStages.HoleGeometryValidationFailed,
+                    string.Join(" | ", holeReport.FailedChecks.Concat(read.Issues)));
+            diagnostics.OperationsExecuted.Add("hole_geometry_validation_success");
+            return;
+        }
         var expected = DescribeExpectedGeometry(plan);
         if (expected is null)
         {

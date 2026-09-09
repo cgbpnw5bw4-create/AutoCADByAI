@@ -10,6 +10,7 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
         [
             "CreateSketch",
             "CreateCenterLine",
+            "CreateHole",
             "ExportStep",
             "SavePart"
         ]),
@@ -85,6 +86,8 @@ public sealed class SolidWorksBuildPlanValidator : IValidator
         }
 
         ValidateOperationGraph(plan.Operations, issues);
+        var holeValidation = HolePlanValidation.Validate(plan);
+        if (holeValidation is not null) issues.AddRange(holeValidation.Issues.Select(issue => $"non_retryable: {issue}"));
 
         if (plan.ExpectedArtifacts.Count == 0)
         {

@@ -1,0 +1,86 @@
+{
+  "operation": "build_plate",
+  "dry_run": true,
+  "cad_model_spec": {
+    "model_id": "hole_simple_plate",
+    "model_type": "plate_basic_4holes",
+    "unit": "mm",
+    "parameters": {
+      "length_mm": "100",
+      "width_mm": "60",
+      "thickness_mm": "20",
+      "hole_count": "4",
+      "hole_diameter_mm": "6"
+    },
+    "reference_geometry": {
+      "primary_plane": "TopPlane"
+    },
+    "sketches": [
+      {
+        "sketch_id": "plate_profile",
+        "reference_plane": "TopPlane",
+        "execution_order": 1,
+        "entities": [
+          {
+            "entity_id": "plate_rectangle",
+            "entity_type": "rectangle",
+            "parameters": {
+              "center_x_mm": "0",
+              "center_y_mm": "0",
+              "width_mm": "100",
+              "height_mm": "60"
+            }
+          }
+        ],
+        "constraints": [],
+        "dimensions": {}
+      }
+    ],
+    "features": [
+      {
+        "feature_id": "plate_boss",
+        "feature_type": "extrude_boss",
+        "parameters": {
+          "depth_mm": "20",
+          "direction": "blind"
+        },
+        "dependencies": [],
+        "referenced_sketches": [
+          "plate_profile"
+        ],
+        "referenced_features": [],
+        "execution_order": 1
+      },
+      {
+        "feature_id": "test_hole",
+        "feature_type": "hole",
+        "parameters": {
+          "hole_type": "SimpleHole",
+          "diameter_mm": "6",
+          "depth_mm": "12",
+          "through_all": "false",
+          "position": "{\"x_mm\":0,\"y_mm\":0,\"z_mm\":0}",
+          "reference_face": "plate_boss:end_face",
+          "quantity": "1"
+        },
+        "dependencies": [
+          "plate_boss"
+        ],
+        "referenced_sketches": [],
+        "execution_order": 2
+      }
+    ],
+    "material": "Q235",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false"
+    },
+    "execution_options": {
+      "dry_run": "true"
+    }
+  }
+}

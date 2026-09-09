@@ -31,6 +31,15 @@ public static class PartFamilyFailureStages
     public const string ExtrudeExecutionFailed = "extrude_execution_failed";
     public const string CutExecutionFailed = "cut_execution_failed";
     public const string HoleExecutionFailed = "hole_execution_failed";
+    public const string UnsupportedHoleType = "unsupported_hole_type";
+    public const string InvalidHoleParameter = "invalid_hole_parameter";
+    public const string HoleReferenceFaceMissing = "hole_reference_face_missing";
+    public const string SimpleHoleExecutionFailed = "simple_hole_execution_failed";
+    public const string CounterboreExecutionFailed = "counterbore_execution_failed";
+    public const string CountersinkExecutionFailed = "countersink_execution_failed";
+    public const string TappedHoleExecutionFailed = "tapped_hole_execution_failed";
+    public const string HoleGeometryValidationFailed = "hole_geometry_validation_failed";
+    public const string TappedHoleApiUnverified = "tapped_hole_api_unverified";
     public const string FeatureResultInvalid = "feature_result_invalid";
     public const string FeatureArtifactMissing = "feature_artifact_missing";
     public const string FeatureApiUnverified = "feature_api_unverified";
