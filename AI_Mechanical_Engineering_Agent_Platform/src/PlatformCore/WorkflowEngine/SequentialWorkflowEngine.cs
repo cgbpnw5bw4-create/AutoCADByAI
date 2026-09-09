@@ -55,9 +55,11 @@ public sealed class SequentialWorkflowEngine
     {
         ArgumentNullException.ThrowIfNull(submission);
         if (string.IsNullOrWhiteSpace(submission.WorkflowId) ||
-            string.IsNullOrWhiteSpace(submission.SubmittedBy))
+            string.IsNullOrWhiteSpace(submission.SubmittedBy) ||
+            string.IsNullOrWhiteSpace(submission.ApprovalRequestId) ||
+            string.IsNullOrWhiteSpace(submission.StepId))
         {
-            return new(false, null, "workflow_approval_invalid_submission: workflow_id and submitted_by are required.");
+            return new(false, null, "workflow_approval_invalid_submission: workflow_id, submitted_by, approval_request_id and step_id are required.");
         }
 
         if (!Enum.IsDefined(submission.Decision))
@@ -65,57 +67,92 @@ public sealed class SequentialWorkflowEngine
             return new(false, null, "workflow_approval_invalid_submission: unsupported approval decision.");
         }
 
-        if (!_approvalStore.TryTake(submission.WorkflowId, out var pending))
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_approvalStore.TryTake(submission.WorkflowId, submission.ApprovalRequestId, submission.StepId, out var pending))
         {
-            return new(false, null, $"workflow_approval_not_pending: {submission.WorkflowId} has no pending approval request.");
+            return new(false, null, $"workflow_approval_not_pending_or_mismatched: {submission.WorkflowId} has no pending approval matching request {submission.ApprovalRequestId} and step {submission.StepId}.");
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        var auditStartIndex = _auditLog.GetEntries().Count;
         var submittedAt = submission.SubmittedAt ?? DateTimeOffset.UtcNow;
+        submission = submission with { SubmittedAt = submittedAt };
         _auditLog.Record(
             "workflow",
             pending.WaitingStep.StepId,
             "workflow_human_approval_submitted",
-            $"Workflow {pending.WorkflowId} received {submission.Decision} from {submission.SubmittedBy} at {submittedAt:O}.");
+            $"Workflow {pending.WorkflowId} received {submission.Decision} from {submission.SubmittedBy} at {submittedAt:O}; approval_request_id={submission.ApprovalRequestId}; step_id={submission.StepId}.");
 
         return submission.Decision switch
         {
             WorkflowApprovalDecision.Approve => await ResumeApprovedAsync(
                 pending,
                 submission,
+                auditStartIndex,
                 cancellationToken),
             WorkflowApprovalDecision.Reject or WorkflowApprovalDecision.RequestRevision =>
-                CompleteRejectedApproval(pending, submission),
+                CompleteRejectedApproval(pending, submission, auditStartIndex),
             _ => new(false, null, "workflow_approval_invalid_submission: unsupported approval decision.")
         };
     }
 
-    public async Task<WorkflowExecutionResult> ExecuteAsync(
+    public Task<WorkflowExecutionResult> ExecuteAsync(
         IEnumerable<WorkflowStep> steps,
         WorkflowContext context,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        ExecuteStepsAsync(steps, context, Array.Empty<WorkflowStepResult>(), Array.Empty<AuditLogEntry>(), true, cancellationToken);
+
+    private async Task<WorkflowExecutionResult> ExecuteStepsAsync(
+        IEnumerable<WorkflowStep> steps,
+        WorkflowContext context,
+        IReadOnlyList<WorkflowStepResult> completedSteps,
+        IReadOnlyList<AuditLogEntry> auditHistory,
+        bool isInitialExecution,
+        CancellationToken cancellationToken)
     {
         var workflowId = context.TaskId;
-        var results = new List<WorkflowStepResult>();
+        var results = completedSteps.ToList();
         var orderedSteps = steps.ToArray();
         var auditStartIndex = _auditLog.GetEntries().Count;
+        IReadOnlyList<AuditLogEntry> SnapshotAuditLogs() =>
+            auditHistory.Concat(CurrentAuditLogs(auditStartIndex)).ToArray();
+        WorkflowExecutionResult CancelledResume(WorkflowStep step, int retryCount, int maxRetries)
+        {
+            const string stage = "workflow_approval_resume_cancelled";
+            var stepId = step.StepId ?? step.Name;
+            var reason = $"{stage}: Approved continuation was cancelled at step '{stepId}'. Inspect completed steps and side effects before starting a new workflow; automatic replay is disabled.";
+            var decision = new GateDecision($"gate-{stepId}-cancelled-{Guid.NewGuid():N}", GateDecisionResult.Failed, reason);
+            var cancelled = new WorkflowStepResult(stepId, step.Name, WorkflowStepStatus.Failed, reason,
+                GateDecision: decision, Issues: [reason], Logs: [reason], RetryCount: retryCount, MaxRetries: maxRetries);
+            results.Add(cancelled);
+            _auditLog.Record("workflow", stepId, stage, reason);
+            return new WorkflowExecutionResult(workflowId, WorkflowStatus.Failed, results, decision,
+                FailureReport: BuildFailureReport(workflowId, cancelled, decision), AuditLogs: SnapshotAuditLogs(), FinalMessage: reason);
+        }
 
-        _auditLog.Record("workflow", workflowId, "workflow_started", $"Workflow {workflowId} started.");
+        if (isInitialExecution)
+        {
+            _auditLog.Record("workflow", workflowId, "workflow_started", $"Workflow {workflowId} started.");
+        }
 
         for (var index = 0; index < orderedSteps.Length; index++)
         {
             var step = orderedSteps[index];
             var retryCount = 0;
-            var maxRetries = step.MaxRetries ?? _retryPolicy.MaxRetries;
+            // 步骤上限只能收紧全局策略；负上限按不允许重试处理。
+            var maxRetries = Math.Max(0, Math.Min(step.MaxRetries ?? _retryPolicy.MaxRetries, _retryPolicy.MaxRetries));
             var nextStepId = step.NextStepId ?? orderedSteps.ElementAtOrDefault(index + 1)?.StepId ?? orderedSteps.ElementAtOrDefault(index + 1)?.Name;
 
             while (true)
             {
-                cancellationToken.ThrowIfCancellationRequested();
                 WorkflowStepResult rawResult;
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     rawResult = await step.ExecuteAsync(context);
+                }
+                catch (OperationCanceledException) when (!isInitialExecution)
+                {
+                    return CancelledResume(step, retryCount, maxRetries);
                 }
                 catch (OperationCanceledException)
                 {
@@ -129,6 +166,12 @@ public sealed class SequentialWorkflowEngine
                 var decision = rawResult.GateDecision ?? PassedDecision(step);
                 var issues = ResolveIssues(rawResult);
                 var typedIssues = issues.Select(Issue.FromText).ToArray();
+                if (decision.Result == GateDecisionResult.NeedsHumanApproval && HasNonApprovableIssues(rawResult))
+                {
+                    decision = new GateDecision($"gate-{step.StepId ?? step.Name}-non-approvable-{Guid.NewGuid():N}",
+                        GateDecisionResult.Failed,
+                        "workflow_human_approval_non_approvable: Fatal, critical or non_retryable issues require repair and cannot be approved.");
+                }
 
                 switch (decision.Result)
                 {
@@ -140,7 +183,8 @@ public sealed class SequentialWorkflowEngine
                         break;
                     }
 
-                    case GateDecisionResult.Rejected when _retryPolicy.ShouldRetry(decision, retryCount, typedIssues):
+                    case GateDecisionResult.Rejected when retryCount < maxRetries &&
+                                                         _retryPolicy.ShouldRetry(decision, retryCount, typedIssues):
                     {
                         var retrying = Normalize(rawResult, step, WorkflowStepStatus.Retrying, decision, retryCount, maxRetries, step.StepId ?? step.Name);
                         results.Add(retrying);
@@ -149,7 +193,14 @@ public sealed class SequentialWorkflowEngine
                         retryCount++;
                         if (retryDelay > TimeSpan.Zero)
                         {
-                            await Task.Delay(retryDelay, cancellationToken);
+                            try
+                            {
+                                await Task.Delay(retryDelay, cancellationToken);
+                            }
+                            catch (OperationCanceledException) when (!isInitialExecution)
+                            {
+                                return CancelledResume(step, retryCount, maxRetries);
+                            }
                         }
 
                         continue;
@@ -174,7 +225,7 @@ public sealed class SequentialWorkflowEngine
                             results,
                             decision,
                             FailureReport: failureReport,
-                            AuditLogs: CurrentAuditLogs(auditStartIndex),
+                            AuditLogs: SnapshotAuditLogs(),
                             FinalMessage: rejectReport.Message);
                     }
 
@@ -191,7 +242,7 @@ public sealed class SequentialWorkflowEngine
                             results,
                             decision,
                             FailureReport: failureReport,
-                            AuditLogs: CurrentAuditLogs(auditStartIndex),
+                            AuditLogs: SnapshotAuditLogs(),
                             FinalMessage: failureReport.FailureReason);
                     }
 
@@ -208,7 +259,7 @@ public sealed class SequentialWorkflowEngine
                             waiting,
                             orderedSteps.Skip(index + 1).ToArray(),
                             request,
-                            CurrentAuditLogs(auditStartIndex)));
+                            SnapshotAuditLogs()));
 
                         return new WorkflowExecutionResult(
                             workflowId,
@@ -216,7 +267,7 @@ public sealed class SequentialWorkflowEngine
                             results,
                             decision,
                             HumanApprovalRequest: request,
-                            AuditLogs: CurrentAuditLogs(auditStartIndex),
+                            AuditLogs: SnapshotAuditLogs(),
                             FinalMessage: request.Reason);
                     }
                 }
@@ -236,7 +287,7 @@ public sealed class SequentialWorkflowEngine
             WorkflowStatus.Passed,
             results,
             finalDecision,
-            AuditLogs: CurrentAuditLogs(auditStartIndex),
+            AuditLogs: SnapshotAuditLogs(),
             FinalMessage: "Workflow completed all steps.");
     }
 
@@ -246,6 +297,7 @@ public sealed class SequentialWorkflowEngine
     private async Task<WorkflowApprovalSubmissionResult> ResumeApprovedAsync(
         PendingWorkflowApproval pending,
         WorkflowApprovalSubmission submission,
+        int auditStartIndex,
         CancellationToken cancellationToken)
     {
         var approvalDecision = new GateDecision(
@@ -256,6 +308,7 @@ public sealed class SequentialWorkflowEngine
         {
             Status = WorkflowStepStatus.Passed,
             GateDecision = approvalDecision,
+            ApprovalResolution = BuildApprovalResolution(pending, submission),
             NextStepId = pending.RemainingSteps.FirstOrDefault()?.StepId ??
                          pending.RemainingSteps.FirstOrDefault()?.Name,
             Logs = pending.WaitingStep.Logs
@@ -268,30 +321,20 @@ public sealed class SequentialWorkflowEngine
             "workflow_human_approval_approved",
             $"Workflow {pending.WorkflowId} resumed after approval from {submission.SubmittedBy}.");
 
-        var resumed = pending.RemainingSteps.Count == 0
-            ? new WorkflowExecutionResult(
-                pending.WorkflowId,
-                WorkflowStatus.Passed,
-                Array.Empty<WorkflowStepResult>(),
-                approvalDecision,
-                AuditLogs: Array.Empty<AuditLogEntry>(),
-                FinalMessage: "Workflow completed after human approval.")
-            : await ExecuteAsync(pending.RemainingSteps, pending.Context, cancellationToken);
-        var result = new WorkflowExecutionResult(
-            pending.WorkflowId,
-            resumed.Status,
-            pending.CompletedSteps.Append(approvedStep).Concat(resumed.Steps).ToArray(),
-            resumed.FinalGateDecision ?? approvalDecision,
-            resumed.FailureReport,
-            resumed.HumanApprovalRequest,
-            pending.AuditLogs.Concat(resumed.AuditLogs).ToArray(),
-            resumed.FinalMessage);
+        var result = await ExecuteStepsAsync(
+            pending.RemainingSteps,
+            pending.Context,
+            pending.CompletedSteps.Append(approvedStep).ToArray(),
+            pending.AuditLogs.Concat(CurrentAuditLogs(auditStartIndex)).ToArray(),
+            false,
+            cancellationToken);
         return new(true, result);
     }
 
     private WorkflowApprovalSubmissionResult CompleteRejectedApproval(
         PendingWorkflowApproval pending,
-        WorkflowApprovalSubmission submission)
+        WorkflowApprovalSubmission submission,
+        int auditStartIndex)
     {
         var decision = new GateDecision(
             $"gate-{pending.WaitingStep.StepId}-human-{submission.Decision.ToString().ToLowerInvariant()}-{Guid.NewGuid():N}",
@@ -303,6 +346,7 @@ public sealed class SequentialWorkflowEngine
         {
             Status = WorkflowStepStatus.Rejected,
             GateDecision = decision,
+            ApprovalResolution = BuildApprovalResolution(pending, submission),
             NextStepId = null,
             Logs = pending.WaitingStep.Logs
                 .Append($"workflow_human_approval_{submission.Decision.ToString().ToLowerInvariant()}: submitted_by={submission.SubmittedBy}; comment={submission.Comment ?? string.Empty}")
@@ -322,9 +366,27 @@ public sealed class SequentialWorkflowEngine
                 pending.CompletedSteps.Append(rejectedStep).ToArray(),
                 decision,
                 FailureReport: failure,
-                AuditLogs: pending.AuditLogs,
+                AuditLogs: pending.AuditLogs.Concat(CurrentAuditLogs(auditStartIndex)).ToArray(),
                 FinalMessage: failure.FailureReason));
     }
+
+    private static HumanApprovalResolution BuildApprovalResolution(
+        PendingWorkflowApproval pending,
+        WorkflowApprovalSubmission submission) =>
+        new(pending.Request.ApprovalRequestId!, pending.Request.StepId, submission.Decision.ToString(),
+            submission.SubmittedBy, submission.Comment, submission.SubmittedAt!.Value,
+            pending.WaitingStep.AgentOutput?.ReviewReport ?? pending.WaitingStep.ReviewReport,
+            AllOriginalIssues(pending.WaitingStep).Distinct(StringComparer.Ordinal).ToArray());
+
+    private static IEnumerable<string> AllOriginalIssues(WorkflowStepResult result) =>
+        result.Issues.Concat(result.AgentOutput?.Issues ?? Array.Empty<string>())
+            .Concat(result.ReviewReport?.Issues ?? Array.Empty<string>())
+            .Concat(result.AgentOutput?.ReviewReport?.Issues ?? Array.Empty<string>());
+
+    private static bool HasNonApprovableIssues(WorkflowStepResult result) =>
+        result.ReviewReport?.HasFatalError == true || result.AgentOutput?.ReviewReport?.HasFatalError == true ||
+        AllOriginalIssues(result).Select(Issue.FromText).Any(issue =>
+            issue.Severity == "critical" || issue.Type == "non_retryable");
 
     private static WorkflowStepResult Normalize(
         WorkflowStepResult rawResult,
@@ -439,5 +501,6 @@ public sealed class SequentialWorkflowEngine
             decision.Reason,
             new[] { "approve", "reject", "request_revision" },
             waiting.Message,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            $"approval-{Guid.NewGuid():N}");
 }

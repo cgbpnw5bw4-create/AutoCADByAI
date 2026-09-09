@@ -1,0 +1,133 @@
+{
+  "request_id": "self-check-v21-a-jacket-5ba62019e14b4a378b79df325f7c908b",
+  "plan_id": "solidworks-build-plan-self-check-v21-a-jacket",
+  "part_type": "jacket_basic",
+  "part_family_definition": "JacketBasicDefinition",
+  "part_family_builder": "SolidWorksFeatureGraphPartFamilyBuilder",
+  "parameter_schema": [
+    {
+      "Name": "outer_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Jacket outer diameter.",
+      "DefaultValue": "140",
+      "MinimumValue": 2,
+      "MaximumValue": 3000,
+      "HasRange": true
+    },
+    {
+      "Name": "inner_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Jacket inner diameter.",
+      "DefaultValue": "120",
+      "MinimumValue": 1,
+      "MaximumValue": 2990,
+      "HasRange": true
+    },
+    {
+      "Name": "length_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Jacket axial length.",
+      "DefaultValue": "180",
+      "MinimumValue": 1,
+      "MaximumValue": 10000,
+      "HasRange": true
+    }
+  ],
+  "api_evidence": "part_family_production_evidence_pending; generic FeatureGraph execution remains fail-closed",
+  "dimensions": {
+    "outer_diameter_mm": "140",
+    "inner_diameter_mm": "120",
+    "length_mm": "180"
+  },
+  "material": "Q235",
+  "features": {},
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "build_report.json"
+  ],
+  "drawing_requirements": {},
+  "execution_options": {},
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "real_cad_executed": false,
+  "operations": [
+    {
+      "OperationId": "op-001",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "outer_diameter_mm": "140",
+        "profile": "jacket_outer_circle",
+        "sketch_id": "jacket_outer_sketch",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "1",
+        "dimensions": "{\u0022outer_diameter_mm\u0022:\u0022140\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022jacket_outer_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022profile\u0022:\u0022jacket_outer_circle\u0022,\u0022outer_diameter_mm\u0022:\u0022140\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022jacket_outer_circle_dimension\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022jacket_outer_circle\u0022],\u0022value\u0022:\u0022140\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022outer_diameter_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-002",
+      "OperationType": "ExtrudeBoss",
+      "Parameters": {
+        "depth_mm": "180",
+        "direction": "blind",
+        "feature_id": "jacket_body_extrude",
+        "feature_type": "extrude_boss",
+        "sketch_id": "jacket_outer_sketch",
+        "referenced_sketches": "[\u0022jacket_outer_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-003",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "inner_diameter_mm": "120",
+        "profile": "jacket_inner_circle",
+        "sketch_id": "jacket_inner_sketch",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "1",
+        "dimensions": "{\u0022inner_diameter_mm\u0022:\u0022120\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022jacket_inner_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022profile\u0022:\u0022jacket_inner_circle\u0022,\u0022inner_diameter_mm\u0022:\u0022120\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022jacket_inner_circle_dimension\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022jacket_inner_circle\u0022],\u0022value\u0022:\u0022120\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022inner_diameter_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-004",
+      "OperationType": "CutExtrude",
+      "Parameters": {
+        "cut_role": "jacket_bore",
+        "hole_diameter_mm": "120",
+        "depth_mm": "360",
+        "direction": "blind",
+        "through_all": "false",
+        "feature_id": "jacket_inner_cut",
+        "feature_type": "extrude_cut",
+        "sketch_id": "jacket_inner_sketch",
+        "referenced_sketches": "[\u0022jacket_inner_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-005",
+      "OperationType": "SavePart",
+      "Parameters": {
+        "file_name": "self-check-v21-a-jacket.SLDPRT"
+      }
+    },
+    {
+      "OperationId": "op-006",
+      "OperationType": "ExportStep",
+      "Parameters": {
+        "file_name": "self-check-v21-a-jacket.STEP"
+      }
+    }
+  ],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-09-09T06:45:30.1563638+00:00"
+}

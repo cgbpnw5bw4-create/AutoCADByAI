@@ -2,6 +2,8 @@
 
 ## 阶段列表
 
+当前开发入口为 [V2.2-A 平台任务生命周期与审批闭环](v2_2_a_task_approval_lifecycle.md)。本轮用户新授权允许推进独立的平台阶段，历史 CAD 阶段的能力描述与失败证据仍按各自范围有效；阶段实现和验证结果以当前阶段页回填为准。
+
 | 阶段 | 目标 | 不做什么 | 关键交付物 | 说明文件 | self-check 字段 | 审查报告位置 |
 |---|---|---|---|---|---|---|
 | V0.1 | 平台骨架 | 不做真实 CAD | Contracts、Registry、Gateway、CLI | `docs/architecture.md` | `solution_exists` | `../reviewrep` |
@@ -39,7 +41,8 @@
 | V2.0-E | 统一 FeatureGraph 真实执行与证据闭环 | 不开发 V2.1-A；不把候选诊断改成 Deliverable；不猜测 STEP COM 导出常量；不因 Feature 证据存在而授权未绑定的零件族 | 全零件族统一 `SolidWorksFeatureGraphPartFamilyBuilder`、参数更新候选真实重建、STEP 物理内容门禁、V2.0-C/D 实证绑定、三族回归模型、能力基线退化闸、V2.1-A 真实执行冻结 | `docs/v2_0_e_unified_feature_graph_execution.md`、`docs/cad_capability_matrix.md`、`docs/self_check_capability_baseline.json` | `v2_0_e_unified_part_family_builders`、`v2_0_e_controlled_plate_evidence_active`、`v2_0_e_step_content_gate_active`、`v2_0_e_capability_regression_gate_passed`、`part_family_definition_supported`、`plate/flange/shaft_uses_part_family_definition`、`common_feature_templates_exists`、`cad_capability_matrix_exists`、`regression_models_supported`、`flange/shaft_regression_passed`、`v2_1_a_real_execution_frozen`、`v2_0_e_final_status` | `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json` |
 | V2.1-A（编号已作废，见下） | 圆筒夹套参数化零件族 | 仅支持同轴直筒夹套；结构化证据和有效 STEP 未恢复前真实执行失败关闭；不得绕过 Worker、Validator、Reviewer 或 QualityGate | `jacket_basic` 参数定义、校验器、FeatureGraph、BuildPlan、专用 Builder、dry-run、严格重建、实测几何与 STEP 内容门禁 | `docs/v2_1_a_jacket_basic.md`、两层 `execution.md` / `failure_repair.md` / `api_evidence.md` / `review_checklist.md` | `jacket_part_family_registered`、`jacket_uses_generic_feature_graph`、`jacket_real_builder_implemented`、`jacket_dry_run_passed`、`jacket_real_workflow_supported`、`jacket_api_evidence_documented`、`jacket_production_evidence_active`、`v2_1_a_jacket_documented` | `output/reports/platform_self_check_report.json`、重新采集后同次夹套主流程的 SLDPRT、有效 STEP、构建报告、几何证据与发布包质量报告 |
 | V2.1-A | 复杂特征库扩展 | 不改变 FeatureHandler 架构；Handler 不得直接调用 COM；API 未验证不得进入真实执行；不新增零件专用逻辑；不进入 V2.1-B | 新增 `FilletHandler`、`ChamferHandler`、`LinearPatternHandler`、`CircularPatternHandler`、`MirrorHandler`；`ISolidWorksFeatureAdapter` 新增五个执行入口；建立声明式边选择模型（`EdgeSelectionCriteria`/`EdgeSelectionResolver`/`SolidWorksEdgeEnumerator`）与只读拓扑探针 `tools/SolidWorksEdgeProbe`；五个特征全部完成真机取证升为 `verified`：`FeatureFillet3`、`InsertFeatureChamfer`、`FeatureLinearPattern4`、`FeatureCircularPattern5`、`InsertMirrorFeature2` 均已实调；方向与轴由边判据求解并与声明主轴交叉校验；每个特征的几何都用闭式解与只读拓扑探针独立复核 | `docs/v2_1_a_complex_feature_library.md`、`docs/cad_capability_matrix.md`、各特征目录 `api_evidence.md` / `failure_repair.md` | `fillet_handler_registered`、`chamfer_handler_registered`、`linear_pattern_handler_registered`、`circular_pattern_handler_registered`、`mirror_handler_registered`、`complex_feature_registry_supported`、`unverified_feature_blocks_execution`（双向判据）、`edge_selection_model_supported`、`feature_library_documented`、`feature_regression_tests_passed`、`v2_1_a_documented`、`markdown_chinese_check_passed` | `output/reports/platform_self_check_report.json`、五份 `evidence/solidworks/20260828_0146xx_*/feature_execution_report.json`（圆角、倒角、线性阵列、圆周阵列、镜像各一） |
-| V2.1-B | 孔特征增强 | 不改变 FeatureHandler 架构；不增加重复 Agent/Handler 或零件专用逻辑；不以普通 Cut 冒充攻丝孔；无证据不得真实执行；不进入 V2.1-C | `HoleFeatureDefinition`、`HoleValidator`、既有 `HoleHandler` 与统一 Adapter 类型策略、孔几何校验、四类 dry-run 样例、逐类型 API evidence 与专用失败阶段 | `docs/v2_1_b_hole_features.md`、`docs/cad_capability_matrix.md`、`src/Workers/SolidWorks/Features/Hole/api_evidence.md`、两层模块/Worker 协议 | `simple_hole_supported`、`counterbore_hole_supported`、`countersink_hole_supported`、`tapped_hole_supported`、`hole_type_validation_supported`、`hole_geometry_validation_supported`、`tapped_hole_semantics_separated_from_simple_cut`、`hole_api_evidence_required`、`unverified_hole_blocks_real_execution`、`hole_feature_regression_tests_passed`、`v2_1_b_documented`、`markdown_chinese_check_passed` | 前置审查 `../reviewrep/2026-09-07-v2.1-a-complex-feature-library-review.md`；本轮验证见 `output/reports/platform_self_check_report.json` 与阶段说明 |
+| V2.1-B | 孔特征增强 | 不改变 FeatureHandler 架构；不增加重复 Agent/Handler 或零件专用逻辑；不以普通 Cut 冒充攻丝孔；无证据不得真实执行；不进入 V2.1-C | `HoleFeatureDefinition`、`HoleValidator`、既有 `HoleHandler` 与统一 Adapter 类型策略、孔几何校验、四类 dry-run 样例、逐类型 API evidence 与专用失败阶段 | `docs/v2_1_b_hole_features.md`、`docs/cad_capability_matrix.md`、`src/Workers/SolidWorks/Features/Hole/api_evidence.md`、两层模块/Worker 协议 | `simple_hole_supported`、`counterbore_hole_supported`、`countersink_hole_supported`、`tapped_hole_supported`、`hole_type_validation_supported`、`hole_geometry_validation_supported`、`tapped_hole_semantics_separated_from_simple_cut`、`hole_api_evidence_required`、`unverified_hole_blocks_real_execution`、`hole_self_check_group_passed`、`v2_1_b_documented`、`markdown_chinese_check_passed` | 前置审查 `../reviewrep/2026-09-07-v2.1-a-complex-feature-library-review.md`；本轮验证见 `output/reports/platform_self_check_report.json` 与阶段说明 |
+| V2.2-A | 平台任务生命周期与审批闭环 | 不扩展 CAD；不实施类型交接、持久化或真实证据修复；不绕过原业务收尾与质量门禁 | 具体审批身份、原子匹配防重放、任务访问令牌、状态查询与宿主审批入口、恢复后的 `chief-engineer` 原后处理和 `QualityGate` | [阶段合同与验收](v2_2_a_task_approval_lifecycle.md) | `task_lifecycle_tracked`、`task_approval_roundtrip_supported`、`task_access_token_required`、`workflow_approval_identity_bound` | 本轮指定输出目录及阶段页实际验证记录，待回填 |
 
 > `V2.1-A` 编号说明：该标签此前指向圆筒夹套零件族，经决定作废并改派给复杂特征库。夹套本身继续有效，其文档与自检字段保留为历史记录，不再代表阶段编号。
 
@@ -52,6 +55,25 @@
 ## 使用方式
 
 开始新任务时先定位阶段，再读取对应说明文件。阶段未完成时不得提前进入下一阶段。
+
+本轮用户已授权自主选择下一阶段，当前选定 V2.2-A 平台任务生命周期与审批闭环。V2.1-B 可靠性补强 `R01`–`R05` 已完成；尚未解决的 `R08`–`R11` 继续阻断各自真实 CAD 能力，但不阻断不依赖 COM 的平台开发。本轮无需重复确认上轮“不进入 V2.1-C”的范围限制，不把平台阶段改称 CAD 功能阶段。
+
+## V2.2-A 准入与范围
+
+目标为完成 `R06` 的最小必要修复。输入为任务、任务访问令牌、具体审批身份与明确决定、原工作流上下文和历史；输出为一致的任务状态与查询、审批原子匹配结果、恢复后的业务输出、门禁裁决及审计。`GET /tasks/{taskId}` 和 `POST /tasks/{taskId}/approvals` 均要求 `X-Task-Access-Token`；首次同步消息响应仅返回一次令牌。具体字段、状态码和恢复边界见 [阶段页](v2_2_a_task_approval_lifecycle.md)。
+
+当前自检 schema 为 `2.2-a-task-approval`，上述四字段仅表示行为检查；完整测试和全局状态分别报告。单进程内存任务及审批不能跨重启恢复，Microsoft advisory 按任务复用，审批恢复不再次调用 LLM。
+
+执行顺序为审批身份与原子消费、任务状态和宿主接口、恢复原后处理与 `QualityGate`、无 COM 行为回归及完整验证。`R07` 类型交接和持久化留待后续，`R08`–`R11` 保留未解决状态及失败关闭。验证必须分别列出本阶段结果、完整测试与全局自检；禁止修改旧证据或历史审查结论以制造通过。
+
+## V2.1-B 可靠性补强（2026-09-09）
+
+本轮仍属于 V2.1-B，说明见 [架构审查与开发清单](2026_09_09_architecture_review.md)。目标是完成非法结构化输入拒绝、有效重试上限、预取消审批无损、累计审批历史、自检诊断和输出定向。适用输入为已确认缺陷、当前源码与阶段协议；输出为最小修复、行为回归及本次报告，不增加 CAD Feature 类型或真实执行档案。
+
+执行顺序为本轮可靠性补强、任务生命周期与宿主审批及类型交接、阵列绑定和方向修复后重采证据、一个显式普通孔档案及真实逐孔 Reader、其余孔逐类型取证。后续项未经实现和验收不得提前标记完成。
+
+验证命令为完整 build、test 及 `self-check --output <目录>`；本轮字段和实际结果在上述审查文档中回填。阶段通过、全局通过与真实 CAD 通过分别裁决。样例损坏或报告不完整时保留具体原因并修复后复验；禁止使用旧报告制造通过、直接换绑旧 evidence、修改只读 `reviewrep` 或进入 V2.1-C。
+
 ## V2.0-D 证据补充（2026-08-03）
 
 四孔板的三圆 `extrude_cut` 保留独立的 V2.0-D source/input/candidate-diagnostic 绑定，作为 V2.0-C 单圆 Handler 证据的补充而非替换。V2.0-E 候选执行会先真实应用 160×80×12 到 200×100×15 的参数更新，再核验 Φ10、20 mm 边距和 blind `through_all=false` 的更新后 FeatureGraph；任一证据失配均在 COM 连接前失败关闭。最终状态仍由同次 `run-cad-workflow` QualityGate 决定。

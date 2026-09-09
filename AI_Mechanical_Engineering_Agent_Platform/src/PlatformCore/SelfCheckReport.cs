@@ -661,37 +661,70 @@ public sealed record PlatformSelfCheckReport(
     public bool V21ADocumented { get; init; }
 
     [JsonPropertyName("simple_hole_supported")]
-    public bool SimpleHoleSupported { get; init; }
+    public bool? SimpleHoleSupported { get; init; }
 
     [JsonPropertyName("counterbore_hole_supported")]
-    public bool CounterboreHoleSupported { get; init; }
+    public bool? CounterboreHoleSupported { get; init; }
 
     [JsonPropertyName("countersink_hole_supported")]
-    public bool CountersinkHoleSupported { get; init; }
+    public bool? CountersinkHoleSupported { get; init; }
 
     [JsonPropertyName("tapped_hole_supported")]
-    public bool TappedHoleSupported { get; init; }
+    public bool? TappedHoleSupported { get; init; }
 
     [JsonPropertyName("hole_type_validation_supported")]
-    public bool HoleTypeValidationSupported { get; init; }
+    public bool? HoleTypeValidationSupported { get; init; }
 
     [JsonPropertyName("hole_geometry_validation_supported")]
-    public bool HoleGeometryValidationSupported { get; init; }
+    public bool? HoleGeometryValidationSupported { get; init; }
 
     [JsonPropertyName("tapped_hole_semantics_separated_from_simple_cut")]
-    public bool TappedHoleSemanticsSeparatedFromSimpleCut { get; init; }
+    public bool? TappedHoleSemanticsSeparatedFromSimpleCut { get; init; }
 
     [JsonPropertyName("hole_api_evidence_required")]
-    public bool HoleApiEvidenceRequired { get; init; }
+    public bool? HoleApiEvidenceRequired { get; init; }
 
     [JsonPropertyName("unverified_hole_blocks_real_execution")]
-    public bool UnverifiedHoleBlocksRealExecution { get; init; }
+    public bool? UnverifiedHoleBlocksRealExecution { get; init; }
 
-    [JsonPropertyName("hole_feature_regression_tests_passed")]
-    public bool HoleFeatureRegressionTestsPassed { get; init; }
+    [JsonPropertyName("hole_self_check_group_passed")]
+    public bool HoleSelfCheckGroupPassed { get; init; }
+
+    [JsonPropertyName("structured_cad_input_fails_closed")]
+    public bool StructuredCadInputFailsClosed { get; init; }
+
+    [JsonPropertyName("hole_self_check_inputs_readable")]
+    public bool HoleSelfCheckInputsReadable { get; init; }
+
+    [JsonPropertyName("hole_self_check_issues")]
+    public IReadOnlyList<string> HoleSelfCheckIssues { get; init; } = [];
+
+    [JsonPropertyName("hole_self_check_unobserved_capabilities")]
+    public IReadOnlyList<string> HoleSelfCheckUnobservedCapabilities { get; init; } = [];
+
+    [JsonPropertyName("workflow_step_retry_limit_enforced")]
+    public bool WorkflowStepRetryLimitEnforced { get; init; }
+
+    [JsonPropertyName("workflow_cancelled_approval_preserved")]
+    public bool WorkflowCancelledApprovalPreserved { get; init; }
+
+    [JsonPropertyName("workflow_multi_approval_history_preserved")]
+    public bool WorkflowMultiApprovalHistoryPreserved { get; init; }
+
+    [JsonPropertyName("task_lifecycle_tracked")]
+    public bool TaskLifecycleTracked { get; init; }
+
+    [JsonPropertyName("task_approval_roundtrip_supported")]
+    public bool TaskApprovalRoundtripSupported { get; init; }
+
+    [JsonPropertyName("task_access_token_required")]
+    public bool TaskAccessTokenRequired { get; init; }
+
+    [JsonPropertyName("workflow_approval_identity_bound")]
+    public bool WorkflowApprovalIdentityBound { get; init; }
 
     [JsonPropertyName("v2_1_b_documented")]
-    public bool V21BDocumented { get; init; }
+    public bool? V21BDocumented { get; init; }
 
     [JsonPropertyName("v2_0_e_geometry_validation_platform_wide")]
     public bool V20EGeometryValidationPlatformWide { get; init; }

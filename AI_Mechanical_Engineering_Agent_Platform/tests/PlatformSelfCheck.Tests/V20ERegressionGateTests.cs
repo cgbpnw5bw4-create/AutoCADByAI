@@ -157,7 +157,7 @@ public sealed class V20ERegressionGateTests
 
         foreach (var name in protectedNames)
         {
-            Assert.Contains($"[\"{name}\"]", snapshot, StringComparison.Ordinal);
+            Assert.Contains($"\"{name}\"", snapshot, StringComparison.Ordinal);
         }
     }
 

@@ -70,7 +70,7 @@ public sealed class PlatformBootstrapperTests
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));
         Assert.Equal("Failed", report.FinalStatus);
-        Assert.Equal("2.0-e", report.SchemaVersion);
+        Assert.Equal("2.2-a-task-approval", report.SchemaVersion);
         Assert.StartsWith("platform-self-check-", report.RunId, StringComparison.Ordinal);
         Assert.NotEqual(default, report.GeneratedAt);
         Assert.False(string.IsNullOrWhiteSpace(report.SourceRevision));
@@ -149,7 +149,15 @@ public sealed class PlatformBootstrapperTests
         using var stream = File.OpenRead(reportPath);
         using var document = await JsonDocument.ParseAsync(stream);
         Assert.Equal("Failed", document.RootElement.GetProperty("final_status").GetString());
-        Assert.Equal("2.0-e", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.Equal("2.2-a-task-approval", document.RootElement.GetProperty("schema_version").GetString());
+        Assert.True(report.HoleSelfCheckGroupPassed);
+        Assert.Empty(report.HoleSelfCheckIssues);
+        Assert.True(report.WorkflowStepRetryLimitEnforced);
+        Assert.True(report.WorkflowCancelledApprovalPreserved);
+        Assert.True(report.WorkflowMultiApprovalHistoryPreserved);
+        Assert.False(document.RootElement.TryGetProperty("hole_feature_regression_tests_passed", out _));
+        Assert.NotEmpty(Directory.GetFiles(Path.Combine(outputRoot, "solidworks", "self-check", "v2_1_b"), "*", SearchOption.AllDirectories));
+        Assert.True(File.Exists(Path.Combine(outputRoot, "solidworks", "real_acceptance", "real_acceptance_report.json")));
         Assert.Equal("Passed", document.RootElement.GetProperty("v2_0_e_final_status").GetString());
         Assert.True(document.RootElement.GetProperty("v2_0_e_capability_regression_gate_passed").GetBoolean());
         Assert.Equal(report.RunId, document.RootElement.GetProperty("run_id").GetString());

@@ -3,7 +3,7 @@ using DomainSchemas;
 
 namespace PlatformCore.Modules.RequirementUnderstanding.Agents;
 
-public sealed class ChiefEngineerAgent : IAgent
+public sealed class ChiefEngineerAgent : IAgent, IHumanApprovalAgent
 {
     private readonly ChiefEngineerOrchestrator _orchestrator;
 
@@ -27,4 +27,8 @@ public sealed class ChiefEngineerAgent : IAgent
 
     public Task<AgentOutput> ExecuteAsync(AgentContext context) =>
         _orchestrator.ExecuteAsync(context, Id, Name);
+
+    public Task<AgentApprovalResult> ResumeHumanApprovalAsync(AgentContext context, WorkflowApprovalSubmission submission,
+        CancellationToken cancellationToken = default) =>
+        _orchestrator.ResumeHumanApprovalAsync(context.TaskId, Id, Name, submission, cancellationToken);
 }

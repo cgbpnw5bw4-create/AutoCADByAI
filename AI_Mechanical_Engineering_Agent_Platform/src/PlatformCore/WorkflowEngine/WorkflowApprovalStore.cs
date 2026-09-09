@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using DomainSchemas;
 
 namespace PlatformCore;
@@ -14,29 +13,52 @@ public interface IWorkflowApprovalStore
 
     bool TryGet(string workflowId, out PendingWorkflowApproval pending);
 
-    bool TryTake(string workflowId, out PendingWorkflowApproval pending);
+    bool TryTake(string workflowId, string approvalRequestId, string stepId, out PendingWorkflowApproval pending);
 }
 
 public sealed class InMemoryWorkflowApprovalStore : IWorkflowApprovalStore
 {
-    private readonly ConcurrentDictionary<string, PendingWorkflowApproval> _pending =
+    private readonly object _sync = new();
+    private readonly Dictionary<string, PendingWorkflowApproval> _pending =
         new(StringComparer.OrdinalIgnoreCase);
 
     public void Save(PendingWorkflowApproval pending)
     {
         ArgumentNullException.ThrowIfNull(pending);
-        if (!_pending.TryAdd(pending.WorkflowId, pending))
+        if (string.IsNullOrWhiteSpace(pending.Request.ApprovalRequestId) ||
+            !string.Equals(pending.Request.WorkflowId, pending.WorkflowId, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(pending.Request.StepId, pending.WaitingStep.StepId, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(
-                $"workflow_approval_already_pending: {pending.WorkflowId} already has an unresolved approval request.");
+            throw new ArgumentException("workflow_approval_invalid_identity: pending approval must bind its workflow, request and waiting step.", nameof(pending));
+        }
+        lock (_sync)
+        {
+            if (!_pending.TryAdd(pending.WorkflowId, pending))
+            {
+                throw new InvalidOperationException(
+                    $"workflow_approval_already_pending: {pending.WorkflowId} already has an unresolved approval request.");
+            }
         }
     }
 
-    public bool TryGet(string workflowId, out PendingWorkflowApproval pending) =>
-        _pending.TryGetValue(workflowId, out pending!);
+    public bool TryGet(string workflowId, out PendingWorkflowApproval pending)
+    {
+        lock (_sync) return _pending.TryGetValue(workflowId, out pending!);
+    }
 
-    public bool TryTake(string workflowId, out PendingWorkflowApproval pending) =>
-        _pending.TryRemove(workflowId, out pending!);
+    public bool TryTake(string workflowId, string approvalRequestId, string stepId, out PendingWorkflowApproval pending)
+    {
+        lock (_sync)
+        {
+            pending = null!;
+            if (!_pending.TryGetValue(workflowId, out var candidate) ||
+                !string.Equals(candidate.Request.ApprovalRequestId, approvalRequestId, StringComparison.Ordinal) ||
+                !string.Equals(candidate.WaitingStep.StepId, stepId, StringComparison.Ordinal)) return false;
+            _pending.Remove(workflowId);
+            pending = candidate;
+            return true;
+        }
+    }
 }
 
 public sealed record PendingWorkflowApproval(
@@ -60,7 +82,9 @@ public sealed record WorkflowApprovalSubmission(
     WorkflowApprovalDecision Decision,
     string SubmittedBy,
     string? Comment = null,
-    DateTimeOffset? SubmittedAt = null);
+    DateTimeOffset? SubmittedAt = null,
+    string? ApprovalRequestId = null,
+    string? StepId = null);
 
 public sealed record WorkflowApprovalSubmissionResult(
     bool Accepted,

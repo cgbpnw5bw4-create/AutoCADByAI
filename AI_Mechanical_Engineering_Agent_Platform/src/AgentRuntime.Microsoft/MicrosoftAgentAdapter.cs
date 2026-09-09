@@ -1,16 +1,18 @@
 using AgentContracts;
 using DomainSchemas;
 using PlatformCore;
+using System.Collections.Concurrent;
 
 namespace AgentRuntime.Microsoft;
 
-public sealed class MicrosoftAgentAdapter : IAgent
+public sealed class MicrosoftAgentAdapter : IAgent, IHumanApprovalAgent
 {
     private readonly IAgent? _platformAgent;
     private readonly RuntimeAgentManifest _manifest;
     private readonly AgentRuntimeMode _runtimeMode;
     private readonly InMemoryAuditLog? _auditLog;
     private readonly IMicrosoftRuntimeAgentInvoker? _microsoftInvoker;
+    private readonly ConcurrentDictionary<string, AgentOutput> _pendingAdvisories = new(StringComparer.Ordinal);
 
     public MicrosoftAgentAdapter(IAgent platformAgent, object? microsoftAgentInstance = null)
         : this(
@@ -105,6 +107,28 @@ public sealed class MicrosoftAgentAdapter : IAgent
     {
         var runtimeOutput = await _microsoftInvoker!.InvokeAsync(_manifest, context);
         var workflowOutput = await _platformAgent!.ExecuteAsync(context);
+        if (workflowOutput.InternalCollaborationReport?.HumanApprovalRequest is not null)
+            _pendingAdvisories[context.TaskId] = runtimeOutput;
+        return MergeRuntimeOutput(runtimeOutput, workflowOutput);
+    }
+
+    public async Task<AgentApprovalResult> ResumeHumanApprovalAsync(AgentContext context, WorkflowApprovalSubmission submission,
+        CancellationToken cancellationToken = default)
+    {
+        if (_platformAgent is not IHumanApprovalAgent resumable)
+            return new(false, null, "runtime_approval_resume_unsupported");
+        AgentOutput? advisory = null;
+        if (_runtimeMode == AgentRuntimeMode.Microsoft && !_pendingAdvisories.TryGetValue(context.TaskId, out advisory))
+            return new(false, null, "runtime_approval_advisory_missing");
+        var result = await resumable.ResumeHumanApprovalAsync(context, submission, cancellationToken);
+        if (!result.Accepted || result.Output is null) return result;
+        if (result.Output.InternalCollaborationReport?.HumanApprovalRequest is null)
+            _pendingAdvisories.TryRemove(context.TaskId, out _);
+        return result with { Output = advisory is null ? result.Output : MergeRuntimeOutput(advisory, result.Output) };
+    }
+
+    private AgentOutput MergeRuntimeOutput(AgentOutput runtimeOutput, AgentOutput workflowOutput)
+    {
         var metadata = runtimeOutput.RuntimeMetadata ?? new RuntimeMetadata(
             "Microsoft",
             _manifest.Id,

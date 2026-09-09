@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "V2.0-E 迁移必须保持为真的跨阶段能力字段。字段从 true 降为 false 时，阶段自检必须失败。",
+  "description": "受保护的跨阶段能力：已观测的 true 变 false 为回归，未观测为配置错误，两者都阻断。孔 supported 仅表示定义、模拟及判定规则，不授权真实执行。移除冗余 hole_feature_regression_tests_passed 聚合，实际测试结果以当次 dotnet test 为准；各独立孔能力仍全部受保护。",
   "protected_capabilities": {
     "all_part_families_use_registry": true,
     "complex_feature_registry_supported": true,
@@ -27,7 +27,14 @@
     "tapped_hole_semantics_separated_from_simple_cut": true,
     "hole_api_evidence_required": true,
     "unverified_hole_blocks_real_execution": true,
-    "hole_feature_regression_tests_passed": true,
+    "workflow_step_retry_limit_enforced": true,
+    "structured_cad_input_fails_closed": true,
+    "workflow_cancelled_approval_preserved": true,
+    "workflow_multi_approval_history_preserved": true,
+    "task_lifecycle_tracked": true,
+    "task_approval_roundtrip_supported": true,
+    "task_access_token_required": true,
+    "workflow_approval_identity_bound": true,
     "v2_1_b_documented": true
   }
 }

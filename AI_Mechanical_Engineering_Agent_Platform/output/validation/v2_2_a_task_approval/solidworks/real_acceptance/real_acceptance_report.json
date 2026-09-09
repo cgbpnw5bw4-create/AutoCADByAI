@@ -1,0 +1,37 @@
+{
+  "schema_version": "2.2-a-task-approval",
+  "run_id": "platform-self-check-348a1ddfbea5471fb68bd7d50fc9e338",
+  "generated_at": "2026-09-09T06:45:26.6641805+00:00",
+  "source_revision": "ab63fbd15628cfd9f5e8af29fba45c1c9f392ed0-dirty",
+  "latest_sldprt_path": null,
+  "latest_step_path": null,
+  "latest_slddrw_path": null,
+  "latest_pdf_path": null,
+  "build_report_path": null,
+  "drawing_report_path": null,
+  "dimension_report_path": null,
+  "title_block_report_path": null,
+  "package_quality_report_path": null,
+  "source_report_final_status": {
+    "build_report": "MissingOrInvalid",
+    "drawing_report": "MissingOrInvalid",
+    "dimension_report": "MissingOrInvalid",
+    "title_block_report": "MissingOrInvalid",
+    "package_quality_report": "MissingOrInvalid"
+  },
+  "all_source_reports_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "deliverable_blocked_by": [
+    "build_report.final_status=MissingOrInvalid",
+    "drawing_report.final_status=MissingOrInvalid",
+    "dimension_report.final_status=MissingOrInvalid",
+    "title_block_report.final_status=MissingOrInvalid",
+    "package_quality_report.final_status=MissingOrInvalid",
+    "sldprt_artifact_missing_or_empty",
+    "step_artifact_missing_or_empty",
+    "slddrw_artifact_missing_or_empty",
+    "pdf_artifact_missing_or_empty",
+    "package_quality_report.all_source_reports_passed!=true",
+    "package_quality_report.deliverable_status!=Deliverable"
+  ]
+}

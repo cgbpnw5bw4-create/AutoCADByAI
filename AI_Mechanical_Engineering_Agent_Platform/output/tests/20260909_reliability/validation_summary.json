@@ -1,0 +1,107 @@
+{
+  "source_head": "ab63fbd15628cfd9f5e8af29fba45c1c9f392ed0",
+  "build_exit": 0,
+  "build_errors": 0,
+  "build_warnings": 0,
+  "full_test_total": 498,
+  "full_test_passed": 490,
+  "full_test_failed": 8,
+  "new_test_total": 49,
+  "new_test_passed": 49,
+  "failures": [
+    {
+      "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"fillet\")",
+      "reason": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"chamfer\")",
+      "reason": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate",
+      "reason": "feature_api_unverified: V2.0-D candidate model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate() in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V20DModelRebuildAndGeometryValidationTests.cs:line 176\r\n   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending",
+      "reason": "Assert.True() Failure\r\nExpected: True\r\nActual:   False",
+      "stack": "   at PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending() in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\PlatformBootstrapperTests.cs:line 117\r\n--- End of stack trace from previous location ---"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"mirror\")",
+      "reason": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"circular_pattern\")",
+      "reason": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"linear_pattern\")",
+      "reason": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+    },
+    {
+      "name": "PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic",
+      "reason": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+      "stack": "   at PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic() in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V20CFeatureAdapterTests.cs:line 293\r\n   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+    }
+  ],
+  "evidence_mismatches": [
+    {
+      "directory": "20260907_013221_3210868",
+      "reported_model_bytes": 72843,
+      "actual_model_bytes": 76939,
+      "difference": 4096,
+      "model_sha256": "751F631B4CA8B829DCBB176A1086220F0E9EFD8209D84E844C38E996B3473D28"
+    },
+    {
+      "directory": "20260907_013408_5080299",
+      "reported_model_bytes": 88345,
+      "actual_model_bytes": 92441,
+      "difference": 4096,
+      "model_sha256": "B00A8F11815C67B61212416BAF6B23D037037771C878C7A9B9BFB38C7CA49CF6"
+    },
+    {
+      "directory": "20260907_013423_5400787",
+      "reported_model_bytes": 76621,
+      "actual_model_bytes": 80717,
+      "difference": 4096,
+      "model_sha256": "3C0E6263408078FDA87F83853343406845B6AC2392C4F18762ECE46EB3CD6DCB"
+    },
+    {
+      "directory": "20260907_013438_4901315",
+      "reported_model_bytes": 76466,
+      "actual_model_bytes": 80562,
+      "difference": 4096,
+      "model_sha256": "4514236FC56F0FFD209E0ECE67959FDC13357C0263598E9EDF40421B23B104B3"
+    },
+    {
+      "directory": "20260907_013451_0073586",
+      "reported_model_bytes": 80862,
+      "actual_model_bytes": 84958,
+      "difference": 4096,
+      "model_sha256": "7CCB0BCC0D18F9A8E2523C491B9E3994431FBE060BFF897C843FE3C97360775C"
+    },
+    {
+      "directory": "20260907_013503_7710789",
+      "reported_model_bytes": 70136,
+      "actual_model_bytes": 74232,
+      "difference": 4096,
+      "model_sha256": "321DC7043D5B556DF5D91500884D5D71735794E54FF4A25C955ADD1C6D10B096"
+    },
+    {
+      "directory": "20260907_013514_0906527",
+      "reported_model_bytes": 74054,
+      "actual_model_bytes": 78150,
+      "difference": 4096,
+      "model_sha256": "7F9B6C5E72F367707515E47E54EB99F118FD74D446996CCB9D599EFC3C07FDE9"
+    }
+  ],
+  "real_cad_executed": false,
+  "self_check_process_exit": 2,
+  "reviewrep_hash_changes": 0
+}

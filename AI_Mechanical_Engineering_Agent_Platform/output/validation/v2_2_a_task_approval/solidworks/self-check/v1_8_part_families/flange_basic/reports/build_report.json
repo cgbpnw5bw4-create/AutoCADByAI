@@ -1,0 +1,195 @@
+{
+  "request_id": "self-check-v18-request-flange_basic-8552a34d82404e55b08b1bbcd41bbda2",
+  "plan_id": "solidworks-build-plan-self-check-v18-flange_basic",
+  "part_type": "flange_basic",
+  "part_family_definition": "FlangeBasicDefinition",
+  "part_family_builder": "SolidWorksFeatureGraphPartFamilyBuilder",
+  "parameter_schema": [
+    {
+      "Name": "outer_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Outer diameter.",
+      "DefaultValue": "160",
+      "MinimumValue": 10,
+      "MaximumValue": 2000,
+      "HasRange": true
+    },
+    {
+      "Name": "inner_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Inner bore diameter.",
+      "DefaultValue": "80",
+      "MinimumValue": 1,
+      "MaximumValue": 1990,
+      "HasRange": true
+    },
+    {
+      "Name": "thickness_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Flange thickness.",
+      "DefaultValue": "20",
+      "MinimumValue": 1,
+      "MaximumValue": 500,
+      "HasRange": true
+    },
+    {
+      "Name": "bolt_hole_count",
+      "ValueKind": 1,
+      "Required": true,
+      "Description": "Bolt-hole count.",
+      "DefaultValue": "4",
+      "MinimumValue": 1,
+      "MaximumValue": 64,
+      "HasRange": true
+    },
+    {
+      "Name": "bolt_hole_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Bolt-hole diameter.",
+      "DefaultValue": "12",
+      "MinimumValue": 1,
+      "MaximumValue": 200,
+      "HasRange": true
+    },
+    {
+      "Name": "bolt_circle_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Pitch-circle diameter.",
+      "DefaultValue": "120",
+      "MinimumValue": 5,
+      "MaximumValue": 1990,
+      "HasRange": true
+    }
+  ],
+  "api_evidence": "feature_handler_registry_preflight_required; handler evidence is evaluated per node",
+  "dimensions": {
+    "outer_diameter_mm": "160",
+    "inner_diameter_mm": "60",
+    "thickness_mm": "18",
+    "bolt_hole_count": "6",
+    "bolt_hole_diameter_mm": "14",
+    "bolt_circle_diameter_mm": "115"
+  },
+  "material": "",
+  "features": {},
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "build_report.json"
+  ],
+  "drawing_requirements": {},
+  "execution_options": {},
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "real_cad_executed": false,
+  "operations": [
+    {
+      "OperationId": "op-001",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "outer_diameter_mm": "160",
+        "profile": "outer_circle",
+        "sketch_id": "flange_outer_sketch",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "1",
+        "dimensions": "{\u0022outer_diameter_mm\u0022:\u0022160\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022flange_outer_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022profile\u0022:\u0022outer_circle\u0022,\u0022outer_diameter_mm\u0022:\u0022160\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022flange_outer_circle_dimension\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022flange_outer_circle\u0022],\u0022value\u0022:\u0022160\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022outer_diameter_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-002",
+      "OperationType": "ExtrudeBoss",
+      "Parameters": {
+        "depth_mm": "18",
+        "direction": "mid_plane",
+        "feature_id": "flange_body_extrude",
+        "feature_type": "extrude_boss",
+        "sketch_id": "flange_outer_sketch",
+        "referenced_sketches": "[\u0022flange_outer_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-003",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "inner_diameter_mm": "60",
+        "profile": "center_hole_circle",
+        "sketch_id": "flange_inner_sketch",
+        "reference_plane": "TopFace",
+        "entity_count": "1",
+        "constraint_count": "1",
+        "dimensions": "{\u0022inner_diameter_mm\u0022:\u002260\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022flange_inner_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022profile\u0022:\u0022center_hole_circle\u0022,\u0022inner_diameter_mm\u0022:\u002260\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022flange_inner_circle_dimension\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022flange_inner_circle\u0022],\u0022value\u0022:\u002260\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022inner_diameter_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-004",
+      "OperationType": "CutExtrude",
+      "Parameters": {
+        "cut_role": "center_hole",
+        "hole_diameter_mm": "60",
+        "through_all": "true",
+        "feature_id": "flange_inner_cut",
+        "feature_type": "extrude_cut",
+        "sketch_id": "flange_inner_sketch",
+        "referenced_sketches": "[\u0022flange_inner_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-005",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "bolt_hole_count": "6",
+        "bolt_hole_diameter_mm": "14",
+        "bolt_circle_diameter_mm": "115",
+        "pattern": "bolt_circle",
+        "sketch_id": "flange_bolt_sketch",
+        "reference_plane": "TopFace",
+        "entity_count": "1",
+        "constraint_count": "2",
+        "dimensions": "{\u0022bolt_hole_count\u0022:\u00226\u0022,\u0022bolt_hole_diameter_mm\u0022:\u002214\u0022,\u0022bolt_circle_diameter_mm\u0022:\u0022115\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022flange_bolt_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022pattern\u0022:\u0022bolt_circle\u0022,\u0022bolt_hole_count\u0022:\u00226\u0022,\u0022bolt_hole_diameter_mm\u0022:\u002214\u0022,\u0022bolt_circle_diameter_mm\u0022:\u0022115\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022flange_bolt_hole_diameter\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022flange_bolt_circle\u0022],\u0022value\u0022:\u002214\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022bolt_hole_diameter_mm\u0022}},{\u0022constraint_id\u0022:\u0022flange_bolt_circle_diameter\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022flange_bolt_circle\u0022],\u0022value\u0022:\u0022115\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022bolt_circle_diameter_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-006",
+      "OperationType": "CutExtrude",
+      "Parameters": {
+        "cut_role": "bolt_holes",
+        "hole_diameter_mm": "14",
+        "hole_count": "6",
+        "through_all": "true",
+        "feature_id": "flange_bolt_holes",
+        "feature_type": "extrude_cut",
+        "sketch_id": "flange_bolt_sketch",
+        "referenced_sketches": "[\u0022flange_bolt_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-007",
+      "OperationType": "SavePart",
+      "Parameters": {
+        "file_name": "self-check-flange.SLDPRT"
+      }
+    },
+    {
+      "OperationId": "op-008",
+      "OperationType": "ExportStep",
+      "Parameters": {
+        "file_name": "self-check-flange.STEP"
+      }
+    }
+  ],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-09-09T06:45:29.9648197+00:00"
+}

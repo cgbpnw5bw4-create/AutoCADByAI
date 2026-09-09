@@ -26,7 +26,8 @@ public sealed record InternalWorkflowStepSummary(
     int RetryCount,
     int MaxRetries,
     IReadOnlyList<string> Issues,
-    IReadOnlyList<string> Logs);
+    IReadOnlyList<string> Logs,
+    HumanApprovalResolution? ApprovalResolution = null);
 
 public sealed record RetrySummary(
     int TotalRetries,

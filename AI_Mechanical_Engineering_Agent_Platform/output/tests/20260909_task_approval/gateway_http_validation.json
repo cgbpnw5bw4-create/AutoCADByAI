@@ -1,0 +1,139 @@
+{
+  "checks": [
+    {
+      "name": "only_chief_public",
+      "passed": true
+    },
+    {
+      "name": "internal_agent_hidden",
+      "passed": true
+    },
+    {
+      "name": "Approve_waiting",
+      "passed": true
+    },
+    {
+      "name": "Approve_query_requires_token",
+      "passed": true
+    },
+    {
+      "name": "Approve_query_snapshot",
+      "passed": true
+    },
+    {
+      "name": "Approve_missing_decision_refused",
+      "passed": true
+    },
+    {
+      "name": "Approve_approval_requires_token",
+      "passed": true
+    },
+    {
+      "name": "Approve_wrong_identity_refused",
+      "passed": true
+    },
+    {
+      "name": "Approve_correct_terminal",
+      "passed": true
+    },
+    {
+      "name": "Approve_no_pending_or_token",
+      "passed": true
+    },
+    {
+      "name": "Approve_replay_refused",
+      "passed": true
+    },
+    {
+      "name": "Approve_terminal_query",
+      "passed": true
+    },
+    {
+      "name": "Reject_waiting",
+      "passed": true
+    },
+    {
+      "name": "Reject_query_requires_token",
+      "passed": true
+    },
+    {
+      "name": "Reject_query_snapshot",
+      "passed": true
+    },
+    {
+      "name": "Reject_missing_decision_refused",
+      "passed": true
+    },
+    {
+      "name": "Reject_approval_requires_token",
+      "passed": true
+    },
+    {
+      "name": "Reject_wrong_identity_refused",
+      "passed": true
+    },
+    {
+      "name": "Reject_correct_terminal",
+      "passed": true
+    },
+    {
+      "name": "Reject_no_pending_or_token",
+      "passed": true
+    },
+    {
+      "name": "Reject_replay_refused",
+      "passed": true
+    },
+    {
+      "name": "Reject_terminal_query",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_waiting",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_query_requires_token",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_query_snapshot",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_missing_decision_refused",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_approval_requires_token",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_wrong_identity_refused",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_correct_terminal",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_no_pending_or_token",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_replay_refused",
+      "passed": true
+    },
+    {
+      "name": "RequestRevision_terminal_query",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "check_count": 32,
+  "runtime_mode": "Mock",
+  "real_cad_executed": false,
+  "external_model_called": false,
+  "server_stopped": true,
+  "tokens_in_report": false
+}

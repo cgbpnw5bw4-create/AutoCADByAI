@@ -1,0 +1,157 @@
+{
+  "request_id": "self-check-v18-request-plate_basic_4holes-8a0c91d9f6684e7bbcd71e686ea5f209",
+  "plan_id": "solidworks-build-plan-self-check-v18-plate_basic_4holes",
+  "part_type": "plate_basic_4holes",
+  "part_family_definition": "PlateBasic4HolesDefinition",
+  "part_family_builder": "SolidWorksFeatureGraphPartFamilyBuilder",
+  "parameter_schema": [
+    {
+      "Name": "length_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Plate length in millimetres.",
+      "DefaultValue": "160",
+      "MinimumValue": 10,
+      "MaximumValue": 2000,
+      "HasRange": true
+    },
+    {
+      "Name": "width_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Plate width in millimetres.",
+      "DefaultValue": "80",
+      "MinimumValue": 10,
+      "MaximumValue": 2000,
+      "HasRange": true
+    },
+    {
+      "Name": "thickness_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Plate thickness in millimetres.",
+      "DefaultValue": "12",
+      "MinimumValue": 1,
+      "MaximumValue": 200,
+      "HasRange": true
+    },
+    {
+      "Name": "hole_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Through-hole diameter in millimetres.",
+      "DefaultValue": "10",
+      "MinimumValue": 1,
+      "MaximumValue": 100,
+      "HasRange": true
+    },
+    {
+      "Name": "hole_count",
+      "ValueKind": 1,
+      "Required": true,
+      "Description": "Fixed four-hole count.",
+      "DefaultValue": "4",
+      "MinimumValue": 4,
+      "MaximumValue": 4,
+      "HasRange": true
+    }
+  ],
+  "api_evidence": "feature_handler_registry_preflight_required; handler evidence is evaluated per node",
+  "dimensions": {
+    "length_mm": "160",
+    "width_mm": "80",
+    "thickness_mm": "12",
+    "hole_diameter_mm": "10",
+    "hole_count": "4"
+  },
+  "material": "Q235",
+  "features": {},
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "build_report.json"
+  ],
+  "drawing_requirements": {},
+  "execution_options": {},
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "real_cad_executed": false,
+  "operations": [
+    {
+      "OperationId": "op-001",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "length_mm": "160",
+        "width_mm": "80",
+        "profile": "center_rectangle",
+        "sketch_id": "plate_base_sketch",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "2",
+        "dimensions": "{\u0022length_mm\u0022:\u0022160\u0022,\u0022width_mm\u0022:\u002280\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022plate_base_rectangle\u0022,\u0022entity_type\u0022:\u0022rectangle\u0022,\u0022parameters\u0022:{\u0022profile\u0022:\u0022center_rectangle\u0022,\u0022length_mm\u0022:\u0022160\u0022,\u0022width_mm\u0022:\u002280\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022plate_length\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022plate_base_rectangle\u0022],\u0022value\u0022:\u0022160\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022length_mm\u0022}},{\u0022constraint_id\u0022:\u0022plate_width\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022plate_base_rectangle\u0022],\u0022value\u0022:\u002280\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022width_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-002",
+      "OperationType": "ExtrudeBoss",
+      "Parameters": {
+        "depth_mm": "12",
+        "direction": "mid_plane",
+        "feature_id": "plate_base_extrude",
+        "feature_type": "extrude_boss",
+        "sketch_id": "plate_base_sketch",
+        "referenced_sketches": "[\u0022plate_base_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-003",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "hole_count": "4",
+        "hole_diameter_mm": "10",
+        "margin_x_mm": "20",
+        "margin_y_mm": "20",
+        "pattern": "rectangular",
+        "sketch_id": "plate_hole_sketch",
+        "reference_plane": "TopFace",
+        "entity_count": "1",
+        "constraint_count": "1",
+        "dimensions": "{\u0022hole_count\u0022:\u00224\u0022,\u0022hole_diameter_mm\u0022:\u002210\u0022,\u0022margin_x_mm\u0022:\u002220\u0022,\u0022margin_y_mm\u0022:\u002220\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022plate_hole_pattern\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022pattern\u0022:\u0022rectangular\u0022,\u0022hole_count\u0022:\u00224\u0022,\u0022margin_x_mm\u0022:\u002220\u0022,\u0022margin_y_mm\u0022:\u002220\u0022,\u0022hole_diameter_mm\u0022:\u002210\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022plate_hole_diameter\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022plate_hole_pattern\u0022],\u0022value\u0022:\u002210\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022hole_diameter_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-004",
+      "OperationType": "CutExtrude",
+      "Parameters": {
+        "hole_diameter_mm": "10",
+        "through_all": "true",
+        "hole_count": "4",
+        "feature_id": "plate_hole_cut",
+        "feature_type": "extrude_cut",
+        "sketch_id": "plate_hole_sketch",
+        "referenced_sketches": "[\u0022plate_hole_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-005",
+      "OperationType": "SavePart",
+      "Parameters": {
+        "file_name": "cad-model-spec-plate-basic-4holes.SLDPRT"
+      }
+    },
+    {
+      "OperationId": "op-006",
+      "OperationType": "ExportStep",
+      "Parameters": {
+        "file_name": "cad-model-spec-plate-basic-4holes.STEP"
+      }
+    }
+  ],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-09-09T06:45:29.9596886+00:00"
+}

@@ -260,7 +260,11 @@ public sealed partial class SolidWorksMainWorkflowRunner
                             fatal: true));
                     }
 
-                    artifactValidation = new SolidWorksArtifactValidator(Path.Combine(request.ProjectRoot, "output", "solidworks"))
+                    // 模拟支持显式输出目录；真实产物保留既有 output/solidworks/real 合同。
+                    var validationRoot = string.Equals(workerResult.ExecutionMode, "Fake", StringComparison.OrdinalIgnoreCase)
+                        ? outputDirectory
+                        : Path.Combine(request.ProjectRoot, "output", "solidworks");
+                    artifactValidation = new SolidWorksArtifactValidator(validationRoot)
                         .Validate(workerResult);
                     if (RequiresGeometryValidationReport(plan))
                     {

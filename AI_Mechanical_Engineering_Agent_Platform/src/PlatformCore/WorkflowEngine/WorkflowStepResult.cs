@@ -68,6 +68,8 @@ public sealed record WorkflowStepResult
 
     public RejectReport? RejectReport { get; init; }
 
+    public HumanApprovalResolution? ApprovalResolution { get; init; }
+
     public int RetryCount { get; init; }
 
     public int MaxRetries { get; init; }

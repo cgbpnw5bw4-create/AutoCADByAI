@@ -1,0 +1,1519 @@
+{
+  "schema_version": "2.2-a-task-approval",
+  "run_id": "platform-self-check-cce6d9609f01484f960ae09f3dee94fe",
+  "generated_at": "2026-09-09T06:22:06.3756611+00:00",
+  "source_revision": "ab63fbd15628cfd9f5e8af29fba45c1c9f392ed0-dirty",
+  "registered_modules": [
+    {
+      "name": "CADModeling",
+      "version": "0.1.0",
+      "description": "规划 BuildSpec 与 SolidWorksBuildPlan 到 CAD Worker 的受控交接，当前仅支持 dry-run skeleton。"
+    },
+    {
+      "name": "CodeEngineering",
+      "version": "0.1.0",
+      "description": "规划未来 CAD API、SDK 和 COM 自动化代码开发。"
+    },
+    {
+      "name": "CodeReview",
+      "version": "0.1.0",
+      "description": "复审未来自动化代码的安全性和可维护性。"
+    },
+    {
+      "name": "DrawingGeneration",
+      "version": "0.1.0",
+      "description": "规划工程图生成任务。"
+    },
+    {
+      "name": "DrawingReview",
+      "version": "0.1.0",
+      "description": "复审工程图 PDF、尺寸、视图和标题栏。"
+    },
+    {
+      "name": "ErrorDiagnosis",
+      "version": "0.1.0",
+      "description": "诊断执行失败并提出修复建议。"
+    },
+    {
+      "name": "MechanicalDesign",
+      "version": "0.1.0",
+      "description": "检查机械可行性、结构和参数假设。"
+    },
+    {
+      "name": "RequirementUnderstanding",
+      "version": "0.1.0",
+      "description": "将自然语言需求转换为 CADModelSpec。"
+    }
+  ],
+  "registered_agents": [
+    {
+      "id": "cad-modeler",
+      "name": "CAD建模工程师",
+      "role": "建模规划、BuildSpec 生成、Worker 调用规划",
+      "visibility": "Internal"
+    },
+    {
+      "id": "chief-engineer",
+      "name": "机械总工程师",
+      "role": "总调度、任务拆解、内部 Agent 协作、质量裁决",
+      "visibility": "Public"
+    },
+    {
+      "id": "code-engineer",
+      "name": "代码工程师",
+      "role": "CAD API / SDK 自动化代码开发规划",
+      "visibility": "Internal"
+    },
+    {
+      "id": "code-reviewer",
+      "name": "代码复审工程师",
+      "role": "代码安全性、稳定性、可维护性审查",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-engineer",
+      "name": "工程图工程师",
+      "role": "工程图生成规划",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-reviewer",
+      "name": "出图复审工程师",
+      "role": "PDF、尺寸、视图、标题栏复审",
+      "visibility": "Internal"
+    },
+    {
+      "id": "error-diagnosis",
+      "name": "异常诊断工程师",
+      "role": "失败原因分析和修复建议",
+      "visibility": "Internal"
+    },
+    {
+      "id": "mechanical-designer",
+      "name": "机械设计师",
+      "role": "结构方案、机械合理性、参数建议",
+      "visibility": "Internal"
+    }
+  ],
+  "public_agents": [
+    {
+      "id": "chief-engineer",
+      "name": "机械总工程师",
+      "role": "总调度、任务拆解、内部 Agent 协作、质量裁决",
+      "visibility": "Public"
+    }
+  ],
+  "internal_agents": [
+    {
+      "id": "cad-modeler",
+      "name": "CAD建模工程师",
+      "role": "建模规划、BuildSpec 生成、Worker 调用规划",
+      "visibility": "Internal"
+    },
+    {
+      "id": "code-engineer",
+      "name": "代码工程师",
+      "role": "CAD API / SDK 自动化代码开发规划",
+      "visibility": "Internal"
+    },
+    {
+      "id": "code-reviewer",
+      "name": "代码复审工程师",
+      "role": "代码安全性、稳定性、可维护性审查",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-engineer",
+      "name": "工程图工程师",
+      "role": "工程图生成规划",
+      "visibility": "Internal"
+    },
+    {
+      "id": "drawing-reviewer",
+      "name": "出图复审工程师",
+      "role": "PDF、尺寸、视图、标题栏复审",
+      "visibility": "Internal"
+    },
+    {
+      "id": "error-diagnosis",
+      "name": "异常诊断工程师",
+      "role": "失败原因分析和修复建议",
+      "visibility": "Internal"
+    },
+    {
+      "id": "mechanical-designer",
+      "name": "机械设计师",
+      "role": "结构方案、机械合理性、参数建议",
+      "visibility": "Internal"
+    }
+  ],
+  "registered_skills": [
+    {
+      "name": "build-spec-planning",
+      "description": "Plan structured BuildSpec placeholders without CAD execution."
+    },
+    {
+      "name": "drawing-review-summary",
+      "description": "Summarize drawing review inputs into ReviewReport placeholders."
+    },
+    {
+      "name": "requirement-to-cad-model-spec",
+      "description": "Convert natural-language requirements into CADModelSpec placeholders."
+    },
+    {
+      "name": "solidworks-build-plan-skill",
+      "description": "Generate a registry-dispatched SolidWorksBuildPlan without calling SolidWorks, COM or Worker."
+    }
+  ],
+  "registered_workers": [
+    {
+      "name": "FakeAutoCADWorker",
+      "target_system": "AutoCAD"
+    },
+    {
+      "name": "FakeSolidWorksWorker",
+      "target_system": "SolidWorks"
+    }
+  ],
+  "workflow_steps": [
+    {
+      "step_id": "initialize-platform",
+      "step_name": "initialize-platform",
+      "status": "Passed",
+      "message": "Platform initialized.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-initialize-platform-64ddf04a3ca441c1a0aa07adacd57b5b",
+        "result": "Passed",
+        "reason": "Workflow step 'initialize-platform' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "register-modules",
+      "logs": [
+        "Platform initialized."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "register-modules",
+      "step_name": "register-modules",
+      "status": "Passed",
+      "message": "Base modules registered.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-register-modules-2025a3eb605b438697101b03c6f53d17",
+        "result": "Passed",
+        "reason": "Workflow step 'register-modules' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "register-agents",
+      "logs": [
+        "Base modules registered."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "register-agents",
+      "step_name": "register-agents",
+      "status": "Passed",
+      "message": "Base agents registered.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-register-agents-2a0c8a909cc4422e9d22022d968caaef",
+        "result": "Passed",
+        "reason": "Workflow step 'register-agents' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "register-skills",
+      "logs": [
+        "Base agents registered."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "register-skills",
+      "step_name": "register-skills",
+      "status": "Passed",
+      "message": "Base skills registered.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-register-skills-1cc4b5928d734cd2ac41b531e2a44647",
+        "result": "Passed",
+        "reason": "Workflow step 'register-skills' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "register-workers",
+      "logs": [
+        "Base skills registered."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "register-workers",
+      "step_name": "register-workers",
+      "status": "Passed",
+      "message": "Fake CAD workers registered.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-register-workers-7af1ad823d724f7a936c382e726b0641",
+        "result": "Passed",
+        "reason": "Workflow step 'register-workers' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "gateway-directory",
+      "logs": [
+        "Fake CAD workers registered."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "gateway-directory",
+      "step_name": "gateway-directory",
+      "status": "Passed",
+      "message": "Gateway public agent directory checked.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-gateway-directory-49f58c833e684dd4bf0d0dae0e573f91",
+        "result": "Passed",
+        "reason": "Workflow step 'gateway-directory' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "module-manifest-loader",
+      "logs": [
+        "Gateway public agent directory checked."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "module-manifest-loader",
+      "step_name": "module-manifest-loader",
+      "status": "Passed",
+      "message": "module.yaml manifests checked.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-module-manifest-loader-dd56da721f534791b1e8bc936e59085f",
+        "result": "Passed",
+        "reason": "Workflow step 'module-manifest-loader' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "storage-contracts",
+      "logs": [
+        "module.yaml manifests checked."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "storage-contracts",
+      "step_name": "storage-contracts",
+      "status": "Passed",
+      "message": "Storage abstraction contracts checked.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-storage-contracts-4f74de5939c846eca7b38275541aadb7",
+        "result": "Passed",
+        "reason": "Workflow step 'storage-contracts' did not request rejection, failure or human approval.",
+        "next_action": null,
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": "quality-gate",
+      "logs": [
+        "Storage abstraction contracts checked."
+      ],
+      "issues": []
+    },
+    {
+      "step_id": "quality-gate",
+      "step_name": "quality-gate",
+      "status": "Passed",
+      "message": "QualityGate skeleton returned Passed.",
+      "agent_output": null,
+      "review_report": null,
+      "gate_decision": {
+        "id": "gate-self-check",
+        "result": "Passed",
+        "reason": "Self-check review passed.",
+        "next_action": "Continue with platform extension.",
+        "reject_report": null
+      },
+      "reject_report": null,
+      "approval_resolution": null,
+      "retry_count": 0,
+      "max_retries": 2,
+      "next_step_id": null,
+      "logs": [
+        "QualityGate skeleton returned Passed."
+      ],
+      "issues": []
+    }
+  ],
+  "gate_decision": {
+    "id": "gate-self-check",
+    "result": "Passed",
+    "reason": "Self-check review passed.",
+    "next_action": "Continue with platform extension.",
+    "reject_report": null
+  },
+  "gateway_visible_agents": [
+    {
+      "id": "chief-engineer",
+      "display_name": "机械总工程师",
+      "role": "总调度、任务拆解、内部 Agent 协作、质量裁决",
+      "mention": "@机械总工程师",
+      "visibility": "Public"
+    }
+  ],
+  "audit_logs": [
+    {
+      "category": "module",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered module manifests from yaml with fallback support.",
+      "created_at": "2026-09-09T06:22:06.3086753+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered module agent implementations.",
+      "created_at": "2026-09-09T06:22:06.3145163+00:00"
+    },
+    {
+      "category": "skill",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered base skill placeholders.",
+      "created_at": "2026-09-09T06:22:06.3147907+00:00"
+    },
+    {
+      "category": "worker",
+      "actor": "bootstrapper",
+      "action": "registered",
+      "message": "Registered SolidWorks dry-run worker and AutoCAD placeholder worker.",
+      "created_at": "2026-09-09T06:22:06.3667004+00:00"
+    },
+    {
+      "category": "platform",
+      "actor": "bootstrapper",
+      "action": "initialized",
+      "message": "Default platform skeleton initialized.",
+      "created_at": "2026-09-09T06:22:06.3668027+00:00"
+    },
+    {
+      "category": "task",
+      "actor": "self-check",
+      "action": "created",
+      "message": "Created self-check task task-0ac05c24365b41a4ac5fd3be75ad2e37.",
+      "created_at": "2026-09-09T06:22:06.4619516+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "task-0ac05c24365b41a4ac5fd3be75ad2e37",
+      "action": "workflow_started",
+      "message": "Workflow task-0ac05c24365b41a4ac5fd3be75ad2e37 started.",
+      "created_at": "2026-09-09T06:22:06.4649283+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "initialize-platform",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'initialize-platform' passed.",
+      "created_at": "2026-09-09T06:22:06.4658823+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "register-modules",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'register-modules' passed.",
+      "created_at": "2026-09-09T06:22:06.4658872+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "register-agents",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'register-agents' passed.",
+      "created_at": "2026-09-09T06:22:06.4658887+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "register-skills",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'register-skills' passed.",
+      "created_at": "2026-09-09T06:22:06.4658894+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "register-workers",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'register-workers' passed.",
+      "created_at": "2026-09-09T06:22:06.4658938+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "gateway-directory",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'gateway-directory' passed.",
+      "created_at": "2026-09-09T06:22:06.4658945+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "module-manifest-loader",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'module-manifest-loader' passed.",
+      "created_at": "2026-09-09T06:22:06.4658952+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "storage-contracts",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'storage-contracts' passed.",
+      "created_at": "2026-09-09T06:22:06.4658966+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "quality-gate",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'quality-gate' passed.",
+      "created_at": "2026-09-09T06:22:06.465914+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "task-0ac05c24365b41a4ac5fd3be75ad2e37",
+      "action": "workflow_passed",
+      "message": "Workflow task-0ac05c24365b41a4ac5fd3be75ad2e37 passed.",
+      "created_at": "2026-09-09T06:22:06.4659402+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-collaboration-task-9c4e66e4cdc5484d81446187fbd10de1",
+      "action": "workflow_started",
+      "message": "Workflow internal-collaboration-task-9c4e66e4cdc5484d81446187fbd10de1 started.",
+      "created_at": "2026-09-09T06:22:06.4749854+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "mechanical-designer",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'mechanical-designer' invoked for task task-9c4e66e4cdc5484d81446187fbd10de1.",
+      "created_at": "2026-09-09T06:22:06.4768441+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "mechanical-designer",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'mechanical-designer' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:06.4774582+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "mechanical-designer",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'mechanical-designer' with decision Passed.",
+      "created_at": "2026-09-09T06:22:06.477936+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:mechanical-designer",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:mechanical-designer' passed.",
+      "created_at": "2026-09-09T06:22:06.4779728+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "cad-modeler",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'cad-modeler' invoked for task task-9c4e66e4cdc5484d81446187fbd10de1.",
+      "created_at": "2026-09-09T06:22:06.477983+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "cad-modeler",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'cad-modeler' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:06.4783288+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "cad-modeler",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'cad-modeler' with decision Passed.",
+      "created_at": "2026-09-09T06:22:06.4783349+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:cad-modeler",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:cad-modeler' passed.",
+      "created_at": "2026-09-09T06:22:06.4783366+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-engineer",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'drawing-engineer' invoked for task task-9c4e66e4cdc5484d81446187fbd10de1.",
+      "created_at": "2026-09-09T06:22:06.4783439+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-engineer",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'drawing-engineer' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:06.4784777+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "drawing-engineer",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'drawing-engineer' with decision Passed.",
+      "created_at": "2026-09-09T06:22:06.4784818+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:drawing-engineer",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:drawing-engineer' passed.",
+      "created_at": "2026-09-09T06:22:06.478483+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-reviewer",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'drawing-reviewer' invoked for task task-9c4e66e4cdc5484d81446187fbd10de1.",
+      "created_at": "2026-09-09T06:22:06.4784854+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-reviewer",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'drawing-reviewer' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:06.4786803+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "drawing-reviewer",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'drawing-reviewer' with decision Passed.",
+      "created_at": "2026-09-09T06:22:06.4786839+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:drawing-reviewer",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:drawing-reviewer' passed.",
+      "created_at": "2026-09-09T06:22:06.4786857+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-collaboration-task-9c4e66e4cdc5484d81446187fbd10de1",
+      "action": "workflow_passed",
+      "message": "Workflow internal-collaboration-task-9c4e66e4cdc5484d81446187fbd10de1 passed.",
+      "created_at": "2026-09-09T06:22:06.4786894+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "chief-engineer",
+      "action": "collaboration_report_created",
+      "message": "Internal workflow-backed collaboration report created for self-check-conversation.",
+      "created_at": "2026-09-09T06:22:06.4822996+00:00"
+    },
+    {
+      "category": "agent-runtime",
+      "actor": "chief-engineer",
+      "action": "runtime_agent_invoked",
+      "message": "Runtime mode Mock invoked for chief-engineer.",
+      "created_at": "2026-09-09T06:22:06.7127935+00:00"
+    },
+    {
+      "category": "agent-runtime",
+      "actor": "chief-engineer",
+      "action": "runtime_agent_completed",
+      "message": "Runtime mode Mock completed with status Completed.",
+      "created_at": "2026-09-09T06:22:06.712919+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-5a7e2aad98314b599e7edd722a3a4ade",
+      "action": "workflow_started",
+      "message": "Workflow solidworks-main-workflow-task-5a7e2aad98314b599e7edd722a3a4ade started.",
+      "created_at": "2026-09-09T06:22:09.2123708+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-generation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-generation' passed.",
+      "created_at": "2026-09-09T06:22:09.2139293+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-validation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-validation' passed.",
+      "created_at": "2026-09-09T06:22:09.2142543+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-worker-execution",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-worker-execution' passed.",
+      "created_at": "2026-09-09T06:22:09.2166425+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "solidworks-main-workflow",
+      "action": "quality_gate_after_solidworks_main_workflow",
+      "message": "QualityGate evaluated SolidWorks main workflow as Passed.",
+      "created_at": "2026-09-09T06:22:09.2175323+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-artifact-quality-gate",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-artifact-quality-gate' passed.",
+      "created_at": "2026-09-09T06:22:09.2175743+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-5a7e2aad98314b599e7edd722a3a4ade",
+      "action": "workflow_passed",
+      "message": "Workflow solidworks-main-workflow-task-5a7e2aad98314b599e7edd722a3a4ade passed.",
+      "created_at": "2026-09-09T06:22:09.2175762+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-5ec5f0881a2b43c681050fe1dd5102d4",
+      "action": "workflow_started",
+      "message": "Workflow solidworks-main-workflow-task-5ec5f0881a2b43c681050fe1dd5102d4 started.",
+      "created_at": "2026-09-09T06:22:09.2186232+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-generation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-generation' passed.",
+      "created_at": "2026-09-09T06:22:09.2188456+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-validation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-validation' passed.",
+      "created_at": "2026-09-09T06:22:09.218878+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-worker-execution",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-worker-execution' passed.",
+      "created_at": "2026-09-09T06:22:09.2197373+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "solidworks-main-workflow",
+      "action": "quality_gate_after_solidworks_main_workflow",
+      "message": "QualityGate evaluated SolidWorks main workflow as Passed.",
+      "created_at": "2026-09-09T06:22:09.219813+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-artifact-quality-gate",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-artifact-quality-gate' passed.",
+      "created_at": "2026-09-09T06:22:09.2198142+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-5ec5f0881a2b43c681050fe1dd5102d4",
+      "action": "workflow_passed",
+      "message": "Workflow solidworks-main-workflow-task-5ec5f0881a2b43c681050fe1dd5102d4 passed.",
+      "created_at": "2026-09-09T06:22:09.219815+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-3ce3f1d341804c95b43658e6a9723d98",
+      "action": "workflow_started",
+      "message": "Workflow solidworks-main-workflow-task-3ce3f1d341804c95b43658e6a9723d98 started.",
+      "created_at": "2026-09-09T06:22:09.2198528+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-generation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-generation' passed.",
+      "created_at": "2026-09-09T06:22:09.2200313+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-validation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-validation' passed.",
+      "created_at": "2026-09-09T06:22:09.2200583+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-worker-execution",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-worker-execution' passed.",
+      "created_at": "2026-09-09T06:22:09.2210568+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "solidworks-main-workflow",
+      "action": "quality_gate_after_solidworks_main_workflow",
+      "message": "QualityGate evaluated SolidWorks main workflow as Passed.",
+      "created_at": "2026-09-09T06:22:09.2211535+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-artifact-quality-gate",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-artifact-quality-gate' passed.",
+      "created_at": "2026-09-09T06:22:09.2211562+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-3ce3f1d341804c95b43658e6a9723d98",
+      "action": "workflow_passed",
+      "message": "Workflow solidworks-main-workflow-task-3ce3f1d341804c95b43658e6a9723d98 passed.",
+      "created_at": "2026-09-09T06:22:09.2211572+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-collaboration-task-c0de89ff4c7a4f40a2e8b78a730ef824",
+      "action": "workflow_started",
+      "message": "Workflow internal-collaboration-task-c0de89ff4c7a4f40a2e8b78a730ef824 started.",
+      "created_at": "2026-09-09T06:22:09.2211967+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "mechanical-designer",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'mechanical-designer' invoked for task task-c0de89ff4c7a4f40a2e8b78a730ef824.",
+      "created_at": "2026-09-09T06:22:09.2212004+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "mechanical-designer",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'mechanical-designer' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:09.2212071+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "mechanical-designer",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'mechanical-designer' with decision Passed.",
+      "created_at": "2026-09-09T06:22:09.2212106+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:mechanical-designer",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:mechanical-designer' passed.",
+      "created_at": "2026-09-09T06:22:09.2212123+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "cad-modeler",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'cad-modeler' invoked for task task-c0de89ff4c7a4f40a2e8b78a730ef824.",
+      "created_at": "2026-09-09T06:22:09.2212132+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "cad-modeler",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'cad-modeler' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:09.221215+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "cad-modeler",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'cad-modeler' with decision Passed.",
+      "created_at": "2026-09-09T06:22:09.2212177+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:cad-modeler",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:cad-modeler' passed.",
+      "created_at": "2026-09-09T06:22:09.221218+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-engineer",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'drawing-engineer' invoked for task task-c0de89ff4c7a4f40a2e8b78a730ef824.",
+      "created_at": "2026-09-09T06:22:09.2212185+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-engineer",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'drawing-engineer' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:09.2212191+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "drawing-engineer",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'drawing-engineer' with decision Passed.",
+      "created_at": "2026-09-09T06:22:09.2212199+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:drawing-engineer",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:drawing-engineer' passed.",
+      "created_at": "2026-09-09T06:22:09.2212202+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-reviewer",
+      "action": "internal_agent_invoked",
+      "message": "Internal agent 'drawing-reviewer' invoked for task task-c0de89ff4c7a4f40a2e8b78a730ef824.",
+      "created_at": "2026-09-09T06:22:09.2212206+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "drawing-reviewer",
+      "action": "internal_agent_completed",
+      "message": "Internal agent 'drawing-reviewer' completed with status Completed.",
+      "created_at": "2026-09-09T06:22:09.2212216+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "drawing-reviewer",
+      "action": "quality_gate_after_internal_step",
+      "message": "QualityGate evaluated internal agent step 'drawing-reviewer' with decision Passed.",
+      "created_at": "2026-09-09T06:22:09.2212231+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-agent:drawing-reviewer",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'internal-agent:drawing-reviewer' passed.",
+      "created_at": "2026-09-09T06:22:09.2212233+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "internal-collaboration-task-c0de89ff4c7a4f40a2e8b78a730ef824",
+      "action": "workflow_passed",
+      "message": "Workflow internal-collaboration-task-c0de89ff4c7a4f40a2e8b78a730ef824 passed.",
+      "created_at": "2026-09-09T06:22:09.2212236+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-c0de89ff4c7a4f40a2e8b78a730ef824",
+      "action": "workflow_started",
+      "message": "Workflow solidworks-main-workflow-task-c0de89ff4c7a4f40a2e8b78a730ef824 started.",
+      "created_at": "2026-09-09T06:22:09.2236584+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-generation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-generation' passed.",
+      "created_at": "2026-09-09T06:22:09.2238924+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-build-plan-validation",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-build-plan-validation' passed.",
+      "created_at": "2026-09-09T06:22:09.2239311+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-worker-execution",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-worker-execution' passed.",
+      "created_at": "2026-09-09T06:22:09.2249007+00:00"
+    },
+    {
+      "category": "quality-gate",
+      "actor": "solidworks-main-workflow",
+      "action": "quality_gate_after_solidworks_main_workflow",
+      "message": "QualityGate evaluated SolidWorks main workflow as Passed.",
+      "created_at": "2026-09-09T06:22:09.2250137+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-artifact-quality-gate",
+      "action": "workflow_step_passed",
+      "message": "Workflow step 'solidworks-artifact-quality-gate' passed.",
+      "created_at": "2026-09-09T06:22:09.2250164+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow-task-c0de89ff4c7a4f40a2e8b78a730ef824",
+      "action": "workflow_passed",
+      "message": "Workflow solidworks-main-workflow-task-c0de89ff4c7a4f40a2e8b78a730ef824 passed.",
+      "created_at": "2026-09-09T06:22:09.2250176+00:00"
+    },
+    {
+      "category": "workflow",
+      "actor": "solidworks-main-workflow",
+      "action": "solidworks_main_workflow_completed",
+      "message": "SolidWorks main workflow completed with status Completed, real_cad_executed=False, quality_gate_passed=True.",
+      "created_at": "2026-09-09T06:22:09.2252064+00:00"
+    },
+    {
+      "category": "agent",
+      "actor": "chief-engineer",
+      "action": "collaboration_report_created",
+      "message": "Internal workflow-backed collaboration report created for self-check-solidworks_main_workflow.",
+      "created_at": "2026-09-09T06:22:09.2255766+00:00"
+    },
+    {
+      "category": "self-check",
+      "actor": "quality-gate",
+      "action": "failed",
+      "message": "Self-check final status: Failed.",
+      "created_at": "2026-09-09T06:22:09.599538+00:00"
+    }
+  ],
+  "solution_exists": true,
+  "module_structure_checks": [
+    {
+      "module_name": "RequirementUnderstanding",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "MechanicalDesign",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "CADModeling",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "DrawingGeneration",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "DrawingReview",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "CodeEngineering",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "CodeReview",
+      "passed": true,
+      "missing_entries": []
+    },
+    {
+      "module_name": "ErrorDiagnosis",
+      "passed": true,
+      "missing_entries": []
+    }
+  ],
+  "module_manifest_source": "yaml",
+  "yaml_loaded_modules": [
+    "CADModeling",
+    "CodeEngineering",
+    "CodeReview",
+    "DrawingGeneration",
+    "DrawingReview",
+    "ErrorDiagnosis",
+    "MechanicalDesign",
+    "RequirementUnderstanding"
+  ],
+  "fallback_modules": [],
+  "gateway_quality_gate_enabled": true,
+  "storage_contracts_registered": true,
+  "reject_report_builder_check": true,
+  "internal_routing_enabled": true,
+  "internal_agents_invoked": [
+    "mechanical-designer",
+    "cad-modeler",
+    "drawing-engineer",
+    "drawing-reviewer"
+  ],
+  "collaboration_report_created": true,
+  "gateway_blocks_internal_agents": true,
+  "quality_gate_after_collaboration": true,
+  "audit_internal_agent_calls": true,
+  "agent_runtime_project_exists": true,
+  "microsoft_runtime_dependency_isolated": true,
+  "runtime_mode": "Mock",
+  "mock_runtime_agent_creation": true,
+  "microsoft_agent_adapter_check": true,
+  "microsoft_workflow_runtime_check": true,
+  "runtime_types_do_not_leak_to_contracts": true,
+  "gateway_visibility_still_valid": true,
+  "quality_gate_still_enabled": true,
+  "workflow_quality_loop_enabled": true,
+  "workflow_passed_scenario": "Passed",
+  "workflow_rejected_retry_passed_scenario": "Passed",
+  "workflow_rejected_max_retries_scenario": "Passed",
+  "workflow_human_approval_scenario": "Passed",
+  "retry_policy_enabled": true,
+  "failure_report_generated": true,
+  "human_approval_request_generated": true,
+  "module_agents_registered": true,
+  "placeholder_agent_is_fallback_only": true,
+  "chief_engineer_internal_orchestration_uses_workflow_engine": true,
+  "internal_agent_workflow_steps_created": true,
+  "quality_gate_after_each_internal_step": true,
+  "internal_workflow_passed_scenario": "Passed",
+  "internal_workflow_retry_then_passed_scenario": "Passed",
+  "internal_workflow_max_retries_exceeded_scenario": "Passed",
+  "internal_workflow_failed_scenario": "Passed",
+  "internal_workflow_human_approval_scenario": "Passed",
+  "retry_policy_interface_enabled": true,
+  "exponential_backoff_policy_available": true,
+  "code_engineer_agent_registered": true,
+  "code_reviewer_agent_registered": true,
+  "code_agents_are_internal": true,
+  "gateway_blocks_code_agents": true,
+  "real_runtime_invoker_implemented": true,
+  "runtime_config_env_supported": true,
+  "runtime_mode_default_is_mock": true,
+  "runtime_fallback_when_missing_key": true,
+  "chief_engineer_real_runtime_only": true,
+  "internal_agents_remain_mock": true,
+  "microsoft_agent_output_mapper_enabled": true,
+  "invalid_model_output_fallback_enabled": true,
+  "model_cannot_escalate_permissions": true,
+  "model_cannot_call_worker_directly": true,
+  "chief_engineer_runtime_then_workflow_engine": true,
+  "quality_gate_after_real_runtime": true,
+  "gateway_response_contains_runtime_metadata": true,
+  "microsoft_runtime_smoke_test_attempted": false,
+  "microsoft_runtime_smoke_test_passed": false,
+  "microsoft_runtime_smoke_test_error": null,
+  "retry_delay_actually_awaited": true,
+  "exponential_backoff_delay_respected": true,
+  "workflow_retry_delay_cancellation_supported": true,
+  "runtime_timeout_config_supported": true,
+  "invalid_timeout_falls_back_to_default": true,
+  "openai_client_timeout_configured": true,
+  "openai_client_cancellation_supported": true,
+  "provider_errors_are_structured": true,
+  "api_key_not_logged": true,
+  "markdown_chinese_standard_exists": true,
+  "markdown_files_scanned": 89,
+  "markdown_chinese_validator_enabled": true,
+  "markdown_chinese_check_passed": true,
+  "markdown_language_report_generated": true,
+  "markdown_english_exceptions_supported": true,
+  "solidworks_module_skeleton_enabled": true,
+  "solidworks_build_plan_skill_registered": true,
+  "solidworks_build_plan_generated": true,
+  "solidworks_worker_contract_exists": true,
+  "fake_solidworks_worker_registered": true,
+  "fake_solidworks_worker_dry_run_passed": true,
+  "solidworks_build_plan_validator_passed": true,
+  "solidworks_artifact_validator_passed": true,
+  "solidworks_build_plan_reviewer_passed": true,
+  "solidworks_quality_gate_passed": true,
+  "solidworks_fake_artifacts_generated": true,
+  "solidworks_real_cad_not_executed": true,
+  "solidworks_agent_does_not_call_worker_directly": true,
+  "gateway_does_not_call_solidworks_worker": true,
+  "solidworks_self_check_error": null,
+  "solidworks_real_worker_skeleton_exists": true,
+  "solidworks_environment_validator_exists": true,
+  "solidworks_preflight_report_generated": true,
+  "solidworks_session_manager_exists": true,
+  "solidworks_real_execution_default_disabled": false,
+  "solidworks_real_execution_requires_request_flag": false,
+  "solidworks_real_execution_requires_env_flag": false,
+  "solidworks_com_not_called_in_default_self_check": true,
+  "solidworks_real_connection_smoke_test_attempted": false,
+  "solidworks_real_connection_smoke_test_passed": false,
+  "solidworks_real_connection_smoke_test_error": null,
+  "solidworks_generic_real_build_not_implemented": false,
+  "solidworks_real_cad_not_executed_by_default": true,
+  "solidworks_real_plate_build_implemented": true,
+  "solidworks_real_build_requires_env_flag": false,
+  "solidworks_real_build_requires_request_flag": false,
+  "solidworks_real_build_requires_dry_run_false": true,
+  "solidworks_real_build_default_disabled": true,
+  "solidworks_real_build_smoke_test_attempted": false,
+  "solidworks_real_build_smoke_test_passed": false,
+  "solidworks_real_build_smoke_test_error": null,
+  "solidworks_real_build_artifacts_validated": false,
+  "solidworks_real_build_report_generated": false,
+  "solidworks_real_build_outputs_sldprt": false,
+  "solidworks_real_build_outputs_step": false,
+  "solidworks_real_build_outputs_json_report": false,
+  "solidworks_real_build_not_called_in_default_self_check": true,
+  "sw_real_build_smoke_test_env_value": null,
+  "sw_strict_real_build_test_env_value": null,
+  "real_build_request_dry_run": null,
+  "real_build_execution_mode": null,
+  "real_build_output_directory": null,
+  "real_build_latest_report_path": null,
+  "solidworks_diagnostic_runner_exists": true,
+  "solidworks_diagnostic_runner_not_called_by_default": true,
+  "solidworks_latest_diagnostic_report_path": null,
+  "solidworks_latest_diagnostic_final_status": null,
+  "solidworks_real_build_failure_stage": null,
+  "solidworks_real_build_error_is_actionable": true,
+  "solidworks_api_failure_analyzer_exists": true,
+  "solidworks_api_evidence_collector_exists": true,
+  "solidworks_api_evidence_report_schema_exists": true,
+  "solidworks_cut_holes_api_evidence_supported": true,
+  "solidworks_reference_skill_readonly_analysis_supported": true,
+  "solidworks_external_scripts_not_copied": true,
+  "solidworks_api_repair_loop_available": true,
+  "solidworks_macro_recording_request_available": true,
+  "solidworks_plate_feature_builder_exists": true,
+  "solidworks_real_drawing_basic_views_implemented": true,
+  "solidworks_real_drawing_default_disabled": true,
+  "solidworks_real_drawing_requires_env_flag": false,
+  "solidworks_real_drawing_smoke_test_attempted": false,
+  "solidworks_real_drawing_smoke_test_passed": false,
+  "solidworks_real_drawing_smoke_test_error": null,
+  "solidworks_real_drawing_outputs_slddrw": false,
+  "solidworks_real_drawing_outputs_pdf": false,
+  "solidworks_real_drawing_outputs_json_report": false,
+  "solidworks_real_drawing_not_called_in_default_self_check": true,
+  "solidworks_drawing_report_generated": false,
+  "solidworks_real_drawing_failure_stage": null,
+  "solidworks_drawing_failure_stage_actionable": true,
+  "real_drawing_output_directory": null,
+  "real_drawing_latest_report_path": null,
+  "v1_1_version_stage_documented": true,
+  "solidworks_drawing_failure_repair_documented": true,
+  "solidworks_drawing_api_evidence_documented": true,
+  "solidworks_drawing_review_checklist_updated": true,
+  "solidworks_real_drawing_dimensions_implemented": true,
+  "solidworks_real_drawing_dimensions_default_disabled": true,
+  "solidworks_real_drawing_dimensions_requires_env_flag": false,
+  "solidworks_real_drawing_dimensions_smoke_test_attempted": false,
+  "solidworks_real_drawing_dimensions_smoke_test_passed": false,
+  "solidworks_real_drawing_dimensions_smoke_test_error": null,
+  "solidworks_real_drawing_dimensions_outputs_slddrw": false,
+  "solidworks_real_drawing_dimensions_outputs_pdf": false,
+  "solidworks_real_drawing_dimensions_outputs_json_report": false,
+  "solidworks_real_drawing_dimensions_not_called_in_default_self_check": true,
+  "solidworks_drawing_dimension_report_generated": false,
+  "solidworks_real_drawing_dimension_failure_stage": null,
+  "solidworks_drawing_dimension_failure_stage_actionable": true,
+  "real_drawing_dimension_output_directory": null,
+  "real_drawing_dimension_latest_report_path": null,
+  "v1_2_version_stage_documented": true,
+  "solidworks_drawing_dimension_failure_repair_documented": true,
+  "solidworks_drawing_dimension_api_evidence_documented": true,
+  "solidworks_drawing_dimension_review_checklist_updated": true,
+  "solidworks_real_drawing_title_block_implemented": true,
+  "solidworks_real_drawing_title_block_default_disabled": true,
+  "solidworks_real_drawing_title_block_requires_env_flag": false,
+  "solidworks_real_drawing_title_block_smoke_test_attempted": false,
+  "solidworks_real_drawing_title_block_smoke_test_passed": false,
+  "solidworks_real_drawing_title_block_smoke_test_error": null,
+  "solidworks_real_drawing_title_block_outputs_slddrw": false,
+  "solidworks_real_drawing_title_block_outputs_pdf": false,
+  "solidworks_real_drawing_title_block_outputs_json_report": false,
+  "solidworks_real_drawing_title_block_not_called_in_default_self_check": true,
+  "solidworks_drawing_title_block_report_generated": false,
+  "solidworks_real_drawing_title_block_failure_stage": null,
+  "solidworks_drawing_title_block_failure_stage_actionable": true,
+  "real_drawing_title_block_output_directory": null,
+  "real_drawing_title_block_latest_report_path": null,
+  "v1_3_version_stage_documented": true,
+  "solidworks_drawing_title_block_failure_repair_documented": true,
+  "solidworks_drawing_title_block_api_evidence_documented": true,
+  "solidworks_drawing_title_block_review_checklist_updated": true,
+  "solidworks_drawing_title_block_population_strategy": "custom_properties_only",
+  "solidworks_drawing_title_block_fields_verified_in_sheet_format": false,
+  "solidworks_release_package_implemented": true,
+  "solidworks_release_package_default_no_cad_execution": true,
+  "solidworks_release_manifest_generated": true,
+  "solidworks_package_quality_report_generated": true,
+  "solidworks_release_summary_generated": true,
+  "solidworks_release_artifacts_collected": true,
+  "solidworks_release_reports_collected": true,
+  "solidworks_release_package_failure_stage": null,
+  "solidworks_release_package_failure_stage_actionable": true,
+  "solidworks_release_manifest_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\self-check\\release-source\\output\\solidworks\\release\\plate_basic_4holes\\20260909_062209_315_414303b91a824ea492ef4ae73f381470\\release_manifest.json",
+  "solidworks_package_quality_report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\self-check\\release-source\\output\\solidworks\\release\\plate_basic_4holes\\20260909_062209_315_414303b91a824ea492ef4ae73f381470\\package_quality_report.json",
+  "solidworks_release_summary_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\self-check\\release-source\\output\\solidworks\\release\\plate_basic_4holes\\20260909_062209_315_414303b91a824ea492ef4ae73f381470\\release_summary.md",
+  "v1_4_version_stage_documented": true,
+  "solidworks_release_package_failure_repair_documented": true,
+  "solidworks_release_package_review_checklist_updated": true,
+  "executable_docs_layer_enabled": true,
+  "docs_index_exists": true,
+  "project_execution_standard_exists": true,
+  "module_document_standard_exists": true,
+  "step_execution_standard_exists": true,
+  "failure_repair_standard_exists": true,
+  "codex_execution_protocol_exists": true,
+  "claude_review_protocol_exists": true,
+  "version_stage_index_exists": true,
+  "codex_agent_team_guide_exists": true,
+  "codex_agent_registry_exists": true,
+  "codex_agent_governance_doc_exists": true,
+  "agents_md_exists": true,
+  "codex_agents_configured": true,
+  "codex_agent_registry_lists_canonical_agents": true,
+  "codex_no_duplicate_active_agents": true,
+  "codex_agent_reuse_policy_documented": true,
+  "codex_agent_new_requirements_go_to_skills_or_docs": true,
+  "codex_active_agent_count_is_expected": true,
+  "codex_only_canonical_agents_active": true,
+  "codex_config_example_exists": true,
+  "codex_project_manager_agent_exists": true,
+  "codex_code_mapper_agent_exists": true,
+  "codex_api_researcher_agent_exists": true,
+  "codex_cad_worker_agent_exists": true,
+  "codex_quality_gate_agent_exists": true,
+  "codex_docs_writer_agent_exists": true,
+  "codex_agents_do_not_replace_project_modules": true,
+  "codex_agents_respect_worker_boundaries": true,
+  "agents_skills_directory_exists": true,
+  "solidworks_api_repair_skill_exists": true,
+  "markdown_docs_standard_skill_exists": true,
+  "quality_review_skill_exists": true,
+  "cadmodeling_execution_doc_exists": true,
+  "cadmodeling_failure_repair_doc_exists": true,
+  "cadmodeling_api_evidence_doc_exists": true,
+  "cadmodeling_review_checklist_exists": true,
+  "solidworks_worker_execution_doc_exists": true,
+  "solidworks_worker_failure_repair_doc_exists": true,
+  "solidworks_worker_api_evidence_doc_exists": true,
+  "solidworks_worker_review_checklist_exists": true,
+  "real_cad_worker_integrated_into_main_workflow": true,
+  "chief_engineer_orchestrator_invokes_cad_workflow": true,
+  "workflow_engine_can_route_to_solidworks_worker": true,
+  "real_cad_main_workflow_default_disabled": true,
+  "real_cad_main_workflow_requires_request_flag": false,
+  "real_cad_main_workflow_requires_env_flag": false,
+  "real_cad_main_workflow_passes_quality_gate": true,
+  "gateway_does_not_call_worker_directly": true,
+  "llm_does_not_call_worker_directly": true,
+  "release_package_all_source_reports_passed_field_exists": true,
+  "release_package_deliverable_status_field_exists": true,
+  "release_package_failed_source_reports_block_deliverable": true,
+  "v1_5_version_stage_documented": true,
+  "solidworks_com_facade_injection_supported": true,
+  "solidworks_real_acceptance_protocol_exists": true,
+  "solidworks_latest_real_outputs_report_supported": true,
+  "v1_6_test_a_documented": true,
+  "real_cad_e2e_cli_entry_exists": true,
+  "real_cad_e2e_structured_input_supported": true,
+  "real_cad_e2e_uses_chief_engineer_orchestrator": true,
+  "real_cad_e2e_uses_workflow_engine": true,
+  "real_cad_e2e_uses_solidworks_router": true,
+  "real_cad_e2e_can_invoke_real_worker": true,
+  "real_cad_e2e_passes_quality_gate": true,
+  "real_cad_e2e_default_disabled": true,
+  "real_cad_e2e_requires_request_confirmation": false,
+  "real_cad_e2e_requires_env_confirmation": false,
+  "real_cad_e2e_report_supported": true,
+  "real_cad_e2e_deliverable_semantics_supported": true,
+  "v1_7_version_stage_documented": true,
+  "real_cad_e2e_local_authorization_profile_supported": true,
+  "real_cad_e2e_local_authorization_default_disabled": false,
+  "final_status": "Failed",
+  "generic_cad_model_spec_supported": true,
+  "part_type_registry_exists": true,
+  "plate_part_family_registered": true,
+  "flange_part_family_registered": true,
+  "shaft_part_family_registered": true,
+  "unsupported_part_type_rejected": true,
+  "invalid_part_parameters_rejected_before_worker": true,
+  "part_family_builders_do_not_use_large_switch": true,
+  "plate_regression_passed": true,
+  "flange_dry_run_passed": true,
+  "shaft_dry_run_passed": true,
+  "real_cad_part_family_default_disabled": false,
+  "v1_8_version_stage_documented": true,
+  "flange_real_builder_implemented": true,
+  "shaft_real_builder_implemented": true,
+  "flange_real_workflow_supported": true,
+  "shaft_real_workflow_supported": false,
+  "flange_real_workflow_default_disabled": false,
+  "shaft_real_workflow_default_disabled": false,
+  "flange_api_evidence_documented": true,
+  "shaft_api_evidence_documented": true,
+  "flange_artifact_validation_supported": true,
+  "shaft_artifact_validation_supported": true,
+  "plate_part_family_regression_passed": true,
+  "no_large_part_type_switch": true,
+  "all_part_families_use_registry": true,
+  "v1_9_version_stage_documented": true,
+  "solidworks_local_interactive_default_enabled": true,
+  "solidworks_disable_env_supported": true,
+  "solidworks_ci_execution_disabled": true,
+  "solidworks_unit_test_execution_disabled": true,
+  "solidworks_dry_run_disables_real_execution": true,
+  "solidworks_visible_default_true": true,
+  "solidworks_execution_environment_probe_supported": true,
+  "legacy_enable_flag_not_required": true,
+  "legacy_request_confirmation_not_required": true,
+  "generic_cad_model_spec_v2_supported": true,
+  "sketch_definition_supported": true,
+  "sketch_constraints_supported": true,
+  "feature_definition_supported": true,
+  "feature_graph_supported": true,
+  "feature_graph_cycle_detected": true,
+  "missing_feature_dependency_rejected": true,
+  "build_plan_compiler_supported": true,
+  "plate_uses_generic_feature_graph": true,
+  "flange_uses_generic_feature_graph": true,
+  "shaft_uses_generic_feature_graph": true,
+  "no_part_specific_logic_in_real_worker": true,
+  "v2_0_a_documented": true,
+  "feature_handler_registry_exists": true,
+  "no_feature_type_large_switch": true,
+  "sketch_handler_registered": true,
+  "extrude_handler_registered": true,
+  "cut_handler_registered": true,
+  "hole_handler_registered": true,
+  "revolve_handler_registered": true,
+  "feature_handler_validation_supported": true,
+  "feature_api_evidence_required": true,
+  "unverified_api_blocks_real_execution": true,
+  "feature_handler_docs_completed": true,
+  "v2_0_b_documented": true,
+  "feature_adapter_layer_exists": true,
+  "feature_handler_no_direct_com_access": true,
+  "solidworks_feature_adapter_exists": true,
+  "sketch_real_execution_supported": true,
+  "extrude_real_execution_supported": true,
+  "cut_real_execution_supported": true,
+  "hole_real_execution_supported": true,
+  "feature_pipeline_end_to_end_supported": true,
+  "feature_production_evidence_active": false,
+  "feature_result_validation_supported": true,
+  "feature_fake_success_guard_supported": true,
+  "v2_0_c_documented": true,
+  "model_rebuild_pipeline_exists": true,
+  "parameter_update_supported": true,
+  "solidworks_rebuild_supported": true,
+  "geometry_validator_exists": true,
+  "bounding_box_validation_supported": true,
+  "volume_validation_supported": true,
+  "parameter_geometry_match_supported": true,
+  "rebuild_failure_detected": true,
+  "geometry_report_generated": true,
+  "v2_0_d_documented": true,
+  "v2_0_d_production_evidence_active": false,
+  "v2_0_e_unified_part_family_builders": true,
+  "v2_0_e_controlled_plate_evidence_active": false,
+  "v2_0_e_step_content_gate_active": false,
+  "v2_1_a_real_execution_frozen": true,
+  "v2_0_e_documented": true,
+  "v2_0_e_capability_regression_gate_passed": false,
+  "v2_0_e_capability_regressions": [
+    "feature_production_evidence_active",
+    "unverified_feature_blocks_execution",
+    "v2_0_d_production_evidence_active",
+    "v2_0_e_controlled_plate_evidence_active",
+    "v2_0_e_step_content_gate_active"
+  ],
+  "part_family_definition_supported": true,
+  "plate_uses_part_family_definition": true,
+  "flange_uses_part_family_definition": true,
+  "shaft_uses_part_family_definition": true,
+  "no_part_specific_builder_logic": true,
+  "feature_graph_template_reuse_supported": true,
+  "common_feature_templates_exists": true,
+  "cad_capability_matrix_exists": true,
+  "regression_models_supported": true,
+  "flange_regression_passed": true,
+  "shaft_regression_passed": true,
+  "fillet_handler_registered": true,
+  "chamfer_handler_registered": true,
+  "linear_pattern_handler_registered": true,
+  "circular_pattern_handler_registered": true,
+  "mirror_handler_registered": true,
+  "complex_feature_registry_supported": true,
+  "unverified_feature_blocks_execution": false,
+  "feature_library_documented": true,
+  "feature_regression_tests_passed": true,
+  "edge_selection_model_supported": true,
+  "v2_1_a_documented": true,
+  "simple_hole_supported": true,
+  "counterbore_hole_supported": true,
+  "countersink_hole_supported": true,
+  "tapped_hole_supported": true,
+  "hole_type_validation_supported": true,
+  "hole_geometry_validation_supported": true,
+  "tapped_hole_semantics_separated_from_simple_cut": true,
+  "hole_api_evidence_required": true,
+  "unverified_hole_blocks_real_execution": true,
+  "hole_self_check_group_passed": true,
+  "structured_cad_input_fails_closed": true,
+  "hole_self_check_inputs_readable": true,
+  "hole_self_check_issues": [],
+  "hole_self_check_unobserved_capabilities": [],
+  "workflow_step_retry_limit_enforced": true,
+  "workflow_cancelled_approval_preserved": true,
+  "workflow_multi_approval_history_preserved": true,
+  "task_lifecycle_tracked": true,
+  "task_approval_roundtrip_supported": true,
+  "task_access_token_required": true,
+  "workflow_approval_identity_bound": true,
+  "v2_1_b_documented": true,
+  "v2_0_e_geometry_validation_platform_wide": true,
+  "v2_0_e_final_status": "Failed",
+  "workflow_human_approval_resume_supported": true,
+  "jacket_part_family_registered": true,
+  "jacket_uses_generic_feature_graph": true,
+  "jacket_real_builder_implemented": true,
+  "jacket_dry_run_passed": true,
+  "jacket_real_workflow_supported": false,
+  "jacket_api_evidence_documented": true,
+  "jacket_production_evidence_active": false,
+  "v2_1_a_jacket_documented": true
+}

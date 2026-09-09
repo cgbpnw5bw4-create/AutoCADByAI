@@ -16,6 +16,12 @@ public sealed class SolidWorksWorkflowRouter
 
     public SolidWorksMainWorkflowRequest? TryBuildRequest(AgentContext context)
     {
+        var inputIssues = ValidateStructuredInput(context);
+        if (inputIssues.Count > 0)
+        {
+            throw new ArgumentException(string.Join(" ", inputIssues), nameof(context));
+        }
+
         if (!ShouldRun(context))
         {
             return null;
@@ -71,6 +77,9 @@ public sealed class SolidWorksWorkflowRouter
 
     public bool ShouldRun(AgentContext context)
     {
+        // 显式输入即为 CAD 意图；解析错误交给输入门禁，不得当成未提供。
+        if (context.Input.Context.ContainsKey("cad_model_spec_json")) return true;
+
         if (ContextValueEquals(context, SolidWorksE2eCliContract.CompleteDrawingPackageOperation, "operation") ||
             ContextValueEquals(context, SolidWorksE2eCliContract.PartFamilyReleasePackageOperation, "operation") ||
             ContextValueEquals(context, SolidWorksE2eCliContract.ModelUpdateReleasePackageOperation, "operation"))
@@ -202,46 +211,87 @@ public sealed class SolidWorksWorkflowRouter
 
     private static CADModelSpec? TryGetContextModelSpec(AgentContext context)
     {
-        if (!context.Input.Context.TryGetValue("cad_model_spec_json", out var json) ||
-            string.IsNullOrWhiteSpace(json))
+        if (!context.Input.Context.TryGetValue("cad_model_spec_json", out var json))
         {
             return null;
         }
 
-        try
+        return ReadStructuredValue<CADModelSpec>(json, "cad_model_spec_json");
+    }
+
+    public static IReadOnlyList<string> ValidateStructuredInput(AgentContext context)
+    {
+        var issues = new List<string>();
+        foreach (var key in new[] { "cad_model_spec_json", "parameter_update_json" })
         {
-            return JsonSerializer.Deserialize<CADModelSpec>(json, new JsonSerializerOptions
+            if (!context.Input.Context.ContainsKey(key)) continue;
+            try
             {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-            });
+                if (key == "cad_model_spec_json")
+                {
+                    var spec = TryGetContextModelSpec(context)!;
+                    EnsureModelStructure(spec);
+                }
+                else
+                {
+                    var update = ResolveParameterUpdate(context)!;
+                    if (update.NewParameters is null || update.NewParameters.Count == 0 || update.NewParameters.Values.Any(value => value is null))
+                        throw new JsonException("new_parameters 必须包含需要更新的参数。");
+                    if (!ContextValueEquals(context, SolidWorksE2eCliContract.ModelUpdateReleasePackageOperation, "operation") ||
+                        (!context.Input.Context.ContainsKey("cad_model_spec_json") && !HasExplicitPartType(context) && TryGetSharedStateModelSpec(context) is null))
+                        throw new JsonException("参数更新必须同时指定更新 operation 与明确模型或 part_type，不能回退默认模型。");
+                }
+            }
+            catch (Exception exception) when (exception is JsonException or InvalidOperationException or ArgumentException or FormatException or NotSupportedException)
+            {
+                var stage = key == "cad_model_spec_json" ? "invalid_cad_model_spec" : "invalid_parameter_update";
+                issues.Add($"{stage}: {key}: {exception.Message} 修正结构化输入后重新提交。");
+            }
         }
-        catch (JsonException)
+        return issues;
+    }
+
+    private static T ReadStructuredValue<T>(string json, string key) where T : class
+    {
+        if (string.IsNullOrWhiteSpace(json)) throw new JsonException($"{key} 不能为空。");
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+            throw new JsonException($"{key} 必须为 JSON 对象，不能为 null 或数组。");
+        return document.RootElement.Deserialize<T>(new JsonSerializerOptions
         {
-            return null;
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        }) ?? throw new JsonException($"{key} 不能为 null。");
+    }
+
+    internal static void EnsureModelStructure(CADModelSpec spec)
+    {
+        if (spec.Features.Any(feature => feature is null) || spec.Sketches.Any(sketch => sketch is null))
+            throw new JsonException("features 和 sketches 不得包含 null 节点。");
+        void CheckValues(IReadOnlyDictionary<string, string> values)
+        {
+            if (values.Values.Any(value => value is null)) throw new JsonException("参数字典不得包含 null 值。");
+        }
+        CheckValues(spec.Parameters);
+        foreach (var feature in spec.Features) CheckValues(feature.Parameters);
+        foreach (var sketch in spec.Sketches)
+        {
+            if (sketch.Entities.Any(entity => entity is null) || sketch.Constraints.Any(constraint => constraint is null))
+                throw new JsonException("草图 entities 和 constraints 不得包含 null 节点。");
+            CheckValues(sketch.Dimensions);
+            foreach (var entity in sketch.Entities) CheckValues(entity.Parameters);
+            foreach (var constraint in sketch.Constraints) CheckValues(constraint.Parameters);
         }
     }
 
     private static ModelParameterUpdateRequest? ResolveParameterUpdate(AgentContext context)
     {
-        if (!context.Input.Context.TryGetValue("parameter_update_json", out var json) ||
-            string.IsNullOrWhiteSpace(json))
+        if (!context.Input.Context.TryGetValue("parameter_update_json", out var json))
         {
             return null;
         }
 
-        try
-        {
-            return JsonSerializer.Deserialize<ModelParameterUpdateRequest>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-            });
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+        return ReadStructuredValue<ModelParameterUpdateRequest>(json, "parameter_update_json");
     }
 
     private static CADModelSpec CreateSpec(

@@ -1,4 +1,5 @@
 using DomainSchemas;
+using PlatformCore;
 
 namespace AgentGatewayHost;
 
@@ -18,4 +19,9 @@ public sealed record GatewayMessageResponse(
     string? RuntimeModel = null,
     bool RuntimeFallbackUsed = false,
     string? RuntimeFallbackReason = null,
-    bool ChiefEngineerRuntimeUsed = false);
+    bool ChiefEngineerRuntimeUsed = false,
+    string? TaskId = null,
+    PlatformTaskStatus? TaskStatus = null,
+    HumanApprovalRequest? PendingApproval = null,
+    string? TaskAccessToken = null,
+    string? FailureStage = null);

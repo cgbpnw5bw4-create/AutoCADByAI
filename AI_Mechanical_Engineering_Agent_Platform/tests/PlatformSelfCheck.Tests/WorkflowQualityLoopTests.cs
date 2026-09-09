@@ -195,7 +195,9 @@ public sealed class WorkflowQualityLoopTests
             context.TaskId,
             WorkflowApprovalDecision.Approve,
             "reviewer-01",
-            "已核准继续执行。"));
+            "已核准继续执行。",
+            ApprovalRequestId: pendingRequest.ApprovalRequestId,
+            StepId: pendingRequest.StepId));
 
         Assert.True(submission.Accepted);
         Assert.NotNull(submission.WorkflowResult);
@@ -226,11 +228,14 @@ public sealed class WorkflowQualityLoopTests
             },
             context);
 
+        Assert.True(engine.TryGetPendingHumanApproval(context.TaskId, out var pendingRequest));
         var submission = await engine.SubmitHumanApprovalAsync(new WorkflowApprovalSubmission(
             context.TaskId,
             WorkflowApprovalDecision.Reject,
             "reviewer-02",
-            "拒绝发布。"));
+            "拒绝发布。",
+            ApprovalRequestId: pendingRequest.ApprovalRequestId,
+            StepId: pendingRequest.StepId));
 
         Assert.True(submission.Accepted);
         Assert.NotNull(submission.WorkflowResult);
@@ -251,10 +256,13 @@ public sealed class WorkflowQualityLoopTests
             [new WorkflowStep("approval-step", _ => Task.FromResult(Result("approval-step", GateDecisionResult.NeedsHumanApproval)))],
             context);
 
+        Assert.True(engine.TryGetPendingHumanApproval(context.TaskId, out var pendingRequest));
         var invalid = await engine.SubmitHumanApprovalAsync(new WorkflowApprovalSubmission(
             context.TaskId,
             (WorkflowApprovalDecision)99,
-            "reviewer-03"));
+            "reviewer-03",
+            ApprovalRequestId: pendingRequest.ApprovalRequestId,
+            StepId: pendingRequest.StepId));
 
         Assert.False(invalid.Accepted);
         Assert.True(engine.TryGetPendingHumanApproval(context.TaskId, out _));

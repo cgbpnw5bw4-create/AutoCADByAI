@@ -1,0 +1,131 @@
+{
+  "request_id": "self-check-v18-request-shaft_basic-9ea12a151757490cb89c04600294b637",
+  "plan_id": "solidworks-build-plan-self-check-v18-shaft_basic",
+  "part_type": "shaft_basic",
+  "part_family_definition": "ShaftBasicDefinition",
+  "part_family_builder": "SolidWorksFeatureGraphPartFamilyBuilder",
+  "parameter_schema": [
+    {
+      "Name": "diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Base shaft diameter.",
+      "DefaultValue": "40",
+      "MinimumValue": 1,
+      "MaximumValue": 1000,
+      "HasRange": true
+    },
+    {
+      "Name": "length_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Overall shaft length.",
+      "DefaultValue": "200",
+      "MinimumValue": 1,
+      "MaximumValue": 5000,
+      "HasRange": true
+    },
+    {
+      "Name": "optional_step_diameters",
+      "ValueKind": 2,
+      "Required": false,
+      "Description": "Comma-separated optional step diameters.",
+      "DefaultValue": null,
+      "MinimumValue": null,
+      "MaximumValue": null,
+      "HasRange": false
+    },
+    {
+      "Name": "optional_step_lengths",
+      "ValueKind": 2,
+      "Required": false,
+      "Description": "Comma-separated optional step lengths.",
+      "DefaultValue": null,
+      "MinimumValue": null,
+      "MaximumValue": null,
+      "HasRange": false
+    }
+  ],
+  "api_evidence": "part_family_production_evidence_pending; generic FeatureGraph execution remains fail-closed",
+  "dimensions": {
+    "diameter_mm": "40",
+    "length_mm": "180",
+    "optional_step_diameters": "32,24",
+    "optional_step_lengths": "40,30"
+  },
+  "material": "",
+  "features": {},
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "build_report.json"
+  ],
+  "drawing_requirements": {},
+  "execution_options": {},
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "real_cad_executed": false,
+  "operations": [
+    {
+      "OperationId": "op-001",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "diameter_mm": "40",
+        "length_mm": "180",
+        "optional_step_diameters": "32,24",
+        "optional_step_lengths": "40,30",
+        "profile": "closed_half_section",
+        "sketch_id": "shaft_profile_sketch",
+        "reference_plane": "RightPlane",
+        "entity_count": "2",
+        "constraint_count": "3",
+        "dimensions": "{\u0022diameter_mm\u0022:\u002240\u0022,\u0022length_mm\u0022:\u0022180\u0022,\u0022optional_step_diameters\u0022:\u002232,24\u0022,\u0022optional_step_lengths\u0022:\u002240,30\u0022}",
+        "entities": "[{\u0022entity_id\u0022:\u0022shaft_half_profile\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022profile\u0022:\u0022closed_half_section\u0022,\u0022diameter_mm\u0022:\u002240\u0022,\u0022length_mm\u0022:\u0022180\u0022,\u0022optional_step_diameters\u0022:\u002232,24\u0022,\u0022optional_step_lengths\u0022:\u002240,30\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_axis\u0022,\u0022entity_type\u0022:\u0022construction_centerline\u0022,\u0022parameters\u0022:{\u0022axis\u0022:\u0022shaft_axis\u0022,\u0022selection_mark\u0022:\u002216\u0022},\u0022construction\u0022:true,\u0022execution_order\u0022:2,\u0022IsConstructionCenterLine\u0022:true}]",
+        "constraints": "[{\u0022constraint_id\u0022:\u0022shaft_axis_horizontal\u0022,\u0022constraint_type\u0022:\u0022horizontal\u0022,\u0022entity_ids\u0022:[\u0022shaft_axis\u0022],\u0022value\u0022:null,\u0022parameters\u0022:{}},{\u0022constraint_id\u0022:\u0022shaft_diameter\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022shaft_half_profile\u0022],\u0022value\u0022:\u002240\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022diameter_mm\u0022}},{\u0022constraint_id\u0022:\u0022shaft_length\u0022,\u0022constraint_type\u0022:\u0022dimensional\u0022,\u0022entity_ids\u0022:[\u0022shaft_half_profile\u0022],\u0022value\u0022:\u0022180\u0022,\u0022parameters\u0022:{\u0022parameter\u0022:\u0022length_mm\u0022}}]"
+      }
+    },
+    {
+      "OperationId": "op-002",
+      "OperationType": "CreateCenterLine",
+      "Parameters": {
+        "axis": "shaft_axis",
+        "selection_mark": "16",
+        "sketch_id": "shaft_profile_sketch",
+        "entity_id": "shaft_axis",
+        "entity_type": "construction_centerline",
+        "construction": "true"
+      }
+    },
+    {
+      "OperationId": "op-003",
+      "OperationType": "RevolveBoss",
+      "Parameters": {
+        "feature_api": "FeatureRevolve2",
+        "angle_degrees": "360",
+        "profile_selection_mark": "0",
+        "axis_selection_mark": "16",
+        "feature_id": "shaft_revolve",
+        "feature_type": "revolve_boss",
+        "sketch_id": "shaft_profile_sketch",
+        "referenced_sketches": "[\u0022shaft_profile_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-004",
+      "OperationType": "SavePart",
+      "Parameters": {
+        "file_name": "self-check-shaft.SLDPRT"
+      }
+    },
+    {
+      "OperationId": "op-005",
+      "OperationType": "ExportStep",
+      "Parameters": {
+        "file_name": "self-check-shaft.STEP"
+      }
+    }
+  ],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-09-09T06:45:29.9708447+00:00"
+}

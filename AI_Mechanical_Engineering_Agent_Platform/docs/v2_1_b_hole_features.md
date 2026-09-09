@@ -147,7 +147,7 @@ hole_geometry_validation_supported
 tapped_hole_semantics_separated_from_simple_cut
 hole_api_evidence_required
 unverified_hole_blocks_real_execution
-hole_feature_regression_tests_passed
+hole_self_check_group_passed
 v2_1_b_documented
 markdown_chinese_check_passed
 ```
@@ -160,7 +160,15 @@ markdown_chinese_check_passed
 
 禁止 Handler COM、未验证 API 实调、第三方脚本复制、大型类型 switch、零件专用逻辑、猜测面或数据库枚举、普通 Cut 冒充攻丝、非空 Feature 冒充几何成功、改写旧 evidence 绑定冒充重采、削弱基线或进入 V2.1-C。
 
-## 本轮验证记录
+## 2026-09-09 自检合同修订
+
+当前报告版本为 `schema_version=2.1-b-reliability`。`hole_feature_regression_tests_passed` 已删除，替换为明确的派生字段 `hole_self_check_group_passed`；后者不代表执行过 xUnit。真实测试结果必须读取当次 `dotnet test` 日志或 TRX。基线移除冗余聚合项，全部独立孔能力继续受保护，并增加四条工作流可靠性行为字段。
+
+孔能力布尔字段允许 `null`，表示由于样例读取、结构或运行错误而未观测。新增 `hole_self_check_inputs_readable`、`hole_self_check_issues` 与 `hole_self_check_unobserved_capabilities` 记录可行动原因；未观测能力使回归闸以配置错误失败，不能当作能力已退化或已通过。读取旧字段的消费方需按新版本迁移。
+
+默认 self-check 会调用模拟 Worker，持久产物写入指定的输出根目录。使用 `self-check --output <目录>` 时，主报告位于 `<目录>/reports/platform_self_check_report.json`。临时夹具仍使用系统临时目录；这项约定不包含显式打开的历史真机 smoke 分支。自检、模拟通过均不证明真实逐孔读取或可交付。当前完整审查、已知证据失配和验证结果见 [可靠性补强报告](2026_09_09_architecture_review.md)。
+
+## 2026-09-07 历史验证记录
 
 以下结果来自本轮最终日志。孔阶段检查和构建测试已通过，全局自检仍因既有夹套证据缺口为 `Failed`；两者分别记录，不能使用前置审查或中途失败轮次代替最终结果。
 

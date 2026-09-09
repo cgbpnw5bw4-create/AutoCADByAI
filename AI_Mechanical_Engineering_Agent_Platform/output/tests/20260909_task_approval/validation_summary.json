@@ -1,0 +1,262 @@
+{
+  "build": {
+    "command": "dotnet build AI_Mechanical_Engineering_Agent_Platform.sln --verbosity quiet",
+    "exit_code": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "tests": {
+    "command": "dotnet test --no-build --logger \"trx;LogFileName=verified_final.trx\" --results-directory output/tests/20260909_task_approval --verbosity quiet",
+    "exit_code": 1,
+    "counts": {
+      "total": "551",
+      "executed": "551",
+      "passed": "543",
+      "failed": "8",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    },
+    "new_total": 53,
+    "new_passed": 53,
+    "new_failed": [],
+    "failures": [
+      {
+        "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"mirror\")",
+        "message": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"circular_pattern\")",
+        "message": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending",
+        "message": "Assert.True() Failure\r\nExpected: True\r\nActual:   False",
+        "stack": "   at PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending() in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\PlatformBootstrapperTests.cs:line 117\r\n--- End of stack trace from previous location ---"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"chamfer\")",
+        "message": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"fillet\")",
+        "message": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic",
+        "message": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic() in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V20CFeatureAdapterTests.cs:line 293\r\n   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"linear_pattern\")",
+        "message": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(String featureType) in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V21AComplexFeatureLibraryTests.cs:line 134\r\n   at InvokeStub_V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+      },
+      {
+        "name": "PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate",
+        "message": "feature_api_unverified: V2.0-D candidate model artifact does not physically match its report.",
+        "stack": "   at PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate() in D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tests\\PlatformSelfCheck.Tests\\V20DModelRebuildAndGeometryValidationTests.cs:line 176\r\n   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)"
+      }
+    ],
+    "same_failure_names_as_previous_run": true
+  },
+  "self_check": {
+    "command": "dotnet run --project src/Interfaces/CliHost -- self-check",
+    "exit_code": 2,
+    "schema_version": "2.2-a-task-approval",
+    "run_id": "platform-self-check-cce6d9609f01484f960ae09f3dee94fe",
+    "final_status": "Failed",
+    "phase_checks": {
+      "task_lifecycle_tracked": true,
+      "task_approval_roundtrip_supported": true,
+      "task_access_token_required": true,
+      "workflow_approval_identity_bound": true
+    },
+    "markdown_chinese_check_passed": true,
+    "capability_regressions": [
+      "feature_production_evidence_active",
+      "unverified_feature_blocks_execution",
+      "v2_0_d_production_evidence_active",
+      "v2_0_e_controlled_plate_evidence_active",
+      "v2_0_e_step_content_gate_active"
+    ]
+  },
+  "http": {
+    "checks": [
+      {
+        "name": "only_chief_public",
+        "passed": true
+      },
+      {
+        "name": "internal_agent_hidden",
+        "passed": true
+      },
+      {
+        "name": "Approve_waiting",
+        "passed": true
+      },
+      {
+        "name": "Approve_query_requires_token",
+        "passed": true
+      },
+      {
+        "name": "Approve_query_snapshot",
+        "passed": true
+      },
+      {
+        "name": "Approve_missing_decision_refused",
+        "passed": true
+      },
+      {
+        "name": "Approve_approval_requires_token",
+        "passed": true
+      },
+      {
+        "name": "Approve_wrong_identity_refused",
+        "passed": true
+      },
+      {
+        "name": "Approve_correct_terminal",
+        "passed": true
+      },
+      {
+        "name": "Approve_no_pending_or_token",
+        "passed": true
+      },
+      {
+        "name": "Approve_replay_refused",
+        "passed": true
+      },
+      {
+        "name": "Approve_terminal_query",
+        "passed": true
+      },
+      {
+        "name": "Reject_waiting",
+        "passed": true
+      },
+      {
+        "name": "Reject_query_requires_token",
+        "passed": true
+      },
+      {
+        "name": "Reject_query_snapshot",
+        "passed": true
+      },
+      {
+        "name": "Reject_missing_decision_refused",
+        "passed": true
+      },
+      {
+        "name": "Reject_approval_requires_token",
+        "passed": true
+      },
+      {
+        "name": "Reject_wrong_identity_refused",
+        "passed": true
+      },
+      {
+        "name": "Reject_correct_terminal",
+        "passed": true
+      },
+      {
+        "name": "Reject_no_pending_or_token",
+        "passed": true
+      },
+      {
+        "name": "Reject_replay_refused",
+        "passed": true
+      },
+      {
+        "name": "Reject_terminal_query",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_waiting",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_query_requires_token",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_query_snapshot",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_missing_decision_refused",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_approval_requires_token",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_wrong_identity_refused",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_correct_terminal",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_no_pending_or_token",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_replay_refused",
+        "passed": true
+      },
+      {
+        "name": "RequestRevision_terminal_query",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "check_count": 32,
+    "runtime_mode": "Mock",
+    "real_cad_executed": false,
+    "external_model_called": false,
+    "server_stopped": true,
+    "tokens_in_report": false
+  },
+  "reviewrep_hash_changes": [],
+  "legacy_test_reports_restored": [
+    "output/tests/v21_b/simple/reports/build_report.json",
+    "output/tests/v21_b/counterbore/reports/build_report.json",
+    "output/tests/v21_b/countersink/reports/build_report.json",
+    "output/tests/v21_b/tapped/reports/build_report.json"
+  ],
+  "real_cad_executed": false,
+  "persistence": "single_process_memory_only",
+  "source_revision": "ab63fbd15628cfd9f5e8af29fba45c1c9f392ed0-dirty",
+  "directed_self_check": {
+    "command": "dotnet run --no-build --project src/Interfaces/CliHost -- self-check --output output/validation/v2_2_a_task_approval",
+    "run_id": "platform-self-check-348a1ddfbea5471fb68bd7d50fc9e338",
+    "final_status": "Failed",
+    "checks": {
+      "task_lifecycle_tracked": true,
+      "task_approval_roundtrip_supported": true,
+      "task_access_token_required": true,
+      "workflow_approval_identity_bound": true,
+      "markdown_chinese_check_passed": true,
+      "solidworks_real_cad_not_executed": true
+    }
+  },
+  "documentation_missing_links": [],
+  "reviewrep_file_count": 44,
+  "protected_paths_git_status": ""
+}

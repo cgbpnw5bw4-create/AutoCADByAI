@@ -1,90 +1,78 @@
 using AgentContracts;
-using DomainSchemas;
 using PlatformCore;
-using QualityGate;
+using DomainSchemas;
 
 namespace AgentGatewayHost;
 
 public sealed class AgentMessageDispatcher
 {
     private readonly PlatformKernel _platform;
-    private readonly IGatekeeper _gatekeeper;
+    private readonly AgentTaskService _tasks;
 
     public AgentMessageDispatcher(PlatformKernel platform)
     {
         _platform = platform;
-        _gatekeeper = new DefaultGatekeeper(new GateDecisionPolicy(), new RejectReportBuilder());
+        _tasks = new AgentTaskService(platform);
     }
 
-    public async Task<GatewayMessageResponse?> DispatchAsync(string agentId, GatewayMessageRequest request)
+    public async Task<GatewayMessageResponse?> DispatchAsync(string agentId, GatewayMessageRequest request,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Source) || string.IsNullOrWhiteSpace(request.Channel) ||
+            string.IsNullOrWhiteSpace(request.ConversationId) || string.IsNullOrWhiteSpace(request.User) ||
+            string.IsNullOrWhiteSpace(request.Message) || request.Attachments is null || request.Context is null)
+            throw new ArgumentException("gateway_invalid_request: 请求来源、渠道、对话、用户、消息和集合字段均为必填。");
         _platform.AuditLog.Record("gateway", agentId, "gateway_request_received", $"Gateway request received from {request.Source}.");
-        var agent = _platform.AgentRegistry.GetById(agentId);
-        if (agent is null || !_platform.PermissionManager.CanExposeToExternalGateway(agent))
+        var creation = await _tasks.ExecuteAsync(agentId,
+            new AgentInput(request.Source, request.Channel, request.ConversationId, request.User, request.Message,
+                request.Attachments, request.Context), cancellationToken);
+        if (creation is null)
         {
             _platform.AuditLog.Record("gateway", agentId, "gateway_request_rejected", "Gateway rejected non-public or unknown agent.");
             return null;
         }
-
-        var task = _platform.TaskStore.Create($"Gateway message from {request.Source}");
-        var input = new AgentInput(
-            request.Source,
-            request.Channel,
-            request.ConversationId,
-            request.User,
-            request.Message,
-            request.Attachments,
-            request.Context);
-
-        var context = new AgentContext(
-            task.Id,
-            input,
-            new Dictionary<string, object?>(),
-            DateTimeOffset.UtcNow);
-
-        _platform.AuditLog.Record("agent", agent.Id, "public_agent_invoked", $"Public agent '{agent.Id}' invoked from gateway.");
-        var output = await agent.ExecuteAsync(context);
-        _platform.AuditLog.Record("agent", agent.Id, "public_agent_completed", output.Message);
-        var reviewReport = AgentOutputReviewMapper.ToReviewReport($"gateway-quality-gate:{agent.Id}", output);
-        var gateEvaluation = _gatekeeper.Evaluate(reviewReport);
-        _platform.AuditLog.Record("quality-gate", "AgentGatewayHost", "quality_gate_evaluated", gateEvaluation.Decision.Reason);
-
-        var responseStatus = gateEvaluation.Decision.Result switch
-        {
-            GateDecisionResult.Passed => output.Status.ToString().ToLowerInvariant(),
-            GateDecisionResult.Rejected => "rejected",
-            GateDecisionResult.Failed => "failed",
-            GateDecisionResult.NeedsHumanApproval => "needs_human_approval",
-            _ => "failed"
-        };
-
-        var responseMessage = gateEvaluation.Decision.Result == GateDecisionResult.Passed
-            ? output.Message
-            : gateEvaluation.RejectReport?.Message ?? gateEvaluation.Decision.Reason;
-
-        var issues = gateEvaluation.RejectReport?.Reasons ?? output.Issues;
-        var runtimeMetadata = output.RuntimeMetadata;
-
-        var response = new GatewayMessageResponse(
-            agent.Id,
-            agent.Name,
-            responseStatus,
-            responseMessage,
-            output.Artifacts,
-            issues,
-            gateEvaluation.Decision,
-            gateEvaluation.RejectReport,
-            output.InternalCollaborationReport,
-            output.NextRecommendedAgentId,
-            runtimeMetadata?.RuntimeMode ?? "Mock",
-            runtimeMetadata?.RuntimeProvider,
-            runtimeMetadata?.RuntimeModel,
-            runtimeMetadata?.RuntimeFallbackUsed ?? false,
-            runtimeMetadata?.RuntimeFallbackReason,
-            runtimeMetadata?.ChiefEngineerRuntimeUsed ?? false);
-
-        _platform.AuditLog.Record("gateway", agent.Id, "gateway_response_returned", $"Gateway response returned with status {response.Status}.");
+        var response = MapResponse(creation.Result) with { TaskAccessToken = creation.AccessToken };
+        _platform.AuditLog.Record("gateway", agentId, "gateway_response_returned", $"Task {response.TaskId} returned {response.Status}.");
         return response;
     }
 
+    public GatewayTaskResponse? GetTask(string taskId, string? accessToken)
+    {
+        var result = _tasks.Get(taskId, accessToken);
+        return result is null ? null : MapTask(result);
+    }
+
+    public async Task<GatewayApprovalResponse> SubmitApprovalAsync(string taskId, string? accessToken,
+        GatewayApprovalRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await _tasks.SubmitApprovalAsync(taskId, accessToken,
+            new(request.WorkflowId, request.Decision ?? (WorkflowApprovalDecision)(-1), request.SubmittedBy, request.Comment,
+                ApprovalRequestId: request.ApprovalRequestId, StepId: request.StepId), cancellationToken);
+        return new(result.Accepted, result.Result is null ? null : MapTask(result.Result), result.FailureReason, result.NotFound);
+    }
+
+    private static GatewayTaskResponse MapTask(AgentTaskResult result) =>
+        new(result.Task, result.PendingApproval, result.FailureStage, result.Output is null ? null : MapResponse(result));
+
+    private static GatewayMessageResponse MapResponse(AgentTaskResult result)
+    {
+        var output = result.Output!;
+        var decision = result.GateDecision!;
+        var metadata = output.RuntimeMetadata;
+        var status = decision.Result switch
+        {
+            GateDecisionResult.Passed => output.Status.ToString().ToLowerInvariant(),
+            GateDecisionResult.Rejected => "rejected",
+            GateDecisionResult.NeedsHumanApproval => "needs_human_approval",
+            _ => "failed"
+        };
+        return new(result.AgentId, result.AgentName, status,
+            decision.Result == GateDecisionResult.Passed ? output.Message : result.RejectReport?.Message ?? decision.Reason,
+            output.Artifacts, result.RejectReport?.Reasons ?? output.Issues, decision, result.RejectReport,
+            output.InternalCollaborationReport, output.NextRecommendedAgentId,
+            metadata?.RuntimeMode ?? "Mock", metadata?.RuntimeProvider, metadata?.RuntimeModel,
+            metadata?.RuntimeFallbackUsed ?? false, metadata?.RuntimeFallbackReason, metadata?.ChiefEngineerRuntimeUsed ?? false,
+            result.Task.Id, result.Task.Status, result.PendingApproval, FailureStage: result.FailureStage);
+    }
 }

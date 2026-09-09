@@ -8,4 +8,5 @@ public sealed record HumanApprovalRequest(
     string Reason,
     IReadOnlyList<string> Options,
     string ContextSummary,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? ApprovalRequestId = null);

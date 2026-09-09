@@ -1,6 +1,7 @@
 using AgentContracts;
 using DomainSchemas;
 using PlatformCore;
+using System.Collections.Concurrent;
 
 namespace PlatformCore.Modules.RequirementUnderstanding.Agents;
 
@@ -13,6 +14,7 @@ public sealed class ChiefEngineerOrchestrator
     private readonly SolidWorksMainWorkflowRunner? _solidWorksMainWorkflowRunner;
     private readonly SolidWorksWorkflowRouter _solidWorksWorkflowRouter;
     private readonly IReadOnlyList<string> _internalRoute;
+    private readonly ConcurrentDictionary<string, AgentContext> _pendingContexts = new(StringComparer.Ordinal);
 
     public ChiefEngineerOrchestrator(
         InternalAgentRouter router,
@@ -45,6 +47,16 @@ public sealed class ChiefEngineerOrchestrator
 
     public async Task<AgentOutput> ExecuteAsync(AgentContext context, string rootAgentId, string rootAgentName)
     {
+        var inputIssues = SolidWorksWorkflowRouter.ValidateStructuredInput(context);
+        if (inputIssues.Count > 0)
+        {
+            _auditLog.Record("workflow", context.TaskId, "structured_cad_input_rejected", string.Join(" ", inputIssues));
+            return new AgentOutput(AgentOutputStatus.Failed, "结构化 CAD 输入无效，已停止执行。",
+                [], inputIssues, ["structured_cad_input_rejected_before_workflow"], "error-diagnosis",
+                ReviewReport: new ReviewReport($"input-{context.TaskId}", "cad-input-validator", false, 0,
+                    inputIssues, RequiresHumanApproval: false, HasFatalError: true));
+        }
+
         var workflowId = $"internal-collaboration-{context.TaskId}";
         var workflowSteps = _internalRoute
             .Select(agentId => new InternalAgentWorkflowStep(agentId, context, _router, _agentRegistry, _auditLog).ToWorkflowStep())
@@ -56,6 +68,28 @@ public sealed class ChiefEngineerOrchestrator
                 ["root_agent_id"] = rootAgentId,
                 ["conversation_id"] = context.Input.ConversationId
             }));
+
+        return await CompleteWorkflowAsync(context, rootAgentId, rootAgentName, workflowResult);
+    }
+
+    public async Task<AgentApprovalResult> ResumeHumanApprovalAsync(string taskId, string rootAgentId, string rootAgentName,
+        WorkflowApprovalSubmission submission, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_pendingContexts.TryGetValue(taskId, out var context) ||
+            !string.Equals(submission.WorkflowId, $"internal-collaboration-{taskId}", StringComparison.Ordinal))
+            return new(false, null, "chief_approval_context_not_pending");
+
+        var resumed = await _workflowEngine.SubmitHumanApprovalAsync(submission, cancellationToken);
+        if (!resumed.Accepted || resumed.WorkflowResult is null) return new(false, null, resumed.FailureReason);
+        return new(true, await CompleteWorkflowAsync(context, rootAgentId, rootAgentName, resumed.WorkflowResult));
+    }
+
+    private async Task<AgentOutput> CompleteWorkflowAsync(AgentContext context, string rootAgentId, string rootAgentName,
+        WorkflowExecutionResult workflowResult)
+    {
+        if (workflowResult.Status == WorkflowStatus.WaitingForHumanApproval) _pendingContexts[context.TaskId] = context;
+        else _pendingContexts.TryRemove(context.TaskId, out _);
 
         var report = BuildReport(context, rootAgentId, workflowResult);
         var solidWorksMainWorkflowResult = await TryRunSolidWorksMainWorkflowAsync(context, workflowResult);
@@ -117,7 +151,7 @@ public sealed class ChiefEngineerOrchestrator
             var agent = _agentRegistry.GetById(agentId)
                 ?? throw new InvalidOperationException($"Internal agent '{agentId}' was not found while building collaboration report.");
             var step = finalStepByAgent[agentId];
-            var output = step.AgentOutput!;
+            var output = EffectiveOutput(step)!;
 
             calledAgents.Add(new CalledAgentSummary(
                 agent.Id,
@@ -137,7 +171,7 @@ public sealed class ChiefEngineerOrchestrator
                 output.ReviewReport ?? step.ReviewReport));
 
             artifacts.AddRange(output.Artifacts);
-            issues.AddRange(step.Issues);
+            issues.AddRange(EffectiveIssues(step));
         }
 
         if (workflowResult.FailureReport is not null)
@@ -159,8 +193,9 @@ public sealed class ChiefEngineerOrchestrator
                 step.GateDecision,
                 step.RetryCount,
                 step.MaxRetries,
-                step.Issues,
-                step.Logs))
+                EffectiveIssues(step),
+                step.Logs,
+                step.ApprovalResolution))
             .ToArray();
         var retryStepIds = workflowResult.Steps
             .Where(step => step.Status == WorkflowStepStatus.Retrying)
@@ -203,8 +238,39 @@ public sealed class ChiefEngineerOrchestrator
             workflowResult.HumanApprovalRequest);
     }
 
-    private static ReviewReport? ResolveFinalReviewReport(WorkflowExecutionResult workflowResult) =>
-        workflowResult.Steps.LastOrDefault(step => step.ReviewReport is not null)?.ReviewReport;
+    private static ReviewReport? ResolveFinalReviewReport(WorkflowExecutionResult workflowResult)
+    {
+        var step = workflowResult.Steps.LastOrDefault(step => step.ReviewReport is not null);
+        return step is null ? null : EffectiveOutput(step)?.ReviewReport ?? step.ReviewReport;
+    }
+
+    private static bool IsApproved(WorkflowStepResult step) =>
+        step is { Status: WorkflowStepStatus.Passed, GateDecision.Result: GateDecisionResult.Passed,
+            ApprovalResolution.Decision: "Approve" };
+
+    private static ReviewReport ApprovedReview(WorkflowStepResult step) =>
+        new($"human-approved-{step.ApprovalResolution!.ApprovalRequestId}", step.ApprovalResolution.SubmittedBy,
+            true, 1.0, [], false, false);
+
+    private static IReadOnlyList<string> EffectiveIssues(WorkflowStepResult step) =>
+        IsApproved(step) ? [] : IsDeclined(step) ? [$"human_approval_rejected: {step.GateDecision!.Reason}"] : step.Issues;
+
+    private static bool IsDeclined(WorkflowStepResult step) =>
+        step is { Status: WorkflowStepStatus.Rejected, GateDecision.Result: GateDecisionResult.Rejected,
+            ApprovalResolution.Decision: "Reject" or "RequestRevision" };
+
+    private static AgentOutput? EffectiveOutput(WorkflowStepResult step)
+    {
+        if (step.AgentOutput is null) return null;
+        if (IsApproved(step)) return step.AgentOutput with { Status = AgentOutputStatus.Completed, Issues = [], ReviewReport = ApprovedReview(step) };
+        if (IsDeclined(step)) return step.AgentOutput with
+        {
+            Status = AgentOutputStatus.Rejected, Issues = EffectiveIssues(step),
+            ReviewReport = new ReviewReport($"human-rejected-{step.ApprovalResolution!.ApprovalRequestId}",
+                step.ApprovalResolution.SubmittedBy, false, 0.4, EffectiveIssues(step), false, false)
+        };
+        return step.AgentOutput;
+    }
 
     private static string AgentIdFromStepId(string stepId) =>
         stepId.StartsWith("internal-agent:", StringComparison.OrdinalIgnoreCase)

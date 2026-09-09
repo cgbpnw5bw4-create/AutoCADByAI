@@ -9,7 +9,10 @@ using PlatformCore.Modules.CADModeling;
 if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.OrdinalIgnoreCase))
 {
     var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
-    var outputRoot = Path.Combine(projectRoot, "output");
+    string outputRoot;
+    try { outputRoot = SelfCheckCliOptions.ResolveOutputRoot(args, projectRoot); }
+    catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+    { Console.Error.WriteLine($"self_check_invalid_options: {exception.Message}"); return 2; }
     var platform = RuntimePlatformFactory.CreateDefault(projectRoot);
     var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, projectRoot);
     var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
@@ -23,6 +26,8 @@ if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.Ord
     Console.WriteLine($"Registered workers: {string.Join(", ", report.RegisteredWorkers.Select(worker => worker.Name))}");
     Console.WriteLine($"Gateway visible agents: {string.Join(", ", report.GatewayVisibleAgents.Select(agent => agent.Id))}");
     Console.WriteLine($"Report: {reportPath}");
+    Console.WriteLine($"Hole self-check group: {(report.HoleSelfCheckGroupPassed ? "Passed" : "Failed")}");
+    foreach (var issue in report.HoleSelfCheckIssues) Console.Error.WriteLine(issue);
     return report.FinalStatus == "Passed" ? 0 : 2;
 }
 
@@ -149,7 +154,7 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
 }
 
 Console.WriteLine("Usage:");
-Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- self-check");
+Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- self-check [--output <directory>]");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_flange_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_shaft_request.json");

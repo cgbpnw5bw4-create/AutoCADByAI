@@ -1,0 +1,9 @@
+{
+  "command": "dotnet run --no-build --project src/Interfaces/CliHost -- self-check --output <temporary-directory>",
+  "output_root": "C:\\Users\\LEEYS\\AppData\\Local\\Temp\\cad-final-isolation-d8872a40cec643e6af8e3110f0653eb7",
+  "source_output_changes": 0,
+  "schema_version": "2.1-b-reliability",
+  "run_id": "platform-self-check-8e35b5b4b9404f388994618a14559795",
+  "final_status": "Failed",
+  "hole_group_passed": true
+}

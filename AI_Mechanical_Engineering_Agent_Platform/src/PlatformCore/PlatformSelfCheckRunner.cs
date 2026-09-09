@@ -17,7 +17,7 @@ namespace PlatformCore;
 public static class PlatformSelfCheckRunner
 {
     private const string FakeSolidWorksWorkerFullName = "SolidWorksWorker.FakeSolidWorksWorker";
-    private const string SelfCheckSchemaVersion = "2.0-e";
+    private const string SelfCheckSchemaVersion = "2.2-a-task-approval";
     private static readonly object RealAcceptanceOutputLock = new();
 
     private static readonly string[] ExpectedModules =
@@ -176,7 +176,7 @@ public static class PlatformSelfCheckRunner
         var internalWorkflowChecks = await RunWorkflowBackedInternalOrchestrationChecks(root, platform, chiefEngineerOutput, collaborationReport, gatewayVisibleAgents);
         var solidWorksSkeletonChecks = await RunSolidWorksSkeletonChecks(root, platform, outputRoot, cancellationToken);
         var executableDocsChecks = RunExecutableDocsLayerChecks(root);
-        var realAcceptanceOutputs = WriteRealAcceptanceOutputs(root, runMetadata);
+        var realAcceptanceOutputs = WriteRealAcceptanceOutputs(root, runMetadata, outputRoot);
         var versionStageText = File.Exists(Path.Combine(root, "docs", "version_stage_index.md"))
             ? File.ReadAllText(Path.Combine(root, "docs", "version_stage_index.md"))
             : string.Empty;
@@ -220,7 +220,17 @@ public static class PlatformSelfCheckRunner
             markdownChineseCheckPassed);
         // V2.1-A 复杂特征检查必须先于 V2.0-E：回归闸的当前值字典需要它的结果。
         var v21AComplexFeatureChecks = RunV21AComplexFeatureChecks(root, platform, versionStageText);
-        var v21BHoleChecks = await V21BHoleSelfCheck.RunAsync(root, platform, cancellationToken);
+        var holeSelfCheck = await V21BHoleSelfCheck.RunAsync(root, platform, cancellationToken, outputRoot);
+        var v21BHoleChecks = holeSelfCheck.Checks;
+        var workflowReliabilityChecks = await WorkflowReliabilitySelfCheck.RunAsync();
+        var structuredInputFailsClosed = await StructuredCadInputSelfCheck.RunAsync();
+        var taskLifecycleChecks = await TaskLifecycleSelfCheck.RunAsync(root);
+        var approvalIdentityBound = await WorkflowReliabilitySelfCheck.RunApprovalIdentityAsync();
+        var capabilityChecks = new Dictionary<string, bool>(v21BHoleChecks);
+        capabilityChecks["structured_cad_input_fails_closed"] = structuredInputFailsClosed;
+        foreach (var check in workflowReliabilityChecks) capabilityChecks[check.Key] = check.Value;
+        foreach (var check in taskLifecycleChecks) capabilityChecks[check.Key] = check.Value;
+        capabilityChecks["workflow_approval_identity_bound"] = approvalIdentityBound;
         var v20EUnifiedFeatureGraphChecks = RunV20EUnifiedFeatureGraphChecks(
             root,
             platform,
@@ -231,11 +241,12 @@ public static class PlatformSelfCheckRunner
             v20CFeatureAdapterChecks,
             v20DModelRebuildChecks,
             v21AComplexFeatureChecks,
-            v21BHoleChecks);
+            capabilityChecks);
         var v21AJacketChecks = await RunV21AJacketChecksAsync(
             root,
             platform,
             versionStageText,
+            outputRoot,
             cancellationToken);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
@@ -464,7 +475,8 @@ public static class PlatformSelfCheckRunner
             v20DModelRebuildChecks.AllPassed &&
             v20EUnifiedFeatureGraphChecks.AllPassed &&
             v21AComplexFeatureChecks.AllPassed &&
-            v21BHoleChecks.Values.All(value => value) &&
+            holeSelfCheck.GroupPassed && structuredInputFailsClosed && workflowReliabilityChecks.Values.All(value => value) &&
+            taskLifecycleChecks.Values.All(value => value) && approvalIdentityBound &&
             v21AJacketChecks.AllPassed &&
             executableDocsChecks.ExecutableDocsLayerEnabled &&
             gateDecision.Result == GateDecisionResult.Passed &&
@@ -880,17 +892,28 @@ public static class PlatformSelfCheckRunner
             FeatureLibraryDocumented = v21AComplexFeatureChecks.FeatureLibraryDocumented,
             FeatureRegressionTestsPassed = v21AComplexFeatureChecks.FeatureRegressionTestsPassed,
             V21ADocumented = v21AComplexFeatureChecks.V21ADocumented,
-            SimpleHoleSupported = v21BHoleChecks["simple_hole_supported"],
-            CounterboreHoleSupported = v21BHoleChecks["counterbore_hole_supported"],
-            CountersinkHoleSupported = v21BHoleChecks["countersink_hole_supported"],
-            TappedHoleSupported = v21BHoleChecks["tapped_hole_supported"],
-            HoleTypeValidationSupported = v21BHoleChecks["hole_type_validation_supported"],
-            HoleGeometryValidationSupported = v21BHoleChecks["hole_geometry_validation_supported"],
-            TappedHoleSemanticsSeparatedFromSimpleCut = v21BHoleChecks["tapped_hole_semantics_separated_from_simple_cut"],
-            HoleApiEvidenceRequired = v21BHoleChecks["hole_api_evidence_required"],
-            UnverifiedHoleBlocksRealExecution = v21BHoleChecks["unverified_hole_blocks_real_execution"],
-            HoleFeatureRegressionTestsPassed = v21BHoleChecks["hole_feature_regression_tests_passed"],
-            V21BDocumented = v21BHoleChecks["v2_1_b_documented"],
+            SimpleHoleSupported = holeSelfCheck.Value("simple_hole_supported"),
+            CounterboreHoleSupported = holeSelfCheck.Value("counterbore_hole_supported"),
+            CountersinkHoleSupported = holeSelfCheck.Value("countersink_hole_supported"),
+            TappedHoleSupported = holeSelfCheck.Value("tapped_hole_supported"),
+            HoleTypeValidationSupported = holeSelfCheck.Value("hole_type_validation_supported"),
+            HoleGeometryValidationSupported = holeSelfCheck.Value("hole_geometry_validation_supported"),
+            TappedHoleSemanticsSeparatedFromSimpleCut = holeSelfCheck.Value("tapped_hole_semantics_separated_from_simple_cut"),
+            HoleApiEvidenceRequired = holeSelfCheck.Value("hole_api_evidence_required"),
+            UnverifiedHoleBlocksRealExecution = holeSelfCheck.Value("unverified_hole_blocks_real_execution"),
+            HoleSelfCheckGroupPassed = holeSelfCheck.GroupPassed,
+            StructuredCadInputFailsClosed = structuredInputFailsClosed,
+            TaskLifecycleTracked = taskLifecycleChecks["task_lifecycle_tracked"],
+            TaskApprovalRoundtripSupported = taskLifecycleChecks["task_approval_roundtrip_supported"],
+            TaskAccessTokenRequired = taskLifecycleChecks["task_access_token_required"],
+            WorkflowApprovalIdentityBound = approvalIdentityBound,
+            HoleSelfCheckInputsReadable = holeSelfCheck.Value("hole_self_check_inputs_readable") is true,
+            HoleSelfCheckIssues = holeSelfCheck.Issues,
+            HoleSelfCheckUnobservedCapabilities = holeSelfCheck.UnobservedCapabilities,
+            WorkflowStepRetryLimitEnforced = workflowReliabilityChecks["workflow_step_retry_limit_enforced"],
+            WorkflowCancelledApprovalPreserved = workflowReliabilityChecks["workflow_cancelled_approval_preserved"],
+            WorkflowMultiApprovalHistoryPreserved = workflowReliabilityChecks["workflow_multi_approval_history_preserved"],
+            V21BDocumented = holeSelfCheck.Value("v2_1_b_documented"),
             EdgeSelectionModelSupported = v21AComplexFeatureChecks.EdgeSelectionModelSupported,
             V20ECapabilityRegressions = v20EUnifiedFeatureGraphChecks.CapabilityRegressions,
             PartFamilyDefinitionSupported = v20EUnifiedFeatureGraphChecks.PartFamilyDefinitionSupported,
@@ -1018,7 +1041,7 @@ public static class PlatformSelfCheckRunner
             var request = new SolidWorksWorkerRequest(
                 $"self-check-v18-request-{partType}-{Guid.NewGuid():N}",
                 plan,
-                Path.Combine(projectRoot, "output", "solidworks", "self-check", "v1_8_part_families", partType),
+                Path.Combine(outputRoot, "solidworks", "self-check", "v1_8_part_families", partType),
                 DryRun: true,
                 AllowRealCadExecution: false);
             var task = workerMethod.Invoke(worker, new object?[] { request, cancellationToken }) as Task<SolidWorksWorkerResult>;
@@ -2775,6 +2798,7 @@ public static class PlatformSelfCheckRunner
         string projectRoot,
         PlatformKernel platform,
         string versionStageText,
+        string outputRoot,
         CancellationToken cancellationToken)
     {
         var registry = PartTypeRegistry.CreateDefault();
@@ -2846,8 +2870,7 @@ public static class PlatformSelfCheckRunner
         if (worker is not null && workerMethod is not null && plan is not null)
         {
             var output = Path.Combine(
-                projectRoot,
-                "output",
+                outputRoot,
                 "solidworks",
                 "self-check",
                 "v2_1_a_jacket");
@@ -3213,7 +3236,7 @@ public static class PlatformSelfCheckRunner
         return string.Empty;
     }
 
-    private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform, string? testScenario = null)
+    private static async Task<AgentContracts.AgentOutput> InvokeChiefEngineerForSelfCheck(PlatformKernel platform, string? testScenario = null, string? outputRoot = null)
     {
         var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")
             ?? throw new InvalidOperationException("chief-engineer is not registered.");
@@ -3225,6 +3248,8 @@ public static class PlatformSelfCheckRunner
             {
                 inputContext["solidworks_main_workflow"] = "true";
                 inputContext["dry_run"] = "true";
+                if (outputRoot is not null)
+                    inputContext["solidworks_output_directory"] = Path.Combine(outputRoot, "solidworks", "self-check", "chief-engineer-main-workflow");
             }
         }
 
@@ -3379,7 +3404,7 @@ public static class PlatformSelfCheckRunner
                 dryRunRequest = new SolidWorksWorkerRequest(
                     requestId,
                     plan,
-                    Path.Combine(projectRoot, "output", "solidworks", "self-check", requestId),
+                    Path.Combine(outputRoot, "solidworks", "self-check", requestId),
                     DryRun: true,
                     AllowRealCadExecution: false);
                 var task = (Task<SolidWorksWorkerResult>)workerMethod.Invoke(registeredFakeSolidWorksWorker, new object?[] { dryRunRequest, cancellationToken })!;
@@ -3395,7 +3420,7 @@ public static class PlatformSelfCheckRunner
                 ? new SolidWorksBuildPlanValidator().Validate(plan)
                 : new ReviewReport("solidworks-build-plan-validation-missing", "solidworks-build-plan-validator", false, 0, new[] { "plan missing" }, false, true);
             var artifactValidation = workerResult is not null
-                ? new SolidWorksArtifactValidator().Validate(workerResult)
+                ? new SolidWorksArtifactValidator(Path.Combine(outputRoot, "solidworks")).Validate(workerResult)
                 : new ReviewReport("solidworks-artifact-validation-missing", "solidworks-artifact-validator", false, 0, new[] { "worker result missing" }, false, true);
             var buildPlanReview = plan is not null
                 ? new SolidWorksBuildPlanReviewer().Review(plan)
@@ -3435,7 +3460,7 @@ public static class PlatformSelfCheckRunner
                 : new SolidWorksWorkerRequest(
                     $"self-check-solidworks-preflight-{Guid.NewGuid():N}",
                     plan,
-                    Path.Combine(projectRoot, "output", "solidworks", "self-check", "preflight"),
+                    Path.Combine(outputRoot, "solidworks", "self-check", "preflight"),
                     DryRun: true,
                     AllowRealCadExecution: false));
             var preflightReport = preflightRequest is not null
@@ -3571,7 +3596,7 @@ public static class PlatformSelfCheckRunner
                     $"self-check-main-workflow-{Guid.NewGuid():N}",
                     $"task-{Guid.NewGuid():N}",
                     projectRoot,
-                    Path.Combine(projectRoot, "output", "solidworks", "self-check", "main-workflow-default"),
+                    Path.Combine(outputRoot, "solidworks", "self-check", "main-workflow-default"),
                     DryRun: true,
                     AllowRealCadExecution: false),
                     cancellationToken);
@@ -3585,7 +3610,7 @@ public static class PlatformSelfCheckRunner
                         $"self-check-main-workflow-request-flag-{Guid.NewGuid():N}",
                         $"task-{Guid.NewGuid():N}",
                         projectRoot,
-                        Path.Combine(projectRoot, "output", "solidworks", "self-check", "main-workflow-request-flag"),
+                        Path.Combine(outputRoot, "solidworks", "self-check", "main-workflow-request-flag"),
                         DryRun: false,
                         AllowRealCadExecution: false),
                         cancellationToken);
@@ -3593,13 +3618,14 @@ public static class PlatformSelfCheckRunner
                     $"self-check-main-workflow-env-flag-{Guid.NewGuid():N}",
                     $"task-{Guid.NewGuid():N}",
                     projectRoot,
-                    Path.Combine(projectRoot, "output", "solidworks", "self-check", "main-workflow-env-flag"),
+                    Path.Combine(outputRoot, "solidworks", "self-check", "main-workflow-env-flag"),
                     DryRun: false,
                     AllowRealCadExecution: true),
                     cancellationToken);
                 var chiefEngineerCadOutput = await InvokeChiefEngineerForSelfCheck(
                     platform,
-                    "solidworks_main_workflow");
+                    "solidworks_main_workflow",
+                    outputRoot);
 
                 realCadWorkerIntegratedIntoMainWorkflow =
                     defaultMainWorkflowResult.Status == "Completed" &&
@@ -3638,19 +3664,19 @@ public static class PlatformSelfCheckRunner
                 var requestFlagProbe = new SolidWorksWorkerRequest(
                     $"self-check-solidworks-request-flag-{Guid.NewGuid():N}",
                     plan,
-                    Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-request-flag"),
+                    Path.Combine(outputRoot, "solidworks", "self-check", "real-request-flag"),
                     DryRun: false,
                     AllowRealCadExecution: false);
                 var envFlagProbe = requestFlagProbe with
                 {
                     RequestId = $"self-check-solidworks-env-flag-{Guid.NewGuid():N}",
-                    OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-env-flag"),
+                    OutputDirectory = Path.Combine(outputRoot, "solidworks", "self-check", "real-env-flag"),
                     AllowRealCadExecution = true
                 };
                 var dryRunFlagProbe = requestFlagProbe with
                 {
                     RequestId = $"self-check-solidworks-dry-run-flag-{Guid.NewGuid():N}",
-                    OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-dry-run-flag"),
+                    OutputDirectory = Path.Combine(outputRoot, "solidworks", "self-check", "real-dry-run-flag"),
                     DryRun = true,
                     AllowRealCadExecution = true
                 };
@@ -3719,7 +3745,7 @@ public static class PlatformSelfCheckRunner
                     var smokeRequest = envFlagProbe with
                     {
                         RequestId = $"self-check-solidworks-real-smoke-{Guid.NewGuid():N}",
-                        OutputDirectory = Path.Combine(projectRoot, "output", "solidworks", "self-check", "real-smoke"),
+                        OutputDirectory = Path.Combine(outputRoot, "solidworks", "self-check", "real-smoke"),
                         DryRun = false,
                         AllowRealCadExecution = true,
                         ConnectionSmokeTestOnly = true
@@ -4754,19 +4780,21 @@ public static class PlatformSelfCheckRunner
 
     private static RealAcceptanceOutputPaths WriteRealAcceptanceOutputs(
         string projectRoot,
-        SelfCheckRunMetadata runMetadata)
+        SelfCheckRunMetadata runMetadata,
+        string outputRoot)
     {
         lock (RealAcceptanceOutputLock)
         {
-            return WriteRealAcceptanceOutputsCore(projectRoot, runMetadata);
+            return WriteRealAcceptanceOutputsCore(projectRoot, runMetadata, outputRoot);
         }
     }
 
     private static RealAcceptanceOutputPaths WriteRealAcceptanceOutputsCore(
         string projectRoot,
-        SelfCheckRunMetadata runMetadata)
+        SelfCheckRunMetadata runMetadata,
+        string outputRoot)
     {
-        var outputDirectory = Path.Combine(projectRoot, "output", "solidworks", "real_acceptance");
+        var outputDirectory = Path.Combine(outputRoot, "solidworks", "real_acceptance");
         Directory.CreateDirectory(outputDirectory);
         var reportPath = Path.Combine(outputDirectory, "real_acceptance_report.json");
         var markdownPath = Path.Combine(outputDirectory, "latest_real_outputs.md");
@@ -5853,7 +5881,9 @@ public static class PlatformSelfCheckRunner
                 humanApprovalContext.TaskId,
                 WorkflowApprovalDecision.Approve,
                 "self-check-reviewer",
-                "Self-check approval resume."));
+                "Self-check approval resume.",
+                ApprovalRequestId: humanApproval.HumanApprovalRequest!.ApprovalRequestId,
+                StepId: humanApproval.HumanApprovalRequest.StepId));
         var humanApprovalResumeSupported =
             approvalSubmission.Accepted &&
             approvalSubmission.WorkflowResult?.Status == WorkflowStatus.Passed &&
