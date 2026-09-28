@@ -10,7 +10,7 @@ public sealed class ChiefEngineerOrchestrator
     private readonly InternalAgentRouter _router;
     private readonly AgentRegistry _agentRegistry;
     private readonly InMemoryAuditLog _auditLog;
-    private readonly SequentialWorkflowEngine _workflowEngine;
+    private readonly IWorkflowEngine _workflowEngine;
     private readonly SolidWorksMainWorkflowRunner? _solidWorksMainWorkflowRunner;
     private readonly SolidWorksWorkflowRouter _solidWorksWorkflowRouter;
     private readonly IReadOnlyList<string> _internalRoute;
@@ -20,7 +20,7 @@ public sealed class ChiefEngineerOrchestrator
         InternalAgentRouter router,
         AgentRegistry agentRegistry,
         InMemoryAuditLog auditLog,
-        SequentialWorkflowEngine? workflowEngine = null,
+        IWorkflowEngine? workflowEngine = null,
         SolidWorksMainWorkflowRunner? solidWorksMainWorkflowRunner = null,
         SolidWorksWorkflowRouter? solidWorksWorkflowRouter = null,
         InternalWorkflowRoute? internalWorkflowRoute = null)
@@ -31,9 +31,8 @@ public sealed class ChiefEngineerOrchestrator
         _workflowEngine = workflowEngine ?? new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), auditLog);
         _solidWorksMainWorkflowRunner = solidWorksMainWorkflowRunner;
         _solidWorksWorkflowRouter = solidWorksWorkflowRouter ?? new SolidWorksWorkflowRouter();
-        var route = internalWorkflowRoute ?? InternalWorkflowRoute.EngineeringDefault;
-        var routeIssues = route.Validate();
-        if (route.AgentIds.Count == 0 || routeIssues.Count > 0)
+        var routeIssues = internalWorkflowRoute?.Validate() ?? [];
+        if (internalWorkflowRoute is not null && (internalWorkflowRoute.AgentIds.Count == 0 || routeIssues.Count > 0))
         {
             throw new ArgumentException(
                 routeIssues.Count == 0
@@ -42,7 +41,7 @@ public sealed class ChiefEngineerOrchestrator
                 nameof(internalWorkflowRoute));
         }
 
-        _internalRoute = route.AgentIds.ToArray();
+        _internalRoute = internalWorkflowRoute?.AgentIds.ToArray() ?? [];
     }
 
     public async Task<AgentOutput> ExecuteAsync(AgentContext context, string rootAgentId, string rootAgentName)
@@ -58,9 +57,11 @@ public sealed class ChiefEngineerOrchestrator
         }
 
         var workflowId = $"internal-collaboration-{context.TaskId}";
-        var workflowSteps = _internalRoute
-            .Select(agentId => new InternalAgentWorkflowStep(agentId, context, _router, _agentRegistry, _auditLog).ToWorkflowStep())
-            .ToArray();
+        WorkflowStep[] workflowSteps = _internalRoute.Count == 0
+            ? [new EngineeringPlanValidationStep(context, _solidWorksWorkflowRouter, _auditLog).ToWorkflowStep()]
+            : _internalRoute
+                .Select(agentId => new InternalAgentWorkflowStep(agentId, context, _router, _agentRegistry, _auditLog).ToWorkflowStep())
+                .ToArray();
         var workflowResult = await _workflowEngine.ExecuteAsync(
             workflowSteps,
             new WorkflowContext(workflowId, new Dictionary<string, object?>
@@ -124,7 +125,9 @@ public sealed class ChiefEngineerOrchestrator
             BuildOutputMessage(rootAgentName, workflowResult, solidWorksMainWorkflowResult),
             new[] { artifact }.Concat(report.Artifacts).ToArray(),
             report.Issues,
-            new[] { "Chief engineer orchestrated internal agents through SequentialWorkflowEngine and QualityGate." }
+            new[] { _internalRoute.Count == 0
+                ? "总工程师通过 WorkflowEngine 与 QualityGate 完成确定性规划输入校验。"
+                : "Chief engineer orchestrated internal agents through WorkflowEngine and QualityGate." }
                 .Concat(solidWorksMainWorkflowResult?.Logs ?? Array.Empty<string>())
                 .ToArray(),
             report.CalledAgents.LastOrDefault()?.NextRecommendedAgentId,
@@ -174,6 +177,8 @@ public sealed class ChiefEngineerOrchestrator
             issues.AddRange(EffectiveIssues(step));
         }
 
+        issues.AddRange(workflowResult.Steps.Where(step => step.AgentOutput is null).SelectMany(EffectiveIssues));
+
         if (workflowResult.FailureReport is not null)
         {
             issues.Add(workflowResult.FailureReport.FailureReason);
@@ -188,7 +193,7 @@ public sealed class ChiefEngineerOrchestrator
             .Select(step => new InternalWorkflowStepSummary(
                 step.StepId,
                 step.StepName,
-                AgentIdFromStepId(step.StepId),
+                step.AgentOutput is null ? string.Empty : AgentIdFromStepId(step.StepId),
                 step.Status.ToString(),
                 step.GateDecision,
                 step.RetryCount,
@@ -205,6 +210,7 @@ public sealed class ChiefEngineerOrchestrator
 
         var summary = workflowResult.Status switch
         {
+            WorkflowStatus.Passed when _internalRoute.Count == 0 => "工程规划输入已通过规则校验；本步骤不生成工程计划，后续 CAD 仍须通过既有规划与执行链。",
             WorkflowStatus.Passed => "Internal agents completed the workflow-backed mechanical engineering planning route.",
             WorkflowStatus.WaitingForHumanApproval => $"Internal workflow is waiting for human approval at {workflowResult.HumanApprovalRequest?.StepId}.",
             WorkflowStatus.Failed => $"Internal workflow failed at {workflowResult.FailureReport?.FailedStepId}.",
@@ -331,7 +337,9 @@ public sealed class ChiefEngineerOrchestrator
         WorkflowExecutionResult workflowResult,
         SolidWorksMainWorkflowResult? solidWorksResult)
     {
-        var message = $"{rootAgentName} completed workflow-backed internal multi-agent routing with status {workflowResult.Status}.";
+        var message = workflowResult.Steps.Any(step => step.AgentOutput is not null)
+            ? $"{rootAgentName} completed workflow-backed internal multi-agent routing with status {workflowResult.Status}."
+            : $"{rootAgentName}完成工程规划输入校验，状态为 {workflowResult.Status}；此步骤未生成工程计划。";
         if (solidWorksResult is null)
         {
             return message;

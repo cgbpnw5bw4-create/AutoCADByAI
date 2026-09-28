@@ -4,14 +4,14 @@ namespace AgentRuntime.Microsoft;
 
 public sealed class MicrosoftWorkflowRuntime
 {
-    private readonly SequentialWorkflowEngine _workflowEngine;
+    private readonly IWorkflowEngine _workflowEngine;
 
     public MicrosoftWorkflowRuntime(AgentRuntimeMode runtimeMode = AgentRuntimeMode.Mock)
         : this(new SequentialWorkflowEngine(), runtimeMode)
     {
     }
 
-    public MicrosoftWorkflowRuntime(SequentialWorkflowEngine workflowEngine, AgentRuntimeMode runtimeMode = AgentRuntimeMode.Mock)
+    public MicrosoftWorkflowRuntime(IWorkflowEngine workflowEngine, AgentRuntimeMode runtimeMode = AgentRuntimeMode.Mock)
     {
         _workflowEngine = workflowEngine;
         RuntimeMode = runtimeMode;

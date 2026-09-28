@@ -100,13 +100,27 @@ public sealed class LateBoundSolidWorksComFacade : ISolidWorksComFacade
     public object? Invoke(object target, string name, params object?[] args) =>
         InvokeWithArgs(target, name, args);
 
-    public object? InvokeWithArgs(object target, string name, object?[] args) =>
-        target.GetType().InvokeMember(
-            name,
-            BindingFlags.InvokeMethod,
-            binder: null,
-            target,
-            args);
+    public object? InvokeWithArgs(object target, string name, object?[] args)
+    {
+        // 已核对的 ActivateDoc3/LoadFile4 第四参和六参 Extension.SaveAs 最后两参
+        // 均为 out int；装箱的 0 不会自动成为引用参数，必须显式标记。
+        // SaveAs 的 ExportData 还要求 IDispatch，空指针封送由 TryExtensionSaveAs 处理。
+        if ((args.Length == 4 && name is "ActivateDoc3" or "LoadFile4") ||
+            (args.Length == 6 && name == "SaveAs"))
+        {
+            var modifier = new ParameterModifier(args.Length);
+            if (args.Length == 4) modifier[3] = true;
+            else
+            {
+                // IModelDocExtension.SaveAs 的 Errors 和 Warnings。
+                modifier[4] = true;
+                modifier[5] = true;
+            }
+            return target.GetType().InvokeMember(name, BindingFlags.InvokeMethod, null, target,
+                args, [modifier], CultureInfo.InvariantCulture, null);
+        }
+        return target.GetType().InvokeMember(name, BindingFlags.InvokeMethod, null, target, args);
+    }
 
     public object? TryInvoke(object? target, string name, params object?[] args)
     {
@@ -176,7 +190,14 @@ public sealed class LateBoundSolidWorksComFacade : ISolidWorksComFacade
         try
         {
             var extension = GetProperty(model, "Extension");
-            var args = new object?[] { path, 0, 1, exportData, 0, 0 };
+            // ExportData 的 COM 合同为 IDispatch；普通 null 会封送成 VT_EMPTY。
+            // Windows 下显式传空 IDispatch，非空导出配置保持原对象。
+            var dispatchExportData = exportData;
+            if (dispatchExportData is null && OperatingSystem.IsWindows())
+            {
+                dispatchExportData = new DispatchWrapper(null);
+            }
+            var args = new object?[] { path, 0, 1, dispatchExportData, 0, 0 };
             var result = InvokeWithArgs(extension, "SaveAs", args);
             if (args[4] is not null && Convert.ToInt32(args[4], CultureInfo.InvariantCulture) != 0)
             {

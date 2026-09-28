@@ -60,6 +60,14 @@ public sealed class MicrosoftAgentAdapter : IAgent, IHumanApprovalAgent
 
     public object? MicrosoftAgentInstance { get; }
 
+    internal IAgent GetPlatformAgentForReconfiguration()
+    {
+        if (!_pendingAdvisories.IsEmpty)
+            throw new InvalidOperationException("runtime_reconfiguration_pending_approval: 待审批任务完成前不能替换其模型运行时。");
+        // 旧工厂也能创建独立适配器；没有包装链时保留该实例的兼容行为。
+        return _platformAgent ?? this;
+    }
+
     public string Id => _platformAgent?.Id ?? _manifest.Id;
 
     public string Name => _platformAgent?.Name ?? _manifest.Name;
@@ -145,7 +153,7 @@ public sealed class MicrosoftAgentAdapter : IAgent, IHumanApprovalAgent
             $"{runtimeOutput.Message}\n\n{workflowOutput.Message}",
             workflowOutput.Artifacts,
             workflowOutput.Issues.Concat(runtimeIssuesForFinal).ToArray(),
-            runtimeOutput.Logs.Concat(workflowOutput.Logs).Concat(new[] { "Chief engineer runtime advisory was followed by SequentialWorkflowEngine orchestration." }).ToArray(),
+            runtimeOutput.Logs.Concat(workflowOutput.Logs).Concat(new[] { "Chief engineer runtime advisory was followed by WorkflowEngine orchestration." }).ToArray(),
             runtimeOutput.NextRecommendedAgentId ?? workflowOutput.NextRecommendedAgentId,
             workflowOutput.InternalCollaborationReport,
             workflowOutput.ReviewReport,

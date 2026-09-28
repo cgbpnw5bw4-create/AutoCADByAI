@@ -1,0 +1,229 @@
+{
+  "status": "Passed",
+  "checks": [
+    {
+      "input": "v2_2_c_pattern_linear_opposite_edge",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091231-90ca4269\\01-probe.json",
+        "size_bytes": 20519,
+        "sha256": "63f34200ad906636473a3df2b45213d3434a9a9bd24721aeb1f72428fd35a504"
+      },
+      "expected_xz_mm": [
+        [
+          -30.0,
+          0.0
+        ],
+        [
+          -10.0,
+          0.0
+        ],
+        [
+          10.0,
+          0.0
+        ],
+        [
+          30.0,
+          0.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            29.999999999999996,
+            0
+          ],
+          [
+            10.000000000000002,
+            0
+          ],
+          [
+            -30,
+            0
+          ],
+          [
+            -9.999999999999998,
+            0
+          ]
+        ],
+        "10.0": [
+          [
+            29.999999999999996,
+            0
+          ],
+          [
+            10.000000000000002,
+            0
+          ],
+          [
+            -30,
+            0
+          ],
+          [
+            -9.999999999999998,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_linear_negative",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091231-90ca4269\\02-probe.json",
+        "size_bytes": 18499,
+        "sha256": "ea75cde992d65a6d94a0f92c8e474dc86d784dfc39c1cc7e718e73cf5623b934"
+      },
+      "expected_xz_mm": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          15.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            0,
+            0
+          ],
+          [
+            30,
+            0
+          ],
+          [
+            15,
+            0
+          ]
+        ],
+        "10.0": [
+          [
+            0,
+            0
+          ],
+          [
+            30,
+            0
+          ],
+          [
+            15,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_circular_positive_quarter",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091231-90ca4269\\03-probe.json",
+        "size_bytes": 20733,
+        "sha256": "1d4307cfaf05e541b90f9b9b2034fab48722dc5b1dd4d4118bd3c553ae0c50c0"
+      },
+      "expected_xz_mm": [
+        [
+          20.0,
+          0.0
+        ],
+        [
+          14.142135623730951,
+          -14.142135623730951
+        ],
+        [
+          0.0,
+          -20.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            -14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            -20
+          ]
+        ],
+        "10.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            -14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            -20
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_circular_negative_quarter",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091231-90ca4269\\04-probe.json",
+        "size_bytes": 20721,
+        "sha256": "62d60dcacb98f7fd2f090a7b7e78fd50c2a033c8d988fa16a66d211ec1750a94"
+      },
+      "expected_xz_mm": [
+        [
+          20.0,
+          0.0
+        ],
+        [
+          14.142135623730951,
+          14.142135623730951
+        ],
+        [
+          0.0,
+          20.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            20
+          ]
+        ],
+        "10.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            20
+          ]
+        ]
+      },
+      "passed": true
+    }
+  ]
+}

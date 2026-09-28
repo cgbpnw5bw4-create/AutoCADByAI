@@ -941,10 +941,7 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
             Path.GetFileName(request.SourceDimensionedDrawingPath),
             request.DrawingSmokeTestOnly ? $"{request.BuildPlan.PartType}.SLDDRW" : null,
             request.DrawingDimensionSmokeTestOnly ? $"{request.BuildPlan.PartType}_dimensioned.SLDDRW" : null,
-            request.DrawingTitleBlockSmokeTestOnly ? $"{request.BuildPlan.PartType}_title_block.SLDDRW" : null,
-            !request.DrawingSmokeTestOnly && !request.DrawingDimensionSmokeTestOnly && !request.DrawingTitleBlockSmokeTestOnly
-                ? $"{request.BuildPlan.PartType}.SLDPRT"
-                : null
+            request.DrawingTitleBlockSmokeTestOnly ? $"{request.BuildPlan.PartType}_title_block.SLDDRW" : null
         }
         .Where(name => !string.IsNullOrWhiteSpace(name))
         .Distinct(StringComparer.OrdinalIgnoreCase)

@@ -1,0 +1,306 @@
+{
+  "review_date": "2026-09-24",
+  "scope": "只读重算既有文件的SHA256/字节数、正式归一源码revision，核验历史TRX和CAD探针；没有运行CAD、build或test。仅新增本日期审查记录。",
+  "candidate_collections": [
+    {
+      "manifest": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\manifest.json",
+        "size_bytes": 124375,
+        "sha256": "d9984472fadfaa2af6d293f58cf25063dbb5c5c85f4e64a9735c95181fdadd6f"
+      },
+      "status": "CandidatesCollected",
+      "item_count": 4,
+      "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+      "fingerprints": {
+        "record_count": 52,
+        "unique_file_count": 24,
+        "passed": true,
+        "failures": []
+      },
+      "all_candidate_semantics_preserved": true,
+      "freeze_checks": 25,
+      "all_freeze_checks_stable": true
+    },
+    {
+      "manifest": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092821-db67d733\\manifest.json",
+        "size_bytes": 371779,
+        "sha256": "311c3b5a479dbef8df719f3cff2fac469051c96fa312f0f8ff1671510eb48846"
+      },
+      "status": "CandidatesCollected",
+      "item_count": 7,
+      "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+      "fingerprints": {
+        "record_count": 91,
+        "unique_file_count": 42,
+        "passed": true,
+        "failures": []
+      },
+      "all_candidate_semantics_preserved": true,
+      "freeze_checks": 43,
+      "all_freeze_checks_stable": true
+    }
+  ],
+  "candidate_artifact_report_probe_totals": {
+    "record_count": 143,
+    "unique_file_count": 66,
+    "passed": true,
+    "failures": []
+  },
+  "source_revision": {
+    "computed": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+    "expected": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+    "matches_both_collections": true,
+    "bound_source_count": 31,
+    "method": "复用正式路径排序、CRLF转LF、EvidenceId/SolidWorksVersion/DiagnosticRunPath/SourceRevision字面量正规归一；不要求绑定后DLL仍等于采集前DLL。"
+  },
+  "release": {
+    "directory": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9",
+    "original_verification": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\main_release_geometry_unique_20260914\\verification.json",
+      "size_bytes": 48527,
+      "sha256": "d2c2e6cc96ecb63e67459df5597a64604dcdaff04022ed616061b6fcaaf3adc7"
+    },
+    "files_before_equal_files_after": true,
+    "files_after_rechecked": {
+      "record_count": 15,
+      "unique_file_count": 15,
+      "passed": true,
+      "failures": []
+    },
+    "probe_and_alias_fingerprints": {
+      "record_count": 6,
+      "unique_file_count": 6,
+      "passed": true,
+      "failures": []
+    },
+    "package_manifest_entries": {
+      "record_count": 12,
+      "unique_file_count": 12,
+      "passed": true,
+      "failures": []
+    },
+    "status_reports": {
+      "release_manifest.json": {
+        "fingerprint": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json",
+          "size_bytes": 7101,
+          "sha256": "50c6a4ee8754ed0fa6b0fe811b9da586578f117777464a42ecf14bbc0af94598"
+        },
+        "final_status": "Passed",
+        "deliverable_status": "Deliverable",
+        "all_source_reports_passed": true,
+        "quality_gate_decision": null,
+        "errors": []
+      },
+      "reports/e2e_execution_report.json": {
+        "fingerprint": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json",
+          "size_bytes": 4681,
+          "sha256": "05e2e17b1e29d7b5d3e95f81d2a92b6dde8629bff7d13eac80d30c0c1ba5a904"
+        },
+        "final_status": "Passed",
+        "deliverable_status": "Deliverable",
+        "all_source_reports_passed": true,
+        "quality_gate_decision": "Passed",
+        "errors": []
+      },
+      "reports/package_quality_report.json": {
+        "fingerprint": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json",
+          "size_bytes": 4799,
+          "sha256": "f6e22134479a7aa17654db96afe5ef45cc03dd74d529708bb648ddd3511f20e9"
+        },
+        "final_status": "Passed",
+        "deliverable_status": "Deliverable",
+        "all_source_reports_passed": true,
+        "quality_gate_decision": null,
+        "errors": []
+      }
+    },
+    "independent_geometry": {
+      "native": {
+        "read_success": true,
+        "body_count": 1,
+        "expected_eight_hole_mouths_matched": true,
+        "expected_200_100_15_extents_matched": true,
+        "expected_volume_mm3": 295287.6110196153,
+        "actual_volume_mm3": 295287.6110196154,
+        "volume_difference_mm3": 5.820766091346741e-11,
+        "probe_input_is_verified_alias": true,
+        "source_and_alias_bytes_equal": true
+      },
+      "step": {
+        "read_success": true,
+        "body_count": 1,
+        "expected_eight_hole_mouths_matched": true,
+        "expected_200_100_15_extents_matched": true,
+        "expected_volume_mm3": 295287.6110196153,
+        "actual_volume_mm3": 295287.6110196153,
+        "volume_difference_mm3": 0.0,
+        "probe_input_is_verified_alias": true,
+        "source_and_alias_bytes_equal": true
+      }
+    },
+    "direct_original_name_probe_failed_record_retained": true
+  },
+  "historical_test_validation": {
+    "baseline": {
+      "total": "591",
+      "executed": "591",
+      "passed": "583",
+      "failed": "8",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    },
+    "final": {
+      "total": "684",
+      "executed": "684",
+      "passed": "684",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    },
+    "actual_result_count": 684,
+    "all_684_results_passed": true,
+    "summary_counters_match_trx": true,
+    "original_failed_cases": [
+      {
+        "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"linear_pattern\")",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"circular_pattern\")",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"fillet\")",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"mirror\")",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending",
+        "before": "Failed",
+        "after": "Passed"
+      },
+      {
+        "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"chamfer\")",
+        "before": "Failed",
+        "after": "Passed"
+      }
+    ],
+    "original_eight_all_now_passed": true,
+    "note": "这是9月14日已有TRX的重新读取；9月24日的新测试由主代理另行执行。",
+    "unique_execution_id_count": 684,
+    "unique_test_id_count": 684,
+    "unique_display_name_count": 683,
+    "counting_correction": "本次审查初算用testName作为字典键得683，原因是两条参数化案例的截断显示名相同；已直接按UnitTestResult与executionId核实为684条独立执行全部Passed。TRX和9月14日总结未修改。",
+    "duplicate_display_name_rows": [
+      {
+        "executionId": "18d2855d-848a-4353-9418-d48e7c35d6dc",
+        "testId": "413f7685-cd82-561d-ada6-4d017bedaeee",
+        "testName": "PlatformSelfCheck.Tests.InputAndSelfCheckReliabilityTests.BrokenFixtureIsUnobservedWithActionableIssueAndOtherTypesContinue(content: \"{\\\"cad_model_spec\\\":{\\\"features\\\":[{\\\"parameters\\\"\"···)",
+        "outcome": "Passed"
+      },
+      {
+        "executionId": "a54ec20b-042f-43dc-ba18-90987919f5db",
+        "testId": "82c42847-8b52-c9a4-98a7-619e489c4404",
+        "testName": "PlatformSelfCheck.Tests.InputAndSelfCheckReliabilityTests.BrokenFixtureIsUnobservedWithActionableIssueAndOtherTypesContinue(content: \"{\\\"cad_model_spec\\\":{\\\"features\\\":[{\\\"parameters\\\"\"···)",
+        "outcome": "Passed"
+      }
+    ]
+  },
+  "self_check_scope": {
+    "v22b": {
+      "final_status": "Failed",
+      "feature_production_evidence_active": false,
+      "v2_0_d_production_evidence_active": false,
+      "v2_0_e_final_status": "Failed",
+      "v2_0_e_capability_regression_gate_passed": false,
+      "v2_0_e_capability_regressions": [
+        "feature_production_evidence_active",
+        "unverified_feature_blocks_execution",
+        "v2_0_d_production_evidence_active",
+        "v2_0_e_controlled_plate_evidence_active",
+        "v2_0_e_step_content_gate_active"
+      ],
+      "shaft_real_workflow_supported": false,
+      "flange_real_workflow_supported": true,
+      "jacket_real_workflow_supported": false,
+      "jacket_production_evidence_active": false
+    },
+    "v22c_20260914": {
+      "final_status": "Failed",
+      "feature_production_evidence_active": true,
+      "v2_0_d_production_evidence_active": true,
+      "v2_0_e_final_status": "Passed",
+      "v2_0_e_capability_regression_gate_passed": true,
+      "v2_0_e_capability_regressions": [],
+      "shaft_real_workflow_supported": false,
+      "flange_real_workflow_supported": true,
+      "jacket_real_workflow_supported": false,
+      "jacket_production_evidence_active": false
+    },
+    "correction": "不得称全局self-check仅因jacket两项失败；shaft_real_workflow_supported也是必过项且false，在V2.2-B已存在。旧总结JSON未改。",
+    "code_basis": [
+      "src/PlatformCore/PlatformSelfCheckRunner.cs:472",
+      "src/PlatformCore/PlatformSelfCheckRunner.cs:7000",
+      "src/PlatformCore/PlatformSelfCheckRunner.cs:7236",
+      "src/PlatformCore/PlatformSelfCheckRunner.cs:7238"
+    ]
+  },
+  "historical_preservation": {
+    "protected_count": 180,
+    "fingerprints": {
+      "record_count": 235,
+      "unique_file_count": 235,
+      "passed": true,
+      "failures": []
+    },
+    "review_file_set_unchanged": true
+  },
+  "notes": [
+    "历史CAD验收只能证明已记录的当前字节对应产物；本次没有重新启动CAD。",
+    "候选报告与正式发布报告分别保留NotDeliverable和Deliverable语义。",
+    "V2.2-C范围内证据未发现漂移；全局shaft/jacket未完成状态不得隐藏。"
+  ],
+  "blockers": [],
+  "status": "PassedWithinReviewedScope"
+}

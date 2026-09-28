@@ -81,14 +81,14 @@ public sealed partial class SolidWorksMainWorkflowRunner
     private readonly SkillRegistry _skillRegistry;
     private readonly WorkerRegistry _workerRegistry;
     private readonly InMemoryAuditLog _auditLog;
-    private readonly SequentialWorkflowEngine _workflowEngine;
+    private readonly IWorkflowEngine _workflowEngine;
     private readonly Func<SolidWorksRuntimeOptions> _runtimeOptionsProvider;
 
     public SolidWorksMainWorkflowRunner(
         SkillRegistry skillRegistry,
         WorkerRegistry workerRegistry,
         InMemoryAuditLog auditLog,
-        SequentialWorkflowEngine? workflowEngine = null,
+        IWorkflowEngine? workflowEngine = null,
         Func<SolidWorksRuntimeOptions>? runtimeOptionsProvider = null)
     {
         _skillRegistry = skillRegistry;

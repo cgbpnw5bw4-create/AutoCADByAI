@@ -3,7 +3,9 @@ using AgentGatewayHost;
 using DomainSchemas;
 using PlatformCore;
 using QualityGate;
+using SolidWorksWorker;
 using System.Diagnostics;
+using WorkerContracts;
 
 namespace PlatformSelfCheck.Tests;
 
@@ -44,12 +46,64 @@ public sealed class WorkflowBackedInternalOrchestrationTests
         Assert.NotNull(report.WorkflowId);
         Assert.Equal("Passed", report.WorkflowStatus);
         var stepResults = Assert.IsAssignableFrom<IReadOnlyList<InternalWorkflowStepSummary>>(report.StepResults);
-        Assert.Equal(4, stepResults.Count);
+        Assert.Equal(EngineeringPlanValidationStep.Id, Assert.Single(stepResults).StepId);
+        Assert.Empty(stepResults[0].AgentId);
+        Assert.Empty(report.CalledAgents);
         Assert.All(stepResults, step => Assert.NotNull(step.GateDecision));
         Assert.NotNull(report.FinalGateDecision);
         Assert.Contains(output.Logs, log => log.Contains("WorkflowEngine", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "workflow_started");
-        Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_after_internal_step");
+        Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_after_plan_validation");
+        Assert.DoesNotContain(platform.AuditLog.GetEntries(), entry => entry.Action == "internal_agent_invoked");
+    }
+
+    [Fact]
+    public async Task DefaultPlanningInputRejectsEmptyRequirement()
+    {
+        var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
+        var context = CreateAgentContext();
+
+        var output = await platform.AgentRegistry.GetById("chief-engineer")!.ExecuteAsync(
+            context with { Input = context.Input with { Message = "   " } });
+
+        Assert.Equal(AgentOutputStatus.Failed, output.Status);
+        Assert.Contains(output.Issues, issue => issue.Contains("engineering_requirement_missing", StringComparison.Ordinal));
+        Assert.Equal(GateDecisionResult.Failed, output.InternalCollaborationReport!.FinalGateDecision!.Result);
+        Assert.DoesNotContain(platform.AuditLog.GetEntries(), entry => entry.Action is "internal_agent_invoked" or "solidworks_main_workflow_invoked");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DefaultDryRunUsesWorkerOnceAndRetainsArtifactQualityGate(bool brokenArtifacts)
+    {
+        using var fixture = new DefaultCadFixture(brokenArtifacts);
+
+        var result = await fixture.Dispatcher.DispatchAsync("chief-engineer", fixture.Request);
+
+        Assert.Equal(brokenArtifacts ? PlatformTaskStatus.Failed : PlatformTaskStatus.Passed, result!.TaskStatus);
+        Assert.Equal(brokenArtifacts ? GateDecisionResult.Failed : GateDecisionResult.Passed, result.GateDecision.Result);
+        Assert.Equal(1, fixture.Worker.Calls);
+        Assert.True(fixture.Worker.LastRequest!.DryRun);
+        Assert.Empty(result.CollaborationReport!.CalledAgents);
+        Assert.Contains(fixture.Platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_after_plan_validation");
+        Assert.Contains(fixture.Platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_after_solidworks_main_workflow");
+        Assert.Contains(fixture.Platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_evaluated");
+        Assert.DoesNotContain(fixture.Platform.AuditLog.GetEntries(), entry => entry.Action == "internal_agent_invoked");
+    }
+
+    [Fact]
+    public async Task InvalidStructuredInputStillStopsBeforeDefaultWorkflowAndWorker()
+    {
+        using var fixture = new DefaultCadFixture(false);
+        var values = fixture.Request.Context.ToDictionary(pair => pair.Key, pair => pair.Value);
+        values["cad_model_spec_json"] = "{";
+
+        var result = await fixture.Dispatcher.DispatchAsync("chief-engineer", fixture.Request with { Context = values });
+
+        Assert.Equal(PlatformTaskStatus.Failed, result!.TaskStatus);
+        Assert.Equal(0, fixture.Worker.Calls);
+        Assert.DoesNotContain(fixture.Platform.AuditLog.GetEntries(), entry => entry.Action == "workflow_started");
     }
 
     [Fact]
@@ -366,5 +420,54 @@ public sealed class WorkflowBackedInternalOrchestrationTests
         }
 
         public override TimeSpan GetDelay(int retryCount) => _delay;
+    }
+
+    private sealed class DefaultCadFixture : IDisposable
+    {
+        private readonly string _outputRoot = Path.Combine(Path.GetTempPath(), "default-planning-cad-" + Guid.NewGuid().ToString("N"));
+        public PlatformKernel Platform { get; } = PlatformBootstrapper.CreateDefault(FindProjectRoot());
+        public CountingCadWorker Worker { get; }
+        public AgentMessageDispatcher Dispatcher { get; }
+        public GatewayMessageRequest Request { get; }
+
+        public DefaultCadFixture(bool brokenArtifacts)
+        {
+            Worker = new CountingCadWorker(brokenArtifacts);
+            Platform.WorkerRegistry.Register(Worker);
+            Dispatcher = new AgentMessageDispatcher(Platform);
+            Request = new("test", "local", Guid.NewGuid().ToString("N"), "tester", "校验并执行明确的 CAD 请求", [],
+                new Dictionary<string, string>
+                {
+                    ["dry_run"] = "true", ["solidworks_main_workflow"] = "true",
+                    ["solidworks_output_directory"] = _outputRoot, ["project_root"] = FindProjectRoot()
+                });
+        }
+
+        public void Dispose()
+        {
+            var tempRoot = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!Path.GetFullPath(_outputRoot).StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("测试输出目录越界。");
+            if (Directory.Exists(_outputRoot)) Directory.Delete(_outputRoot, true);
+        }
+    }
+
+    private sealed class CountingCadWorker(bool brokenArtifacts) : ISolidWorksWorker
+    {
+        private readonly FakeSolidWorksWorker _fake = new();
+        public string Name => "FakeSolidWorksWorker";
+        public string TargetSystem => "SolidWorks";
+        public int Calls { get; private set; }
+        public SolidWorksWorkerRequest? LastRequest { get; private set; }
+
+        public async Task<SolidWorksWorkerResult> ExecuteAsync(SolidWorksWorkerRequest request, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            LastRequest = request;
+            var result = await _fake.ExecuteAsync(request, cancellationToken);
+            return brokenArtifacts ? result with { GeneratedArtifacts = [] } : result;
+        }
+
+        public Task<WorkerOutput> ExecuteAsync(WorkerInput input) => throw new InvalidOperationException("必须使用受控 CAD 请求。");
     }
 }

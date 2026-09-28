@@ -1,0 +1,22 @@
+[
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\simple\\reports\\build_report.json",
+    "backup": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\pre_final_test_reports\\simple.json",
+    "sha256": "5fadeb196dbfad52782625d89884830bca141694309ef5b916164ffe705b158b"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\counterbore\\reports\\build_report.json",
+    "backup": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\pre_final_test_reports\\counterbore.json",
+    "sha256": "5baed3214f83353d6ea3ee8e9f5538148ab17835c6e92a5a9d72056ed1bf7b39"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\countersink\\reports\\build_report.json",
+    "backup": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\pre_final_test_reports\\countersink.json",
+    "sha256": "ecf9b4e01b817871ea812b1ea5b6b38b6cc7067101e82ae84e2c80f166aeaa90"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\tapped\\reports\\build_report.json",
+    "backup": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\pre_final_test_reports\\tapped.json",
+    "sha256": "e399728abd8e94afb9c776154f9defaed8890e6be3cf061c146f0d99ff4e5380"
+  }
+]

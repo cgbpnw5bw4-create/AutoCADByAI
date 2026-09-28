@@ -20,12 +20,15 @@ public sealed record RuntimeAgentMessage(
 public sealed class ToolBridge
 {
     private readonly SkillRegistry _skillRegistry;
-    private readonly WorkerRegistry _workerRegistry;
-
     public ToolBridge(SkillRegistry skillRegistry, WorkerRegistry workerRegistry)
+        : this(skillRegistry)
+    {
+        // 保留旧构造签名；运行时不再持有 Worker Registry 或提供执行入口。
+    }
+
+    public ToolBridge(SkillRegistry skillRegistry)
     {
         _skillRegistry = skillRegistry;
-        _workerRegistry = workerRegistry;
     }
 
     public RuntimeToolMapping MapToolCallToSkill(RuntimeToolCall toolCall)
@@ -60,11 +63,4 @@ public sealed class ToolBridge
         return skill.ExecuteAsync(input);
     }
 
-    public Task<WorkerOutput> InvokeWorkerAsync(string workerName, WorkerInput input)
-    {
-        var worker = _workerRegistry.GetByName(workerName)
-            ?? throw new InvalidOperationException($"Worker '{workerName}' is not registered.");
-
-        return worker.ExecuteAsync(input);
-    }
 }

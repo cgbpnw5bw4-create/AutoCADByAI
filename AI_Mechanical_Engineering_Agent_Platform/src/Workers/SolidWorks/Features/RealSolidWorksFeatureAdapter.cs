@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using DomainSchemas;
+using SolidWorksWorker.Features.Pattern;
 
 namespace SolidWorksWorker.Features;
 
@@ -44,11 +45,6 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     private const string SwLinearPatternTypeName = "LPattern";
     private const string SwCircularPatternTypeName = "CirPattern";
     private const string SwMirrorPatternTypeName = "MirrorPattern";
-
-    // 方向平行性判据：|cos| 必须达到该阈值才认为解出的边与声明的主轴同向。
-    // 取 0.999 而不是 1.0，是为了容忍浮点与建模公差，但仍能把差 2.6 度以上
-    // 的边判为不匹配——阵列方向错一点，整排实例就全错位置。
-    private const double AxisParallelCosine = 0.999d;
 
     private const double MmToMeters = 0.001d;
     private static readonly double OneDegreeInRadians = Math.PI / 180d;
@@ -365,15 +361,15 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
             {
                 var instances = RequiredInstanceCount(feature);
                 var spacing = RequiredPositive(feature.Parameters, "spacing_mm");
+                var seed = ResolvePatternSeed(feature);
                 var directionEdge = ResolveAxisEdge(feature, "direction_selection", "direction", EdgeKinds.Line);
-                var seed = ResolveSeedFeatures(feature, "seed_feature");
 
                 var volumeBefore = MeasureSolidVolume();
                 var manager = RequireFeatureManager();
 
                 ClearSelection();
-                SelectFeatures(seed, SeedFeatureSelectionMark, "linear pattern seed");
-                SelectEntity(directionEdge, DirectionSelectionMark, "linear pattern direction");
+                SelectFeatures([seed], SeedFeatureSelectionMark, "linear pattern seed");
+                SelectEntity(directionEdge.Edge, DirectionSelectionMark, "linear pattern direction");
 
                 // FeatureLinearPattern4 的 20 个参数取自本机 SDK 反射。
                 // 只用第一方向：Num2=1、Spacing2=0 且 CtrlByNum2=true 表示第二方向未启用。
@@ -382,7 +378,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                     "FeatureLinearPattern4",
                     [
                         instances, spacing * MmToMeters, 1, 0d,
-                        false, false, string.Empty, string.Empty,
+                        directionEdge.FlipDirection, false, string.Empty, string.Empty,
                         false, false, false, false,
                         true, true, false, false,
                         false, false, 0d, 0d
@@ -418,15 +414,15 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                         $"angle_deg={angle} exceeds the authorized 360 degree envelope.");
                 }
 
+                var seed = ResolvePatternSeed(feature);
                 var axisEdge = ResolveAxisEdge(feature, "axis_selection", "axis", EdgeKinds.Circle);
-                var seed = ResolveSeedFeatures(feature, "seed_feature");
 
                 var volumeBefore = MeasureSolidVolume();
                 var manager = RequireFeatureManager();
 
                 ClearSelection();
-                SelectFeatures(seed, SeedFeatureSelectionMark, "circular pattern seed");
-                SelectEntity(axisEdge, DirectionSelectionMark, "circular pattern axis");
+                SelectFeatures([seed], SeedFeatureSelectionMark, "circular pattern seed");
+                SelectEntity(axisEdge.Edge, DirectionSelectionMark, "circular pattern axis");
 
                 // FeatureCircularPattern5 的 14 个参数取自本机 SDK 反射。
                 // EqualSpacing=true 时 Spacing 是总角度，实例在其上等分。
@@ -434,7 +430,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                     manager,
                     "FeatureCircularPattern5",
                     [
-                        instances, angle * OneDegreeInRadians, false, string.Empty,
+                        instances, angle * OneDegreeInRadians, axisEdge.FlipDirection, string.Empty,
                         false, true, false, false,
                         false, false, 1, 0d, string.Empty, false
                     ]));
@@ -501,7 +497,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     /// 整排实例的位置就全错——错得还很像成功。
     /// </para>
     /// </summary>
-    private object ResolveAxisEdge(
+    private (object Edge, bool FlipDirection) ResolveAxisEdge(
         FeatureDefinition feature,
         string criteriaParameter,
         string axisParameter,
@@ -523,6 +519,18 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                 $"{criteriaParameter} must declare expected_count=1; a direction or axis comes from one edge only.");
         }
 
+        feature.Parameters.TryGetValue(axisParameter, out var declaredAxis);
+        if (!PrincipalAxisRules.TryParse(declaredAxis, out var declared))
+        {
+            throw Stage(PartFamilyFailureStages.InvalidFeatureParameter,
+                $"{axisParameter} 必须为 x/y/z 或带 +、- 符号的主轴方向。");
+        }
+        if (expectedKind == EdgeKinds.Circle && !PrincipalAxisRules.HasExplicitOriginAxisPosition(criteria, declared))
+        {
+            throw Stage(PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                "圆周轴判据必须显式约束主轴横向两坐标为 0，不能只校验平行。");
+        }
+
         var (enumerated, resolution) = ResolveEdges(criteria);
         var match = resolution.Matches[0];
         if (!match.Kind.Equals(expectedKind, StringComparison.OrdinalIgnoreCase))
@@ -532,43 +540,37 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                 $"{criteriaParameter} resolved a {match.Kind} edge but {expectedKind} is required.");
         }
 
-        if (match.Direction is null)
-        {
-            throw Stage(
-                PartFamilyFailureStages.EdgeSelectionNotFound,
-                $"{criteriaParameter} resolved edge index {match.Index}, which exposes no measurable direction.");
-        }
-
-        var declared = RequiredPrincipalAxis(feature, axisParameter);
-        var cosine = Math.Abs(
-            (match.Direction.X * declared.X) +
-            (match.Direction.Y * declared.Y) +
-            (match.Direction.Z * declared.Z));
-        if (cosine < AxisParallelCosine)
+        if (!PrincipalAxisRules.TryResolveFlip(match.Direction, declaredAxis, out var flipDirection))
         {
             throw Stage(
                 PartFamilyFailureStages.EdgeSelectionAmbiguous,
-                $"{criteriaParameter} resolved an edge whose direction " +
-                $"({match.Direction.X:0.###}, {match.Direction.Y:0.###}, {match.Direction.Z:0.###}) " +
-                $"is not parallel to the declared {axisParameter}={feature.Parameters[axisParameter]} axis; " +
-                "refusing to guess which one the design meant.");
+                $"{criteriaParameter} 的实测方向无效或不平行于 {axisParameter}={declaredAxis}，已拒绝猜测方向。");
         }
 
-        return enumerated[match.Index].ComEdge;
+        if (expectedKind == EdgeKinds.Circle && !PrincipalAxisRules.IsOnOriginAxis(match, declared, criteria.ToleranceMm))
+        {
+            throw Stage(
+                PartFamilyFailureStages.EdgeSelectionAmbiguous,
+                $"{criteriaParameter} 实测圆心不在声明的过原点主轴上，平行轴不能作为同轴证据。");
+        }
+
+        return (enumerated[match.Index].ComEdge, flipDirection);
     }
 
-    private static EdgeDirection RequiredPrincipalAxis(FeatureDefinition feature, string parameterName)
+    // 阵列只允许一个显式绑定的前序种子；镜像保留独立的多目标解析。
+    private object ResolvePatternSeed(FeatureDefinition feature)
     {
-        feature.Parameters.TryGetValue(parameterName, out var axis);
-        return (axis ?? string.Empty).ToLowerInvariant() switch
+        var validation = PatternParameterRules.ValidateSingleSeed(feature, nameof(RealSolidWorksFeatureAdapter));
+        if (validation is not null)
         {
-            "x" => new EdgeDirection(1d, 0d, 0d),
-            "y" => new EdgeDirection(0d, 1d, 0d),
-            "z" => new EdgeDirection(0d, 0d, 1d),
-            _ => throw Stage(
-                PartFamilyFailureStages.InvalidFeatureParameter,
-                $"{parameterName} must be one of x, y or z.")
-        };
+            throw Stage(PartFamilyFailureStages.InvalidFeatureParameter, string.Join(" ", validation.Issues));
+        }
+
+        var seed = feature.Parameters["seed_feature"];
+        return _features.TryGetValue(seed, out var created)
+            ? created
+            : throw Stage(PartFamilyFailureStages.FeatureResultInvalid,
+                $"seed_feature={seed} 尚未由当前 Adapter 创建，不能用于阵列。");
     }
 
     /// <summary>

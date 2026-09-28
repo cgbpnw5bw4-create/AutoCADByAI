@@ -1,0 +1,345 @@
+{
+  "status": "Passed",
+  "checks": [
+    {
+      "input": "feature_pipeline_plate.json",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092821-db67d733\\01-probe.json",
+        "size_bytes": 16783,
+        "sha256": "3df77a59ad1436925458f0d842084b46df7839dd8dbbe80216d6803171e5a439"
+      },
+      "expected_xyz_radius_mm": [
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ]
+      ],
+      "actual_xyz_radius_mm": [
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "input": "feature_pipeline_plate_fillet.json",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092821-db67d733\\02-probe.json",
+        "size_bytes": 18450,
+        "sha256": "01c7c540c81852000cba6c7027466d319fc287fbea9dfe7d7dba022c7dab0555"
+      },
+      "expected_xyz_radius_mm": [
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          -20,
+          9,
+          0,
+          5
+        ],
+        [
+          -20,
+          10,
+          0,
+          6
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          9,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          6
+        ]
+      ],
+      "actual_xyz_radius_mm": [
+        [
+          -20,
+          9.000000000000002,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          6
+        ],
+        [
+          -20,
+          10,
+          0,
+          6
+        ],
+        [
+          20,
+          9.000000000000002,
+          0,
+          5
+        ],
+        [
+          -20,
+          0,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          5
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "input": "feature_pipeline_plate_chamfer.json",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092821-db67d733\\03-probe.json",
+        "size_bytes": 18530,
+        "sha256": "119a6662705b888e0a0ef1ab84502e047752ca67c6172aff7bb3a591b499f90b"
+      },
+      "expected_xyz_radius_mm": [
+        [
+          -20,
+          0,
+          0,
+          6
+        ],
+        [
+          -20,
+          1,
+          0,
+          5
+        ],
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          6
+        ],
+        [
+          20,
+          1,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ]
+      ],
+      "actual_xyz_radius_mm": [
+        [
+          -20,
+          1.0000000000000113,
+          0,
+          5
+        ],
+        [
+          20,
+          1.0000000000000113,
+          0,
+          5
+        ],
+        [
+          20,
+          0,
+          0,
+          6.000000000000005
+        ],
+        [
+          -20,
+          0,
+          0,
+          6.000000000000005
+        ],
+        [
+          -20,
+          10,
+          0,
+          5
+        ],
+        [
+          20,
+          10,
+          0,
+          5
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "input": "parameter_update_plate.json",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092821-db67d733\\07-probe.json",
+        "size_bytes": 20473,
+        "sha256": "11e64c44b08c0968c773076f1dfcefde20cf6f75c161a94e20b9258b6c87ba79"
+      },
+      "expected_xyz_radius_mm": [
+        [
+          -80,
+          0,
+          -30,
+          5
+        ],
+        [
+          -80,
+          0,
+          30,
+          5
+        ],
+        [
+          -80,
+          15,
+          -30,
+          5
+        ],
+        [
+          -80,
+          15,
+          30,
+          5
+        ],
+        [
+          80,
+          0,
+          -30,
+          5
+        ],
+        [
+          80,
+          0,
+          30,
+          5
+        ],
+        [
+          80,
+          15,
+          -30,
+          5
+        ],
+        [
+          80,
+          15,
+          30,
+          5
+        ]
+      ],
+      "actual_xyz_radius_mm": [
+        [
+          -80,
+          15,
+          -30,
+          5.000000000000005
+        ],
+        [
+          80,
+          15,
+          30,
+          5.000000000000004
+        ],
+        [
+          -80,
+          15,
+          30,
+          5.000000000000004
+        ],
+        [
+          -80,
+          0,
+          30,
+          5.000000000000004
+        ],
+        [
+          80,
+          0,
+          30,
+          5.000000000000004
+        ],
+        [
+          -80,
+          0,
+          -30,
+          5.000000000000005
+        ],
+        [
+          80,
+          15,
+          -30,
+          5.000000000000005
+        ],
+        [
+          80,
+          0,
+          -30,
+          5.000000000000005
+        ]
+      ],
+      "passed": true
+    }
+  ]
+}

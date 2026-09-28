@@ -1,5 +1,23 @@
 # SolidWorks Worker API 证据规则
 
+## V2.2-C 当前恢复入口
+
+本阶段目标、输入、重采方法与实际结果见 [CAD 基线恢复与阵列证据重采](../../../docs/v2_2_c_cad_baseline_recovery.md)。影响单种子、方向、选择和执行引用的源码须参与同一复合指纹；旧物理失配证据保留，新候选必须重新打开核对模型、STEP 与独立几何。官方 API 参数语义不等于当前真机通过，`CandidatePassed` 不等于正式主流程验收；禁止仅修改旧报告长度、hash 或 revision 恢复授权。
+
+2026-09-14 完成 STEP 封送、唯一内部文件名、强制激活与完整路径检查后，9 个 Handler 和 V2.0-D 绑定下列 7 份新报告；原生模型与 STEP 均已独立重开验收。Feature 修订为 `feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a`；V2.0-D 修订为 `v2.0-d-three-circle-source-sha256:3f20fa75e8d828208d211cfed5f9a46b8c93332ba31cd6238ad5d1437cf928dc`。旧阶段记录仅供历史审计，不是当前授权。
+
+| 当前绑定范围 | 最终新报告 |
+|---|---|
+| `sketch`、`extrude_boss`、`extrude_cut`、历史普通 `hole` | [基础特征证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_012822_1801536/feature_execution_report.json) |
+| `fillet` | [圆角证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_012835_8513506/feature_execution_report.json) |
+| `chamfer` | [倒角证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_012854_4152919/feature_execution_report.json) |
+| `linear_pattern` | [线性阵列证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_012912_2394344/feature_execution_report.json) |
+| `circular_pattern` | [圆周阵列证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_012929_6066341/feature_execution_report.json) |
+| `mirror` | [镜像证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_012947_5186294/feature_execution_report.json) |
+| V2.0-D 三圆切除与第四孔精确 profile | [参数更新证据](../../../evidence/solidworks/v2_2_c_refresh/20260914_013003_7170234/feature_execution_report.json) |
+
+正式参数更新主流程和发布件实物复核已通过，详见阶段页；候选报告自身仍不能替代主流程质量链。本轮不授权显式四类孔、夹套或轴类尚未通过的真实工作流，完整测试通过也不代表全局 self-check 通过。
+
 ## 查证顺序
 
 1. 官方 `SolidWorks API Help`。
@@ -430,17 +448,17 @@ IPartDoc.GetPartBox、文件存在、COM 返回非空、特征名称或 hole_cou
 `run-cad-workflow` 在 SolidWorks `33.5.0` 的同次受控运行中完成基线 `160 x 80 x 12 mm` 与更新后的 `200 x 100 x 15 mm` 四孔板。更新报告证明 FeatureGraph 保持不变，且只重执行既有 `plate_boss`、`plate_cut`、`plate_hole`。
 
 更新后的真实测量为：一个实体、外包络 `200 x 100 x 15 mm`、四个平面法向圆柱面、每孔直径约 `10 mm`、实体体积与质量属性体积均为约 `295287.6110196154 mm³`。`geometry_validation_report.json` 的 `final_status=Passed`，同次 `rebuild_report.json`、SLDPRT、STEP、E2E 和 package QualityGate 均为 `Passed` / `Deliverable`。该记录只证明当前四孔板参数更新轮廓，不扩大 V2.0-C 的其他 Feature profile；V2.0-E 仍须保持统一 FeatureGraph 和证据门禁。
-## V2.0-D 三圆 blind cut 的独立授权
+## V2.0-D 三圆 blind cut 的历史独立授权
 
 `V20DThreeCircleCutEvidencePolicy` 不是新的 CAD Feature 或 COM 调用点。它在 `FeatureHandlerRegistry` 通过后、`ConnectAsync` 前对已编译 `SolidWorksBuildPlan` 和受绑定 JSON 证据做纯读取校验，补足 V2.0-C 单圆 `extrude_cut` profile 不覆盖的三圆 `cut_profile`。
 
-固定候选诊断 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json` 绑定 `examples/parameter_update_plate.json`，在 SolidWorks `31.5.0` 中真实应用 200×100×15 的参数更新，记录 `plate_cut` 从 `0.00030000000000000003` 下降到 `0.00029646570826471146` m³，随后 `plate_hole` 再下降到 `0.00029528761101961536` m³。策略同时校验候选报告哈希、实际 SLDPRT/STEP 物理文件及其大小、STEP 内容、V2.0-C Feature 源码 revision、三圆/第四孔的精确图形和 20 mm 边距映射。
+以下保留当时的固定候选诊断记录；当前绑定以页首 V2.2-C 表格为准。当时 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json` 绑定 `examples/parameter_update_plate.json`，在 SolidWorks `31.5.0` 中真实应用 200×100×15 的参数更新，记录 `plate_cut` 从 `0.00030000000000000003` 下降到 `0.00029646570826471146` m³，随后 `plate_hole` 再下降到 `0.00029528761101961536` m³。策略同时校验候选报告哈希、实际 SLDPRT/STEP 物理文件及其大小、STEP 内容、V2.0-C Feature 源码 revision、三圆/第四孔的精确图形和 20 mm 边距映射。
 
 候选诊断只能证明该精确 profile 的 API 行为，不能代替 `run-cad-workflow`、GeometryValidator 或 QualityGate。任何不匹配都以 `feature_api_unverified` 在连接前拒绝，绝不通过修改 Handler、直接 Builder 或伪造文件存在绕过。
 
-## V2.0-E 现行 FeatureGraph 证据绑定
+## V2.0-E 历史 FeatureGraph 证据绑定
 
-历史 V2.0-C/D 记录仅保留为审计背景，不能作为当前源码的生产授权。现行四类 Handler 与 V2.0-D 三圆 profile 统一绑定 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`：SolidWorks `31.5.0`、源码 revision `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`，报告的 `CandidatePassed` / `NotDeliverable` 语义不变。策略逐项读取诊断、校验受绑定物理 SLDPRT、有效 STEP 内容、版本、特征结果和体积变化；任何失配都在 COM 连接前返回 `feature_api_unverified`。
+以下保留 V2.0-E 当时的绑定事实，仅作审计背景；当前生产授权以页首 V2.2-C 新报告为准。当时四类 Handler 与 V2.0-D 三圆 profile 统一绑定 `evidence/solidworks/20260821_034143_9836278/feature_execution_report.json`：SolidWorks `31.5.0`、源码 revision `feature-execution-source-sha256:1795e60b5855ee1140db9b979d34ae0672490d4f7e384ec820c8acadc9baa211`，报告的 `CandidatePassed` / `NotDeliverable` 语义不变。策略逐项读取诊断、校验受绑定物理 SLDPRT、有效 STEP 内容、版本、特征结果和体积变化；任何失配都在 COM 连接前返回 `feature_api_unverified`。
 
 ## V2.1-A 夹套 API 证据
 

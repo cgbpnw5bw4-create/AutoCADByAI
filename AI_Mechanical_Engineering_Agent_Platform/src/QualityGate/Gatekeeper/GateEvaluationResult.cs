@@ -4,4 +4,7 @@ namespace QualityGate;
 
 public sealed record GateEvaluationResult(
     GateDecision Decision,
-    RejectReport? RejectReport);
+    RejectReport? RejectReport)
+{
+    public IReadOnlyList<QualityGateCheckResult> Checks { get; init; } = [];
+}

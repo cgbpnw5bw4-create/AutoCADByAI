@@ -646,13 +646,18 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
             context.Request,
             context.Options,
             PartType);
-        var partPath = Path.Combine(outputDirectory, $"{PartType}.SLDPRT");
-        var stepPath = Path.Combine(outputDirectory, $"{PartType}.STEP");
+        // SolidWorks 按标题激活；独立运行必须拥有独立实际文件名，避免复用同名历史文档。
+        var documentName = $"{PartType}_{Guid.NewGuid():N}";
+        var partPath = Path.Combine(outputDirectory, $"{documentName}.SLDPRT");
+        var stepPath = Path.Combine(outputDirectory, $"{documentName}.STEP");
+        var deliveryPartPath = Path.Combine(outputDirectory, $"{PartType}.SLDPRT");
+        var deliveryStepPath = Path.Combine(outputDirectory, $"{PartType}.STEP");
         var reportPath = Path.Combine(outputDirectory, "build_report.json");
         var featureExecutionReportPath = Path.Combine(outputDirectory, "feature_execution_report.json");
         diagnostics.SldprtPath = partPath;
         diagnostics.StepPath = stepPath;
         object? model = null;
+        var ownedModelClosed = false;
 
         try
         {
@@ -676,11 +681,39 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
             ValidateExpectedGeometry(model, context.Request.BuildPlan, diagnostics);
             Save(model, partPath, diagnostics);
             Export(context.Application, model, stepPath, diagnostics);
+            ownedModelClosed = TryCloseOwnedModel(context.Application, model, partPath);
+            if (!ownedModelClosed)
+            {
+                throw Failure(PartFamilyFailureStages.ArtifactValidationFailed, "本次模型未能按保存路径安全关闭，禁止发布规范名副本。");
+            }
+            logs.Add($"solidworks_document_closed: {Path.GetFileName(partPath)}");
+            try
+            {
+                // 关闭独占内部文档后再复制规范名，兼容已有绘图和发布路径；不得覆盖已有交付物。
+                File.Copy(partPath, deliveryPartPath, overwrite: false);
+                File.Copy(stepPath, deliveryStepPath, overwrite: false);
+                var partState = FileVerifier.GetState(deliveryPartPath);
+                var stepState = FileVerifier.GetState(deliveryStepPath);
+                if (!partState.Exists || !stepState.Exists ||
+                    partState.SizeBytes != diagnostics.SldprtSizeBytes || stepState.SizeBytes != diagnostics.StepSizeBytes)
+                {
+                    throw new IOException("规范名副本的文件状态或大小与本次已验证内部文件不一致。");
+                }
+                diagnostics.SldprtPath = deliveryPartPath;
+                diagnostics.StepPath = deliveryStepPath;
+                diagnostics.SldprtSizeBytes = partState.SizeBytes;
+                diagnostics.StepSizeBytes = stepState.SizeBytes;
+                diagnostics.OperationsExecuted.Add("delivery_artifacts_copied");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                throw Failure(PartFamilyFailureStages.ArtifactValidationFailed, $"交付文件复制失败：{ex.Message}");
+            }
             SolidWorksPartFamilyBuildReportWriter.Write(reportPath, context, this, outputDirectory, diagnostics, "Passed");
             var artifacts = new List<SolidWorksArtifact>
             {
-                    SolidWorksPartFamilyBuildOutput.Artifact("real-part", "Part", partPath, ".SLDPRT", $"Real {PartType} SolidWorks part."),
-                    SolidWorksPartFamilyBuildOutput.Artifact("real-step", "Step", stepPath, ".STEP", $"Real {PartType} STEP export."),
+                    SolidWorksPartFamilyBuildOutput.Artifact("real-part", "Part", deliveryPartPath, ".SLDPRT", $"Real {PartType} SolidWorks part."),
+                    SolidWorksPartFamilyBuildOutput.Artifact("real-step", "Step", deliveryStepPath, ".STEP", $"Real {PartType} STEP export."),
                     SolidWorksPartFamilyBuildOutput.Artifact("real-build-report", "BuildReport", reportPath, ".json", "Real part-family build report.")
             };
             if (diagnostics.FeatureHandlerReports.Count > 0)
@@ -735,8 +768,34 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         {
             if (model is not null)
             {
+                if (!ownedModelClosed) TryCloseOwnedModel(context.Application, model, partPath);
                 Com.ReleaseComObject(model);
             }
+        }
+    }
+
+    private bool TryCloseOwnedModel(object application, object model, string expectedPartPath)
+    {
+        try
+        {
+            // 只有本次 NewDocument 对象且保存路径相符才拥有关闭权；不能从 ActiveDoc 或 PartType 猜测。
+            var actualPath = Com.TryInvoke(model, "GetPathName") as string;
+            var title = Com.TryInvoke(model, "GetTitle") as string;
+            if (string.IsNullOrWhiteSpace(actualPath) || !Path.IsPathFullyQualified(actualPath) ||
+                !string.Equals(Path.GetFullPath(actualPath), Path.GetFullPath(expectedPartPath), StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(title) ||
+                (!title.Equals(Path.GetFileName(expectedPartPath), StringComparison.OrdinalIgnoreCase) &&
+                 !title.Equals(Path.GetFileNameWithoutExtension(expectedPartPath), StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+            Com.Invoke(application, "CloseDoc", title);
+            return true;
+        }
+        catch (Exception ex) when (ex is COMException or TargetInvocationException or MissingMethodException or
+            InvalidOperationException or ArgumentException or NotSupportedException or IOException)
+        {
+            return false;
         }
     }
 
@@ -896,24 +955,22 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
     {
         diagnostics.StepExportAttempted = true;
         diagnostics.OperationsExecuted.Add("step_export_started");
-        var title = Com.TryInvoke(model, "GetTitle")?.ToString();
-        if (!string.IsNullOrWhiteSpace(title))
+        if (!SolidWorksStepExportDocumentGuard.TryPrepare(
+                Com, application, model, diagnostics.SldprtPath, out var identityIssue))
         {
-            Com.TryInvoke(application, "ActivateDoc3", title, true, 0, 0);
+            throw Failure(PartFamilyFailureStages.StepExportFailed, identityIssue!);
         }
 
-        var activeDocument = Com.TryGetProperty(application, "ActiveDoc") ?? model;
-        Com.TryInvoke(activeDocument, "ClearSelection2", true);
+        diagnostics.OperationsExecuted.Add("step_export_document_identity_verified");
+        Com.Invoke(model, "ClearSelection2", true);
         var errors = new List<string>();
         var warnings = new List<string>();
-        var exported = Com.TryExtensionSaveAs(activeDocument, path, null, errors, warnings) ||
-                       Com.TryInvokeBool(activeDocument, "SaveAs3", path, 0, 1) ||
-                       Com.TryInvokeBool(activeDocument, "SaveAs", path);
-        if (!exported)
+        var exported = Com.TryExtensionSaveAs(model, path, null, errors, warnings);
+        diagnostics.Warnings.AddRange(warnings);
+        if (!exported || errors.Count > 0)
         {
             diagnostics.Issues.AddRange(errors);
-            diagnostics.Warnings.AddRange(warnings);
-            throw Failure(PartFamilyFailureStages.StepExportFailed, "STEP SaveAs returned false.");
+            throw Failure(PartFamilyFailureStages.StepExportFailed, "STEP Extension.SaveAs 未成功或返回错误。");
         }
 
         var state = FileVerifier.GetState(path);
@@ -933,6 +990,71 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         diagnostics.StepContentValidated = true;
         diagnostics.StepSizeBytes = state.SizeBytes;
         diagnostics.OperationsExecuted.Add("step_export_success");
+    }
+}
+
+// STEP 导出依赖活动文档，但名称不是文档身份。只接受本次已保存 SLDPRT 的完整路径。
+internal static class SolidWorksStepExportDocumentGuard
+{
+    public static bool TryPrepare(
+        ISolidWorksComFacade com,
+        object application,
+        object model,
+        string? expectedPartPath,
+        out string? issue)
+    {
+        issue = null;
+        if (!TryAbsolutePath(expectedPartPath, out var expected) ||
+            !Path.GetExtension(expected).Equals(".SLDPRT", StringComparison.OrdinalIgnoreCase))
+        {
+            issue = "step_export_document_identity_invalid: 缺少本次保存的绝对 SLDPRT 路径。";
+            return false;
+        }
+        if (!HasExpectedPath(com, model, expected))
+        {
+            issue = $"step_export_document_identity_invalid: 原模型 GetPathName 与本次保存路径不一致：{expected}。";
+            return false;
+        }
+
+        var active = com.TryGetProperty(application, "ActiveDoc");
+        // 官方 Name 合同是含扩展名文档名；完整路径只用于前后身份核对。
+        // UseUserPreferences=false，1=swDontRebuildActiveDoc，避免激活弹窗或保存后的隐式重建。
+        object?[] arguments = [Path.GetFileName(expected), false, 1, -1];
+        var activated = com.TryInvokeWithArgs(application, "ActivateDoc3", arguments);
+        if (activated is null || arguments[3] is not int activationError || activationError != 0)
+        {
+            issue = $"step_export_activation_failed: ActivateDoc3 未成功激活目标文档，error={arguments[3] ?? "missing"}。";
+            return false;
+        }
+
+        active = com.TryGetProperty(application, "ActiveDoc");
+        if (!HasExpectedPath(com, activated, expected) || active is null ||
+            !HasExpectedPath(com, active, expected) || !HasExpectedPath(com, model, expected))
+        {
+            issue = $"step_export_document_identity_invalid: 激活返回文档、ActiveDoc 与原模型必须均匹配 {expected}，禁止使用同名其他路径或缺少身份的文档。";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool HasExpectedPath(ISolidWorksComFacade com, object model, string expected) =>
+        TryAbsolutePath(com.TryInvoke(model, "GetPathName") as string, out var actual) &&
+        string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryAbsolutePath(string? path, out string absolutePath)
+    {
+        absolutePath = string.Empty;
+        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path)) return false;
+        try
+        {
+            absolutePath = Path.GetFullPath(path);
+            return true;
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
     }
 }
 

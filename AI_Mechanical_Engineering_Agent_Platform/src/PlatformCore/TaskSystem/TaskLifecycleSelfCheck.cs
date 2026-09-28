@@ -6,7 +6,7 @@ public static class TaskLifecycleSelfCheck
 {
     public static async Task<IReadOnlyDictionary<string, bool>> RunAsync(string projectRoot)
     {
-        var platform = PlatformBootstrapper.CreateDefault(projectRoot);
+        var platform = PlatformBootstrapper.CreateDefault(projectRoot, internalWorkflowRoute: InternalWorkflowRoute.EngineeringDefault);
         var service = new AgentTaskService(platform);
         var input = new AgentInput("self-check", "local", "task-lifecycle-self-check", "self-check", "检查工程规划流程",
             [], new Dictionary<string, string> { ["test_scenario"] = "drawing_reviewer_needs_human_approval", ["dry_run"] = "true" });

@@ -1,0 +1,27 @@
+{
+  "schema_version": "v2.2-c-candidate-collection-2",
+  "started_at": "2026-09-14T01:07:03Z",
+  "status": "Failed",
+  "candidate_only": true,
+  "production_bindings_modified": false,
+  "independent_engineering_acceptance": "Pending",
+  "project_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform",
+  "items": [],
+  "updated_at": "2026-09-14T01:07:03Z",
+  "output_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation",
+  "config_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\config\\solidworks.local.json",
+  "cad_environment": {
+    "SW_TEMPLATE_PART_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_part.prtdot",
+    "SW_TEMPLATE_DRAWING_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_a3.drwdot",
+    "SW_CONNECT_TIMEOUT_SECONDS": "120",
+    "SW_EXECUTION_TIMEOUT_SECONDS": "300",
+    "SW_VISIBLE": "true",
+    "SW_FEATURE_EXECUTION_SMOKE_TEST": "true"
+  },
+  "failure": {
+    "type": "RuntimeError",
+    "message": "--build-log 必须指向本阶段 validation 目录内已经完成的构建日志。",
+    "at": "2026-09-14T01:07:03Z"
+  },
+  "finished_at": "2026-09-14T01:07:03Z"
+}

@@ -96,7 +96,8 @@ public sealed class ApprovalCadContinuationTests
     private sealed class Fixture : IDisposable
     {
         public string Root { get; } = Path.Combine(Path.GetTempPath(), "approval-cad-" + Guid.NewGuid().ToString("N"));
-        public PlatformKernel Platform { get; } = PlatformBootstrapper.CreateDefault(PlatformPathResolver.FindProjectRoot());
+        public PlatformKernel Platform { get; } = PlatformBootstrapper.CreateDefault(PlatformPathResolver.FindProjectRoot(),
+            internalWorkflowRoute: AgentContracts.InternalWorkflowRoute.EngineeringDefault);
         public CountingWorker Worker { get; }
         public AgentMessageDispatcher Dispatcher { get; }
         public Dictionary<string, string> Values { get; }

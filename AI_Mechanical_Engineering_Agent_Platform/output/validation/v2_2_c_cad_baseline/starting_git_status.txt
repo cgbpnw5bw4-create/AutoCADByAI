@@ -1,0 +1,48 @@
+ M AGENTS.md
+ M AI_Mechanical_Engineering_Agent_Platform.sln
+ M docs/agent_standard.md
+ M docs/architecture.md
+ M docs/codex_execution_protocol.md
+ M docs/index.md
+ M docs/project_execution_standard.md
+ M docs/quality_gate.md
+ M docs/version_stage_index.md
+ M src/AgentRuntime.Microsoft/AgentFactory.cs
+ M src/AgentRuntime.Microsoft/AgentRuntime.Microsoft.csproj
+ M src/AgentRuntime.Microsoft/MicrosoftAgentAdapter.cs
+ M src/AgentRuntime.Microsoft/MicrosoftRuntimeAgentInvoker.cs
+ M src/AgentRuntime.Microsoft/MicrosoftWorkflowRuntime.cs
+ M src/AgentRuntime.Microsoft/Prompts/chief_engineer.system.md
+ M src/AgentRuntime.Microsoft/README.md
+ M src/AgentRuntime.Microsoft/RuntimePlatformFactory.cs
+ M src/AgentRuntime.Microsoft/ToolBridge.cs
+ M src/Interfaces/ApiHost/Program.cs
+ M src/Interfaces/CliHost/Program.cs
+ M src/Modules/RequirementUnderstanding/agents/ChiefEngineerOrchestrator.cs
+ M src/PlatformCore/PlatformBootstrapper.cs
+ M src/PlatformCore/PlatformCore.csproj
+ M src/PlatformCore/PlatformKernel.cs
+ M src/PlatformCore/PlatformSelfCheckRunner.cs
+ M src/PlatformCore/SelfCheckReport.cs
+ M src/PlatformCore/SolidWorksMainWorkflowRunner.cs
+ M src/PlatformCore/TaskSystem/TaskLifecycleSelfCheck.cs
+ M src/PlatformCore/WorkflowEngine/SequentialWorkflowEngine.cs
+ M src/QualityGate/Gatekeeper/DefaultGatekeeper.cs
+ M src/QualityGate/Gatekeeper/GateDecisionPolicy.cs
+ M src/QualityGate/Gatekeeper/GateEvaluationResult.cs
+ M tests/PlatformSelfCheck.Tests/ApprovalCadContinuationTests.cs
+ M tests/PlatformSelfCheck.Tests/InternalAgentRoutingTests.cs
+ M tests/PlatformSelfCheck.Tests/WorkflowBackedInternalOrchestrationTests.cs
+?? README.md
+?? docs/v2_2_b_frontier_model_architecture.md
+?? output/validation/v2_2_b_frontier/
+?? src/AgentRuntime.Microsoft/ConfiguredModelProvider.cs
+?? src/ModelRuntime/
+?? src/PlatformCore/FrontierArchitectureSelfCheck.cs
+?? src/PlatformCore/WorkflowEngine/EngineeringPlanValidationStep.cs
+?? src/PlatformCore/WorkflowEngine/IWorkflowEngine.cs
+?? src/QualityGate/Gatekeeper/IQualityGate.cs
+?? tests/PlatformSelfCheck.Tests/ExtensibleQualityGateTests.cs
+?? tests/PlatformSelfCheck.Tests/ModelRuntimeBoundaryTests.cs
+?? tests/PlatformSelfCheck.Tests/WorkflowAbstractionTests.cs
+?? ../README.md

@@ -2,11 +2,15 @@ namespace PlatformCore;
 
 public sealed class PlatformKernel
 {
-    public PlatformKernel()
+    public PlatformKernel() : this(null)
+    {
+    }
+
+    public PlatformKernel(IWorkflowEngine? workflowEngine)
     {
         TaskStore = new TaskStore();
         AuditLog = new InMemoryAuditLog();
-        WorkflowEngine = new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), AuditLog);
+        WorkflowEngine = workflowEngine ?? new SequentialWorkflowEngine(SequentialWorkflowEngine.CreateDefaultRetryPolicy(), AuditLog);
         AgentRegistry = new AgentRegistry();
         SkillRegistry = new SkillRegistry();
         ModuleRegistry = new ModuleRegistry();
@@ -18,7 +22,7 @@ public sealed class PlatformKernel
 
     public TaskStore TaskStore { get; }
 
-    public SequentialWorkflowEngine WorkflowEngine { get; }
+    public IWorkflowEngine WorkflowEngine { get; }
 
     public AgentRegistry AgentRegistry { get; }
 

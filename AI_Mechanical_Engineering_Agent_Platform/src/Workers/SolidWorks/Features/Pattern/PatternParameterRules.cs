@@ -16,19 +16,8 @@ internal static class PatternParameterRules
         FeatureDefinition feature,
         string handlerName)
     {
-        if (!feature.Parameters.TryGetValue("seed_feature", out var seed) ||
-            string.IsNullOrWhiteSpace(seed))
-        {
-            return Invalid(feature, "seed_feature must reference an existing feature id.");
-        }
-
-        if (feature.ReferencedFeatures.Count > 0 &&
-            !feature.ReferencedFeatures.Contains(seed, StringComparer.OrdinalIgnoreCase))
-        {
-            return Invalid(
-                feature,
-                $"seed_feature={seed} is not present in referenced_features, so {handlerName} cannot bind it.");
-        }
+        var seedValidation = ValidateSingleSeed(feature, handlerName);
+        if (seedValidation is not null) return seedValidation;
 
         if (!TryInteger(feature, "instance_count", out var instances) ||
             instances < MinimumInstanceCount ||
@@ -42,19 +31,52 @@ internal static class PatternParameterRules
         return null;
     }
 
+    public static FeatureHandlerValidationResult? ValidateSingleSeed(FeatureDefinition feature, string handlerName)
+    {
+        if (!feature.Parameters.TryGetValue("seed_feature", out var seed) ||
+            string.IsNullOrWhiteSpace(seed) || seed.IndexOfAny([';', ',']) >= 0)
+        {
+            return Invalid(feature, "seed_feature 必须为一个非空特征标识，不允许分号或逗号分隔多个种子。");
+        }
+
+        if (feature.ReferencedFeatures.Count != 1 ||
+            !string.Equals(feature.ReferencedFeatures[0], seed, StringComparison.OrdinalIgnoreCase))
+        {
+            return Invalid(
+                feature,
+                $"{handlerName}: referenced_features 必须仅包含 seed_feature={seed}，不能省略绑定或声明多个目标。");
+        }
+
+        // ReferencedFeatures 已由 FeatureDefinition.DependsOn 合并为排序依赖，无需重复声明 Dependencies。
+        if (string.Equals(seed, feature.FeatureId, StringComparison.OrdinalIgnoreCase))
+        {
+            return Invalid(feature, $"seed_feature={seed} 不能引用阵列自身。");
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// 校验一条"必须唯一命中"的边判据。方向与轴都只能来自一条边，
     /// 因此 ExpectedCount 必须是 1——允许多条就等于允许执行时任选一条。
     /// </summary>
     public static FeatureHandlerValidationResult? ValidateSingleEdgeCriteria(
         FeatureDefinition feature,
-        string parameterName)
+        string parameterName,
+        string? principalAxis = null)
     {
         feature.Parameters.TryGetValue(parameterName, out var json);
         if (!EdgeSelectionCriteriaParser.TryParse(json, out var criteria, out var issue) ||
             criteria is null)
         {
             return Invalid(feature, $"{parameterName} is unusable: {issue}");
+        }
+
+        if (principalAxis is not null &&
+            (!PrincipalAxisRules.TryParse(principalAxis, out var axis) ||
+             !PrincipalAxisRules.HasExplicitOriginAxisPosition(criteria, axis)))
+        {
+            return Invalid(feature, $"{parameterName} 必须明确主轴横向的两个圆心坐标为 0；不允许用偏心平行轴代替过原点的主轴。");
         }
 
         return criteria.ExpectedCount == 1

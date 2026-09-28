@@ -1,0 +1,432 @@
+{
+  "status": "Passed",
+  "documents": 11,
+  "local_links": 85,
+  "checks": [
+    {
+      "document": "AGENTS.md",
+      "target": "docs/v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/index.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/project_execution_standard.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/codex_execution_protocol.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/version_stage_index.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/architecture.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/agent_standard.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/quality_gate.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "docs/v2_2_b_frontier_model_architecture.md",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "output/validation/v2_2_c_cad_baseline/verification_summary_20260914.json",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "output/validation/v2_2_c_cad_baseline/main_release_geometry_unique_20260914/verification.json",
+      "exists": true
+    },
+    {
+      "document": "README.md",
+      "target": "output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/index.md",
+      "target": "../README.md",
+      "exists": true
+    },
+    {
+      "document": "docs/index.md",
+      "target": "v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "docs/index.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/index.md",
+      "target": "v2_2_b_frontier_model_architecture.md",
+      "exists": true
+    },
+    {
+      "document": "docs/index.md",
+      "target": "v2_2_a_task_approval_lifecycle.md",
+      "exists": true
+    },
+    {
+      "document": "docs/project_execution_standard.md",
+      "target": "v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "docs/project_execution_standard.md",
+      "target": "v2_2_b_frontier_model_architecture.md",
+      "exists": true
+    },
+    {
+      "document": "docs/project_execution_standard.md",
+      "target": "v2_2_a_task_approval_lifecycle.md",
+      "exists": true
+    },
+    {
+      "document": "docs/project_execution_standard.md",
+      "target": "v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "docs/project_execution_standard.md",
+      "target": "v2_2_a_task_approval_lifecycle.md",
+      "exists": true
+    },
+    {
+      "document": "docs/project_execution_standard.md",
+      "target": "2026_09_09_architecture_review.md",
+      "exists": true
+    },
+    {
+      "document": "docs/codex_execution_protocol.md",
+      "target": "v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "docs/codex_execution_protocol.md",
+      "target": "2026_09_09_architecture_review.md",
+      "exists": true
+    },
+    {
+      "document": "docs/codex_execution_protocol.md",
+      "target": "v2_2_a_task_approval_lifecycle.md",
+      "exists": true
+    },
+    {
+      "document": "docs/version_stage_index.md",
+      "target": "v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "docs/version_stage_index.md",
+      "target": "v2_2_a_task_approval_lifecycle.md",
+      "exists": true
+    },
+    {
+      "document": "docs/version_stage_index.md",
+      "target": "v2_2_b_frontier_model_architecture.md",
+      "exists": true
+    },
+    {
+      "document": "docs/version_stage_index.md",
+      "target": "v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "docs/version_stage_index.md",
+      "target": "v2_2_a_task_approval_lifecycle.md",
+      "exists": true
+    },
+    {
+      "document": "docs/version_stage_index.md",
+      "target": "2026_09_09_architecture_review.md",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/verification_summary_20260914.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../evidence/solidworks/v2_2_c_environment_probe/20260909_072840_7316264/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../evidence/solidworks/v2_2_c_environment_probe/20260909_072840_7316264/probe.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/resume_20260914_verification.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../evidence/solidworks/v2_2_c_direction_validation/20260909_073601_0292174/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/export_isolation_20260914.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/export_isolation_dispatch_20260914.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/export_isolation_dispatch_20260914/step_probe.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260914_090727-a3a1077d/manifest.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260909_154101-818998b2/manifest.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260909_154101-818998b2/01-probe.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260909_154101-818998b2/02-probe.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260909_154101-818998b2/03-probe.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260909_154101-818998b2/04-probe.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260914_091855-55d13b28/manifest.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/collection-20260914_092821-db67d733/manifest.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/topology_acceptance_20260914.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/profile_topology_acceptance_20260914.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../src/Workers/SolidWorks/api_evidence.md",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/main_workflow_20260914.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/solidworks/e2e/plate_basic_4holes/cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/main_release_geometry_unique_20260914/verification.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/main_release_geometry_20260914",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_build_20260914.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_tests_20260914.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_tests/full.trx",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/execution_contracts_owned.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/comparison_regression_20260914.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_self_check/reports/platform_self_check_report.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/preservation_final_20260914.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/preservation_final_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/revisions_resume_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/quality_gate_resume_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_build_20260924.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_tests_20260924.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_tests_20260924/full.trx",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_self_check_20260924/reports/platform_self_check_report.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/final_self_check_20260924.log",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "docs/v2_2_c_cad_baseline_recovery.md",
+      "target": "../output/validation/v2_2_c_cad_baseline/test_report_preservation_20260924.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/execution.md",
+      "target": "../../../docs/v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/failure_repair.md",
+      "target": "../../../docs/v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../docs/v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_012822_1801536/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_012835_8513506/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_012854_4152919/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_012912_2394344/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_012929_6066341/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_012947_5186294/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/api_evidence.md",
+      "target": "../../../evidence/solidworks/v2_2_c_refresh/20260914_013003_7170234/feature_execution_report.json",
+      "exists": true
+    },
+    {
+      "document": "src/Workers/SolidWorks/review_checklist.md",
+      "target": "../../../docs/v2_2_c_cad_baseline_recovery.md",
+      "exists": true
+    }
+  ]
+}

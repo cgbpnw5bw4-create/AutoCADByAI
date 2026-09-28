@@ -46,12 +46,12 @@ public sealed class FilletHandler : FeatureHandlerBase
             "V2.1-A 诊断在 SOLIDWORKS 2023 上实调 FeatureFillet3：判据唯一命中两条顶面孔口，",
             "结果对象非空、重建通过、体积发生可测变化。"
         ],
-        EvidenceId: "v2.1-b-20260907-refresh-FilletHandler",
+        EvidenceId: "v2.2-c-20260914-refresh-FilletHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "constant_radius_edge_fillet;uniform_radius;simple_type;criteria_resolved_selection",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/v2_1_b_refresh/20260907_013408_5080299/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09");
+        DiagnosticRunPath: "evidence/solidworks/v2_2_c_refresh/20260914_012835_8513506/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

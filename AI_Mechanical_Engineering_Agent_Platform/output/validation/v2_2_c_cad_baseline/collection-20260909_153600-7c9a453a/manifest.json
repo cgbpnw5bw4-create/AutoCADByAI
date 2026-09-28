@@ -1,0 +1,92 @@
+{
+  "schema_version": "v2.2-c-candidate-collection-1",
+  "started_at": "2026-09-09T07:36:00Z",
+  "status": "Failed",
+  "candidate_only": true,
+  "production_bindings_modified": false,
+  "independent_engineering_acceptance": "Pending",
+  "project_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform",
+  "items": [
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_opposite_edge.json",
+        "size_bytes": 3396,
+        "sha256": "140401b2a7e3a1b78bec1cc128f998f2e9c341adc82b20eda8b961f4709ac0ab"
+      },
+      "status": "Failed",
+      "smoke_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_opposite_edge.json",
+          "--output",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260909_153600-7c9a453a\\01-smoke.log",
+        "started_at": "2026-09-09T07:36:00Z",
+        "timeout_seconds": 600,
+        "exit_code": 2,
+        "finished_at": "2026-09-09T07:36:01Z"
+      },
+      "new_reports": [
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_073601_0292174\\feature_execution_report.json"
+      ]
+    }
+  ],
+  "updated_at": "2026-09-09T07:36:01Z",
+  "output_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation",
+  "config_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\config\\solidworks.local.json",
+  "cad_environment": {
+    "SW_TEMPLATE_PART_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_part.prtdot",
+    "SW_TEMPLATE_DRAWING_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_a3.drwdot",
+    "SW_CONNECT_TIMEOUT_SECONDS": "120",
+    "SW_EXECUTION_TIMEOUT_SECONDS": "300",
+    "SW_VISIBLE": "true",
+    "SW_FEATURE_EXECUTION_SMOKE_TEST": "true"
+  },
+  "runner_binaries": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+      "size_bytes": 61440,
+      "sha256": "2202aeab985752c2a92d33235299d4092d7c8c0ab31a11fcfbeaba398cdbd9e5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 559616,
+      "sha256": "59577b0af4350ad7e26f7e60a9aa16a900d9586889812196ca46b34d286b3595"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 398336,
+      "sha256": "ab3084389e024b11390daca4978db5b94310c9e09956d1c80c136a2d8d143ce2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\PlatformCore.dll",
+      "size_bytes": 995840,
+      "sha256": "a303cc04d1d648ea62322d264f4fdae94d2fc529f0992f630fe8b8ee7312c7c4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+      "size_bytes": 16384,
+      "sha256": "221c5bcb0b9c026b89af4a36f037c65eb7eed8472ae1ad1dcdf11a64342890e7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 559616,
+      "sha256": "59577b0af4350ad7e26f7e60a9aa16a900d9586889812196ca46b34d286b3595"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 398336,
+      "sha256": "ab3084389e024b11390daca4978db5b94310c9e09956d1c80c136a2d8d143ce2"
+    }
+  ],
+  "failure": {
+    "type": "RuntimeError",
+    "message": "候选进程失败：2",
+    "at": "2026-09-09T07:36:01Z"
+  },
+  "finished_at": "2026-09-09T07:36:01Z"
+}

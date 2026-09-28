@@ -742,6 +742,12 @@ public class BuildPlanCompiler
                 ["feature_id"] = feature.FeatureId,
                 ["feature_type"] = feature.FeatureType
             };
+            if (feature.FeatureType.Equals(FeatureTypes.LinearPattern, StringComparison.OrdinalIgnoreCase) ||
+                feature.FeatureType.Equals(FeatureTypes.CircularPattern, StringComparison.OrdinalIgnoreCase))
+            {
+                // 保留原图声明的绑定，不能由 seed_feature 字符串反向制造引用。
+                parameters["referenced_features"] = JsonSerializer.Serialize(feature.ReferencedFeatures);
+            }
             if (feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase) && feature.Parameters.ContainsKey("hole_type"))
                 foreach (var parameter in new HoleValidator().Validate(feature).Definition!.ToParameters())
                     parameters[parameter.Key] = parameter.Value;

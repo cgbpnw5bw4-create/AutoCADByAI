@@ -1,6 +1,6 @@
 # 质量门禁
 
-`QualityGate` 用于把执行与复审分开。它不负责调用 CAD，也不负责生成模型，而是负责判断结果是否可以继续进入下一步。
+`AI Mechanical Engineer Platform` 的 `QualityGate` 负责工程结果验收和流程裁决。它不调用 CAD 或生成模型；模型建议及 Worker 返回成功均需经过平台独立验收。
 
 ## 目标、适用范围与输入输出
 
@@ -8,6 +8,8 @@
 
 核心组件：
 
+- `IQualityGate`：以 `Name`、`Domain` 和 `Evaluate(ReviewReport)` 表达单项验收合同。
+- `QualityGateDomain`：提供 `General`、`Geometry`、`APIEvidence`、`Assembly`、`Drawing` 和 `Manufacturability` 分类。
 - Validator：确定性校验，生成或辅助生成 `ReviewReport`。
 - Reviewer：复审逻辑，生成 `ReviewReport`。
 - Gatekeeper：读取 `ReviewReport` 并生成 `GateDecision`。
@@ -28,6 +30,22 @@
 3. Gatekeeper 应用 `GateDecisionPolicy`。
 4. 如果被打回，`RejectReportBuilder` 创建 `RejectReport`。
 5. `WorkflowEngine` 根据裁决继续、重试、失败或等待人工审批。
+
+## 可扩展门禁合同
+
+`GateDecisionPolicy` 实现 `IQualityGate`，保留原 `Decide` 入口。`DefaultGatekeeper` 保留原双参数构造函数，同时接受可选 `IEnumerable<IQualityGate> additionalGates`；现有 `Evaluate` 必须先运行基础策略，再组合附加门禁。
+
+独立领域门禁组合按 `Failed > Rejected > NeedsHumanApproval > Passed` 收敛，附加门禁只能收紧结果，不能覆盖基础拒绝为通过，也不能用人工审批放行另一个领域的证据或几何拒绝。单一 `GateDecisionPolicy` 内部既有优先级保持兼容；跨门禁合成使用上述顺序。每项结果记录在 `GateEvaluationResult.Checks` 中，包含对应领域和裁决。门禁异常、空裁决或未知结果均失败关闭；重复名称和无效领域在配置时拒绝。
+
+| 未来专项门禁 | 对应领域 | 本轮边界 |
+|---|---|---|
+| `GeometryQualityGate` | `Geometry` | 保留现有几何检查，可按合同接入；不重写已受证几何路径 |
+| `APIEvidenceQualityGate` | `APIEvidence` | 保留现有源码、档案、环境及物理证据检查，不以新抽象重新授权 |
+| `AssemblyQualityGate` | `Assembly` | 仅预留清晰领域，装配约束与干涉验收需另行实现 |
+| `DrawingQualityGate` | `Drawing` | 保留已有工程图验收，未来按实际输入扩展 |
+| `ManufacturabilityQualityGate` | `Manufacturability` | 仅预留清晰领域，制造规则与数据来源需另行定义 |
+
+本轮实现接口、分类和组合行为，不增加五个空壳类，也不声称专项工程算法已经完成。未来 Gate 应复用已验证的 Validator/Reviewer 证据；若确实需要不同输入，再以具体用例增量扩展，避免提前堆叠未使用合同。
 
 ## Retry 延迟语义
 
@@ -63,11 +81,13 @@ V2.1-B 可靠性补强结束时，无损取消承诺仅覆盖提交前已取消�
 
 当前按 [V2.2-A 平台任务生命周期与审批闭环](v2_2_a_task_approval_lifecycle.md) 执行：审批绑定 `workflow_id`、`approval_request_id`、`step_id`，存储原子匹配后才消费；错误身份、重复提交及旧审批作用于新等待均被拒绝。宿主查询与提交要求任务访问令牌，审批恢复复用 `chief-engineer` 原后处理并重新进入统一 `QualityGate`，批准节点不等于任务最终通过。
 
-任务、审批和 Microsoft advisory 仅保存在单进程内存中；恢复复用原 advisory，不再次调用 LLM。审批接受后 HTTP 断开不取消已接受动作，调用方凭已有令牌查询结果；重启后的任务恢复与持久化仍未实现。访问令牌是任务范围访问能力，`submitted_by` 仅用于审计，不代表用户账户认证。
+任务、审批和模型建议仅保存在单进程内存中；恢复复用原建议，不再次调用 LLM。审批接受后 HTTP 断开不取消已接受动作，调用方凭已有令牌查询结果；重启后的任务恢复与持久化仍未实现。访问令牌是任务范围访问能力，`submitted_by` 仅用于审计，不代表用户账户认证。
 
 ## 验证标准、常见失败与禁止事项
 
 验证先构造步骤局部上限低于、高于及未设置全局上限的打回场景，再检查真实调用次数、最终状态和报告上限。审批回归至少包含预取消后重新提交、连续两次审批、批准后拒绝、要求修订及最终无后续步骤；同时检查待审批项、完整步骤顺序和每类审计事件。
+
+扩展门禁回归覆盖原策略兼容、拒绝不能放宽、失败与审批优先级、领域检查记录、未知裁决及异常失败关闭、重复或无效注册。测试命令与实际计数见 [V2.2-B 阶段页](v2_2_b_frontier_model_architecture.md)，不得仅凭合同存在声称这些检查通过。
 
 出现次数超限、待审批项意外消失或历史缺段时，先保留失败结果，定位重试判据、消费时点或恢复快照，按 [架构审查清单](2026_09_09_architecture_review.md) 做最小修复后重跑对应反例。禁止通过改报告上限掩盖过量执行、自动批准等待项、丢弃失败步骤或把内存恢复宣称为持久化完成。
 

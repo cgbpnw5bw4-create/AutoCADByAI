@@ -32,7 +32,7 @@ public sealed class InternalAgentRoutingTests
     }
 
     [Fact]
-    public async Task ChiefEngineerCreatesInternalCollaborationReportWithExpectedCalledAgents()
+    public async Task ChiefEngineerDefaultValidatesPlanningInputWithoutCallingInternalAgents()
     {
         var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot());
         var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")!;
@@ -41,9 +41,25 @@ public sealed class InternalAgentRoutingTests
 
         Assert.Equal(AgentOutputStatus.Completed, output.Status);
         Assert.NotNull(output.InternalCollaborationReport);
+        Assert.Empty(output.InternalCollaborationReport!.CalledAgents);
+        Assert.Empty(output.InternalCollaborationReport.AgentOutputs);
+        Assert.Equal(EngineeringPlanValidationStep.Id, Assert.Single(output.InternalCollaborationReport.StepResults!).StepId);
+        Assert.Contains("未生成工程计划", output.Message);
+        Assert.DoesNotContain(platform.AuditLog.GetEntries(), entry => entry.Action == "internal_agent_invoked");
+        Assert.Contains(output.Artifacts, artifact => artifact.Kind == "internal-collaboration-report");
+    }
+
+    [Fact]
+    public async Task ExplicitLegacyRoutePreservesFourInternalAgents()
+    {
+        var platform = PlatformBootstrapper.CreateDefault(FindProjectRoot(),
+            internalWorkflowRoute: InternalWorkflowRoute.EngineeringDefault);
+
+        var output = await platform.AgentRegistry.GetById("chief-engineer")!.ExecuteAsync(CreateAgentContext());
+
+        Assert.Equal(AgentOutputStatus.Completed, output.Status);
         Assert.Equal(ExpectedInternalRoute, output.InternalCollaborationReport!.CalledAgents.Select(agent => agent.AgentId));
         Assert.Equal("drawing-reviewer", output.InternalCollaborationReport.CalledAgents.Last().AgentId);
-        Assert.Contains(output.Artifacts, artifact => artifact.Kind == "internal-collaboration-report");
     }
 
     [Fact]
@@ -80,7 +96,8 @@ public sealed class InternalAgentRoutingTests
         Assert.Equal("completed", response!.Status);
         Assert.Equal(GateDecisionResult.Passed, response.GateDecision.Result);
         Assert.NotNull(response.CollaborationReport);
-        Assert.Equal(ExpectedInternalRoute, response.CollaborationReport!.CalledAgents.Select(agent => agent.AgentId));
+        Assert.Empty(response.CollaborationReport!.CalledAgents);
+        Assert.DoesNotContain(platform.AuditLog.GetEntries(), entry => entry.Action == "internal_agent_invoked");
         Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "quality_gate_evaluated");
         Assert.Contains(platform.AuditLog.GetEntries(), entry => entry.Action == "gateway_response_returned");
     }

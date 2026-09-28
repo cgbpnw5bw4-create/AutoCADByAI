@@ -714,6 +714,9 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("task_lifecycle_tracked")]
     public bool TaskLifecycleTracked { get; init; }
 
+    [JsonPropertyName("frontier_architecture_checks")]
+    public IReadOnlyDictionary<string, bool> FrontierArchitectureChecks { get; init; } = new Dictionary<string, bool>();
+
     [JsonPropertyName("task_approval_roundtrip_supported")]
     public bool TaskApprovalRoundtripSupported { get; init; }
 

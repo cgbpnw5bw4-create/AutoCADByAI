@@ -225,6 +225,7 @@ public static class PlatformSelfCheckRunner
         var workflowReliabilityChecks = await WorkflowReliabilitySelfCheck.RunAsync();
         var structuredInputFailsClosed = await StructuredCadInputSelfCheck.RunAsync();
         var taskLifecycleChecks = await TaskLifecycleSelfCheck.RunAsync(root);
+        var frontierArchitectureChecks = await FrontierArchitectureSelfCheck.RunAsync(root);
         var approvalIdentityBound = await WorkflowReliabilitySelfCheck.RunApprovalIdentityAsync();
         var capabilityChecks = new Dictionary<string, bool>(v21BHoleChecks);
         capabilityChecks["structured_cad_input_fails_closed"] = structuredInputFailsClosed;
@@ -252,6 +253,7 @@ public static class PlatformSelfCheckRunner
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
         var checksPassed =
+            frontierArchitectureChecks.Values.All(passed => passed) &&
             solutionExists &&
             moduleStructureChecks.All(check => check.Passed) &&
             manifestLoadResult.Errors.Count == 0 &&
@@ -904,6 +906,7 @@ public static class PlatformSelfCheckRunner
             HoleSelfCheckGroupPassed = holeSelfCheck.GroupPassed,
             StructuredCadInputFailsClosed = structuredInputFailsClosed,
             TaskLifecycleTracked = taskLifecycleChecks["task_lifecycle_tracked"],
+            FrontierArchitectureChecks = frontierArchitectureChecks,
             TaskApprovalRoundtripSupported = taskLifecycleChecks["task_approval_roundtrip_supported"],
             TaskAccessTokenRequired = taskLifecycleChecks["task_access_token_required"],
             WorkflowApprovalIdentityBound = approvalIdentityBound,
@@ -3240,6 +3243,15 @@ public static class PlatformSelfCheckRunner
     {
         var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer")
             ?? throw new InvalidOperationException("chief-engineer is not registered.");
+        // 历史内部协作字段继续实际验证显式兼容路线；默认单步骤另有行为检查。
+        if (!string.Equals(testScenario, "solidworks_main_workflow", StringComparison.OrdinalIgnoreCase))
+        {
+            chiefEngineer = new PlatformCore.Modules.RequirementUnderstanding.Agents.ChiefEngineerAgent(
+                new PlatformCore.Modules.RequirementUnderstanding.Agents.ChiefEngineerOrchestrator(
+                    new InternalAgentRouter(platform.AgentRegistry, platform.AuditLog), platform.AgentRegistry,
+                    platform.AuditLog, platform.WorkflowEngine,
+                    internalWorkflowRoute: InternalWorkflowRoute.EngineeringDefault));
+        }
         var inputContext = new Dictionary<string, string> { ["project_id"] = "self-check" };
         if (testScenario is not null)
         {
@@ -6063,8 +6075,8 @@ public static class PlatformSelfCheckRunner
                 });
             var chief = platform.AgentRegistry.GetById("chief-engineer")!;
             var internalAgent = platform.AgentRegistry.GetById("mechanical-designer")!;
-            var runtimeChief = (AgentContracts.IAgent)createRuntimeAwareAgent.Invoke(factory, new object?[] { chief, platform.AgentRegistry, microsoftConfig, null })!;
-            var runtimeInternal = (AgentContracts.IAgent)createRuntimeAwareAgent.Invoke(factory, new object?[] { internalAgent, platform.AgentRegistry, microsoftConfig, null })!;
+            var runtimeChief = (AgentContracts.IAgent)createRuntimeAwareAgent.Invoke(factory, new object?[] { chief, platform.AgentRegistry, microsoftConfig, null, null })!;
+            var runtimeInternal = (AgentContracts.IAgent)createRuntimeAwareAgent.Invoke(factory, new object?[] { internalAgent, platform.AgentRegistry, microsoftConfig, null, null })!;
             var chiefEngineerRealRuntimeOnly = adapterType.IsInstanceOfType(runtimeChief);
             var internalAgentsRemainMock = ReferenceEquals(internalAgent, runtimeInternal);
 

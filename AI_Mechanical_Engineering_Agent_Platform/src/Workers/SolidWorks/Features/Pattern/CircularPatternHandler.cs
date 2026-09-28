@@ -8,16 +8,14 @@ namespace SolidWorksWorker.Features.Pattern;
 /// </summary>
 public sealed class CircularPatternHandler : FeatureHandlerBase
 {
-    private static readonly string[] SupportedAxes = ["x", "y", "z"];
-
     public override string FeatureType => FeatureTypes.CircularPattern;
 
     public override string OperationType => "CreateCircularPattern";
 
     public override IReadOnlyList<FeatureHandlerParameterDefinition> ParameterSchema { get; } =
     [
-        new("axis_selection", "EdgeSelectionCriteria JSON", true, "轴边判据；必须唯一命中一条圆边，其法向即阵列轴。"),
-        new("axis", "x|y|z", true, "阵列轴；当前只接受主轴方向。"),
+        new("axis_selection", "EdgeSelectionCriteria JSON", true, "轴边判据；必须唯一命中一条圆边，且明确主轴横向两坐标为 0。"),
+        new("axis", "x|y|z|+x|-x|+y|-y|+z|-z", true, "经过模型原点的带符号主轴；x/y/z 等价于正方向。"),
         new("instance_count", "integer_[2,512]", true, "实例总数，含种子特征。"),
         new("angle_deg", "number_(0,360]", true, "阵列总角度，单位度。"),
         new("seed_feature", "feature_id", true, "被阵列的种子特征标识。")
@@ -53,12 +51,12 @@ public sealed class CircularPatternHandler : FeatureHandlerBase
             "只读拓扑探针在产出零件上量到孔口圆心 (20,0)、(0,-20)、(-20,0)、(0,20)，恰好每 90 度一个，",
             "体积减少 848.23 立方毫米，与 3 个 Ø6 通孔的闭式解一致。",
             "创建后 IFeature.GetTypeName2 返回 CirPattern，证明选择集标记被按预期解读。"
-        ],        EvidenceId: "v2.1-b-20260907-refresh-CircularPatternHandler",
+        ],        EvidenceId: "v2.2-c-20260914-refresh-CircularPatternHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "principal_axis_circular_pattern;equal_spacing;criteria_resolved_axis",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/v2_1_b_refresh/20260907_013451_0073586/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:e97ed88693b4066001fe6033d211e30121b37f99a7f0ffb5c8dec267f09aed09");
+        DiagnosticRunPath: "evidence/solidworks/v2_2_c_refresh/20260914_012929_6066341/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {
@@ -88,11 +86,11 @@ public sealed class CircularPatternHandler : FeatureHandlerBase
         }
 
         if (!feature.Parameters.TryGetValue("axis", out var axis) ||
-            !SupportedAxes.Contains(axis, StringComparer.OrdinalIgnoreCase))
+            !PrincipalAxisRules.TryParse(axis, out _))
         {
             return PatternParameterRules.Invalid(
                 feature,
-                $"axis must be one of {string.Join(", ", SupportedAxes)}.");
+                "axis 必须为 x/y/z 或带 +、- 符号的过原点主轴。");
         }
 
         if (!PatternParameterRules.TryPositive(feature, "angle_deg", out var angle) || angle > 360d)
@@ -100,7 +98,7 @@ public sealed class CircularPatternHandler : FeatureHandlerBase
             return PatternParameterRules.Invalid(feature, "angle_deg must be inside the interval (0, 360].");
         }
 
-        return PatternParameterRules.ValidateSingleEdgeCriteria(feature, "axis_selection")
+        return PatternParameterRules.ValidateSingleEdgeCriteria(feature, "axis_selection", axis)
                ?? FeatureHandlerValidationResult.Passed();
     }
 

@@ -3,7 +3,7 @@ using QualityGate;
 
 namespace PlatformCore;
 
-public sealed class SequentialWorkflowEngine
+public sealed class SequentialWorkflowEngine : IWorkflowEngine
 {
     private readonly IRetryPolicy _retryPolicy;
     private readonly InMemoryAuditLog _auditLog;

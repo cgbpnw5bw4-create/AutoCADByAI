@@ -296,6 +296,11 @@ public abstract class FeatureHandlerBase : IFeatureHandler
             ["feature_id"] = feature.FeatureId,
             ["feature_type"] = feature.FeatureType
         };
+        if (feature.FeatureType.Equals(FeatureTypes.LinearPattern, StringComparison.OrdinalIgnoreCase) ||
+            feature.FeatureType.Equals(FeatureTypes.CircularPattern, StringComparison.OrdinalIgnoreCase))
+        {
+            parameters["referenced_features"] = System.Text.Json.JsonSerializer.Serialize(feature.ReferencedFeatures);
+        }
         return new(
             new SolidWorksOperation(
                 context.OperationId,
@@ -369,6 +374,7 @@ public abstract class FeatureHandlerBase : IFeatureHandler
                 "feature_type",
                 "sketch_id",
                 "referenced_sketches",
+                "referenced_features",
                 "target_reference"
             ]),
             StringComparer.OrdinalIgnoreCase);

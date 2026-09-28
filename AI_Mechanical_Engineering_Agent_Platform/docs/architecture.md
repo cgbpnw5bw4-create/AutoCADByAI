@@ -1,13 +1,44 @@
 # 架构说明
 
-`AI_Mechanical_Engineering_Agent_Platform` 是面向机械工程自动化的长期可托管多 Agent 平台。当前重点是平台边界、运行时隔离、内部协作、质量门禁和可审计性。真实 SolidWorks 能力已经接入受控主工作流程，但默认仍关闭，不允许绕过 Worker、Validator、Reviewer 或 QualityGate。
+`AI Mechanical Engineer Platform` 是面向机械工程自动化的长期平台。强模型负责工程理解、规划和决策，平台负责工程约束、确定性执行、真实 CAD/API 能力和结果验收。运行架构优先采用少量强 Agent 与多个确定性 Worker，当前真实 SolidWorks 主流程继续遵循本地交互式默认启用、测试与 dry-run 禁用、证据不匹配失败关闭的策略。
+
+## 目标、适用范围与输入输出
+
+本说明用于维护当前平台边界和增量演进方向。输入为工程需求、约束、结构化模型与现有 API evidence；输出为工程计划、受控执行、验收报告与可追溯产物。当前阶段见 [V2.2-B 强模型架构增量优化](v2_2_b_frontier_model_architecture.md)，后文 V1.8–V2.0-A 保留各阶段当时的架构范围，不能替代当前能力准入判断。
+
+```text
+Frontier Model / Future AGI
+→ Engineering Agent
+→ Engineering Plan
+→ Deterministic Workers
+→ Verified CAD/API Layer
+→ SolidWorks
+→ QualityGate
+```
+
+`Frontier Model / Future AGI` 表示模型可替换的长期方向，现有结构化建模计划由 `CADModelSpec`、`FeatureGraph`、`SolidWorksBuildPlan` 承载。平台只接收受约束的数据和建议，不把模型输出提升为 Worker 权限或真实 API 能力。
+
+正式能力准入链保持 `Feature Registry → Verified Handler → SolidWorks API Evidence → Worker → SolidWorks Adapter`。这是能力发现、校验、授权和执行责任的顺序；具体证据复核在既有管线中完成，不移动或重写来源绑定的 CAD 代码以迎合图示。
+
+## 职责边界
+
+| 层 | 职责 | 必须保持的边界 |
+|---|---|---|
+| `Agent` | 工程理解、设计与特征规划、建模顺序、装配策略、异常恢复建议和工程决策 | 不直接调用 Worker、COM 或正式执行 API |
+| `Skill` | 可复用机械工程能力与结构化转换 | 不作为单纯消息转发的独立 Agent |
+| `Worker` | 按已校验计划确定性执行、产物与诊断输出 | 不允许模型绕过正式工作流直接调用 |
+| `Registry` | 能力发现和映射，包含 Feature Handler 注册 | 注册存在不等于真实能力已受证 |
+| `API Evidence` | 真实 SolidWorks API 的来源、参数档案、源码和环境绑定证据 | 模型建议、dry-run 和旧档案不能授权新路径 |
+| `Adapter` | 外部系统执行接口及受控 API 实现 | Handler 不持有 COM，Adapter 只能由受控执行层进入 |
+| `QualityGate` | 工程结果验收和继续、打回、失败或审批裁决 | 缺少检查依据不得占位通过 |
+| `ModelRuntime` | 模型能力接入和切换 | 业务层不依赖具体模型名称或供应商 SDK |
 
 ## PlatformCore
 
 `PlatformCore` 提供与具体 Agent Runtime 和 CAD 工具无关的平台能力：
 
 - `TaskSystem`：任务生命周期和状态。
-- `WorkflowEngine`：顺序工作流、步骤结果、Retry、FailureReport、HumanApprovalRequest。
+- `WorkflowEngine`：通过 `IWorkflowEngine` 隔离调用方；现有 `SequentialWorkflowEngine` 承担顺序执行、Retry、FailureReport 和 HumanApprovalRequest。
 - `AgentRegistry`、`SkillRegistry`、`ModuleRegistry`、`WorkerRegistry`：内存注册与查找。
 - `ModuleManifestLoader`：读取 `module.yaml`，并记录 fallback 来源。
 - `InternalAgentRouter`：只允许平台内部调用 Internal Agent，并记录审计日志。
@@ -18,9 +49,9 @@
 
 ## Contracts
 
-`AgentContracts`、`ModuleContracts`、`SkillContracts` 和 `WorkerContracts` 定义平台稳定边界。
+`AgentContracts`、`ModuleContracts`、`SkillContracts` 和 `WorkerContracts` 定义平台稳定边界，`ModelRuntime` 增加模型供应方的中立合同。
 
-Agent 负责判断、协调和结构化输出。Skill 负责结构化转换和辅助能力。Worker 负责外部系统执行。Module 是完整能力板块，不是散乱脚本目录。
+Agent 负责工程理解、规划、决策和结构化输出。Skill 负责可复用工程能力。Worker 负责确定性外部系统执行。Module 是能力组织边界，不要求每个 Module 都增加独立推理 Agent；已有内部角色可作为兼容入口保留。
 
 ## DomainSchemas
 
@@ -42,17 +73,29 @@ Agent 负责判断、协调和结构化输出。Skill 负责结构化转换和�
 
 核心任务状态必须通过这些 Schema 传递，不能只依赖自然语言。
 
-## AgentRuntime.Microsoft
+## ModelRuntime 与兼容适配
+
+独立 `ModelRuntime` 通过 `IModelProvider`、`ModelRequest` 和受限用途枚举表达工程模型调用，由 `ModelRuntime.GenerateAsync` 统一进入供应方。供应商名称、模型名称与连接配置留在接入层；现有 `AgentRuntime.Microsoft` 继续兼容既有配置、错误转换和 Mock 行为。
 
 `AgentRuntime.Microsoft` 是唯一允许引用 Microsoft Agent Framework 相关包的项目。当前引用 `Microsoft.Agents.AI`，并默认使用 `MockRuntime`。
 
 业务模块、Worker、`PlatformCore` 和 Contracts 不依赖 Microsoft Runtime API。真实 Runtime 只允许包装 `chief-engineer`，并且必须把模型输出转换为平台自己的 `AgentOutput`。
 
-模型输出只提供任务理解和协作建议。最终内部调度仍由 `ChiefEngineerOrchestrator`、`SequentialWorkflowEngine`、Internal Agent workflow steps 和 `QualityGate` 控制。Internal Agents 在当前阶段继续使用 Module Agent 或 Mock Agent。
+模型输出负责工程理解、规划和决策建议。正式调度由 `ChiefEngineerOrchestrator`、`IWorkflowEngine` 与 `QualityGate` 控制。旧默认路线中的内部 Agent 实际是确定性模拟或占位实现，并没有四次 LLM 推理；本轮收敛不得虚称已经消除多次模型调用或内部 JSON 中转。
+
+默认 `ChiefEngineerOrchestrator` 仅运行 `EngineeringPlanValidationStep` 校验规划输入，不调用四个占位内部角色，也不生成工程计划。具体 CAD 计划仍由后续原 Skill/Validator 生成和校验；默认报告的 `CalledAgents` / `AgentOutputs` 为空。显式传入 `InternalWorkflowRoute.EngineeringDefault` 继续运行原四角色流程，保留其重试和审批用法。
+
+旧 `ToolBridge` 只保留兼容名称映射，不再提供直接执行 Worker 的能力。模型输出中的 API 名称和参数必须接受 Registry、Handler 与 API Evidence 的独立准入检查。
+
+## WorkflowEngine 演进
+
+保留 `SequentialWorkflowEngine` 的已验证行为并实现 `IWorkflowEngine`，调用方依赖接口而非顺序引擎具体类型。当前能力仍为顺序步骤、既有重试、具体身份绑定的人工审批和恢复；`Parallel` 与 `Conditional` 仅是未来方向，当前不接收或伪装执行未支持的流程。
+
+后续并行仅用于无共享外部状态的步骤，SolidWorks COM 保持既有全局串行约束。条件分支应先确定持久化、审批身份和结果聚合合同，再实现对应引擎或计划类型；本轮不增加空执行器。
 
 ## Modules
 
-每个 Module 都是完整能力板块，包含 agents、skills、workers、validators、reviewers、schemas 和 tests。
+Module 按实际能力组织 agents、skills、workers、validators、reviewers、schemas 和 tests；目录完整不代表全部能力已实现，也不要求每个板块独立调用模型。
 
 当前模块：
 
@@ -69,7 +112,7 @@ Module 元数据优先从 `module.yaml` 加载。只有在 YAML 加载失败时�
 
 ## Workers
 
-Worker 是未来调用 SolidWorks、AutoCAD、API、SDK、COM 或 MCP 工业软件桥接的执行层。当前只注册 Fake Worker：
+Worker 是调用 SolidWorks、AutoCAD、API、SDK、COM 或工业软件桥接的确定性执行层。默认平台验证注册以下替身，真实 SolidWorks 主流程按现有运行策略选择受控 Real Worker：
 
 - `FakeSolidWorksWorker`
 - `FakeAutoCADWorker`
@@ -99,6 +142,8 @@ V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPla
 
 `WorkflowEngine` 根据 `GateDecision` 做流程控制：`Passed` 进入下一步，`Rejected` 按策略重试或停止，`Failed` 生成 FailureReport，`NeedsHumanApproval` 生成 HumanApprovalRequest 并暂停。暂停状态由 `IWorkflowApprovalStore` 保存；宿主必须显式提交批准、拒绝或退回决定，批准才会恢复剩余步骤，拒绝和退回会产生 FailureReport 并阻断下游。
 
+专项门禁的扩展方向为 `GeometryQualityGate`、`APIEvidenceQualityGate`、`AssemblyQualityGate`、`DrawingQualityGate` 与 `ManufacturabilityQualityGate`。当前几何、API evidence 与工程图已有检查继续复用；预留分类与组合合同不表示装配和制造性专项算法已存在，实际新增组件与接线以阶段页和源码为准。
+
 ## Interfaces
 
 `Interfaces` 是平台入口层：
@@ -108,6 +153,14 @@ V1.0-B 在上述边界内新增第一个受控真实构建场景：`RealBuildPla
 - `AgentGatewayHost`：对外暴露 Public Agent Directory 和 Agent Message Endpoint。
 
 Gateway 只暴露 Public Agent，当前只有 `chief-engineer`。Runtime、Internal Agent、Worker 和 QualityGate 的边界不会因为外部入口变化而改变。
+
+## 执行步骤、验证标准与兼容原因
+
+先按需求选择工程 Skill 和受证能力，再提交结构化计划给平台工作流，执行后统一经过 Validator、Reviewer、QualityGate 与发布包检查。修改后运行完整 build、test 和定向 self-check；接口替换、模型供应方替身、执行权限拒绝与已有审批/重试行为分别验证，真实 CAD 能力仍须同次真机验收证据。
+
+正式名称统一为 `AI Mechanical Engineer Platform`，但底层 `AI_Mechanical_Engineering_Agent_Platform` 目录、解决方案、程序集、命名空间、反射加载键和证据路径保留，以避免无关兼容风险。历史阶段与审查中的名称不做全局替换。
+
+常见失败包括模型配置不完整、计划无效、接口语义漂移和 API evidence 与物理产物不匹配。应保留直接原因并按阶段或模块修复手册定位；禁止绕过 Worker、弱化 QualityGate、修改旧 evidence 或将自检通过等同于真实 CAD 通过。
 
 ## V1.8 参数化零件族架构
 

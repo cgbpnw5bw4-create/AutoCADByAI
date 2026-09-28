@@ -2,7 +2,7 @@
 
 ## 阶段列表
 
-当前开发入口为 [V2.2-A 平台任务生命周期与审批闭环](v2_2_a_task_approval_lifecycle.md)。本轮用户新授权允许推进独立的平台阶段，历史 CAD 阶段的能力描述与失败证据仍按各自范围有效；阶段实现和验证结果以当前阶段页回填为准。
+`AI Mechanical Engineer Platform` 当前开发入口为 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)。本轮保留 V2.2-B 架构成果；2026-09-14 已完成既有 CAD 基线恢复，完整测试 684/684 通过，正式参数更新主流程及实物复核通过，全局 self-check 仍为 `Failed`。2026-09-24 继续文档收尾与独立复核，实际结果见阶段页，历史候选与失败结论不被覆盖。
 
 | 阶段 | 目标 | 不做什么 | 关键交付物 | 说明文件 | self-check 字段 | 审查报告位置 |
 |---|---|---|---|---|---|---|
@@ -43,6 +43,8 @@
 | V2.1-A | 复杂特征库扩展 | 不改变 FeatureHandler 架构；Handler 不得直接调用 COM；API 未验证不得进入真实执行；不新增零件专用逻辑；不进入 V2.1-B | 新增 `FilletHandler`、`ChamferHandler`、`LinearPatternHandler`、`CircularPatternHandler`、`MirrorHandler`；`ISolidWorksFeatureAdapter` 新增五个执行入口；建立声明式边选择模型（`EdgeSelectionCriteria`/`EdgeSelectionResolver`/`SolidWorksEdgeEnumerator`）与只读拓扑探针 `tools/SolidWorksEdgeProbe`；五个特征全部完成真机取证升为 `verified`：`FeatureFillet3`、`InsertFeatureChamfer`、`FeatureLinearPattern4`、`FeatureCircularPattern5`、`InsertMirrorFeature2` 均已实调；方向与轴由边判据求解并与声明主轴交叉校验；每个特征的几何都用闭式解与只读拓扑探针独立复核 | `docs/v2_1_a_complex_feature_library.md`、`docs/cad_capability_matrix.md`、各特征目录 `api_evidence.md` / `failure_repair.md` | `fillet_handler_registered`、`chamfer_handler_registered`、`linear_pattern_handler_registered`、`circular_pattern_handler_registered`、`mirror_handler_registered`、`complex_feature_registry_supported`、`unverified_feature_blocks_execution`（双向判据）、`edge_selection_model_supported`、`feature_library_documented`、`feature_regression_tests_passed`、`v2_1_a_documented`、`markdown_chinese_check_passed` | `output/reports/platform_self_check_report.json`、五份 `evidence/solidworks/20260828_0146xx_*/feature_execution_report.json`（圆角、倒角、线性阵列、圆周阵列、镜像各一） |
 | V2.1-B | 孔特征增强 | 不改变 FeatureHandler 架构；不增加重复 Agent/Handler 或零件专用逻辑；不以普通 Cut 冒充攻丝孔；无证据不得真实执行；不进入 V2.1-C | `HoleFeatureDefinition`、`HoleValidator`、既有 `HoleHandler` 与统一 Adapter 类型策略、孔几何校验、四类 dry-run 样例、逐类型 API evidence 与专用失败阶段 | `docs/v2_1_b_hole_features.md`、`docs/cad_capability_matrix.md`、`src/Workers/SolidWorks/Features/Hole/api_evidence.md`、两层模块/Worker 协议 | `simple_hole_supported`、`counterbore_hole_supported`、`countersink_hole_supported`、`tapped_hole_supported`、`hole_type_validation_supported`、`hole_geometry_validation_supported`、`tapped_hole_semantics_separated_from_simple_cut`、`hole_api_evidence_required`、`unverified_hole_blocks_real_execution`、`hole_self_check_group_passed`、`v2_1_b_documented`、`markdown_chinese_check_passed` | 前置审查 `../reviewrep/2026-09-07-v2.1-a-complex-feature-library-review.md`；本轮验证见 `output/reports/platform_self_check_report.json` 与阶段说明 |
 | V2.2-A | 平台任务生命周期与审批闭环 | 不扩展 CAD；不实施类型交接、持久化或真实证据修复；不绕过原业务收尾与质量门禁 | 具体审批身份、原子匹配防重放、任务访问令牌、状态查询与宿主审批入口、恢复后的 `chief-engineer` 原后处理和 `QualityGate` | [阶段合同与验收](v2_2_a_task_approval_lifecycle.md) | `task_lifecycle_tracked`、`task_approval_roundtrip_supported`、`task_access_token_required`、`workflow_approval_identity_bound` | 本轮指定输出目录及阶段页实际验证记录，待回填 |
+| V2.2-B | 强模型架构增量优化与正式名称统一 | 不强改底层标识；不改来源绑定 CAD 代码与 evidence；不实现空壳并行/条件引擎或专项 Gate | `ModelRuntime` / `IModelProvider`、`IWorkflowEngine`、`IQualityGate` 与组合裁决、默认单步骤规划输入校验、Worker 桥接权限收敛、中文定位与兼容说明 | [阶段合同与验证](v2_2_b_frontier_model_architecture.md) | `frontier_architecture_checks` 四项行为；沿用既有阶段字段与全局自检，实际结果另列 | `output/validation/v2_2_b_frontier/` |
+| V2.2-C | CAD 基线恢复与阵列证据重采 | 不继续扩展平台架构；不改旧报告或以修改长度/hash 恢复通过；不扩展未受证孔及装配能力 | 单种子与编译到执行引用绑定、带符号方向与过原点主轴约束、STEP 身份与封送修复、四方向及七组生产重采、参数更新主流程及完整验证记录 | [恢复范围与验证](v2_2_c_cad_baseline_recovery.md) | 9 月 14 日原 8 项失败已消除，V2.0-E 为 Passed；全局仍 Failed，9 月 24 日复核另列 | `output/validation/v2_2_c_cad_baseline/`、`evidence/solidworks/v2_2_c_refresh/` |
 
 > `V2.1-A` 编号说明：该标签此前指向圆筒夹套零件族，经决定作废并改派给复杂特征库。夹套本身继续有效，其文档与自检字段保留为历史记录，不再代表阶段编号。
 
@@ -56,7 +58,19 @@
 
 开始新任务时先定位阶段，再读取对应说明文件。阶段未完成时不得提前进入下一阶段。
 
-本轮用户已授权自主选择下一阶段，当前选定 V2.2-A 平台任务生命周期与审批闭环。V2.1-B 可靠性补强 `R01`–`R05` 已完成；尚未解决的 `R08`–`R11` 继续阻断各自真实 CAD 能力，但不阻断不依赖 COM 的平台开发。本轮无需重复确认上轮“不进入 V2.1-C”的范围限制，不把平台阶段改称 CAD 功能阶段。
+本轮进入 V2.2-C，保留 V2.2-B 强模型架构和 V2.2-A 任务审批行为，按当前阶段页恢复既有 CAD 证据与主流程。未验证能力继续阻断，规则测试、候选通过、完整测试和正式 CAD 交付分别记录，不用新阶段名称覆盖历史失败。
+
+## V2.2-C 准入与范围
+
+输入为 591 项测试基线中的 8 项既有失败、7 组物理失配 evidence、当前环境和阵列反例；输出为必要规则修复、独立方向/落点验证、新源码绑定候选与参数更新正式主流程结果。9 月 14 日最终构建 0 警告、0 错误，684/684 测试及实物复核通过；夹套生产证据与真实执行未激活、轴类真实工作流自检未通过仍阻断全局。9 月 24 日已复核文件保留与源码指纹，完整验证由执行代理继续回填，不扩展本阶段能力范围。
+
+先只读核查环境与文件，再修复单种子、编译到执行引用、有符号方向和轴位置；纳入影响行为的源码指纹后串行重采，最后运行完整 build、test 和定向 self-check。严禁改写旧 evidence 或 `reviewrep`、放宽单种子或物理完整性检查、把 `CandidatePassed` 当作可交付结果。详细方法与待填结果见当前阶段页。
+
+## V2.2-B 准入与范围
+
+目标是以最小改动统一正式名称与职责、提高模型可替换性和确定性执行可靠性。输入为当前代码、完整测试、中文文档和只读审查记录；输出为五项优先架构问题、必要接口和接线、兼容说明及本轮验证记录。
+
+先盘点名称、默认角色、模型和工作流依赖及门禁合同，再实施中立运行时、工作流接口、可组合验收与冗余权限收敛；按实际实现回填阶段页。验证要求完整 build、test、定向 self-check，保留每项退出码、计数和已知失败。禁止把未来 Parallel、Conditional、装配或制造性专项验收写成现有能力，禁止改写旧 evidence 或 `reviewrep`。
 
 ## V2.2-A 准入与范围
 

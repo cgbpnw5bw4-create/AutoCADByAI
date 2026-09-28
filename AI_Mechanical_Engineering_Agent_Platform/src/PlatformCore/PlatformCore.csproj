@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\ModelRuntime\ModelRuntime.csproj" />
     <ProjectReference Include="..\AgentContracts\AgentContracts.csproj" />
     <ProjectReference Include="..\ModuleContracts\ModuleContracts.csproj" />
     <ProjectReference Include="..\SkillContracts\SkillContracts.csproj" />

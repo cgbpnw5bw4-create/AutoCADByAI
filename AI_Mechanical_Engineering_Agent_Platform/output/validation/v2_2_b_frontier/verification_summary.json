@@ -1,0 +1,150 @@
+{
+  "baseline": {
+    "total": "551",
+    "executed": "551",
+    "passed": "543",
+    "failed": "8",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "final": {
+    "total": "591",
+    "executed": "591",
+    "passed": "583",
+    "failed": "8",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "baseline_failures": {
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"chamfer\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending": "Assert.True() Failure\r\nExpected: True\r\nActual:   False",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"circular_pattern\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"linear_pattern\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate": "feature_api_unverified: V2.0-D candidate model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"mirror\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"fillet\")": "feature_api_unverified: diagnostic model artifact does not physically match its report."
+  },
+  "final_failures": {
+    "PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending": "Assert.True() Failure\r\nExpected: True\r\nActual:   False",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"chamfer\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"linear_pattern\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"circular_pattern\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"fillet\")": "feature_api_unverified: diagnostic model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate": "feature_api_unverified: V2.0-D candidate model artifact does not physically match its report.",
+    "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"mirror\")": "feature_api_unverified: diagnostic model artifact does not physically match its report."
+  },
+  "new_failures": [],
+  "baseline_failures_still_present": true,
+  "baseline_names_missing_after_change": [
+    "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ChiefEngineerCreatesInternalCollaborationReportWithExpectedCalledAgents"
+  ],
+  "new_or_renamed_test_results": {
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.RegisteredDomainGateCanBlockOtherwisePassedReview(domain: APIEvidence)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.CombinedDecisionPreservesFatalApprovalAndRejectionPriority(passed: True, approval: True, fatal: False, extra: Rejected, expected: Rejected)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.CombinedDecisionPreservesFatalApprovalAndRejectionPriority(passed: True, approval: False, fatal: True, extra: Passed, expected: Failed)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.PendingApprovalRetainsItsRuntimeAndRejectsReconfiguration": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.RegisteredDomainGateCanBlockOtherwisePassedReview(domain: Geometry)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.CombinedDecisionPreservesFatalApprovalAndRejectionPriority(passed: False, approval: False, fatal: False, extra: NeedsHumanApproval, expected: Rejected)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.InvalidDomainCannotBeRegisteredAsSupportedGate": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.ProviderToolTextCannotBecomeWorkerInvocationOrEvidence": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.EmptyProviderResponseFailsClosed(text: null)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.ProviderReceivesCancellationAndFailureIsNotConvertedToSuccessfulText": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowBackedInternalOrchestrationTests.InvalidStructuredInputStillStopsBeforeDefaultWorkflowAndWorker": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowAbstractionTests.KernelOrchestratorAndRuntimeUseInjectedEngine": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.DefaultPathPreservesExistingDecisionAndRejectReasons(passed: False, score: 0.10000000000000001, approval: True, fatal: False)": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowBackedInternalOrchestrationTests.DefaultPlanningInputRejectsEmptyRequirement": "Passed",
+    "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ChiefEngineerDefaultValidatesPlanningInputWithoutCallingInternalAgents": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowAbstractionTests.InterfacePreservesSequentialRetryAndHumanApproval": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.BrokenExtensionFailsClosedAndRetainsDiagnostic(failure: 2)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.CancellationAndInvalidPurposePreventProviderCalls": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowAbstractionTests.FrontierSelfCheckExercisesDefaultInputAndIndependentGateRejection": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.BrokenExtensionFailsClosedAndRetainsDiagnostic(failure: 0)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.BrokenExtensionFailsClosedAndRetainsDiagnostic(failure: 1)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.CombinedDecisionPreservesFatalApprovalAndRejectionPriority(passed: False, approval: False, fatal: False, extra: Passed, expected: Rejected)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.CombinedDecisionPreservesFatalApprovalAndRejectionPriority(passed: True, approval: True, fatal: False, extra: Failed, expected: Failed)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.DefaultPathPreservesExistingDecisionAndRejectReasons(passed: True, score: 1, approval: False, fatal: False)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.ReconfigurationReplacesProviderAndMockRestoresOriginalAgent": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.RegisteredDomainGateCanBlockOtherwisePassedReview(domain: Drawing)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.StandaloneLegacyMockAdapterCanStillPassThroughFactory(agentId: \"chief-engineer\")": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.RegisteredDomainGateCanBlockOtherwisePassedReview(domain: Manufacturability)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.EmptyProviderResponseFailsClosed(text: \"  \")": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.ProviderCanBeReplacedInExistingChiefEngineerExecution": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.DefaultPathPreservesExistingDecisionAndRejectReasons(passed: True, score: 0.79000000000000004, approval: False, fatal: False)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.CombinedDecisionPreservesFatalApprovalAndRejectionPriority(passed: True, approval: True, fatal: False, extra: Passed, expected: NeedsHumanApproval)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.DefaultPathPreservesExistingDecisionAndRejectReasons(passed: True, score: 1, approval: True, fatal: True)": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowBackedInternalOrchestrationTests.DefaultDryRunUsesWorkerOnceAndRetainsArtifactQualityGate(brokenArtifacts: False)": "Passed",
+    "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ExplicitLegacyRoutePreservesFourInternalAgents": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.StandaloneLegacyMockAdapterCanStillPassThroughFactory(agentId: \"mechanical-designer\")": "Passed",
+    "PlatformSelfCheck.Tests.WorkflowBackedInternalOrchestrationTests.DefaultDryRunUsesWorkerOnceAndRetainsArtifactQualityGate(brokenArtifacts: True)": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.RegisteredDomainGateCanBlockOtherwisePassedReview(domain: Assembly)": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.EmptyProviderResponseFailsClosed(text: \"\")": "Passed",
+    "PlatformSelfCheck.Tests.ModelRuntimeBoundaryTests.CallerCancellationPropagatesThroughCompatibilityInvoker": "Passed",
+    "PlatformSelfCheck.Tests.ExtensibleQualityGateTests.DefaultPathPreservesExistingDecisionAndRejectReasons(passed: False, score: 1, approval: False, fatal: False)": "Passed"
+  },
+  "intentional_route_test_migration": {
+    "previous": "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ChiefEngineerCreatesInternalCollaborationReportWithExpectedCalledAgents",
+    "replacements": [
+      "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ChiefEngineerDefaultValidatesPlanningInputWithoutCallingInternalAgents",
+      "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ExplicitLegacyRoutePreservesFourInternalAgents"
+    ],
+    "replacement_results": {
+      "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ChiefEngineerDefaultValidatesPlanningInputWithoutCallingInternalAgents": "Passed",
+      "PlatformSelfCheck.Tests.InternalAgentRoutingTests.ExplicitLegacyRoutePreservesFourInternalAgents": "Passed"
+    }
+  },
+  "unaccounted_missing_baseline_tests": [],
+  "reviewrep_unchanged": true,
+  "reviewrep_file_count": 44,
+  "reviewrep_file_set_unchanged": true,
+  "protected_paths_diff": [],
+  "protected_paths_unchanged": true,
+  "self_check": {
+    "schema_version": "2.2-a-task-approval",
+    "markdown_chinese_check_passed": true,
+    "final_status": "Failed",
+    "v2_0_e_capability_regressions": [
+      "feature_production_evidence_active",
+      "unverified_feature_blocks_execution",
+      "v2_0_d_production_evidence_active",
+      "v2_0_e_controlled_plate_evidence_active",
+      "v2_0_e_step_content_gate_active"
+    ],
+    "frontier_architecture_checks": {
+      "model_provider_contract_executed": true,
+      "default_planning_route_consolidated": true,
+      "quality_gate_extension_blocks_approval_bypass": true,
+      "workflow_contract_preserves_gate_blocking": true
+    },
+    "v2_0_e_final_status": "Failed",
+    "jacket_real_workflow_supported": false,
+    "jacket_production_evidence_active": false
+  },
+  "test_outputs_preserved_and_originals_restored": [
+    "output/tests/v21_b/simple/reports/build_report.json",
+    "output/tests/v21_b/counterbore/reports/build_report.json",
+    "output/tests/v21_b/countersink/reports/build_report.json",
+    "output/tests/v21_b/tapped/reports/build_report.json"
+  ]
+}

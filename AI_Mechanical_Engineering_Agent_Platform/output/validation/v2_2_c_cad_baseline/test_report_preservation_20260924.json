@@ -1,0 +1,38 @@
+{
+  "status": "Passed",
+  "scope": "保留本次生成的测试报告，恢复本阶段前未修改的四份受版本管理夹具；不修改测试结论或生产证据。",
+  "checks": [
+    {
+      "path": "output/tests/v21_b/simple/reports/build_report.json",
+      "only_changed_field": "generated_at",
+      "generated_report_archive": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\generated_test_reports_20260924\\simple_build_report.json",
+      "generated_report_sha256": "abee74d7946765a0f237772dc23d81986bea72ec1ef93876a89227616ffa2f32",
+      "original_checkout_sha256": "136752fa535b19d38528d63f4061c8174071d8b99b357707dde0bf9aea612497",
+      "restored_original": true
+    },
+    {
+      "path": "output/tests/v21_b/counterbore/reports/build_report.json",
+      "only_changed_field": "generated_at",
+      "generated_report_archive": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\generated_test_reports_20260924\\counterbore_build_report.json",
+      "generated_report_sha256": "9a7beb48150e8776f5a175106036ad66b197f5e4255d17b29a03d36e5042a87e",
+      "original_checkout_sha256": "c382630c1bc8b225cc291a7b35f860d2d02e3acfcffba54b366be071b05b148b",
+      "restored_original": true
+    },
+    {
+      "path": "output/tests/v21_b/countersink/reports/build_report.json",
+      "only_changed_field": "generated_at",
+      "generated_report_archive": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\generated_test_reports_20260924\\countersink_build_report.json",
+      "generated_report_sha256": "052d83d6afa36ab9892b6424316a2bd5d0c590eb69be787bb7a45be854f488da",
+      "original_checkout_sha256": "42d998ed4af7d8ecb99eeb7ff5a0916948f53b9963ec9b43d8e1e75930e2e36b",
+      "restored_original": true
+    },
+    {
+      "path": "output/tests/v21_b/tapped/reports/build_report.json",
+      "only_changed_field": "generated_at",
+      "generated_report_archive": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\generated_test_reports_20260924\\tapped_build_report.json",
+      "generated_report_sha256": "661d7a95823305fec8dc7d89685d64b1681e2253d8c4b33de5e78cbcda7ede01",
+      "original_checkout_sha256": "aa9f0b7399aeb5353d83bc46104272cc8e5da439ce9e65e89b7a9b56a8c2aaa9",
+      "restored_original": true
+    }
+  ]
+}

@@ -2,8 +2,14 @@ using DomainSchemas;
 
 namespace QualityGate;
 
-public sealed class GateDecisionPolicy
+public sealed class GateDecisionPolicy : IQualityGate
 {
+    public string Name => "review-policy";
+
+    public QualityGateDomain Domain => QualityGateDomain.General;
+
+    public GateDecision Evaluate(ReviewReport report) => Decide(report);
+
     public GateDecision Decide(ReviewReport report)
     {
         if (report.HasFatalError)

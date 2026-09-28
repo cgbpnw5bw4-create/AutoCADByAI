@@ -203,13 +203,34 @@ public sealed class FeatureHandlerRegistry
         List<string> issues,
         ref string? firstFailureStage)
     {
-        foreach (var operation in plan.Operations)
+        for (var operationIndex = 0; operationIndex < plan.Operations.Count; operationIndex++)
         {
-            if (!adaptedByOperationId.TryGetValue(operation.OperationId, out var feature) ||
-                !feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase))
+            var operation = plan.Operations[operationIndex];
+            if (!adaptedByOperationId.TryGetValue(operation.OperationId, out var feature))
             {
                 continue;
             }
+
+            if (feature.FeatureType.Equals(FeatureTypes.LinearPattern, StringComparison.OrdinalIgnoreCase) ||
+                feature.FeatureType.Equals(FeatureTypes.CircularPattern, StringComparison.OrdinalIgnoreCase))
+            {
+                var seed = feature.Parameters.GetValueOrDefault("seed_feature");
+                var seedOperations = plan.Operations.Select((candidate, index) => (Operation: candidate, Index: index))
+                    .Where(entry => adaptedByOperationId.TryGetValue(entry.Operation.OperationId, out var candidate) &&
+                        string.Equals(candidate.FeatureId, seed, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+                if (string.IsNullOrWhiteSpace(seed) || seedOperations.Length != 1 ||
+                    seedOperations[0].Index >= operationIndex ||
+                    !operation.DependsOn.Contains(seedOperations[0].Operation.OperationId, StringComparer.OrdinalIgnoreCase))
+                {
+                    AddGraphIssue(feature,
+                        "pattern_seed_dependency_invalid: 种子必须唯一映射到前序 operation，并由阵列 operation 直接依赖；引用元数据不能替代执行顺序。",
+                        issues, ref firstFailureStage);
+                }
+                continue;
+            }
+
+            if (!feature.FeatureType.Equals(FeatureTypes.Hole, StringComparison.OrdinalIgnoreCase)) continue;
 
             var sketchId = feature.Parameters.GetValueOrDefault("sketch_id");
             var sketchEntry = adaptedByOperationId
@@ -360,6 +381,24 @@ public static class FeatureHandlerPlanAdapter
             operation.Parameters.GetValueOrDefault("feature_id") ??
             operation.Parameters.GetValueOrDefault("sketch_id") ??
             operation.OperationId;
+        string[] referencedFeatures = [];
+        if (operation.Parameters.TryGetValue("referenced_features", out var referencesJson))
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(referencesJson)) throw new JsonException("引用元数据不能为空。");
+                referencedFeatures = JsonSerializer.Deserialize<string[]>(referencesJson)
+                    ?? throw new JsonException("引用元数据不能为 null。");
+                if (referencedFeatures.Any(string.IsNullOrWhiteSpace))
+                    throw new JsonException("引用元数据必须为非空特征标识数组。");
+            }
+            catch (JsonException exception)
+            {
+                return new(null, PartFamilyFailureStages.InvalidFeatureParameter,
+                    [$"{PartFamilyFailureStages.InvalidFeatureParameter}: {operation.OperationId}: referenced_features 无效：{exception.Message}"]);
+            }
+        }
+
         return new(
             new FeatureDefinition(
                 featureId,
@@ -369,7 +408,7 @@ public static class FeatureHandlerPlanAdapter
                 referencedSketches: operation.Parameters.TryGetValue("sketch_id", out var sketchId)
                     ? [sketchId]
                     : [],
-                referencedFeatures: [],
+                referencedFeatures: referencedFeatures,
                 targetReference: operation.SketchPlane),
             null,
             Array.Empty<string>());

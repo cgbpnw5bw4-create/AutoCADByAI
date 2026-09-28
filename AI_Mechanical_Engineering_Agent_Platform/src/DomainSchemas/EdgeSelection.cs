@@ -49,11 +49,71 @@ public sealed record MeasuredEdge(
 /// 不必为每种特征再造一套引用模型。
 /// </para>
 /// <para>
-/// 方向有符号但符号不可依赖：SolidWorks 的边定向取决于拓扑生成顺序。
-/// 需要确定朝向时用特征自身的 reverse 选项，不要靠这里的正负号。
+/// 方向来自当次拓扑，正负可能随建模变化。执行器须将它与声明方向做有符号
+/// 点积比较，再设置 API 的翻转选项；边方向与 API 默认方向的映射须经真机取证。
 /// </para>
 /// </summary>
 public sealed record EdgeDirection(double X, double Y, double Z);
+
+/// <summary>主轴方向和位置的纯规则；不读取 CAD，也不授予 API 执行能力。</summary>
+public static class PrincipalAxisRules
+{
+    private const double ParallelCosine = 0.999d;
+
+    public static bool TryParse(string? text, out EdgeDirection axis)
+    {
+        axis = text?.ToLowerInvariant() switch
+        {
+            "x" or "+x" => new(1, 0, 0),
+            "-x" => new(-1, 0, 0),
+            "y" or "+y" => new(0, 1, 0),
+            "-y" => new(0, -1, 0),
+            "z" or "+z" => new(0, 0, 1),
+            "-z" => new(0, 0, -1),
+            _ => new(0, 0, 0)
+        };
+        return axis.X != 0 || axis.Y != 0 || axis.Z != 0;
+    }
+
+    public static bool TryResolveFlip(EdgeDirection? measured, string? declaredAxis, out bool flipDirection)
+    {
+        flipDirection = false;
+        if (measured is null || !TryParse(declaredAxis, out var declared) ||
+            !double.IsFinite(measured.X) || !double.IsFinite(measured.Y) || !double.IsFinite(measured.Z)) return false;
+
+        // 先缩放再归一化，避免有限大向量平方溢出后被误判为有效方向。
+        var scale = Math.Max(Math.Abs(measured.X), Math.Max(Math.Abs(measured.Y), Math.Abs(measured.Z)));
+        if (scale == 0) return false;
+        var x = measured.X / scale;
+        var y = measured.Y / scale;
+        var z = measured.Z / scale;
+        var length = Math.Sqrt(x * x + y * y + z * z);
+        var signedCosine = (x * declared.X + y * declared.Y + z * declared.Z) / length;
+        if (!double.IsFinite(signedCosine) || Math.Abs(signedCosine) < ParallelCosine) return false;
+        flipDirection = signedCosine < 0;
+        return true;
+    }
+
+    public static bool HasExplicitOriginAxisPosition(EdgeSelectionCriteria criteria, EdgeDirection axis) =>
+        IsPrincipalAxis(axis) &&
+        (axis.X != 0 || criteria.AnchorXMm == 0d) &&
+        (axis.Y != 0 || criteria.AnchorYMm == 0d) &&
+        (axis.Z != 0 || criteria.AnchorZMm == 0d);
+
+    public static bool IsOnOriginAxis(MeasuredEdge edge, EdgeDirection axis, double toleranceMm) =>
+        IsPrincipalAxis(axis) &&
+        double.IsFinite(toleranceMm) && toleranceMm > 0 &&
+        double.IsFinite(edge.AnchorXMm) && double.IsFinite(edge.AnchorYMm) && double.IsFinite(edge.AnchorZMm) &&
+        // 用户可收紧选择容差，但不能扩大当前主轴同轴复核的 0.05 mm 上限。
+        (axis.X != 0 || Math.Abs(edge.AnchorXMm) <= Math.Min(toleranceMm, 0.05d)) &&
+        (axis.Y != 0 || Math.Abs(edge.AnchorYMm) <= Math.Min(toleranceMm, 0.05d)) &&
+        (axis.Z != 0 || Math.Abs(edge.AnchorZMm) <= Math.Min(toleranceMm, 0.05d));
+
+    private static bool IsPrincipalAxis(EdgeDirection axis) =>
+        (Math.Abs(axis.X) == 1 && axis.Y == 0 && axis.Z == 0) ||
+        (Math.Abs(axis.Y) == 1 && axis.X == 0 && axis.Z == 0) ||
+        (Math.Abs(axis.Z) == 1 && axis.X == 0 && axis.Y == 0);
+}
 
 /// <summary>
 /// 声明式边选择判据。零件族在 FeatureGraph 中声明"要哪条边"，
@@ -125,6 +185,13 @@ public static class EdgeSelectionResolver
                 "tolerance_mm must be a finite positive number.");
         }
 
+        if (new[] { criteria.LengthMm, criteria.RadiusMm, criteria.AnchorXMm, criteria.AnchorYMm, criteria.AnchorZMm }
+            .Any(value => value is { } number && !double.IsFinite(number)))
+        {
+            return EdgeSelectionResult.Failed(PartFamilyFailureStages.EdgeSelectionInvalidCriteria,
+                Array.Empty<MeasuredEdge>(), "边选择的尺寸和定位坐标必须是有限数值。");
+        }
+
         if (!HasAnyConstraint(criteria))
         {
             // 无约束判据会匹配全部边，等于放任选择集，必须拒绝。
@@ -166,6 +233,10 @@ public static class EdgeSelectionResolver
 
     private static bool Matches(MeasuredEdge edge, EdgeSelectionCriteria criteria)
     {
+        if (!double.IsFinite(edge.LengthMm) || !double.IsFinite(edge.AnchorXMm) ||
+            !double.IsFinite(edge.AnchorYMm) || !double.IsFinite(edge.AnchorZMm) ||
+            (edge.RadiusMm is { } radiusValue && !double.IsFinite(radiusValue))) return false;
+
         if (!string.IsNullOrWhiteSpace(criteria.Kind) &&
             !edge.Kind.Equals(criteria.Kind, StringComparison.OrdinalIgnoreCase))
         {

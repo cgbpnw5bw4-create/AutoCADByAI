@@ -2,20 +2,24 @@
 
 ## 项目定位
 
-`AI Mechanical Engineering Agent Platform` 是面向机械设计、CAD 自动化、`SolidWorks`、`AutoCAD` 和后续工业软件适配的多 Agent 平台。平台目标不是堆脚本，而是把需求理解、建模计划、Worker 执行、校验、复审和质量门禁拆成长期可扩展的边界。
+`AI Mechanical Engineer Platform` 是面向机械设计、CAD 自动化、`SolidWorks`、`AutoCAD` 和后续工业软件适配的平台。强模型负责工程理解、规划和决策；平台负责工程约束、确定性执行、真实 CAD/API 能力和结果验收。架构逐步收敛为少量强 Agent 与多个确定性 Worker。
+
+正式名称、快速入口和底层命名兼容原因见 [项目 README](../README.md)。旧项目目录、解决方案、程序集、命名空间和来源绑定证据路径继续保留。
 
 ## 架构总览
 
 - `Gateway`：外部入口，只能看到公开 Agent。
-- `chief-engineer`：唯一公开 Runtime Agent，负责总调度和内部协作。
-- `Internal Agents`：内部 Agent，例如 `cad-modeler`、`drawing-reviewer`，不能被外部直接调用。
+- `chief-engineer`：唯一公开 Runtime Agent，负责工程理解、规划和决策。
+- `Internal Agents`：保留兼容的内部角色，例如 `cad-modeler`、`drawing-reviewer`，按需求调用，不能被外部直接调用；确定性能力不要求拆成多个推理 Agent。
 - `Modules`：业务能力板块，位于 `src/Modules`。
 - `Skills`：生成结构化计划或中间结果，不直接操作 CAD。
-- `Workers`：真实执行层，未来调用 `API`、`SDK`、`COM` 或外部系统。
+- `Workers`：确定性执行层，通过受证能力和 Adapter 调用 `API`、`SDK`、`COM` 或外部系统。
+- `Feature Registry`、Verified Handler 与 `SolidWorks API Evidence`：负责能力发现、参数校验和真实执行授权；模型 API 建议不构成证据。
 - `Validators`：检查输入、输出和环境。
 - `Reviewers`：做工程合理性复审。
-- `QualityGate`：统一裁决通过、打回、失败或人工审批。
-- `AgentRuntime.Microsoft`：真实 LLM Runtime 适配层，不污染业务接口。
+- `QualityGate`：工程结果验收，统一裁决通过、打回、失败或人工审批，为专项门禁保留可组合边界。
+- `ModelRuntime` / `IModelProvider`：中立模型接入和替换；`AgentRuntime.Microsoft` 保留为兼容适配层。
+- `IWorkflowEngine`：统一工作流调用合同，当前实现仍为已验证的顺序引擎，保留重试与人工审批。
 - `Storage`：任务、审计、事件、产物和报告抽象。
 - `Interfaces`：CLI、API、AgentGatewayHost 等访问面。
 
@@ -29,9 +33,13 @@
 
 ## 当前开发入口
 
-当前开发阶段为 [V2.2-A 平台任务生命周期与审批闭环](v2_2_a_task_approval_lifecycle.md)。前轮 V2.1-B 可靠性补强的 `R01`–`R05` 已完成；本轮在用户授权自主选择下一阶段后，实施 `R06` 的具体审批身份与原子防重放、任务状态及查询、宿主审批入口和恢复后的原业务收尾及 `QualityGate`。
+当前开发阶段为 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)。2026-09-14 已完成既有 8 项 CAD 证据失败恢复、阵列引用与带符号方向修复、STEP 导出身份修复及重采；完整测试 684/684 通过，参数更新正式主流程为 `Passed` / `Deliverable`，发布件两格式独立复核通过。
 
-上轮“不进入 V2.1-C”限定上轮范围，本轮 V2.2-A 平台开发已有新授权，不需要再次确认，也不扩大 CAD 功能。`R07` 类型交接与持久化留待后续；`R08`–`R11` 的 CAD 问题保持未解决及真实执行失败关闭，不阻塞本轮不依赖 COM 的平台开发。[历史架构审查](2026_09_09_architecture_review.md) 的结论继续保留。
+9 月 9 日候选的旧 STEP 语义失配和 9 月 14 日中间连续导出失败均保留原始记录，生产绑定只使用最终修复后新采集并独立验收的证据。9 月 14 日全局 self-check 仍为 `Failed`：夹套生产证据与真实执行未激活，轴类真实工作流自检亦未通过。2026-09-24 保留文件与源码指纹复核通过，重新构建 0 警告、0 错误，完整测试仍为 684/684 通过；本次 self-check 退出码 2，恢复相关门禁与中文检查通过，全局仍保留上述既有缺口。见 [本次验证汇总](../output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json)，不以历史结果代替本次运行。
+
+默认工程流程仅做规划输入校验，具体 CAD 计划沿用原 Skill/Validator；该校验步骤不调用模型或生成计划。旧四角色确定性占位路线保留为显式兼容入口，不能把默认流程收敛描述为减少四次真实 LLM 推理。
+
+前轮 [V2.2-B 强模型架构成果](v2_2_b_frontier_model_architecture.md) 和 [V2.2-A 任务生命周期与审批合同](v2_2_a_task_approval_lifecycle.md) 保留，本轮不继续扩展平台架构。当前阶段允许受控真机诊断与主流程恢复；历史审查与旧 evidence 保留，未获本轮有效证据的能力继续失败关闭。具体范围和实际验证记录以 V2.2-C 阶段页为准。
 
 宿主合同已登记：首次消息返回任务信息和仅返回一次的 `task_access_token`，后续 `GET /tasks/{taskId}`、`POST /tasks/{taskId}/approvals` 使用 `X-Task-Access-Token`。首次消息同步执行；任务与审批仅保存在单进程内存，恢复继续原后处理与门禁，Microsoft advisory 不重复调用 LLM。字段、状态码和验证记录见阶段页；`2.2-a-task-approval` 的四个新行为字段不代表完整测试或全局自检通过。
 

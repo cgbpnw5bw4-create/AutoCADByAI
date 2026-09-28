@@ -17,7 +17,7 @@ if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.Ord
     var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot, projectRoot);
     var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
 
-    Console.WriteLine("AI Mechanical Engineering Agent Platform self-check");
+    Console.WriteLine("AI Mechanical Engineer Platform self-check");
     Console.WriteLine($"Final status: {report.FinalStatus}");
     Console.WriteLine($"Registered modules: {report.RegisteredModules.Count}");
     Console.WriteLine($"Registered agents: {report.RegisteredAgents.Count}");

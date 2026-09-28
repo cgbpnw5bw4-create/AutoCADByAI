@@ -1,0 +1,1447 @@
+{
+  "status": "Passed",
+  "release": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9",
+  "probes": {
+    "native": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\main_release_geometry_unique_20260914\\native_probe.json",
+      "size_bytes": 20523,
+      "sha256": "fa036dc5243827ebcb37294cf59352afc655518a9857a8c577ce83169fdd2d0e"
+    },
+    "step": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\main_release_geometry_unique_20260914\\step_probe.json",
+      "size_bytes": 32020,
+      "sha256": "99da32ff60fef32023621959722102b54c09b1c7c2a5695e6660811a73df9934"
+    }
+  },
+  "checks": [],
+  "files_before": {
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json",
+      "size_bytes": 7101,
+      "sha256": "50c6a4ee8754ed0fa6b0fe811b9da586578f117777464a42ecf14bbc0af94598"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json",
+      "size_bytes": 4799,
+      "sha256": "f6e22134479a7aa17654db96afe5ef45cc03dd74d529708bb648ddd3511f20e9"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json",
+      "size_bytes": 4681,
+      "sha256": "05e2e17b1e29d7b5d3e95f81d2a92b6dde8629bff7d13eac80d30c0c1ba5a904"
+    }
+  },
+  "probe_input_copies": {
+    "native": {
+      "source": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT",
+        "size_bytes": 74358,
+        "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+      },
+      "copy": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\main_release_geometry_unique_20260914\\native_30584f84430d41f180fe5698d5fb36e9.SLDPRT",
+        "size_bytes": 74358,
+        "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+      }
+    },
+    "step": {
+      "source": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP",
+        "size_bytes": 37103,
+        "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+      },
+      "copy": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\main_release_geometry_unique_20260914\\step_47cb697da1b243699d246e0bd225c677.STEP",
+        "size_bytes": 37103,
+        "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+      }
+    }
+  },
+  "step_geometry_match": {
+    "body_count": {
+      "native": 1,
+      "step": 1,
+      "matched": true
+    },
+    "volume": {
+      "native_mm3": 295287.6110196154,
+      "step_mm3": 295287.6110196153,
+      "absolute_difference_mm3": 5.820766091346741e-11,
+      "tolerance_mm3": 0.29528761101961537,
+      "matched": true
+    },
+    "exact_extents": {
+      "tolerance_mm": 0.001,
+      "coordinates": [
+        {
+          "coordinate": "MinXmm",
+          "native_mm": -100.0,
+          "step_mm": -100.0,
+          "absolute_difference_mm": 0.0,
+          "matched": true
+        },
+        {
+          "coordinate": "MinYmm",
+          "native_mm": 0.0,
+          "step_mm": 0.0,
+          "absolute_difference_mm": 0.0,
+          "matched": true
+        },
+        {
+          "coordinate": "MinZmm",
+          "native_mm": -50.0,
+          "step_mm": -50.0,
+          "absolute_difference_mm": 0.0,
+          "matched": true
+        },
+        {
+          "coordinate": "MaxXmm",
+          "native_mm": 100.0,
+          "step_mm": 100.0,
+          "absolute_difference_mm": 0.0,
+          "matched": true
+        },
+        {
+          "coordinate": "MaxYmm",
+          "native_mm": 15.0,
+          "step_mm": 15.0,
+          "absolute_difference_mm": 0.0,
+          "matched": true
+        },
+        {
+          "coordinate": "MaxZmm",
+          "native_mm": 50.0,
+          "step_mm": 50.0,
+          "absolute_difference_mm": 0.0,
+          "matched": true
+        }
+      ],
+      "matched": true
+    },
+    "cylinders": {
+      "tolerance_mm": 0.001,
+      "direction_tolerance": 1e-06,
+      "native_unique": [
+        {
+          "diameter_mm": 10.000000000000009,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            -80.0,
+            0.0,
+            30.0
+          ]
+        },
+        {
+          "diameter_mm": 10.000000000000009,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            80.0,
+            0.0,
+            30.0
+          ]
+        },
+        {
+          "diameter_mm": 10.00000000000001,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            -80.0,
+            0.0,
+            -30.0
+          ]
+        },
+        {
+          "diameter_mm": 10.00000000000001,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            80.0,
+            0.0,
+            -30.0
+          ]
+        }
+      ],
+      "step_unique": [
+        {
+          "diameter_mm": 10.0,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            80.0,
+            0.0,
+            -30.0
+          ]
+        },
+        {
+          "diameter_mm": 10.0,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            -80.0,
+            0.0,
+            -30.0
+          ]
+        },
+        {
+          "diameter_mm": 10.0,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            80.0,
+            0.0,
+            30.0
+          ]
+        },
+        {
+          "diameter_mm": 10.0,
+          "axis": [
+            -0.0,
+            1.0,
+            -0.0
+          ],
+          "perpendicular_origin_mm": [
+            -80.0,
+            0.0,
+            30.0
+          ]
+        }
+      ],
+      "missing_in_step": [],
+      "unexpected_in_step": [],
+      "matched": true
+    },
+    "circles": {
+      "tolerance_mm": 0.001,
+      "direction_tolerance": 1e-06,
+      "native_edge_count": 8,
+      "step_edge_count": 16,
+      "native_unique": [
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 12,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 13,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 14,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 15,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 16,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 17,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 18,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 19,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        }
+      ],
+      "step_unique": [
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 0,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 1,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 2,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 3,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 4,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 5,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 6,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 7,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        }
+      ],
+      "native_coaxial_mouths": [
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 12,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 13,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 14,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 15,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            30.0,
+            5.000000000000004
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 16,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589796,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5.000000000000004,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 17,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 18,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            -30.0,
+            5.000000000000005
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 19,
+            "Kind": "circle",
+            "LengthMm": 31.415926535897963,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5.000000000000005,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        }
+      ],
+      "step_coaxial_mouths": [
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 0,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 1,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            0.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 2,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            0.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 3,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 0,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "plane",
+              "cylinder"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 4,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 5,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": 30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            -80.0,
+            15.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 6,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": -80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        },
+        {
+          "point_radius_mm": [
+            80.0,
+            15.0,
+            -30.0,
+            5.0
+          ],
+          "normal": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "edge": {
+            "Index": 7,
+            "Kind": "circle",
+            "LengthMm": 31.41592653589793,
+            "AnchorXMm": 80,
+            "AnchorYMm": 15,
+            "AnchorZMm": -30,
+            "RadiusMm": 5,
+            "AdjacentSurfaceKinds": [
+              "cylinder",
+              "plane"
+            ],
+            "Direction": {
+              "X": 0,
+              "Y": 1,
+              "Z": 0
+            }
+          }
+        }
+      ],
+      "native_excluded_edges": [],
+      "step_excluded_edges": [],
+      "native_inferred_tori": [],
+      "missing_mouths_in_step": [],
+      "unexpected_mouths_in_step": [],
+      "missing_in_step": [],
+      "unexpected_in_step": [],
+      "matched": true
+    },
+    "passed": true
+  },
+  "expected_hole_mouth_xyz_radius_mm": [
+    [
+      -80.0,
+      0.0,
+      -30.0,
+      5.0
+    ],
+    [
+      -80.0,
+      0.0,
+      30.0,
+      5.0
+    ],
+    [
+      -80.0,
+      15.0,
+      -30.0,
+      5.0
+    ],
+    [
+      -80.0,
+      15.0,
+      30.0,
+      5.0
+    ],
+    [
+      80.0,
+      0.0,
+      -30.0,
+      5.0
+    ],
+    [
+      80.0,
+      0.0,
+      30.0,
+      5.0
+    ],
+    [
+      80.0,
+      15.0,
+      -30.0,
+      5.0
+    ],
+    [
+      80.0,
+      15.0,
+      30.0,
+      5.0
+    ]
+  ],
+  "expected_extents_mm": {
+    "MinXmm": -100.0,
+    "MaxXmm": 100.0,
+    "MinYmm": 0.0,
+    "MaxYmm": 15.0,
+    "MinZmm": -50.0,
+    "MaxZmm": 50.0
+  },
+  "files_after": {
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json",
+      "size_bytes": 7101,
+      "sha256": "50c6a4ee8754ed0fa6b0fe811b9da586578f117777464a42ecf14bbc0af94598"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json",
+      "size_bytes": 4799,
+      "sha256": "f6e22134479a7aa17654db96afe5ef45cc03dd74d529708bb648ddd3511f20e9"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json",
+      "size_bytes": 4681,
+      "sha256": "05e2e17b1e29d7b5d3e95f81d2a92b6dde8629bff7d13eac80d30c0c1ba5a904"
+    }
+  }
+}

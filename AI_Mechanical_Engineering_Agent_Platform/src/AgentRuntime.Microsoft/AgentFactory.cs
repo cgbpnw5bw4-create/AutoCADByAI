@@ -39,11 +39,20 @@ public sealed class AgentFactory
         IAgent platformAgent,
         AgentRegistry agentRegistry,
         RuntimeConfiguration configuration,
-        IRuntimeModelClient? modelClient = null)
+        IRuntimeModelClient? modelClient = null,
+        ModelRuntime.IModelProvider? modelProvider = null)
     {
         if (!string.Equals(platformAgent.Id, "chief-engineer", StringComparison.OrdinalIgnoreCase))
         {
             return platformAgent;
+        }
+
+        // 配置替换不得嵌套运行时，否则同一次任务会重复调用旧模型与新模型。
+        while (platformAgent is MicrosoftAgentAdapter adapter)
+        {
+            var underlying = adapter.GetPlatformAgentForReconfiguration();
+            if (ReferenceEquals(underlying, platformAgent)) break;
+            platformAgent = underlying;
         }
 
         if (configuration.EffectiveMode != AgentRuntimeMode.Microsoft)
@@ -57,10 +66,11 @@ public sealed class AgentFactory
         }
 
         var internalAgentIds = agentRegistry.GetInternalAgents().Select(agent => agent.Id).ToArray();
-        var client = modelClient ?? new RuntimeModelClientFactory().Create(configuration);
+        var provider = modelProvider ?? new ConfiguredModelProvider(
+            modelClient ?? new RuntimeModelClientFactory().Create(configuration), configuration);
         var invoker = new MicrosoftRuntimeAgentInvoker(
             configuration,
-            client,
+            new ModelRuntime.ModelRuntime(provider),
             _auditLog,
             internalAgentIds);
 

@@ -14,7 +14,8 @@ public static class RuntimePlatformFactory
     public static void ApplyRuntimeConfiguration(
         PlatformKernel platform,
         RuntimeConfiguration configuration,
-        IRuntimeModelClient? modelClient = null)
+        IRuntimeModelClient? modelClient = null,
+        ModelRuntime.IModelProvider? modelProvider = null)
     {
         var chiefEngineer = platform.AgentRegistry.GetById("chief-engineer");
         if (chiefEngineer is null)
@@ -28,7 +29,8 @@ public static class RuntimePlatformFactory
             chiefEngineer,
             platform.AgentRegistry,
             configuration,
-            modelClient);
+            modelClient,
+            modelProvider);
 
         platform.AgentRegistry.Register(runtimeAwareChief);
     }

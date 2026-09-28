@@ -1,0 +1,109 @@
+{
+  "stage": "V2.2-C",
+  "baseline_tests": {
+    "total": "591",
+    "executed": "591",
+    "passed": "583",
+    "failed": "8",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "final_tests": {
+    "total": "684",
+    "executed": "684",
+    "passed": "684",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "original_failures": [
+    {
+      "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"linear_pattern\")",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.V20DModelRebuildAndGeometryValidationTests.V20DProductionEvidenceBindsTheRealUpdatedCandidate",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"circular_pattern\")",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.V20CFeatureAdapterTests.ProductionEvidenceMatchesCurrentCompositeRevisionAndDiagnostic",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"fillet\")",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"mirror\")",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.PlatformBootstrapperTests.SelfCheckRunnerFailsClosedWhileJacketRuntimeEvidenceIsPending",
+      "before": "Failed",
+      "after": "Passed"
+    },
+    {
+      "test": "PlatformSelfCheck.Tests.V21AComplexFeatureLibraryTests.VerifiedComplexFeatureCarriesRealExecutionEvidenceAfterItsDiagnostic(featureType: \"chamfer\")",
+      "before": "Failed",
+      "after": "Passed"
+    }
+  ],
+  "original_eight_failures_resolved": true,
+  "all_tests_passed": true,
+  "geometry_comparison_regression": {
+    "passed": true,
+    "cases": 16
+  },
+  "main_workflow_geometry_verification": "Passed",
+  "historical_files_preserved": "Passed",
+  "self_check": {
+    "final_status": "Failed",
+    "feature_production_evidence_active": true,
+    "v2_0_d_documented": true,
+    "v2_0_d_production_evidence_active": true,
+    "v2_0_e_unified_part_family_builders": true,
+    "v2_0_e_controlled_plate_evidence_active": true,
+    "v2_0_e_step_content_gate_active": true,
+    "v2_0_e_documented": true,
+    "v2_0_e_capability_regression_gate_passed": true,
+    "v2_0_e_capability_regressions": [],
+    "v2_0_e_geometry_validation_platform_wide": true,
+    "v2_0_e_final_status": "Passed",
+    "jacket_real_workflow_supported": false,
+    "jacket_production_evidence_active": false
+  },
+  "revisions": {
+    "feature": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+    "v20d": "v2.0-d-three-circle-source-sha256:3f20fa75e8d828208d211cfed5f9a46b8c93332ba31cd6238ad5d1437cf928dc"
+  }
+}

@@ -360,6 +360,394 @@ public sealed class V19PartFamilyRealBuilderTests
         }
     }
 
+    [Theory]
+    [InlineData("current-target", 1)]
+    [InlineData("activate-target", 1)]
+    [InlineData("initial-active-null", 1)]
+    public async Task StepExportRequiresSavedDocumentIdentityAndExportsOriginalModel(
+        string identityScenario,
+        int expectedActivationCount)
+    {
+        var root = Path.Combine(
+            FindProjectRoot(), "output", "solidworks", "real", $"step-identity-success-{Guid.NewGuid():N}");
+        try
+        {
+            var com = new JacketComFacade(identityScenario: identityScenario);
+            var builder = new JacketFeatureBuilder(
+                com,
+                planeSelector: new AlwaysSelectedPlaneSelector(),
+                geometryReader: new FixedGeometryReader(ValidJacketGeometry()));
+
+            var result = await builder.BuildAsync(JacketContext(root));
+
+            Assert.Equal("Completed", result.Status);
+            Assert.Equal(expectedActivationCount, com.ActivationCount);
+            Assert.Same(com.OriginalModel, Assert.Single(com.StepExportTargets));
+            Assert.Equal("Extension.SaveAs", Assert.Single(com.StepSaveMethods));
+            Assert.Contains(result.Logs, log => log.Contains("step_export_document_identity_verified", StringComparison.Ordinal));
+            Assert.True(File.Exists(Path.ChangeExtension(com.SavedPartPath!, ".STEP")));
+            Assert.Equal(Path.GetFileName(com.SavedPartPath), Assert.Single(com.ClosedDocumentNames));
+            Assert.DoesNotContain("jacket_basic.SLDPRT", com.ClosedDocumentNames);
+            Assert.Equal("jacket_basic.SLDPRT", Path.GetFileName(Assert.Single(result.Artifacts, artifact => artifact.ArtifactType == "Part").FilePath));
+            Assert.Equal("jacket_basic.STEP", Path.GetFileName(Assert.Single(result.Artifacts, artifact => artifact.ArtifactType == "Step").FilePath));
+            if (expectedActivationCount == 1)
+            {
+                Assert.Equal(Path.GetFileName(com.SavedPartPath), com.ActivationArguments![0]);
+                Assert.Equal(false, com.ActivationArguments[1]);
+                Assert.Equal(1, com.ActivationArguments[2]);
+                Assert.Equal(0, com.ActivationArguments[3]);
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FamilyRunsUseDistinctOwnedNamesAndPublishIdenticalBytesWithStableNames()
+    {
+        var root = TempRoot("owned-document-compatible-names");
+        try
+        {
+            var internalNames = new List<string>();
+            foreach (var run in new[] { "first", "second" })
+            {
+                var com = new JacketComFacade();
+                var result = await new JacketFeatureBuilder(
+                    com,
+                    planeSelector: new AlwaysSelectedPlaneSelector(),
+                    geometryReader: new FixedGeometryReader(ValidJacketGeometry()))
+                    .BuildAsync(JacketContext(Path.Combine(root, run)));
+
+                Assert.Equal("Completed", result.Status);
+                internalNames.Add(Path.GetFileName(com.SavedPartPath!));
+                Assert.Equal(internalNames[^1], Assert.Single(com.ClosedDocumentNames));
+                var part = Assert.Single(result.Artifacts, artifact => artifact.ArtifactType == "Part");
+                var step = Assert.Single(result.Artifacts, artifact => artifact.ArtifactType == "Step");
+                Assert.Equal("jacket_basic.SLDPRT", Path.GetFileName(part.FilePath));
+                Assert.Equal("jacket_basic.STEP", Path.GetFileName(step.FilePath));
+                Assert.NotEqual(com.SavedPartPath, part.FilePath);
+                Assert.Equal(File.ReadAllBytes(com.SavedPartPath!), File.ReadAllBytes(part.FilePath));
+                Assert.Equal(File.ReadAllBytes(Path.ChangeExtension(com.SavedPartPath, ".STEP")!), File.ReadAllBytes(step.FilePath));
+                using var report = JsonDocument.Parse(File.ReadAllText(
+                    Assert.Single(result.Artifacts, artifact => artifact.ArtifactType == "BuildReport").FilePath));
+                Assert.Equal(part.FilePath, report.RootElement.GetProperty("sldprt_path").GetString());
+                Assert.Equal(step.FilePath, report.RootElement.GetProperty("step_path").GetString());
+            }
+            Assert.NotEqual(internalNames[0], internalNames[1]);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FamilyDoesNotPublishStableNamesUntilOwnedDocumentCloses()
+    {
+        var root = TempRoot("owned-document-close-failed");
+        try
+        {
+            var com = new JacketComFacade(closeDocThrows: true);
+            var result = await new JacketFeatureBuilder(
+                com,
+                planeSelector: new AlwaysSelectedPlaneSelector(),
+                geometryReader: new FixedGeometryReader(ValidJacketGeometry()))
+                .BuildAsync(JacketContext(root));
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal(PartFamilyFailureStages.ArtifactValidationFailed, result.FailureStage);
+            Assert.Empty(com.ClosedDocumentNames);
+            Assert.DoesNotContain(result.Artifacts, artifact => artifact.ArtifactType is "Part" or "Step");
+            Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName(com.SavedPartPath!)!, "jacket_basic.SLDPRT")));
+            Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName(com.SavedPartPath!)!, "jacket_basic.STEP")));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FamilyNeverOverwritesExistingStableDeliverables()
+    {
+        var root = Path.Combine(TempRoot("owned-document-no-overwrite"), JacketBasicDefinition.Type);
+        Directory.CreateDirectory(root);
+        var existingPart = Write(root, "jacket_basic.SLDPRT", "原有零件");
+        var existingStep = Write(root, "jacket_basic.STEP", "原有 STEP");
+        try
+        {
+            var com = new JacketComFacade();
+            var result = await new JacketFeatureBuilder(
+                com,
+                planeSelector: new AlwaysSelectedPlaneSelector(),
+                geometryReader: new FixedGeometryReader(ValidJacketGeometry()))
+                .BuildAsync(JacketContext(root));
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal(PartFamilyFailureStages.ArtifactValidationFailed, result.FailureStage);
+            Assert.Equal("原有零件", File.ReadAllText(existingPart));
+            Assert.Equal("原有 STEP", File.ReadAllText(existingStep));
+            Assert.Equal(Path.GetFileName(com.SavedPartPath), Assert.Single(com.ClosedDocumentNames));
+            Assert.DoesNotContain(result.Artifacts, artifact => artifact.ArtifactType is "Part" or "Step");
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("same-title-wrong-document", "step_export_document_identity_invalid")]
+    [InlineData("current-target-activation-wrong", "step_export_document_identity_invalid")]
+    [InlineData("returned-wrong-document", "step_export_document_identity_invalid")]
+    [InlineData("active-wrong-document", "step_export_document_identity_invalid")]
+    [InlineData("active-null", "step_export_document_identity_invalid")]
+    [InlineData("returned-null", "step_export_activation_failed")]
+    [InlineData("activation-error", "step_export_activation_failed")]
+    [InlineData("activation-rebuild-warning", "step_export_activation_failed")]
+    [InlineData("activation-error-unwritten", "step_export_activation_failed")]
+    [InlineData("missing-returned-path", "step_export_document_identity_invalid")]
+    [InlineData("missing-original-path", "step_export_document_identity_invalid")]
+    [InlineData("relative-original-path", "step_export_document_identity_invalid")]
+    [InlineData("wrong-original-path", "step_export_document_identity_invalid")]
+    public async Task StepExportRejectsAmbiguousOrFailedActivationBeforeEverySaveApi(
+        string identityScenario,
+        string expectedIssue)
+    {
+        var root = TempRoot($"step-identity-{identityScenario}");
+        try
+        {
+            var com = new JacketComFacade(identityScenario: identityScenario);
+            var builder = new JacketFeatureBuilder(
+                com,
+                planeSelector: new AlwaysSelectedPlaneSelector(),
+                geometryReader: new FixedGeometryReader(ValidJacketGeometry()));
+
+            var result = await builder.BuildAsync(JacketContext(root));
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Equal(PartFamilyFailureStages.StepExportFailed, result.FailureStage);
+            Assert.Contains(result.Issues, issue => issue.Contains(expectedIssue, StringComparison.Ordinal));
+            Assert.NotNull(com.SavedPartPath);
+            Assert.True(File.Exists(com.SavedPartPath));
+            Assert.Empty(com.StepExportTargets);
+            Assert.Empty(com.StepSaveMethods);
+            Assert.False(File.Exists(Path.ChangeExtension(com.SavedPartPath, ".STEP")));
+            Assert.DoesNotContain(result.Artifacts, artifact => artifact.ArtifactType == "Step");
+            AssertFailedBuildReport(result, PartFamilyFailureStages.StepExportFailed);
+            if (identityScenario.EndsWith("original-path", StringComparison.Ordinal))
+            {
+                Assert.Equal(0, com.ActivationCount);
+                Assert.Empty(com.ClosedDocumentNames);
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("current-target", true)]
+    [InlineData("activate-target", true)]
+    [InlineData("same-title-wrong-document", false)]
+    [InlineData("active-null", false)]
+    [InlineData("returned-null", false)]
+    [InlineData("activation-rebuild-warning", false)]
+    public void LegacyPlateStepExporterUsesTheSameDocumentIdentityBoundary(
+        string identityScenario,
+        bool expectedSuccess)
+    {
+        var root = TempRoot($"plate-step-identity-{identityScenario}");
+        try
+        {
+            var com = new JacketComFacade(identityScenario: identityScenario);
+            var partPath = Path.Combine(root, "jacket_basic.SLDPRT");
+            var stepPath = Path.ChangeExtension(partPath, ".STEP");
+            Assert.True(com.TryExtensionSaveAs(com.OriginalModel, partPath, null, [], []));
+            var diagnostics = new SolidWorksPlateBuildDiagnostics { SldprtPath = partPath };
+            var builder = new LateBoundSolidWorksPlateBuilder(com);
+            // 旧兼容出口没有独立公开接口；只隔离此前已完成的建模，直接验证实际导出边界。
+            var export = typeof(LateBoundSolidWorksPlateBuilder).GetMethod(
+                "ExportStep", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+            void Export() => export.Invoke(builder, [new object(), com.OriginalModel, stepPath, diagnostics, new List<string>()]);
+
+            if (expectedSuccess)
+            {
+                Export();
+                Assert.True(diagnostics.StepExportSuccess);
+                Assert.Same(com.OriginalModel, Assert.Single(com.StepExportTargets));
+                Assert.Equal("Extension.SaveAs", Assert.Single(com.StepSaveMethods));
+                Assert.True(File.Exists(stepPath));
+                Assert.Equal(1, com.ActivationCount);
+            }
+            else
+            {
+                var exception = Assert.Throws<System.Reflection.TargetInvocationException>(Export);
+                Assert.IsType<IOException>(exception.InnerException);
+                Assert.True(diagnostics.StepExportAttempted);
+                Assert.False(diagnostics.StepExportSuccess);
+                Assert.NotEmpty(diagnostics.StepExportErrors);
+                Assert.Empty(com.StepExportTargets);
+                Assert.Empty(com.StepSaveMethods);
+                Assert.False(File.Exists(stepPath));
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false, 0, 0)]
+    [InlineData(false, 8, 4)]
+    [InlineData(true, 8, 0)]
+    [InlineData(true, 0, 4)]
+    public async Task FamilyStepExportCannotMaskExtensionFailureWithAnotherSaveApi(
+        bool extensionResult,
+        int extensionError,
+        int extensionWarning)
+    {
+        var root = TempRoot("step-extension-result");
+        try
+        {
+            var com = new JacketComFacade(
+                stepExportResult: extensionResult, stepExportError: extensionError, stepExportWarning: extensionWarning);
+            var builder = new JacketFeatureBuilder(
+                com,
+                planeSelector: new AlwaysSelectedPlaneSelector(),
+                geometryReader: new FixedGeometryReader(ValidJacketGeometry()));
+
+            var result = await builder.BuildAsync(JacketContext(root));
+
+            var expectedSuccess = extensionResult && extensionError == 0;
+            Assert.Equal(expectedSuccess ? "Completed" : "Failed", result.Status);
+            Assert.Equal("Extension.SaveAs", Assert.Single(com.StepSaveMethods));
+            Assert.Same(com.OriginalModel, Assert.Single(com.StepExportTargets));
+            // 即使失败接口留下非空文件，也不能凭文件存在将执行宣称成功。
+            Assert.True(File.Exists(Path.ChangeExtension(com.SavedPartPath, ".STEP")));
+            if (!expectedSuccess)
+            {
+                Assert.Equal(PartFamilyFailureStages.StepExportFailed, result.FailureStage);
+                Assert.DoesNotContain(result.Artifacts, artifact => artifact.ArtifactType == "Step");
+                AssertFailedBuildReport(result, PartFamilyFailureStages.StepExportFailed);
+            }
+            if (extensionError != 0)
+            {
+                Assert.Contains(result.Issues, issue => issue.Contains($"save_as_errors: {extensionError}", StringComparison.Ordinal));
+            }
+            var reportArtifact = Assert.Single(result.Artifacts, artifact => artifact.ArtifactType == "BuildReport");
+            using var report = JsonDocument.Parse(File.ReadAllText(reportArtifact.FilePath));
+            if (extensionWarning != 0)
+            {
+                Assert.Contains(report.RootElement.GetProperty("warnings").EnumerateArray(),
+                    warning => warning.GetString() == $"save_as_warnings: {extensionWarning}");
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false, 0, 0)]
+    [InlineData(false, 8, 4)]
+    [InlineData(true, 8, 0)]
+    [InlineData(true, 0, 4)]
+    public void LegacyPlateStepExportCannotMaskExtensionFailureWithAnotherSaveApi(
+        bool extensionResult,
+        int extensionError,
+        int extensionWarning)
+    {
+        var root = TempRoot("plate-step-extension-result");
+        try
+        {
+            var com = new JacketComFacade(
+                stepExportResult: extensionResult, stepExportError: extensionError, stepExportWarning: extensionWarning);
+            var partPath = Path.Combine(root, "jacket_basic.SLDPRT");
+            var stepPath = Path.ChangeExtension(partPath, ".STEP");
+            Assert.True(com.TryExtensionSaveAs(com.OriginalModel, partPath, null, [], []));
+            var diagnostics = new SolidWorksPlateBuildDiagnostics { SldprtPath = partPath };
+            var builder = new LateBoundSolidWorksPlateBuilder(com);
+            var export = typeof(LateBoundSolidWorksPlateBuilder).GetMethod(
+                "ExportStep", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+            void Export() => export.Invoke(builder, [new object(), com.OriginalModel, stepPath, diagnostics, new List<string>()]);
+
+            var expectedSuccess = extensionResult && extensionError == 0;
+            if (expectedSuccess) Export();
+            else Assert.IsType<IOException>(Assert.Throws<System.Reflection.TargetInvocationException>(Export).InnerException);
+
+            Assert.Equal(expectedSuccess, diagnostics.StepExportSuccess);
+            Assert.Equal("Extension.SaveAs", Assert.Single(com.StepSaveMethods));
+            Assert.Same(com.OriginalModel, Assert.Single(com.StepExportTargets));
+            Assert.True(File.Exists(stepPath));
+            if (extensionError != 0) Assert.Contains($"save_as_errors: {extensionError}", diagnostics.StepExportErrors);
+            if (extensionWarning != 0) Assert.Contains($"save_as_warnings: {extensionWarning}", diagnostics.StepExportWarnings);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FamilyStepExportStopsWhenClearingSelectionThrows()
+    {
+        var root = TempRoot("step-clear-selection-error");
+        try
+        {
+            var com = new JacketComFacade(stepClearSelectionThrows: true);
+            var builder = new JacketFeatureBuilder(
+                com,
+                planeSelector: new AlwaysSelectedPlaneSelector(),
+                geometryReader: new FixedGeometryReader(ValidJacketGeometry()));
+
+            var result = await builder.BuildAsync(JacketContext(root));
+
+            Assert.Equal("Failed", result.Status);
+            Assert.Contains(result.Issues, issue => issue.Contains("clear_selection_failed", StringComparison.Ordinal));
+            Assert.Empty(com.StepSaveMethods);
+            Assert.False(File.Exists(Path.ChangeExtension(com.SavedPartPath, ".STEP")));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LegacyPlateStepExportStopsWhenClearingSelectionThrows()
+    {
+        var root = TempRoot("plate-step-clear-selection-error");
+        try
+        {
+            var com = new JacketComFacade(stepClearSelectionThrows: true);
+            var partPath = Path.Combine(root, "jacket_basic.SLDPRT");
+            var stepPath = Path.ChangeExtension(partPath, ".STEP");
+            Assert.True(com.TryExtensionSaveAs(com.OriginalModel, partPath, null, [], []));
+            var diagnostics = new SolidWorksPlateBuildDiagnostics { SldprtPath = partPath };
+            var builder = new LateBoundSolidWorksPlateBuilder(com);
+            var export = typeof(LateBoundSolidWorksPlateBuilder).GetMethod(
+                "ExportStep", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() =>
+                export.Invoke(builder, [new object(), com.OriginalModel, stepPath, diagnostics, new List<string>()]));
+
+            Assert.IsType<System.Runtime.InteropServices.COMException>(exception.InnerException);
+            Assert.False(diagnostics.StepExportSuccess);
+            Assert.Empty(com.StepSaveMethods);
+            Assert.False(File.Exists(stepPath));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task RealWorkerRejectsJacketBeforeComUntilProductionEvidenceIsActive()
     {
@@ -417,7 +805,7 @@ public sealed class V19PartFamilyRealBuilderTests
     }
 
     [Fact]
-    public async Task RealWorkerClosesOnlyTheControlledDocumentWithoutExitingUserSession()
+    public async Task RealWorkerDoesNotGuessOwnershipOfPartDocumentsOrExitUserSession()
     {
         var root = TempRoot("controlled-document-cleanup");
         Directory.CreateDirectory(root);
@@ -432,9 +820,10 @@ public sealed class V19PartFamilyRealBuilderTests
             var result = await worker.ExecuteAsync(RealRequest(FlangePlan(), root));
 
             Assert.Equal("Completed", result.Status);
-            Assert.Equal(["flange_basic.SLDPRT"], session.Application.ClosedDocumentNames);
+            // 此替身没有创建文档。旧断言要求 Worker 猜名关闭，可能误关用户的同名零件。
+            Assert.Empty(session.Application.ClosedDocumentNames);
             Assert.Equal(0, session.Application.ExitAppInvocations);
-            Assert.Contains(result.Logs, log =>
+            Assert.DoesNotContain(result.Logs, log =>
                 string.Equals(log, "solidworks_document_closed: flange_basic.SLDPRT", StringComparison.Ordinal));
         }
         finally
@@ -863,22 +1252,53 @@ public sealed class V19PartFamilyRealBuilderTests
     private sealed class JacketComFacade : ISolidWorksComFacade
     {
         private readonly object _model = new();
+        private readonly object _otherModel = new();
+        private readonly object _unknownModel = new();
         private readonly object _sketchManager = new();
         private readonly object _featureManager = new();
         private readonly bool _rebuildResult;
         private readonly string? _failAt;
         private readonly string _stepContent;
+        private readonly string _identityScenario;
+        private readonly bool _stepExportResult;
+        private readonly int _stepExportError;
+        private readonly int _stepExportWarning;
+        private readonly bool _stepClearSelectionThrows;
+        private readonly bool _closeDocThrows;
+        private object? _activeModel;
         private int _circleInvocationCount;
 
         public JacketComFacade(
             bool rebuildResult = true,
             string? failAt = null,
-            string stepContent = MinimalStepContent)
+            string stepContent = MinimalStepContent,
+            string identityScenario = "current-target",
+            bool stepExportResult = true,
+            int stepExportError = 0,
+            int stepExportWarning = 0,
+            bool stepClearSelectionThrows = false,
+            bool closeDocThrows = false)
         {
             _rebuildResult = rebuildResult;
             _failAt = failAt;
             _stepContent = stepContent;
+            _identityScenario = identityScenario;
+            _stepExportResult = stepExportResult;
+            _stepExportError = stepExportError;
+            _stepExportWarning = stepExportWarning;
+            _stepClearSelectionThrows = stepClearSelectionThrows;
+            _closeDocThrows = closeDocThrows;
+            _activeModel = identityScenario is "current-target" or "current-target-activation-wrong" ? _model
+                : identityScenario == "initial-active-null" ? null : _otherModel;
         }
+
+        public object OriginalModel => _model;
+        public string? SavedPartPath { get; private set; }
+        public int ActivationCount { get; private set; }
+        public object?[]? ActivationArguments { get; private set; }
+        public List<object> StepExportTargets { get; } = [];
+        public List<string> StepSaveMethods { get; } = [];
+        public List<string> ClosedDocumentNames { get; } = [];
 
         public object GetProperty(object target, string name) =>
             name switch
@@ -889,7 +1309,7 @@ public sealed class V19PartFamilyRealBuilderTests
             };
 
         public object? TryGetProperty(object? target, string name) =>
-            name.Equals("ActiveDoc", StringComparison.OrdinalIgnoreCase) ? _model : null;
+            name.Equals("ActiveDoc", StringComparison.OrdinalIgnoreCase) ? _activeModel : null;
 
         public object? TryGetIndexedProperty(object target, string name, params object?[] args) => null;
 
@@ -898,6 +1318,64 @@ public sealed class V19PartFamilyRealBuilderTests
 
         public object? InvokeWithArgs(object target, string name, object?[] args)
         {
+            if (name == "CloseDoc")
+            {
+                if (_closeDocThrows) throw new System.Runtime.InteropServices.COMException("close_document_failed");
+                ClosedDocumentNames.Add((string)args[0]!);
+                return null;
+            }
+            if (name == "ClearSelection2" && _stepClearSelectionThrows && SavedPartPath is not null)
+            {
+                throw new System.Runtime.InteropServices.COMException("clear_selection_failed");
+            }
+            if (name == "GetPathName")
+            {
+                if (ReferenceEquals(target, _unknownModel)) return null;
+                if (ReferenceEquals(target, _otherModel)) return OtherPartPath();
+                return _identityScenario switch
+                {
+                    "missing-original-path" => null,
+                    "relative-original-path" => Path.GetFileName(SavedPartPath),
+                    "wrong-original-path" => OtherPartPath(),
+                    _ => SavedPartPath
+                };
+            }
+            if (name == "ActivateDoc3")
+            {
+                ActivationCount++;
+                // 模拟 COM 的 out errors 和返回 ModelDoc2；文档标题相同不表示身份相同。
+                if (_identityScenario != "activation-error-unwritten")
+                {
+                    args[3] = _identityScenario switch
+                    {
+                        "activation-error" => 1,
+                        "activation-rebuild-warning" => 2,
+                        _ => 0
+                    };
+                }
+                ActivationArguments = args.ToArray();
+                _activeModel = _identityScenario switch
+                {
+                    "same-title-wrong-document" or "active-wrong-document" or "current-target-activation-wrong" => _otherModel,
+                    "active-null" => null,
+                    _ => _model
+                };
+                return _identityScenario switch
+                {
+                    "same-title-wrong-document" or "returned-wrong-document" or "current-target-activation-wrong" => _otherModel,
+                    "returned-null" => null,
+                    "missing-returned-path" => _unknownModel,
+                    _ => _model
+                };
+            }
+            if ((name is "SaveAs3" or "SaveAs") && args[0] is string path &&
+                path.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase))
+            {
+                StepExportTargets.Add(target);
+                StepSaveMethods.Add(name);
+                // 若生产回退到其他保存 API，故意返回成功；回归必须能发现这种掩盖。
+                return true;
+            }
             if (name.Equals("CreateCircle", StringComparison.OrdinalIgnoreCase))
             {
                 _circleInvocationCount++;
@@ -915,19 +1393,27 @@ public sealed class V19PartFamilyRealBuilderTests
             return name switch
             {
                 "NewDocument" => _model,
-                "GetTitle" => "jacket_basic.SLDPRT",
+                "GetTitle" => SavedPartPath is null ? "Part_test" : Path.GetFileName(SavedPartPath),
                 "InsertSketch" => null,
                 "CreateCircle" => new object(),
                 "FeatureExtrusion2" => new object(),
                 "FeatureCut4" => new object(),
-                "ActivateDoc3" => true,
                 "ClearSelection2" => true,
                 _ => new object()
             };
         }
 
-        public object? TryInvoke(object? target, string name, params object?[] args) =>
-            target is null ? null : Invoke(target, name, args);
+        public object? TryInvoke(object? target, string name, params object?[] args)
+        {
+            try
+            {
+                return target is null ? null : Invoke(target, name, args);
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                return null;
+            }
+        }
 
         public object? TryInvokeWithArgs(object? target, string name, object?[] args) =>
             target is null ? null : InvokeWithArgs(target, name, args);
@@ -946,14 +1432,28 @@ public sealed class V19PartFamilyRealBuilderTests
             List<string> errors,
             List<string> warnings)
         {
+            if (path.EndsWith(".SLDPRT", StringComparison.OrdinalIgnoreCase))
+            {
+                SavedPartPath = Path.GetFullPath(path);
+            }
+            else if (path.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase))
+            {
+                StepExportTargets.Add(model);
+                StepSaveMethods.Add("Extension.SaveAs");
+                if (_stepExportError != 0) errors.Add($"save_as_errors: {_stepExportError}");
+                if (_stepExportWarning != 0) warnings.Add($"save_as_warnings: {_stepExportWarning}");
+            }
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
             File.WriteAllText(
                 path,
                 path.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase)
                     ? _stepContent
                     : "controlled SolidWorks part bytes");
-            return true;
+            return !path.EndsWith(".STEP", StringComparison.OrdinalIgnoreCase) || _stepExportResult;
         }
+
+        private string? OtherPartPath() => SavedPartPath is null ? null
+            : Path.Combine(Path.GetDirectoryName(SavedPartPath)!, "previous", Path.GetFileName(SavedPartPath));
 
         public void ReleaseComObject(object value)
         {

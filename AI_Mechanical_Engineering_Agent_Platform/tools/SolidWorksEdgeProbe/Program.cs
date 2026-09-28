@@ -15,11 +15,13 @@ using SolidWorksWorker;
 using SolidWorksWorker.Features;
 
 const int SwDocPart = 1;
+// SOLIDWORKS 2023 本机 swconst SDK：swMultiCAD_Enable3DInterconnect。
+const int SwEnable3DInterconnect = 691;
 
 var options = ProbeOptions.Parse(args);
 if (options.ShowUsage)
 {
-    Console.WriteLine("usage: SolidWorksEdgeProbe --input <path-to-sldprt> --confirm-real-cad [--json <out.json>]");
+    Console.WriteLine("usage: SolidWorksEdgeProbe --input <path-to-sldprt-or-step> --confirm-real-cad [--json <out.json>]");
     Console.WriteLine();
     Console.WriteLine("  --confirm-real-cad  必须显式给出。缺少该开关时工具不会启动 SolidWorks。");
     return 1;
@@ -55,6 +57,8 @@ if (progId is null)
 
 object? application = null;
 object? document = null;
+object? importData = null;
+bool? interconnectEnabled = null;
 try
 {
     application = Activator.CreateInstance(progId);
@@ -66,9 +70,46 @@ try
 
     com.TrySetProperty(application, "Visible", options.Visible);
 
-    // OpenDoc 没有 ref 参数，因此可以完全走后期绑定，
-    // 不需要为一个诊断工具引入类型化 interop 依赖。
-    document = com.TryInvoke(application, "OpenDoc", Path.GetFullPath(options.InputPath), SwDocPart);
+    var inputPath = Path.GetFullPath(options.InputPath);
+    if (Path.GetExtension(inputPath).Equals(".STEP", StringComparison.OrdinalIgnoreCase) ||
+        Path.GetExtension(inputPath).Equals(".STP", StringComparison.OrdinalIgnoreCase))
+    {
+        // 官方 2023 Import STEP File 示例；只导入和测量，不执行 ImportDiagnosis 修复或保存。
+        var preference = com.TryInvoke(application, "GetUserPreferenceToggle", SwEnable3DInterconnect);
+        if (preference is not bool enabled)
+        {
+            Console.WriteLine("step_import_preference_unknown");
+            return 4;
+        }
+        interconnectEnabled = enabled;
+        importData = com.TryInvoke(application, "GetImportFileData", inputPath);
+        if (importData is null || !com.TrySetProperty(importData, "MapConfigurationData", false))
+        {
+            Console.WriteLine("step_import_data_unavailable");
+            return 4;
+        }
+        object?[] importArguments = [inputPath, enabled ? string.Empty : "r", importData, 0];
+        Console.WriteLine($"step_import_started: interconnect={enabled}, arguments={importArguments[1]}");
+        document = com.InvokeWithArgs(application, "LoadFile4", importArguments);
+        if (document is null || importArguments[3] is not int importErrors || importErrors != 0)
+        {
+            Console.WriteLine($"step_import_failed: document_null={document is null}, errors={importArguments[3]}, error_type={importArguments[3]?.GetType().FullName}");
+            return 4;
+        }
+    }
+    else
+    {
+        document = com.TryInvoke(application, "OpenDoc", inputPath, SwDocPart);
+        var openedPath = document is null ? null : com.TryInvoke(document, "GetPathName")?.ToString();
+        if (string.IsNullOrWhiteSpace(openedPath) ||
+            !string.Equals(Path.GetFullPath(openedPath), inputPath, StringComparison.OrdinalIgnoreCase))
+        {
+            // 身份错误时不关闭可能属于用户的另一份同名文档。
+            document = null;
+            Console.WriteLine("open_document_identity_mismatch");
+            return 4;
+        }
+    }
     if (document is null)
     {
         Console.WriteLine("open_failed");
@@ -118,7 +159,9 @@ try
     if (!string.IsNullOrWhiteSpace(options.JsonPath))
     {
         var json = JsonSerializer.Serialize(
-            new { input = Path.GetFullPath(options.InputPath), edge_count = edges.Count, edges },
+            new { input = Path.GetFullPath(options.InputPath), interconnect_enabled = interconnectEnabled,
+                read_success = result.IsSuccess, failure_stage = result.FailureStage,
+                geometry = result.Geometry, edge_count = edges.Count, edges },
             new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(Path.GetFullPath(options.JsonPath), json);
         Console.WriteLine($"json_written={Path.GetFullPath(options.JsonPath)}");
@@ -140,6 +183,7 @@ finally
 
         com.ReleaseComObject(document);
     }
+    if (importData is not null) com.ReleaseComObject(importData);
 }
 
 internal sealed record ProbeOptions(

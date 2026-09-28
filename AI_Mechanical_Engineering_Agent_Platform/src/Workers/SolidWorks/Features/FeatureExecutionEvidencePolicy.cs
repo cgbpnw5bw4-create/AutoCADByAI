@@ -33,6 +33,7 @@ public static partial class FeatureExecutionEvidencePolicy
         "src/DomainSchemas/FeatureParameterSchemaRegistry.cs",
         "src/DomainSchemas/GenericCadDescription.cs",
         "src/DomainSchemas/GeometryValidation.cs",
+        "src/DomainSchemas/EdgeSelection.cs",
         "src/Modules/CADModeling/validators/SolidWorksBuildPlanValidator.cs",
         // V2.1-A：圆角取证后必须同样绑定其源码，否则改动 FilletHandler
         // 不会让证据失效，等于给它开了一个别人没有的后门。
@@ -40,9 +41,13 @@ public static partial class FeatureExecutionEvidencePolicy
         "src/Workers/SolidWorks/Features/Chamfer/ChamferHandler.cs",
         "src/Workers/SolidWorks/Features/Pattern/LinearPatternHandler.cs",
         "src/Workers/SolidWorks/Features/Pattern/CircularPatternHandler.cs",
+        "src/Workers/SolidWorks/Features/Pattern/PatternParameterRules.cs",
         "src/Workers/SolidWorks/Features/Mirror/MirrorHandler.cs",
         "src/Workers/SolidWorks/Features/SolidWorksEdgeEnumerator.cs",
         "src/Workers/SolidWorks/SolidWorksPartFamilyRealBuilders.cs",
+        "src/Workers/SolidWorks/RealSolidWorksWorker.cs",
+        "src/Workers/SolidWorks/SolidWorksPlateBuilder.cs",
+        "src/Workers/SolidWorks/SolidWorksComInterop.cs",
         "src/Modules/CADModeling/validators/SolidWorksArtifactValidator.cs",
         "tools/SolidWorksFeatureExecutionSmokeRunner/FeatureExecutionSmokeRunner.cs"
     ];

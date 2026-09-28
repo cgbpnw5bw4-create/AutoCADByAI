@@ -1,0 +1,2615 @@
+{
+  "schema_version": "v2.2-c-candidate-collection-2",
+  "started_at": "2026-09-14T01:18:55Z",
+  "status": "CandidatesCollected",
+  "candidate_only": true,
+  "production_bindings_modified": false,
+  "independent_engineering_acceptance": "Pending",
+  "project_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform",
+  "items": [
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_opposite_edge.json",
+        "size_bytes": 3396,
+        "sha256": "140401b2a7e3a1b78bec1cc128f998f2e9c341adc82b20eda8b961f4709ac0ab"
+      },
+      "status": "CandidateCollected",
+      "smoke_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_opposite_edge.json",
+          "--output",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-smoke.log",
+        "started_at": "2026-09-14T01:18:56Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:01Z"
+      },
+      "new_reports": [
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json"
+      ],
+      "report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+        "size_bytes": 10567,
+        "sha256": "c6f221a197715e66a070c08c988da10e0de3d08e0e3d404eef5ec0c34569f116"
+      },
+      "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+      "solidworks_version": "31.5.0",
+      "feature_checks": [
+        {
+          "feature_id": "plate_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "plate_boss",
+          "feature_type": "extrude_boss",
+          "handler_name": "solidworks.extrude_boss@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_boss",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 0,
+          "volume_after_cubic_meters": 5.9999999999999995e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut",
+          "feature_type": "extrude_cut",
+          "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9999999999999995e-05,
+          "volume_after_cubic_meters": 5.9717256661176915e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_pattern",
+          "feature_type": "linear_pattern",
+          "handler_name": "solidworks.linear_pattern@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_pattern",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9717256661176915e-05,
+          "volume_after_cubic_meters": 5.8869026644707675e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        }
+      ],
+      "artifacts_before_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.SLDPRT",
+          "size_bytes": 76225,
+          "sha256": "5b5a4a2a6aa58ace540544abd84dbe06604924b6ea46e17c65749f76295598fa"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.STEP",
+          "size_bytes": 37090,
+          "sha256": "45da968aa00bfb91a9abb75c9934a5506d278cffb8e2e96b37e90491b58e83dd"
+        }
+      },
+      "probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-probe.log",
+        "started_at": "2026-09-14T01:19:01Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:08Z"
+      },
+      "artifacts_after_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.SLDPRT",
+          "size_bytes": 76225,
+          "sha256": "5b5a4a2a6aa58ace540544abd84dbe06604924b6ea46e17c65749f76295598fa"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.STEP",
+          "size_bytes": 37090,
+          "sha256": "45da968aa00bfb91a9abb75c9934a5506d278cffb8e2e96b37e90491b58e83dd"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "size_bytes": 10567,
+          "sha256": "c6f221a197715e66a070c08c988da10e0de3d08e0e3d404eef5ec0c34569f116"
+        }
+      },
+      "probe_artifacts_stable": true,
+      "candidate_report_stable": true,
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-probe.json",
+        "size_bytes": 20519,
+        "sha256": "f4873d9d0aadb139e665a1a8fdcc1a83503a7506586abcd8da2bfb955ed264d8"
+      },
+      "probe_read_success": true,
+      "edge_count": 20,
+      "step_probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-step-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-step-probe.log",
+        "started_at": "2026-09-14T01:19:08Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:10Z"
+      },
+      "artifacts_after_step_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.SLDPRT",
+          "size_bytes": 76225,
+          "sha256": "5b5a4a2a6aa58ace540544abd84dbe06604924b6ea46e17c65749f76295598fa"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.STEP",
+          "size_bytes": 37090,
+          "sha256": "45da968aa00bfb91a9abb75c9934a5506d278cffb8e2e96b37e90491b58e83dd"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+          "size_bytes": 10567,
+          "sha256": "c6f221a197715e66a070c08c988da10e0de3d08e0e3d404eef5ec0c34569f116"
+        },
+        "probe": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-probe.json",
+          "size_bytes": 20519,
+          "sha256": "f4873d9d0aadb139e665a1a8fdcc1a83503a7506586abcd8da2bfb955ed264d8"
+        }
+      },
+      "step_probe_artifacts_stable": true,
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\01-step-probe.json",
+        "size_bytes": 31786,
+        "sha256": "215384acb1e4cdc514710c418d29c6724decef843f69d769ad786944c233d442"
+      },
+      "step_probe_read_success": true,
+      "step_edge_count": 36,
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 58869.02664470767,
+          "step_mm3": 58869.02664470767,
+          "absolute_difference_mm3": 0.0,
+          "tolerance_mm3": 0.05886902664470767,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -50.0,
+              "step_mm": -50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -30.0,
+              "step_mm": -30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 50.0,
+              "step_mm": 50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 10.0,
+              "step_mm": 10.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 30.0,
+              "step_mm": 30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "circles": {
+          "components": [
+            "x_mm",
+            "y_mm",
+            "z_mm",
+            "radius_mm"
+          ],
+          "tolerance_mm": 0.001,
+          "native_edge_count": 8,
+          "step_edge_count": 16,
+          "native_unique": [
+            [
+              -30.0,
+              0.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              -30.0,
+              10.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              -9.999999999999998,
+              0.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              -9.999999999999998,
+              10.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              10.000000000000002,
+              0.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              10.000000000000002,
+              10.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              29.999999999999996,
+              0.0,
+              0.0,
+              3.000000000000001
+            ],
+            [
+              29.999999999999996,
+              10.0,
+              0.0,
+              3.000000000000001
+            ]
+          ],
+          "step_unique": [
+            [
+              -30.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              -30.0,
+              10.0,
+              0.0,
+              3.0
+            ],
+            [
+              -10.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              -10.0,
+              10.0,
+              0.0,
+              3.0
+            ],
+            [
+              10.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              10.0,
+              10.0,
+              0.0,
+              3.0
+            ],
+            [
+              30.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              30.0,
+              10.0,
+              0.0,
+              3.0
+            ]
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_negative.json",
+        "size_bytes": 3390,
+        "sha256": "fc167a730575eec0c7f7fcc751aed8beeb83bab20fbca41d24732054f66552bd"
+      },
+      "status": "CandidateCollected",
+      "smoke_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_negative.json",
+          "--output",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-smoke.log",
+        "started_at": "2026-09-14T01:19:10Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:16Z"
+      },
+      "new_reports": [
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json"
+      ],
+      "report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+        "size_bytes": 10562,
+        "sha256": "3f6f8e29e9fae43777ab67f7c63b88c6a41917b5f6ce3401812dea44e33eca40"
+      },
+      "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+      "solidworks_version": "31.5.0",
+      "feature_checks": [
+        {
+          "feature_id": "plate_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "plate_boss",
+          "feature_type": "extrude_boss",
+          "handler_name": "solidworks.extrude_boss@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_boss",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 0,
+          "volume_after_cubic_meters": 5.9999999999999995e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut",
+          "feature_type": "extrude_cut",
+          "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9999999999999995e-05,
+          "volume_after_cubic_meters": 5.9717256661176915e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_pattern",
+          "feature_type": "linear_pattern",
+          "handler_name": "solidworks.linear_pattern@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_pattern",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9717256661176915e-05,
+          "volume_after_cubic_meters": 5.9151769983530755e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        }
+      ],
+      "artifacts_before_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.SLDPRT",
+          "size_bytes": 73262,
+          "sha256": "52b82867dc2a9090dbd6b4e681ce4b26f2e7d931caab5b9bd4481c68739f5b10"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.STEP",
+          "size_bytes": 31798,
+          "sha256": "0872ee395aabf4e94da6566a4f7ca37942d830dc7f7190af67c0f331b1478dfb"
+        }
+      },
+      "probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-probe.log",
+        "started_at": "2026-09-14T01:19:16Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:22Z"
+      },
+      "artifacts_after_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.SLDPRT",
+          "size_bytes": 73262,
+          "sha256": "52b82867dc2a9090dbd6b4e681ce4b26f2e7d931caab5b9bd4481c68739f5b10"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.STEP",
+          "size_bytes": 31798,
+          "sha256": "0872ee395aabf4e94da6566a4f7ca37942d830dc7f7190af67c0f331b1478dfb"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "size_bytes": 10562,
+          "sha256": "3f6f8e29e9fae43777ab67f7c63b88c6a41917b5f6ce3401812dea44e33eca40"
+        }
+      },
+      "probe_artifacts_stable": true,
+      "candidate_report_stable": true,
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-probe.json",
+        "size_bytes": 18499,
+        "sha256": "833c1f04d446aac5945b3c37456236d266c1e1a28cdece0970a27f81b85076d7"
+      },
+      "probe_read_success": true,
+      "edge_count": 18,
+      "step_probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-step-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-step-probe.log",
+        "started_at": "2026-09-14T01:19:22Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:29Z"
+      },
+      "artifacts_after_step_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.SLDPRT",
+          "size_bytes": 73262,
+          "sha256": "52b82867dc2a9090dbd6b4e681ce4b26f2e7d931caab5b9bd4481c68739f5b10"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.STEP",
+          "size_bytes": 31798,
+          "sha256": "0872ee395aabf4e94da6566a4f7ca37942d830dc7f7190af67c0f331b1478dfb"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+          "size_bytes": 10562,
+          "sha256": "3f6f8e29e9fae43777ab67f7c63b88c6a41917b5f6ce3401812dea44e33eca40"
+        },
+        "probe": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-probe.json",
+          "size_bytes": 18499,
+          "sha256": "833c1f04d446aac5945b3c37456236d266c1e1a28cdece0970a27f81b85076d7"
+        }
+      },
+      "step_probe_artifacts_stable": true,
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\02-step-probe.json",
+        "size_bytes": 26989,
+        "sha256": "598de56e28e5635ba3337f1b2ed9dcd7e4de34ecacb7cc0c5c76d8c0aa454c4a"
+      },
+      "step_probe_read_success": true,
+      "step_edge_count": 30,
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 59151.76998353076,
+          "step_mm3": 59151.76998353076,
+          "absolute_difference_mm3": 0.0,
+          "tolerance_mm3": 0.05915176998353076,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -50.0,
+              "step_mm": -50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -30.0,
+              "step_mm": -30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 50.0,
+              "step_mm": 50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 10.0,
+              "step_mm": 10.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 30.0,
+              "step_mm": 30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "circles": {
+          "components": [
+            "x_mm",
+            "y_mm",
+            "z_mm",
+            "radius_mm"
+          ],
+          "tolerance_mm": 0.001,
+          "native_edge_count": 6,
+          "step_edge_count": 12,
+          "native_unique": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              3.0000000000000013
+            ],
+            [
+              0.0,
+              10.0,
+              0.0,
+              3.0000000000000013
+            ],
+            [
+              15.0,
+              0.0,
+              0.0,
+              3.0000000000000013
+            ],
+            [
+              15.0,
+              10.0,
+              0.0,
+              3.0000000000000013
+            ],
+            [
+              30.0,
+              0.0,
+              0.0,
+              3.0000000000000013
+            ],
+            [
+              30.0,
+              10.0,
+              0.0,
+              3.0000000000000013
+            ]
+          ],
+          "step_unique": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              0.0,
+              10.0,
+              0.0,
+              3.0
+            ],
+            [
+              15.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              15.0,
+              10.0,
+              0.0,
+              3.0
+            ],
+            [
+              30.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              30.0,
+              10.0,
+              0.0,
+              3.0
+            ]
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_circular_positive_quarter.json",
+        "size_bytes": 4296,
+        "sha256": "483c316d6e66683d5d7380abcfd58cf9e21a8b7fd4ed55d9abe39b951fe87a7d"
+      },
+      "status": "CandidateCollected",
+      "smoke_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_circular_positive_quarter.json",
+          "--output",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-smoke.log",
+        "started_at": "2026-09-14T01:19:29Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:35Z"
+      },
+      "new_reports": [
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json"
+      ],
+      "report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+        "size_bytes": 13904,
+        "sha256": "7ed20301e6d23d331b42332eabce5fa769f4bb0fdf979f8dc408c35dcc3501b8"
+      },
+      "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+      "solidworks_version": "31.5.0",
+      "feature_checks": [
+        {
+          "feature_id": "plate_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "plate_boss",
+          "feature_type": "extrude_boss",
+          "handler_name": "solidworks.extrude_boss@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_boss",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 0,
+          "volume_after_cubic_meters": 5.9999999999999995e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "axis_hole_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:axis_hole_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "axis_hole",
+          "feature_type": "extrude_cut",
+          "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:axis_hole",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9999999999999995e-05,
+          "volume_after_cubic_meters": 5.9214601836602546e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut",
+          "feature_type": "extrude_cut",
+          "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9214601836602546e-05,
+          "volume_after_cubic_meters": 5.8931858497779466e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_pattern",
+          "feature_type": "circular_pattern",
+          "handler_name": "solidworks.circular_pattern@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_pattern",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.8931858497779466e-05,
+          "volume_after_cubic_meters": 5.836637182013331e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        }
+      ],
+      "artifacts_before_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.SLDPRT",
+          "size_bytes": 77758,
+          "sha256": "3a5faba22c9603d989a1eebd4cad72f8101b46752327883f88fba1248198ba7b"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.STEP",
+          "size_bytes": 37146,
+          "sha256": "d7f430ed295d0e37312ffd5943cb1065d5dfb37270f0fd79612abf8e76a06087"
+        }
+      },
+      "probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-probe.log",
+        "started_at": "2026-09-14T01:19:35Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:41Z"
+      },
+      "artifacts_after_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.SLDPRT",
+          "size_bytes": 77758,
+          "sha256": "3a5faba22c9603d989a1eebd4cad72f8101b46752327883f88fba1248198ba7b"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.STEP",
+          "size_bytes": 37146,
+          "sha256": "d7f430ed295d0e37312ffd5943cb1065d5dfb37270f0fd79612abf8e76a06087"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "size_bytes": 13904,
+          "sha256": "7ed20301e6d23d331b42332eabce5fa769f4bb0fdf979f8dc408c35dcc3501b8"
+        }
+      },
+      "probe_artifacts_stable": true,
+      "candidate_report_stable": true,
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-probe.json",
+        "size_bytes": 20735,
+        "sha256": "49e71ce753fd93557a8ddd7f2b8ed46daea94dc6d45c421a080b5c76fc695221"
+      },
+      "probe_read_success": true,
+      "edge_count": 20,
+      "step_probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-step-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-step-probe.log",
+        "started_at": "2026-09-14T01:19:41Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:49Z"
+      },
+      "artifacts_after_step_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.SLDPRT",
+          "size_bytes": 77758,
+          "sha256": "3a5faba22c9603d989a1eebd4cad72f8101b46752327883f88fba1248198ba7b"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.STEP",
+          "size_bytes": 37146,
+          "sha256": "d7f430ed295d0e37312ffd5943cb1065d5dfb37270f0fd79612abf8e76a06087"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+          "size_bytes": 13904,
+          "sha256": "7ed20301e6d23d331b42332eabce5fa769f4bb0fdf979f8dc408c35dcc3501b8"
+        },
+        "probe": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-probe.json",
+          "size_bytes": 20735,
+          "sha256": "49e71ce753fd93557a8ddd7f2b8ed46daea94dc6d45c421a080b5c76fc695221"
+        }
+      },
+      "step_probe_artifacts_stable": true,
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\03-step-probe.json",
+        "size_bytes": 32563,
+        "sha256": "dc2145c23667a4e51ac280f382ba6d7c8adbfe74fb34e2bae510bd70e18049cf"
+      },
+      "step_probe_read_success": true,
+      "step_edge_count": 36,
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 58366.3718201333,
+          "step_mm3": 58366.3718201333,
+          "absolute_difference_mm3": 0.0,
+          "tolerance_mm3": 0.0583663718201333,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -50.0,
+              "step_mm": -50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -30.0,
+              "step_mm": -30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 50.0,
+              "step_mm": 50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 10.0,
+              "step_mm": 10.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 30.0,
+              "step_mm": 30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "circles": {
+          "components": [
+            "x_mm",
+            "y_mm",
+            "z_mm",
+            "radius_mm"
+          ],
+          "tolerance_mm": 0.001,
+          "native_edge_count": 8,
+          "step_edge_count": 16,
+          "native_unique": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              5.0
+            ],
+            [
+              0.0,
+              10.0,
+              0.0,
+              5.0
+            ],
+            [
+              1.2246467991473533e-15,
+              0.0,
+              -20.0,
+              2.9999999999999973
+            ],
+            [
+              1.2246467991473533e-15,
+              10.0,
+              -20.0,
+              2.9999999999999973
+            ],
+            [
+              14.142135623730953,
+              0.0,
+              -14.142135623730953,
+              2.9999999999999973
+            ],
+            [
+              14.142135623730953,
+              10.0,
+              -14.142135623730953,
+              2.9999999999999973
+            ],
+            [
+              20.0,
+              0.0,
+              0.0,
+              2.9999999999999973
+            ],
+            [
+              20.0,
+              10.0,
+              0.0,
+              2.9999999999999973
+            ]
+          ],
+          "step_unique": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              5.0
+            ],
+            [
+              0.0,
+              10.0,
+              0.0,
+              5.0
+            ],
+            [
+              1.2246467991473519e-15,
+              0.0,
+              -20.0,
+              3.0
+            ],
+            [
+              1.2246467991473519e-15,
+              10.0,
+              -20.0,
+              3.0
+            ],
+            [
+              14.142135623730939,
+              0.0,
+              -14.142135623730939,
+              3.0
+            ],
+            [
+              14.142135623730939,
+              10.0,
+              -14.142135623730939,
+              3.0
+            ],
+            [
+              20.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              20.0,
+              10.0,
+              0.0,
+              3.0
+            ]
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_circular_negative_quarter.json",
+        "size_bytes": 4296,
+        "sha256": "de572add2196cc5c457d04d2f576c9408a0d9cd92fd63e8b88e368b3de6d1e78"
+      },
+      "status": "CandidateCollected",
+      "smoke_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_circular_negative_quarter.json",
+          "--output",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-smoke.log",
+        "started_at": "2026-09-14T01:19:49Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:19:55Z"
+      },
+      "new_reports": [
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json"
+      ],
+      "report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+        "size_bytes": 13904,
+        "sha256": "109af7d95a0786a6ea867a9d5e6e797ba1be0718bdf4cda2d9b54bf0bd2531e3"
+      },
+      "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+      "solidworks_version": "31.5.0",
+      "feature_checks": [
+        {
+          "feature_id": "plate_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "plate_boss",
+          "feature_type": "extrude_boss",
+          "handler_name": "solidworks.extrude_boss@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_boss",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 0,
+          "volume_after_cubic_meters": 5.9999999999999995e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "axis_hole_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:axis_hole_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "axis_hole",
+          "feature_type": "extrude_cut",
+          "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:axis_hole",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9999999999999995e-05,
+          "volume_after_cubic_meters": 5.9214601836602546e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_profile",
+          "feature_type": "sketch",
+          "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_profile",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": null,
+          "volume_after_cubic_meters": null,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut",
+          "feature_type": "extrude_cut",
+          "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.9214601836602546e-05,
+          "volume_after_cubic_meters": 5.8931858497779466e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        },
+        {
+          "feature_id": "seed_cut_pattern",
+          "feature_type": "circular_pattern",
+          "handler_name": "solidworks.circular_pattern@2.0-c.2/diagnostic-candidate",
+          "api_evidence_status": "diagnostic_candidate",
+          "failure_stage": null,
+          "logs": [
+            "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_pattern",
+            "feature_result_non_null:true",
+            "feature_rebuild_passed:true"
+          ],
+          "issues": [],
+          "adapter_id": "solidworks.real-feature-adapter",
+          "adapter_version": "2.0-c.2",
+          "result_object_validated": true,
+          "rebuild_passed": true,
+          "evidence_id": "v2.0-c-diagnostic-candidate-only",
+          "evidence_handler_version": "2.0-c.2",
+          "evidence_parameter_profile": "exact feature_execution_smoke input only",
+          "evidence_solid_works_version": "31.5.0",
+          "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "evidence_source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+          "geometry_change_validated": true,
+          "volume_before_cubic_meters": 5.8931858497779466e-05,
+          "volume_after_cubic_meters": 5.836637182013331e-05,
+          "hole_type": null,
+          "hole_parameters": null
+        }
+      ],
+      "artifacts_before_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.SLDPRT",
+          "size_bytes": 78182,
+          "sha256": "137f4cbce363c2266d49df36abe61edfd795412b09a73f470eea46c107fd0be0"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.STEP",
+          "size_bytes": 37117,
+          "sha256": "005c426271eb450afe8d5dc7ca12f1d299a85122f524ef92196d0b88d3cfc6a7"
+        }
+      },
+      "probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-probe.log",
+        "started_at": "2026-09-14T01:19:55Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:20:01Z"
+      },
+      "artifacts_after_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.SLDPRT",
+          "size_bytes": 78182,
+          "sha256": "137f4cbce363c2266d49df36abe61edfd795412b09a73f470eea46c107fd0be0"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.STEP",
+          "size_bytes": 37117,
+          "sha256": "005c426271eb450afe8d5dc7ca12f1d299a85122f524ef92196d0b88d3cfc6a7"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "size_bytes": 13904,
+          "sha256": "109af7d95a0786a6ea867a9d5e6e797ba1be0718bdf4cda2d9b54bf0bd2531e3"
+        }
+      },
+      "probe_artifacts_stable": true,
+      "candidate_report_stable": true,
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-probe.json",
+        "size_bytes": 20721,
+        "sha256": "e51303e08716351f3dd550a83627638c27fa19abdd5fc7d25d3727d0638f5e44"
+      },
+      "probe_read_success": true,
+      "edge_count": 20,
+      "step_probe_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-step-probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-step-probe.log",
+        "started_at": "2026-09-14T01:20:01Z",
+        "timeout_seconds": 180,
+        "exit_code": 0,
+        "finished_at": "2026-09-14T01:20:09Z"
+      },
+      "artifacts_after_step_probe": {
+        "model": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.SLDPRT",
+          "size_bytes": 78182,
+          "sha256": "137f4cbce363c2266d49df36abe61edfd795412b09a73f470eea46c107fd0be0"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.STEP",
+          "size_bytes": 37117,
+          "sha256": "005c426271eb450afe8d5dc7ca12f1d299a85122f524ef92196d0b88d3cfc6a7"
+        },
+        "report": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+          "size_bytes": 13904,
+          "sha256": "109af7d95a0786a6ea867a9d5e6e797ba1be0718bdf4cda2d9b54bf0bd2531e3"
+        },
+        "probe": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-probe.json",
+          "size_bytes": 20721,
+          "sha256": "e51303e08716351f3dd550a83627638c27fa19abdd5fc7d25d3727d0638f5e44"
+        }
+      },
+      "step_probe_artifacts_stable": true,
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_091855-55d13b28\\04-step-probe.json",
+        "size_bytes": 32535,
+        "sha256": "985c3a91c792fc24686f1bd3a578eb90ca641ef6f60273ac006113f8dec40464"
+      },
+      "step_probe_read_success": true,
+      "step_edge_count": 36,
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 58366.3718201333,
+          "step_mm3": 58366.3718201333,
+          "absolute_difference_mm3": 0.0,
+          "tolerance_mm3": 0.0583663718201333,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -50.0,
+              "step_mm": -50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -30.0,
+              "step_mm": -30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 50.0,
+              "step_mm": 50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 10.0,
+              "step_mm": 10.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 30.0,
+              "step_mm": 30.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "circles": {
+          "components": [
+            "x_mm",
+            "y_mm",
+            "z_mm",
+            "radius_mm"
+          ],
+          "tolerance_mm": 0.001,
+          "native_edge_count": 8,
+          "step_edge_count": 16,
+          "native_unique": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              5.0
+            ],
+            [
+              0.0,
+              10.0,
+              0.0,
+              5.0
+            ],
+            [
+              1.2246467991473533e-15,
+              0.0,
+              20.0,
+              2.9999999999999973
+            ],
+            [
+              1.2246467991473533e-15,
+              10.0,
+              20.0,
+              2.9999999999999973
+            ],
+            [
+              14.142135623730953,
+              0.0,
+              14.142135623730953,
+              2.9999999999999973
+            ],
+            [
+              14.142135623730953,
+              10.0,
+              14.142135623730953,
+              2.9999999999999973
+            ],
+            [
+              20.0,
+              0.0,
+              0.0,
+              2.9999999999999973
+            ],
+            [
+              20.0,
+              10.0,
+              0.0,
+              2.9999999999999973
+            ]
+          ],
+          "step_unique": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              5.0
+            ],
+            [
+              0.0,
+              10.0,
+              0.0,
+              5.0
+            ],
+            [
+              1.2246467991473519e-15,
+              0.0,
+              20.0,
+              3.0
+            ],
+            [
+              1.2246467991473519e-15,
+              10.0,
+              20.0,
+              3.0
+            ],
+            [
+              14.142135623730939,
+              0.0,
+              14.142135623730939,
+              3.0
+            ],
+            [
+              14.142135623730939,
+              10.0,
+              14.142135623730939,
+              3.0
+            ],
+            [
+              20.0,
+              0.0,
+              0.0,
+              3.0
+            ],
+            [
+              20.0,
+              10.0,
+              0.0,
+              3.0
+            ]
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      }
+    }
+  ],
+  "updated_at": "2026-09-14T01:20:09Z",
+  "output_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation",
+  "config_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\config\\solidworks.local.json",
+  "cad_environment": {
+    "SW_TEMPLATE_PART_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_part.prtdot",
+    "SW_TEMPLATE_DRAWING_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_a3.drwdot",
+    "SW_CONNECT_TIMEOUT_SECONDS": "120",
+    "SW_EXECUTION_TIMEOUT_SECONDS": "300",
+    "SW_VISIBLE": "true",
+    "SW_FEATURE_EXECUTION_SMOKE_TEST": "true"
+  },
+  "frozen_baseline": {
+    "bound_sources": [
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+        "size_bytes": 4771,
+        "sha256": "093f7c3a9c7434afd4efff7a9c082af04f979888eb72c1ce0634a9f2a18e291b"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\EdgeSelection.cs",
+        "size_bytes": 12637,
+        "sha256": "6659c8e5a78dd455c1dad766d70b0217f562f55226b3df9e18ba14274c66860a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\FeatureParameterSchemaRegistry.cs",
+        "size_bytes": 5734,
+        "sha256": "cabf61e283d8b202143249361ead06640ea9cd479c8c8a9369d98cdbd286b87b"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GenericCadDescription.cs",
+        "size_bytes": 39482,
+        "sha256": "2a61572b219005fb6c7dbe9c013f9e869a590f4d3a886fa030a0813f7224d63a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GeometryValidation.cs",
+        "size_bytes": 23803,
+        "sha256": "d29701e686fd25122d30549c5d599ca49b5830096f4126105b4bea0e8f197874"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleFeatureDefinition.cs",
+        "size_bytes": 17862,
+        "sha256": "29ce35cf05171008469752f0dbd42d6704490103af3de62ab875a690bf239297"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleGeometryValidation.cs",
+        "size_bytes": 8696,
+        "sha256": "ec126f5c5e40916538b9a27384498d7eeaa6c40bb06a214f22fa247ab409f3ce"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HolePlanValidation.cs",
+        "size_bytes": 3505,
+        "sha256": "ce6d0c9030ac6765316b128822cf8137ec6887b307d2f1db5471ff3362a37d6a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\ModelUpdateService.cs",
+        "size_bytes": 15554,
+        "sha256": "f775ba7e6ca75f936e7ee010cc1f05cc210f7a88ce0a406b78e0c1379fed8d76"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksArtifactValidator.cs",
+        "size_bytes": 51060,
+        "sha256": "1698ea237eeddaab8f95a4cf1e80ccba32303a775ba035eddb65263265c27beb"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksBuildPlanValidator.cs",
+        "size_bytes": 7933,
+        "sha256": "afc5c59d44aaced68fc8bab554823c9af8d366ef4071ff6d9afbea99cb792804"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Chamfer\\ChamferHandler.cs",
+        "size_bytes": 5661,
+        "sha256": "c4f82e7425b9a9cb904a5dff21edf30239f3775773d52b4767ed9e069b353c97"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Cut\\ExtrudeCutHandler.cs",
+        "size_bytes": 4554,
+        "sha256": "b0b4f4f2ccf3a5a2ee153e59426bd2d98e8ab54c023116f4ac61f2e43bd52421"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Extrude\\ExtrudeBossHandler.cs",
+        "size_bytes": 4945,
+        "sha256": "28d41a3379f7b0d56758c87eb31f5da38ff685a9ef1124bda5a863c389f0e0ad"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionEvidencePolicy.cs",
+        "size_bytes": 18235,
+        "sha256": "94b46c5e217d9d3ffca769d52e8e948adffb21b61db19d4a3e1987d149aee757"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionPipeline.cs",
+        "size_bytes": 4223,
+        "sha256": "56fa61139c4b53b856c631017753baf33c26e4db588223659d15fef4848e50fa"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerContracts.cs",
+        "size_bytes": 14345,
+        "sha256": "e6789b82aaf232e380213dc41ad42b5f733b0392878365c7a543ae2bc7b3cce5"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerRegistry.cs",
+        "size_bytes": 16367,
+        "sha256": "a3f672841298c87525efffd0c9c23556bf0d28b689cb1f8eaa8f4a82b4a8c124"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Fillet\\FilletHandler.cs",
+        "size_bytes": 5070,
+        "sha256": "72cdf3cc6653999e9770773b5e18fe45307b92f9093fa4e0f3bac959b284779c"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\GeometryValidationEvidencePolicy.cs",
+        "size_bytes": 2833,
+        "sha256": "5ec8df6bfa9f90180444d5383bb90b26bc9c52c5a4eb8a9c7dae65957ae77017"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleExecutionStrategies.cs",
+        "size_bytes": 2584,
+        "sha256": "6ec8a8a8898003ac4a31d04bbc733a0dacb84b784cb92d1423eda509f7deb40e"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleHandler.cs",
+        "size_bytes": 10236,
+        "sha256": "42324b9a8c72026a431d8111360d5bdcda951ec4aa7f4ce76492233ed5cc4b46"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Mirror\\MirrorHandler.cs",
+        "size_bytes": 6225,
+        "sha256": "6565d8bce3da91099bf7d2c5efb37b641593bc3e09a2bd37f6c24ce8b6016eae"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\CircularPatternHandler.cs",
+        "size_bytes": 5998,
+        "sha256": "ea7d3edb065f6ed398ecd3a6798611cc2013034f5d9cce65b108ec50aaf54e7a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\LinearPatternHandler.cs",
+        "size_bytes": 6379,
+        "sha256": "18eb8a2827e09d3218a0b58576eb1a892848801eea4ada81de228c44aa0a4cd7"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\PatternParameterRules.cs",
+        "size_bytes": 4627,
+        "sha256": "cccb0c173a633a01a0135668c6ecd2de237520a11b7e31d2561be00f7c291a93"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\RealSolidWorksFeatureAdapter.cs",
+        "size_bytes": 60041,
+        "sha256": "ffefd992b382871ee9c1b77f16b69a61165bbfb6a5659294f677a12ca2e89918"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Sketch\\SketchHandler.cs",
+        "size_bytes": 9604,
+        "sha256": "6d8128ef079f1d5ef35b7c041973e3b777441eba77bfde696e3979a3b5a74b24"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksEdgeEnumerator.cs",
+        "size_bytes": 8026,
+        "sha256": "473c6f2cb519dac4673ccd6aec31588c365681e1b24076fcfe77c2f0633e4c0a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksFeatureGraphPartFamilyBuilder.cs",
+        "size_bytes": 5159,
+        "sha256": "8f9be10727c0a10e8b695cacdca2d6c3d641a3879c044562da6576261555b2ea"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksGeometryReader.cs",
+        "size_bytes": 20251,
+        "sha256": "4cd8436fd28de077e029c3ab554b9f901c2dbc1b648b63be8b03974601d3f6f5"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DFeatureGraphPartFamilyBuilder.cs",
+        "size_bytes": 4326,
+        "sha256": "6b1e02467f0a36cefa2dc150bf22813cca2851be05f1875f6af30cd4357f96a3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DThreeCircleCutEvidencePolicy.cs",
+        "size_bytes": 34899,
+        "sha256": "4b5101285cf973df1e0a06fef0393452d7b7a8e00510f9e896b4160dcccfbb14"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\RealSolidWorksWorker.cs",
+        "size_bytes": 42009,
+        "sha256": "721986943d5faccb5f484b0cd67993c0e7cc6529c9dce23879775103f4b10263"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksComInterop.cs",
+        "size_bytes": 19224,
+        "sha256": "e2e85cb39b46e471d1dc63bafb94b1f49f9a92e7bc5e19e712ff390db99ab8c9"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPartFamilyRealBuilders.cs",
+        "size_bytes": 49434,
+        "sha256": "00853b0258f3407746e23d0675d130e8ce4e2800691cea8ec0b1711d7bd16bf2"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPlateBuilder.cs",
+        "size_bytes": 31941,
+        "sha256": "41ac366503c1f35aa7adbc8218f115c122257822d370a09726cddbe59aeaa0a3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\Program.cs",
+        "size_bytes": 8425,
+        "sha256": "16a91e6ccf71197450f6fca601be4550632c20904fa52b329f45077b4c5079ab"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\SolidWorksEdgeProbe.csproj",
+        "size_bytes": 413,
+        "sha256": "bcba5b88df25c40544ad4c8c5c7f1e57cbec4003c0ed007bac37c3f89bad5529"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\FeatureExecutionSmokeRunner.cs",
+        "size_bytes": 34130,
+        "sha256": "0ec7edcb93044a9ca8f0713bb9de971ff45fad8ecfdcb220147fee1c309bf797"
+      }
+    ],
+    "runner_binaries": [
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+        "size_bytes": 398336,
+        "sha256": "b79d4080d0ae37d18ab00aca943e6e7e83ac8f40c71e078d3be3831c9e12daa3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+        "size_bytes": 19456,
+        "sha256": "577679c7d5f73b69021e50295fa91281038f7b05818e043d1b01dd825a4a14af"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+        "size_bytes": 564736,
+        "sha256": "97cab36e0b43b1ad3d8824908e298138f830536ddda6fb30a2c65a2a02196676"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+        "size_bytes": 14848,
+        "sha256": "5f8813288d2c54cdbbb3a92ce9692797ca3e6a353632fcb72ba28737c3e2b4bb"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\AgentContracts.dll",
+        "size_bytes": 27648,
+        "sha256": "2276329abb15602ef72e5c346c546820b70f3338367b125c44c2901d6d4db3c5"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+        "size_bytes": 398336,
+        "sha256": "b79d4080d0ae37d18ab00aca943e6e7e83ac8f40c71e078d3be3831c9e12daa3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModelRuntime.dll",
+        "size_bytes": 9216,
+        "sha256": "d53595ae309475484281541148965d475ea421a42ad958e3519407ab9443f36e"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModuleContracts.dll",
+        "size_bytes": 14848,
+        "sha256": "d7c238147033bc5c135a5a707bc7fcbf91a1aed305063697528dbdc160639049"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\PlatformCore.dll",
+        "size_bytes": 995840,
+        "sha256": "a303cc04d1d648ea62322d264f4fdae94d2fc529f0992f630fe8b8ee7312c7c4"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\QualityGate.dll",
+        "size_bytes": 28672,
+        "sha256": "25412f0bcc55c038cf46624d9229d5bce0b4eb9e4e3128f099e0b7775411834c"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SkillContracts.dll",
+        "size_bytes": 13824,
+        "sha256": "60189ba0c77cf66defb9f4f8aa319d4cb8121773c6c1e09676e88b2a9ed24b48"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+        "size_bytes": 61440,
+        "sha256": "4c4ae3ecf55a4c2eb04b35751ebb0b1348c95de73e3ed638b91f56edc965323e"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+        "size_bytes": 564736,
+        "sha256": "97cab36e0b43b1ad3d8824908e298138f830536ddda6fb30a2c65a2a02196676"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+        "size_bytes": 14848,
+        "sha256": "5f8813288d2c54cdbbb3a92ce9692797ca3e6a353632fcb72ba28737c3e2b4bb"
+      }
+    ],
+    "build_log": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\baseline_recovery_build_20260914.log",
+      "size_bytes": 4037,
+      "sha256": "c57576bc55f9c2add9c539ad2c3ab5a99a80f41baa3235f1d282efdf63504f97"
+    }
+  },
+  "runner_binaries": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 398336,
+      "sha256": "b79d4080d0ae37d18ab00aca943e6e7e83ac8f40c71e078d3be3831c9e12daa3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+      "size_bytes": 19456,
+      "sha256": "577679c7d5f73b69021e50295fa91281038f7b05818e043d1b01dd825a4a14af"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 564736,
+      "sha256": "97cab36e0b43b1ad3d8824908e298138f830536ddda6fb30a2c65a2a02196676"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "5f8813288d2c54cdbbb3a92ce9692797ca3e6a353632fcb72ba28737c3e2b4bb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\AgentContracts.dll",
+      "size_bytes": 27648,
+      "sha256": "2276329abb15602ef72e5c346c546820b70f3338367b125c44c2901d6d4db3c5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 398336,
+      "sha256": "b79d4080d0ae37d18ab00aca943e6e7e83ac8f40c71e078d3be3831c9e12daa3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModelRuntime.dll",
+      "size_bytes": 9216,
+      "sha256": "d53595ae309475484281541148965d475ea421a42ad958e3519407ab9443f36e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModuleContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "d7c238147033bc5c135a5a707bc7fcbf91a1aed305063697528dbdc160639049"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\PlatformCore.dll",
+      "size_bytes": 995840,
+      "sha256": "a303cc04d1d648ea62322d264f4fdae94d2fc529f0992f630fe8b8ee7312c7c4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\QualityGate.dll",
+      "size_bytes": 28672,
+      "sha256": "25412f0bcc55c038cf46624d9229d5bce0b4eb9e4e3128f099e0b7775411834c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SkillContracts.dll",
+      "size_bytes": 13824,
+      "sha256": "60189ba0c77cf66defb9f4f8aa319d4cb8121773c6c1e09676e88b2a9ed24b48"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+      "size_bytes": 61440,
+      "sha256": "4c4ae3ecf55a4c2eb04b35751ebb0b1348c95de73e3ed638b91f56edc965323e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 564736,
+      "sha256": "97cab36e0b43b1ad3d8824908e298138f830536ddda6fb30a2c65a2a02196676"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "5f8813288d2c54cdbbb3a92ce9692797ca3e6a353632fcb72ba28737c3e2b4bb"
+    }
+  ],
+  "bound_sources": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+      "size_bytes": 4771,
+      "sha256": "093f7c3a9c7434afd4efff7a9c082af04f979888eb72c1ce0634a9f2a18e291b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\EdgeSelection.cs",
+      "size_bytes": 12637,
+      "sha256": "6659c8e5a78dd455c1dad766d70b0217f562f55226b3df9e18ba14274c66860a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\FeatureParameterSchemaRegistry.cs",
+      "size_bytes": 5734,
+      "sha256": "cabf61e283d8b202143249361ead06640ea9cd479c8c8a9369d98cdbd286b87b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GenericCadDescription.cs",
+      "size_bytes": 39482,
+      "sha256": "2a61572b219005fb6c7dbe9c013f9e869a590f4d3a886fa030a0813f7224d63a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GeometryValidation.cs",
+      "size_bytes": 23803,
+      "sha256": "d29701e686fd25122d30549c5d599ca49b5830096f4126105b4bea0e8f197874"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleFeatureDefinition.cs",
+      "size_bytes": 17862,
+      "sha256": "29ce35cf05171008469752f0dbd42d6704490103af3de62ab875a690bf239297"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleGeometryValidation.cs",
+      "size_bytes": 8696,
+      "sha256": "ec126f5c5e40916538b9a27384498d7eeaa6c40bb06a214f22fa247ab409f3ce"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HolePlanValidation.cs",
+      "size_bytes": 3505,
+      "sha256": "ce6d0c9030ac6765316b128822cf8137ec6887b307d2f1db5471ff3362a37d6a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\ModelUpdateService.cs",
+      "size_bytes": 15554,
+      "sha256": "f775ba7e6ca75f936e7ee010cc1f05cc210f7a88ce0a406b78e0c1379fed8d76"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksArtifactValidator.cs",
+      "size_bytes": 51060,
+      "sha256": "1698ea237eeddaab8f95a4cf1e80ccba32303a775ba035eddb65263265c27beb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksBuildPlanValidator.cs",
+      "size_bytes": 7933,
+      "sha256": "afc5c59d44aaced68fc8bab554823c9af8d366ef4071ff6d9afbea99cb792804"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Chamfer\\ChamferHandler.cs",
+      "size_bytes": 5661,
+      "sha256": "c4f82e7425b9a9cb904a5dff21edf30239f3775773d52b4767ed9e069b353c97"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Cut\\ExtrudeCutHandler.cs",
+      "size_bytes": 4554,
+      "sha256": "b0b4f4f2ccf3a5a2ee153e59426bd2d98e8ab54c023116f4ac61f2e43bd52421"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Extrude\\ExtrudeBossHandler.cs",
+      "size_bytes": 4945,
+      "sha256": "28d41a3379f7b0d56758c87eb31f5da38ff685a9ef1124bda5a863c389f0e0ad"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionEvidencePolicy.cs",
+      "size_bytes": 18235,
+      "sha256": "94b46c5e217d9d3ffca769d52e8e948adffb21b61db19d4a3e1987d149aee757"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionPipeline.cs",
+      "size_bytes": 4223,
+      "sha256": "56fa61139c4b53b856c631017753baf33c26e4db588223659d15fef4848e50fa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerContracts.cs",
+      "size_bytes": 14345,
+      "sha256": "e6789b82aaf232e380213dc41ad42b5f733b0392878365c7a543ae2bc7b3cce5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerRegistry.cs",
+      "size_bytes": 16367,
+      "sha256": "a3f672841298c87525efffd0c9c23556bf0d28b689cb1f8eaa8f4a82b4a8c124"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Fillet\\FilletHandler.cs",
+      "size_bytes": 5070,
+      "sha256": "72cdf3cc6653999e9770773b5e18fe45307b92f9093fa4e0f3bac959b284779c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\GeometryValidationEvidencePolicy.cs",
+      "size_bytes": 2833,
+      "sha256": "5ec8df6bfa9f90180444d5383bb90b26bc9c52c5a4eb8a9c7dae65957ae77017"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleExecutionStrategies.cs",
+      "size_bytes": 2584,
+      "sha256": "6ec8a8a8898003ac4a31d04bbc733a0dacb84b784cb92d1423eda509f7deb40e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleHandler.cs",
+      "size_bytes": 10236,
+      "sha256": "42324b9a8c72026a431d8111360d5bdcda951ec4aa7f4ce76492233ed5cc4b46"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Mirror\\MirrorHandler.cs",
+      "size_bytes": 6225,
+      "sha256": "6565d8bce3da91099bf7d2c5efb37b641593bc3e09a2bd37f6c24ce8b6016eae"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\CircularPatternHandler.cs",
+      "size_bytes": 5998,
+      "sha256": "ea7d3edb065f6ed398ecd3a6798611cc2013034f5d9cce65b108ec50aaf54e7a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\LinearPatternHandler.cs",
+      "size_bytes": 6379,
+      "sha256": "18eb8a2827e09d3218a0b58576eb1a892848801eea4ada81de228c44aa0a4cd7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\PatternParameterRules.cs",
+      "size_bytes": 4627,
+      "sha256": "cccb0c173a633a01a0135668c6ecd2de237520a11b7e31d2561be00f7c291a93"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\RealSolidWorksFeatureAdapter.cs",
+      "size_bytes": 60041,
+      "sha256": "ffefd992b382871ee9c1b77f16b69a61165bbfb6a5659294f677a12ca2e89918"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Sketch\\SketchHandler.cs",
+      "size_bytes": 9604,
+      "sha256": "6d8128ef079f1d5ef35b7c041973e3b777441eba77bfde696e3979a3b5a74b24"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksEdgeEnumerator.cs",
+      "size_bytes": 8026,
+      "sha256": "473c6f2cb519dac4673ccd6aec31588c365681e1b24076fcfe77c2f0633e4c0a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksFeatureGraphPartFamilyBuilder.cs",
+      "size_bytes": 5159,
+      "sha256": "8f9be10727c0a10e8b695cacdca2d6c3d641a3879c044562da6576261555b2ea"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksGeometryReader.cs",
+      "size_bytes": 20251,
+      "sha256": "4cd8436fd28de077e029c3ab554b9f901c2dbc1b648b63be8b03974601d3f6f5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DFeatureGraphPartFamilyBuilder.cs",
+      "size_bytes": 4326,
+      "sha256": "6b1e02467f0a36cefa2dc150bf22813cca2851be05f1875f6af30cd4357f96a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DThreeCircleCutEvidencePolicy.cs",
+      "size_bytes": 34899,
+      "sha256": "4b5101285cf973df1e0a06fef0393452d7b7a8e00510f9e896b4160dcccfbb14"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\RealSolidWorksWorker.cs",
+      "size_bytes": 42009,
+      "sha256": "721986943d5faccb5f484b0cd67993c0e7cc6529c9dce23879775103f4b10263"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksComInterop.cs",
+      "size_bytes": 19224,
+      "sha256": "e2e85cb39b46e471d1dc63bafb94b1f49f9a92e7bc5e19e712ff390db99ab8c9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPartFamilyRealBuilders.cs",
+      "size_bytes": 49434,
+      "sha256": "00853b0258f3407746e23d0675d130e8ce4e2800691cea8ec0b1711d7bd16bf2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPlateBuilder.cs",
+      "size_bytes": 31941,
+      "sha256": "41ac366503c1f35aa7adbc8218f115c122257822d370a09726cddbe59aeaa0a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\Program.cs",
+      "size_bytes": 8425,
+      "sha256": "16a91e6ccf71197450f6fca601be4550632c20904fa52b329f45077b4c5079ab"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\SolidWorksEdgeProbe.csproj",
+      "size_bytes": 413,
+      "sha256": "bcba5b88df25c40544ad4c8c5c7f1e57cbec4003c0ed007bac37c3f89bad5529"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\FeatureExecutionSmokeRunner.cs",
+      "size_bytes": 34130,
+      "sha256": "0ec7edcb93044a9ca8f0713bb9de971ff45fad8ecfdcb220147fee1c309bf797"
+    }
+  ],
+  "freeze_checks": [
+    {
+      "stage": "01-before-candidate",
+      "at": "2026-09-14T01:18:56Z",
+      "stable": true
+    },
+    {
+      "stage": "01-after-candidate",
+      "at": "2026-09-14T01:19:01Z",
+      "stable": true
+    },
+    {
+      "stage": "01-before-probe",
+      "at": "2026-09-14T01:19:01Z",
+      "stable": true
+    },
+    {
+      "stage": "01-after-probe",
+      "at": "2026-09-14T01:19:08Z",
+      "stable": true
+    },
+    {
+      "stage": "01-before-step-probe",
+      "at": "2026-09-14T01:19:08Z",
+      "stable": true
+    },
+    {
+      "stage": "01-after-step-probe",
+      "at": "2026-09-14T01:19:10Z",
+      "stable": true
+    },
+    {
+      "stage": "02-before-candidate",
+      "at": "2026-09-14T01:19:10Z",
+      "stable": true
+    },
+    {
+      "stage": "02-after-candidate",
+      "at": "2026-09-14T01:19:16Z",
+      "stable": true
+    },
+    {
+      "stage": "02-before-probe",
+      "at": "2026-09-14T01:19:16Z",
+      "stable": true
+    },
+    {
+      "stage": "02-after-probe",
+      "at": "2026-09-14T01:19:22Z",
+      "stable": true
+    },
+    {
+      "stage": "02-before-step-probe",
+      "at": "2026-09-14T01:19:22Z",
+      "stable": true
+    },
+    {
+      "stage": "02-after-step-probe",
+      "at": "2026-09-14T01:19:29Z",
+      "stable": true
+    },
+    {
+      "stage": "03-before-candidate",
+      "at": "2026-09-14T01:19:29Z",
+      "stable": true
+    },
+    {
+      "stage": "03-after-candidate",
+      "at": "2026-09-14T01:19:35Z",
+      "stable": true
+    },
+    {
+      "stage": "03-before-probe",
+      "at": "2026-09-14T01:19:35Z",
+      "stable": true
+    },
+    {
+      "stage": "03-after-probe",
+      "at": "2026-09-14T01:19:41Z",
+      "stable": true
+    },
+    {
+      "stage": "03-before-step-probe",
+      "at": "2026-09-14T01:19:41Z",
+      "stable": true
+    },
+    {
+      "stage": "03-after-step-probe",
+      "at": "2026-09-14T01:19:49Z",
+      "stable": true
+    },
+    {
+      "stage": "04-before-candidate",
+      "at": "2026-09-14T01:19:49Z",
+      "stable": true
+    },
+    {
+      "stage": "04-after-candidate",
+      "at": "2026-09-14T01:19:55Z",
+      "stable": true
+    },
+    {
+      "stage": "04-before-probe",
+      "at": "2026-09-14T01:19:55Z",
+      "stable": true
+    },
+    {
+      "stage": "04-after-probe",
+      "at": "2026-09-14T01:20:01Z",
+      "stable": true
+    },
+    {
+      "stage": "04-before-step-probe",
+      "at": "2026-09-14T01:20:01Z",
+      "stable": true
+    },
+    {
+      "stage": "04-after-step-probe",
+      "at": "2026-09-14T01:20:09Z",
+      "stable": true
+    },
+    {
+      "stage": "collection-completed",
+      "at": "2026-09-14T01:20:09Z",
+      "stable": true
+    }
+  ],
+  "source_revision": "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a",
+  "solidworks_version": "31.5.0",
+  "finished_at": "2026-09-14T01:20:09Z"
+}

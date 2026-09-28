@@ -1,0 +1,84 @@
+{
+  "status": "Failed",
+  "release": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9",
+  "probes": {},
+  "checks": [],
+  "files_before": {
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json",
+      "size_bytes": 7101,
+      "sha256": "50c6a4ee8754ed0fa6b0fe811b9da586578f117777464a42ecf14bbc0af94598"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json",
+      "size_bytes": 4799,
+      "sha256": "f6e22134479a7aa17654db96afe5ef45cc03dd74d529708bb648ddd3511f20e9"
+    },
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json",
+      "size_bytes": 4681,
+      "sha256": "05e2e17b1e29d7b5d3e95f81d2a92b6dde8629bff7d13eac80d30c0c1ba5a904"
+    }
+  },
+  "failure": "native重新打开失败。"
+}

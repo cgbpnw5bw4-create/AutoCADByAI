@@ -2,6 +2,7 @@ using AgentContracts;
 using DomainSchemas;
 using PlatformCore;
 using System.Text.Json;
+using ModelRuntime;
 
 namespace AgentRuntime.Microsoft;
 
@@ -19,7 +20,7 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
     ];
 
     private readonly RuntimeConfiguration _configuration;
-    private readonly IRuntimeModelClient _modelClient;
+    private readonly ModelRuntime.ModelRuntime _modelRuntime;
     private readonly MicrosoftAgentOutputMapper _mapper;
     private readonly InMemoryAuditLog _auditLog;
     private readonly string _systemPrompt;
@@ -30,9 +31,20 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
         InMemoryAuditLog auditLog,
         IEnumerable<string>? internalAgentIds = null,
         string? systemPrompt = null)
+        : this(configuration, new ModelRuntime.ModelRuntime(new ConfiguredModelProvider(modelClient, configuration)),
+            auditLog, internalAgentIds, systemPrompt)
+    {
+    }
+
+    public MicrosoftRuntimeAgentInvoker(
+        RuntimeConfiguration configuration,
+        ModelRuntime.ModelRuntime modelRuntime,
+        InMemoryAuditLog auditLog,
+        IEnumerable<string>? internalAgentIds = null,
+        string? systemPrompt = null)
     {
         _configuration = configuration;
-        _modelClient = modelClient;
+        _modelRuntime = modelRuntime;
         _auditLog = auditLog;
         _mapper = new MicrosoftAgentOutputMapper(internalAgentIds ?? DefaultInternalAgentIds);
         _systemPrompt = systemPrompt ?? LoadChiefEngineerPrompt();
@@ -43,6 +55,7 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
         AgentContext context,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!string.Equals(manifest.Id, "chief-engineer", StringComparison.OrdinalIgnoreCase))
         {
             return new AgentOutput(
@@ -71,10 +84,8 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
         try
         {
             _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_invoked", $"Provider '{_configuration.Provider}' model '{_configuration.Model}' invoked for chief-engineer.");
-            var modelText = await _modelClient.GenerateTextAsync(
-                _systemPrompt,
-                context.Input.Message,
-                _configuration,
+            var modelText = await _modelRuntime.GenerateAsync(
+                new ModelRequest(EngineeringModelPurpose.RequirementUnderstanding, _systemPrompt, context.Input.Message),
                 cancellationToken);
             var output = _mapper.Map(
                 modelText,
@@ -87,6 +98,10 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
                     true));
             _auditLog.Record("agent-runtime", manifest.Id, "real_runtime_completed", "Chief engineer real runtime returned mapped AgentOutput.");
             return output;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (RuntimeProviderException ex)
         {
@@ -122,6 +137,6 @@ public sealed class MicrosoftRuntimeAgentInvoker : IMicrosoftRuntimeAgentInvoker
             return File.ReadAllText(localPath);
         }
 
-        return "You are the chief mechanical engineer agent. Understand the task, suggest internal agents, and never call workers or CAD directly.";
+        return "你是 AI Mechanical Engineer Platform 的机械总工程师。负责工程需求理解、设计和特征规划、建模顺序、装配策略、异常恢复建议与工程决策。计划必须经过平台校验和 Worker 执行；不得直接调用 Worker 或 CAD，不得把模型生成的 API 名称或参数视为真实能力证据。";
     }
 }

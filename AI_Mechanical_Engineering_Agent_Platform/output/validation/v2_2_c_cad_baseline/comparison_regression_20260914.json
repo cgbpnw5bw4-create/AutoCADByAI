@@ -1,0 +1,300 @@
+{
+  "scope": "离线比较器行为检查，不替代真实 CAD 或生产验收",
+  "sources": {
+    "fillet_native": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092030-8b5acc4b\\02-probe.json",
+      "size_bytes": 18450,
+      "sha256": "79ac5a10023506b3cb7a67f08de6d8bb09c1756212a536c6a694a9bfcd3e5e57"
+    },
+    "fillet_step": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_092030-8b5acc4b\\02-step-probe.json",
+      "size_bytes": 28078,
+      "sha256": "91d8ee4dd023a7adc086ea086cbbdc84fb0ff8d1310c9785129e8c756d162c13"
+    },
+    "wrong_negative_native": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_085332-1b6f5dda\\01-probe.json",
+      "size_bytes": 18491,
+      "sha256": "2fe3b532b6c3c327fdf3b9d25a1d05215bd631f98f01fc5d0093363684a83228"
+    },
+    "wrong_negative_step": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\collection-20260914_085332-1b6f5dda\\01-step-probe.json",
+      "size_bytes": 31778,
+      "sha256": "b106120b47c1b2c9a37a8302f54ae121a81d51ec9c5043d1f87ea4c2622120ae"
+    }
+  },
+  "source_bytes_unchanged": true,
+  "checks": [
+    {
+      "name": "真实圆角与 STEP 环面分割缝一致",
+      "expected": true,
+      "actual": true,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": true
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    },
+    {
+      "name": "旧负 X 导出其他活动文档仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": false,
+        "exact_extents": true,
+        "cylinders": false,
+        "circles": false
+      },
+      "excluded_step_circle_count": 0,
+      "unexpected_step_circle_indices": [
+        0,
+        1,
+        2,
+        3,
+        16,
+        17
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "额外圆柱不得被忽略",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": false,
+        "circles": true
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    },
+    {
+      "name": "漏掉一个实测孔圆柱仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": false,
+        "circles": false
+      },
+      "excluded_step_circle_count": 10,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    },
+    {
+      "name": "漏掉同一位置全部孔口圆仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    },
+    {
+      "name": "孔口错误法向仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 5,
+      "unexpected_step_circle_indices": [
+        0
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "圆柱错误轴向仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": false,
+        "circles": true
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    },
+    {
+      "name": "环面缝错误半径仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [
+        24
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "环面缝错误轴向位置仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [
+        24
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "环面缝错误径向位置仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [
+        24
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "环面缝非切向法向仍拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [
+        24
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "未知额外圆边不得任意排除",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 5,
+      "unexpected_step_circle_indices": [
+        999
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "缺少原生 Fillet 不接受推导环面缝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [
+        24,
+        26,
+        28,
+        30
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "内外圈轴向差不等于小半径则拒绝",
+      "expected": false,
+      "actual": false,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": false
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [
+        2,
+        3,
+        24,
+        26,
+        28,
+        30
+      ],
+      "check_passed": true
+    },
+    {
+      "name": "STEP 合法拓扑重复可去重",
+      "expected": true,
+      "actual": true,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": true
+      },
+      "excluded_step_circle_count": 8,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    },
+    {
+      "name": "同一无向轴线允许原点沿轴移动及反向",
+      "expected": true,
+      "actual": true,
+      "categories": {
+        "body_count": true,
+        "volume": true,
+        "exact_extents": true,
+        "cylinders": true,
+        "circles": true
+      },
+      "excluded_step_circle_count": 4,
+      "unexpected_step_circle_indices": [],
+      "check_passed": true
+    }
+  ],
+  "passed": true
+}

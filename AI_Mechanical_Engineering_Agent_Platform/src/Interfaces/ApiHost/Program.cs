@@ -7,7 +7,7 @@ var app = builder.Build();
 
 app.MapGet("/health", () => Results.Ok(new
 {
-    service = "AI Mechanical Engineering Agent Platform API Host",
+    service = "AI Mechanical Engineer Platform API Host",
     status = "ok"
 }));
 

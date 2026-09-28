@@ -640,19 +640,25 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         Directory.CreateDirectory(Path.GetDirectoryName(stepPath)!);
 
         diagnostics.ActiveDocTitleBeforeStepExport = GetActiveDocumentTitle(application) ?? TryInvoke(model, "GetTitle")?.ToString();
-        ActivateDocument(application, model, diagnostics, logs);
-        var activeDocument = TryGetProperty(application, "ActiveDoc") ?? model;
-        TryInvoke(activeDocument, "ClearSelection2", true);
-
-        var exported = _comFacade.TryExtensionSaveAs(activeDocument, stepPath, null, diagnostics.StepExportErrors, diagnostics.StepExportWarnings) ||
-                       TryInvokeBool(activeDocument, "SaveAs3", stepPath, 0, 1) ||
-                       TryInvokeBool(activeDocument, "SaveAs", stepPath);
-
-        if (!exported)
+        if (!SolidWorksStepExportDocumentGuard.TryPrepare(
+                _comFacade, application, model, diagnostics.SldprtPath, out var identityIssue))
         {
-            diagnostics.StepExportErrors.Add("step_export_failed: SaveAs returned false.");
+            diagnostics.StepExportErrors.Add(identityIssue!);
+            diagnostics.Issues.Add(identityIssue!);
+            throw new IOException($"step_export_failed: {identityIssue}");
+        }
+        diagnostics.ActiveDocTitleAfterActivate = GetActiveDocumentTitle(application);
+        diagnostics.OperationsExecuted.Add("step_export_document_identity_verified");
+        logs.Add($"STEP 导出文档身份已确认：{diagnostics.SldprtPath}。");
+        Invoke(model, "ClearSelection2", true);
+
+        var exported = _comFacade.TryExtensionSaveAs(model, stepPath, null, diagnostics.StepExportErrors, diagnostics.StepExportWarnings);
+
+        if (!exported || diagnostics.StepExportErrors.Count > 0)
+        {
+            diagnostics.StepExportErrors.Add("step_export_failed: Extension.SaveAs 未成功或返回错误。");
             diagnostics.StepExportSuccess = false;
-            diagnostics.Issues.Add("step_export_failed: SaveAs returned false.");
+            diagnostics.Issues.AddRange(diagnostics.StepExportErrors);
             throw new IOException($"step_export_failed: {stepPath}");
         }
 
@@ -669,17 +675,6 @@ public sealed class LateBoundSolidWorksPlateBuilder : ISolidWorksPlateBuilder
         diagnostics.StepSizeBytes = fileState.SizeBytes;
         diagnostics.OperationsExecuted.Add("export_step_success");
         logs.Add($"Exported STEP file: {stepPath}.");
-    }
-
-    private void ActivateDocument(object application, object model, SolidWorksPlateBuildDiagnostics diagnostics, List<string> logs)
-    {
-        var title = TryInvoke(model, "GetTitle")?.ToString();
-        if (!string.IsNullOrWhiteSpace(title))
-        {
-            TryInvoke(application, "ActivateDoc3", title, true, 0, 0);
-            diagnostics.ActiveDocTitleAfterActivate = GetActiveDocumentTitle(application) ?? title;
-            logs.Add($"Activated SolidWorks document before STEP export: {title}.");
-        }
     }
 
     private string? GetActiveDocumentTitle(object application)

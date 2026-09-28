@@ -1,0 +1,220 @@
+{
+  "status": "RejectedForProduction",
+  "reason": "STEP与原生SLDPRT几何不一致，字节一致不能证明内容正确；必须修复文档身份后重采。",
+  "items": [
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_opposite_edge.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074101_7962718\\model.SLDPRT",
+        "size_bytes": 75421,
+        "sha256": "436c91732f0618875625fd233475476a59558f44dac7d2cf7a39ce689d2a83da"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074101_7962718\\model.STEP",
+        "size_bytes": 26373,
+        "sha256": "db907cebbde7e78819382e3975e4e974e8f873bac96bf777a4c3b5dafc5a89a9"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_negative.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074110_8490249\\model.SLDPRT",
+        "size_bytes": 74322,
+        "sha256": "7dcded48404fc0a670d35e61a7c3a0a830eceb72337d67bae806af1b5bc2255a"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074110_8490249\\model.STEP",
+        "size_bytes": 26387,
+        "sha256": "c7416e2cd461d4eeed2dc93060be9ba04d7b7a1bdd7bc5a2c462d1d0832b750b"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_circular_positive_quarter.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074121_0647238\\model.SLDPRT",
+        "size_bytes": 78400,
+        "sha256": "eebab333c98d78d4215bd84494857fc6400baa463dc537ada6001377b46f9932"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074121_0647238\\model.STEP",
+        "size_bytes": 26374,
+        "sha256": "48af955fc8d9d6b60191d935a0f993eeb16c838d4fcf19868126c837a725b24c"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0,
+        5
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_circular_negative_quarter.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074132_7576663\\model.SLDPRT",
+        "size_bytes": 78733,
+        "sha256": "9d1cf06aed9a3552125f62a66c50ac863bb4c89b20f09af691c2b14a4d1935de"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074132_7576663\\model.STEP",
+        "size_bytes": 26387,
+        "sha256": "2756cfa4ae5db46eb8184741d1f7c10c77778e341bc3eb76e342ae30f7640472"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0,
+        5
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\feature_pipeline_plate.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074159_0755385\\model.SLDPRT",
+        "size_bytes": 73715,
+        "sha256": "d0da35f307dc03dc06483d32aea27b1df98dea008a9b40dcf7c921f2b160d34b"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074159_0755385\\model.STEP",
+        "size_bytes": 26376,
+        "sha256": "b590961571f1758aa61aa2016784d43ebf88e3603619fbd10c229ce394076ff3"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        5
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\feature_pipeline_plate_fillet.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074211_2890725\\model.SLDPRT",
+        "size_bytes": 86996,
+        "sha256": "bab9835d381e534712ed59b7af8619979a794b98a3fab11bad8bdcb4d0bcdc7c"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074211_2890725\\model.STEP",
+        "size_bytes": 26370,
+        "sha256": "f4cc2824287c97e297c5fc5a68babccd34c1e41d60668757e6167d42f1f59ff1"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        5,
+        6
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\feature_pipeline_plate_chamfer.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074223_8116476\\model.SLDPRT",
+        "size_bytes": 76493,
+        "sha256": "e2e2be5131b34f31bffabd7f96fd2742c8b4796aebe1fd32015c25cc54998715"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074223_8116476\\model.STEP",
+        "size_bytes": 26372,
+        "sha256": "1e3b09a162f1eb51f7a90fb0a4e30c0d49a9caf24012179dd9ac8ebbdc79b056"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        5,
+        6.0
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\feature_pipeline_plate_linear_pattern.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074237_2239759\\model.SLDPRT",
+        "size_bytes": 76849,
+        "sha256": "de015e50180078bfecb8eeb2032745a3734842461c68b12c825424a3d140964c"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074237_2239759\\model.STEP",
+        "size_bytes": 26366,
+        "sha256": "ac926db34f1eca5eff258fe5c1826efcbbb3244274dd850960cfae168cec757f"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\feature_pipeline_plate_circular_pattern.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074248_7325903\\model.SLDPRT",
+        "size_bytes": 81297,
+        "sha256": "c8d6764d4df8d464d06e4b9f802abb989135a0e6f85aabdb9769ddd5b1e8eb7c"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074248_7325903\\model.STEP",
+        "size_bytes": 26383,
+        "sha256": "9a75d169f5898713cfa244fb979e2dc65c9664b91848256ebd7270723dea5b6e"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0,
+        5
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\feature_pipeline_plate_mirror.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074302_4493341\\model.SLDPRT",
+        "size_bytes": 70680,
+        "sha256": "b871add4ed524c4e146d3abb68dfaf74d8912d5f71fe32c9bfe5445c18852de5"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074302_4493341\\model.STEP",
+        "size_bytes": 26386,
+        "sha256": "35ecb098ef6e04b92a2d6afd1275115c4560e1f8c9b5890cb2baedd745a8df92"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        3.0
+      ]
+    },
+    {
+      "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+      "model": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074314_6629135\\model.SLDPRT",
+        "size_bytes": 75094,
+        "sha256": "821a86403c481a5146e9ea4522be34180dcad8145f5ae6080bfb55052ad2cdb1"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074314_6629135\\model.STEP",
+        "size_bytes": 26386,
+        "sha256": "a74bb9d5cd6a4b77100e00d6200ccb9051fe7fe71c90a8fde5cb281562939485"
+      },
+      "step_cylinder_radii_mm": [
+        "5.000000000000000000"
+      ],
+      "native_circle_radii_mm": [
+        5.0
+      ]
+    }
+  ]
+}

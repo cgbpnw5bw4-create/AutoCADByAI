@@ -1,0 +1,1352 @@
+{
+  "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012854_4152919\\model.STEP",
+  "interconnect_enabled": true,
+  "read_success": true,
+  "failure_stage": null,
+  "geometry": {
+    "RebuildPassed": true,
+    "BoundingBox": {
+      "MinXmm": -50,
+      "MinYmm": 0,
+      "MinZmm": -30,
+      "MaxXmm": 50,
+      "MaxYmm": 10,
+      "MaxZmm": 30
+    },
+    "ExactExtents": {
+      "MinXmm": -50,
+      "MinYmm": 0,
+      "MinZmm": -30,
+      "MaxXmm": 50,
+      "MaxYmm": 10,
+      "MaxZmm": 30
+    },
+    "BodyCount": 1,
+    "VolumeCubicMillimeters": 58395.69335156682,
+    "MassKilograms": 0.058395693351566816,
+    "MassPropertyVolumeCubicMillimeters": 58395.69335156681,
+    "FeatureTypes": [
+      "FavoriteFolder",
+      "HistoryFolder",
+      "SelectionSetFolder",
+      "SensorFolder",
+      "DocsFolder",
+      "DetailCabinet",
+      "InkMarkupFolder",
+      "EnvFolder",
+      "SolidBodyFolder",
+      "SurfaceBodyFolder",
+      "CommentsFolder",
+      "EqnFolder",
+      "MaterialFolder",
+      "RefPlane",
+      "RefPlane",
+      "RefPlane",
+      "OriginProfileFeature",
+      "ConfigTableFolder",
+      "MBimport"
+    ],
+    "Features": [
+      {
+        "Name": "\u6536\u85CF",
+        "TypeName": "FavoriteFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5386\u53F2\u8BB0\u5F55",
+        "TypeName": "HistoryFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u9009\u62E9\u96C6",
+        "TypeName": "SelectionSetFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u4F20\u611F\u5668",
+        "TypeName": "SensorFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u8BBE\u8BA1\u6D3B\u9875\u5939",
+        "TypeName": "DocsFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u6CE8\u89E3",
+        "TypeName": "DetailCabinet",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u6807\u6CE8",
+        "TypeName": "InkMarkupFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5149\u6E90\u3001\u76F8\u673A\u4E0E\u5E03\u666F",
+        "TypeName": "EnvFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5B9E\u4F53",
+        "TypeName": "SolidBodyFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u66F2\u9762\u5B9E\u4F53",
+        "TypeName": "SurfaceBodyFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5907\u6CE8",
+        "TypeName": "CommentsFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u65B9\u7A0B\u5F0F",
+        "TypeName": "EqnFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u6750\u8D28 \u003C\u672A\u6307\u5B9A\u003E",
+        "TypeName": "MaterialFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u524D\u89C6\u57FA\u51C6\u9762",
+        "TypeName": "RefPlane",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u4E0A\u89C6\u57FA\u51C6\u9762",
+        "TypeName": "RefPlane",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u53F3\u89C6\u57FA\u51C6\u9762",
+        "TypeName": "RefPlane",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u539F\u70B9",
+        "TypeName": "OriginProfileFeature",
+        "ErrorCode": null
+      },
+      {
+        "Name": "Tables",
+        "TypeName": "ConfigTableFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "model.STEP\u003C1\u003E",
+        "TypeName": "MBimport",
+        "ErrorCode": null
+      }
+    ],
+    "CylindricalDiametersMm": [
+      10,
+      10,
+      10,
+      10
+    ],
+    "Cylinders": [
+      {
+        "DiameterMm": 10,
+        "OriginXmm": 20,
+        "OriginYmm": 20,
+        "OriginZmm": 0,
+        "AxisX": 0,
+        "AxisY": -1,
+        "AxisZ": 0
+      },
+      {
+        "DiameterMm": 10,
+        "OriginXmm": -20,
+        "OriginYmm": 20,
+        "OriginZmm": 0,
+        "AxisX": 0,
+        "AxisY": -1,
+        "AxisZ": 0
+      },
+      {
+        "DiameterMm": 10,
+        "OriginXmm": -20,
+        "OriginYmm": 20,
+        "OriginZmm": 0,
+        "AxisX": 0,
+        "AxisY": -1,
+        "AxisZ": 0
+      },
+      {
+        "DiameterMm": 10,
+        "OriginXmm": 20,
+        "OriginYmm": 20,
+        "OriginZmm": 0,
+        "AxisX": 0,
+        "AxisY": -1,
+        "AxisZ": 0
+      }
+    ],
+    "ReadIssues": [],
+    "SolidWorksVersion": null,
+    "GeometryEvidenceSourceRevision": "geometry-validation-source-sha256:06181a941237a04306dba2e836dfa781045f5a86ec78d551c747bea97c457c3f",
+    "Edges": [
+      {
+        "Index": 0,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": 20,
+        "AnchorYMm": 1,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 1,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": -20,
+        "AnchorYMm": 1,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 2,
+        "Kind": "circle",
+        "LengthMm": 37.69911184307752,
+        "AnchorXMm": -20,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": 6,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 3,
+        "Kind": "circle",
+        "LengthMm": 37.69911184307752,
+        "AnchorXMm": 20,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": 6,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 4,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": -20,
+        "AnchorYMm": 10,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 5,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": 20,
+        "AnchorYMm": 10,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 6,
+        "Kind": "line",
+        "LengthMm": 100,
+        "AnchorXMm": 0,
+        "AnchorYMm": 10,
+        "AnchorZMm": 30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 1,
+          "Y": 0,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 7,
+        "Kind": "line",
+        "LengthMm": 100,
+        "AnchorXMm": 0,
+        "AnchorYMm": 0,
+        "AnchorZMm": 30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 1,
+          "Y": 0,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 8,
+        "Kind": "line",
+        "LengthMm": 60,
+        "AnchorXMm": -50,
+        "AnchorYMm": 10,
+        "AnchorZMm": 0,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 0,
+          "Z": 1
+        }
+      },
+      {
+        "Index": 9,
+        "Kind": "line",
+        "LengthMm": 10,
+        "AnchorXMm": -50,
+        "AnchorYMm": 5,
+        "AnchorZMm": 30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 10,
+        "Kind": "line",
+        "LengthMm": 60,
+        "AnchorXMm": -50,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 0,
+          "Z": 1
+        }
+      },
+      {
+        "Index": 11,
+        "Kind": "line",
+        "LengthMm": 100,
+        "AnchorXMm": 0,
+        "AnchorYMm": 10,
+        "AnchorZMm": -30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": -1,
+          "Y": 0,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 12,
+        "Kind": "line",
+        "LengthMm": 10,
+        "AnchorXMm": -50,
+        "AnchorYMm": 5,
+        "AnchorZMm": -30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 13,
+        "Kind": "line",
+        "LengthMm": 100,
+        "AnchorXMm": 0,
+        "AnchorYMm": 0,
+        "AnchorZMm": -30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": -1,
+          "Y": 0,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 14,
+        "Kind": "line",
+        "LengthMm": 10,
+        "AnchorXMm": 50,
+        "AnchorYMm": 5,
+        "AnchorZMm": 30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 15,
+        "Kind": "line",
+        "LengthMm": 60,
+        "AnchorXMm": 50,
+        "AnchorYMm": 10,
+        "AnchorZMm": 0,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 0,
+          "Z": -1
+        }
+      },
+      {
+        "Index": 16,
+        "Kind": "line",
+        "LengthMm": 10,
+        "AnchorXMm": 50,
+        "AnchorYMm": 5,
+        "AnchorZMm": -30,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 17,
+        "Kind": "line",
+        "LengthMm": 60,
+        "AnchorXMm": 50,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 0,
+          "Z": -1
+        }
+      },
+      {
+        "Index": 18,
+        "Kind": "line",
+        "LengthMm": 9.000000000000002,
+        "AnchorXMm": -20,
+        "AnchorYMm": 5.5,
+        "AnchorZMm": -5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 19,
+        "Kind": "line",
+        "LengthMm": 9.000000000000002,
+        "AnchorXMm": -20,
+        "AnchorYMm": 5.5,
+        "AnchorZMm": 5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 20,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": -20,
+        "AnchorYMm": 10,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 21,
+        "Kind": "line",
+        "LengthMm": 9.000000000000002,
+        "AnchorXMm": 20,
+        "AnchorYMm": 5.5,
+        "AnchorZMm": -5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 22,
+        "Kind": "line",
+        "LengthMm": 9.000000000000002,
+        "AnchorXMm": 20,
+        "AnchorYMm": 5.5,
+        "AnchorZMm": 5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 23,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": 20,
+        "AnchorYMm": 10,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 24,
+        "Kind": "line",
+        "LengthMm": 1.414213562373095,
+        "AnchorXMm": 20,
+        "AnchorYMm": 0.5,
+        "AnchorZMm": -5.5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cone",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -0.7071067811865476,
+          "Z": -0.7071067811865476
+        }
+      },
+      {
+        "Index": 25,
+        "Kind": "circle",
+        "LengthMm": 37.69911184307752,
+        "AnchorXMm": 20,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": 6,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 26,
+        "Kind": "line",
+        "LengthMm": 1.414213562373095,
+        "AnchorXMm": 20,
+        "AnchorYMm": 0.5,
+        "AnchorZMm": 5.5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cone",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -0.7071067811865476,
+          "Z": 0.7071067811865476
+        }
+      },
+      {
+        "Index": 27,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": 20,
+        "AnchorYMm": 1,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 28,
+        "Kind": "line",
+        "LengthMm": 1.414213562373095,
+        "AnchorXMm": -20,
+        "AnchorYMm": 0.5,
+        "AnchorZMm": -5.5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cone",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -0.7071067811865476,
+          "Z": -0.7071067811865476
+        }
+      },
+      {
+        "Index": 29,
+        "Kind": "circle",
+        "LengthMm": 37.69911184307752,
+        "AnchorXMm": -20,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": 6,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 30,
+        "Kind": "line",
+        "LengthMm": 1.414213562373095,
+        "AnchorXMm": -20,
+        "AnchorYMm": 0.5,
+        "AnchorZMm": 5.5,
+        "RadiusMm": null,
+        "AdjacentSurfaceKinds": [
+          "cone",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -0.7071067811865476,
+          "Z": 0.7071067811865476
+        }
+      },
+      {
+        "Index": 31,
+        "Kind": "circle",
+        "LengthMm": 31.41592653589793,
+        "AnchorXMm": -20,
+        "AnchorYMm": 1,
+        "AnchorZMm": 0,
+        "RadiusMm": 5,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "cone"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": -1,
+          "Z": 0
+        }
+      }
+    ],
+    "Holes": null
+  },
+  "edge_count": 32,
+  "edges": [
+    {
+      "Index": 0,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": 20,
+      "AnchorYMm": 1,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 1,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": -20,
+      "AnchorYMm": 1,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 2,
+      "Kind": "circle",
+      "LengthMm": 37.69911184307752,
+      "AnchorXMm": -20,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": 6,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 3,
+      "Kind": "circle",
+      "LengthMm": 37.69911184307752,
+      "AnchorXMm": 20,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": 6,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 4,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": -20,
+      "AnchorYMm": 10,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 5,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": 20,
+      "AnchorYMm": 10,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 6,
+      "Kind": "line",
+      "LengthMm": 100,
+      "AnchorXMm": 0,
+      "AnchorYMm": 10,
+      "AnchorZMm": 30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 1,
+        "Y": 0,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 7,
+      "Kind": "line",
+      "LengthMm": 100,
+      "AnchorXMm": 0,
+      "AnchorYMm": 0,
+      "AnchorZMm": 30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 1,
+        "Y": 0,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 8,
+      "Kind": "line",
+      "LengthMm": 60,
+      "AnchorXMm": -50,
+      "AnchorYMm": 10,
+      "AnchorZMm": 0,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 0,
+        "Z": 1
+      }
+    },
+    {
+      "Index": 9,
+      "Kind": "line",
+      "LengthMm": 10,
+      "AnchorXMm": -50,
+      "AnchorYMm": 5,
+      "AnchorZMm": 30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 10,
+      "Kind": "line",
+      "LengthMm": 60,
+      "AnchorXMm": -50,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 0,
+        "Z": 1
+      }
+    },
+    {
+      "Index": 11,
+      "Kind": "line",
+      "LengthMm": 100,
+      "AnchorXMm": 0,
+      "AnchorYMm": 10,
+      "AnchorZMm": -30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": -1,
+        "Y": 0,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 12,
+      "Kind": "line",
+      "LengthMm": 10,
+      "AnchorXMm": -50,
+      "AnchorYMm": 5,
+      "AnchorZMm": -30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 13,
+      "Kind": "line",
+      "LengthMm": 100,
+      "AnchorXMm": 0,
+      "AnchorYMm": 0,
+      "AnchorZMm": -30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": -1,
+        "Y": 0,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 14,
+      "Kind": "line",
+      "LengthMm": 10,
+      "AnchorXMm": 50,
+      "AnchorYMm": 5,
+      "AnchorZMm": 30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 15,
+      "Kind": "line",
+      "LengthMm": 60,
+      "AnchorXMm": 50,
+      "AnchorYMm": 10,
+      "AnchorZMm": 0,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 0,
+        "Z": -1
+      }
+    },
+    {
+      "Index": 16,
+      "Kind": "line",
+      "LengthMm": 10,
+      "AnchorXMm": 50,
+      "AnchorYMm": 5,
+      "AnchorZMm": -30,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 17,
+      "Kind": "line",
+      "LengthMm": 60,
+      "AnchorXMm": 50,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 0,
+        "Z": -1
+      }
+    },
+    {
+      "Index": 18,
+      "Kind": "line",
+      "LengthMm": 9.000000000000002,
+      "AnchorXMm": -20,
+      "AnchorYMm": 5.5,
+      "AnchorZMm": -5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 19,
+      "Kind": "line",
+      "LengthMm": 9.000000000000002,
+      "AnchorXMm": -20,
+      "AnchorYMm": 5.5,
+      "AnchorZMm": 5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 20,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": -20,
+      "AnchorYMm": 10,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 21,
+      "Kind": "line",
+      "LengthMm": 9.000000000000002,
+      "AnchorXMm": 20,
+      "AnchorYMm": 5.5,
+      "AnchorZMm": -5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 22,
+      "Kind": "line",
+      "LengthMm": 9.000000000000002,
+      "AnchorXMm": 20,
+      "AnchorYMm": 5.5,
+      "AnchorZMm": 5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 23,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": 20,
+      "AnchorYMm": 10,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 24,
+      "Kind": "line",
+      "LengthMm": 1.414213562373095,
+      "AnchorXMm": 20,
+      "AnchorYMm": 0.5,
+      "AnchorZMm": -5.5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cone",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -0.7071067811865476,
+        "Z": -0.7071067811865476
+      }
+    },
+    {
+      "Index": 25,
+      "Kind": "circle",
+      "LengthMm": 37.69911184307752,
+      "AnchorXMm": 20,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": 6,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 26,
+      "Kind": "line",
+      "LengthMm": 1.414213562373095,
+      "AnchorXMm": 20,
+      "AnchorYMm": 0.5,
+      "AnchorZMm": 5.5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cone",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -0.7071067811865476,
+        "Z": 0.7071067811865476
+      }
+    },
+    {
+      "Index": 27,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": 20,
+      "AnchorYMm": 1,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 28,
+      "Kind": "line",
+      "LengthMm": 1.414213562373095,
+      "AnchorXMm": -20,
+      "AnchorYMm": 0.5,
+      "AnchorZMm": -5.5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cone",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -0.7071067811865476,
+        "Z": -0.7071067811865476
+      }
+    },
+    {
+      "Index": 29,
+      "Kind": "circle",
+      "LengthMm": 37.69911184307752,
+      "AnchorXMm": -20,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": 6,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 30,
+      "Kind": "line",
+      "LengthMm": 1.414213562373095,
+      "AnchorXMm": -20,
+      "AnchorYMm": 0.5,
+      "AnchorZMm": 5.5,
+      "RadiusMm": null,
+      "AdjacentSurfaceKinds": [
+        "cone",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -0.7071067811865476,
+        "Z": 0.7071067811865476
+      }
+    },
+    {
+      "Index": 31,
+      "Kind": "circle",
+      "LengthMm": 31.41592653589793,
+      "AnchorXMm": -20,
+      "AnchorYMm": 1,
+      "AnchorZMm": 0,
+      "RadiusMm": 5,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "cone"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": -1,
+        "Z": 0
+      }
+    }
+  ]
+}

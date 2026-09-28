@@ -2,7 +2,7 @@
 
 ## 目标、适用范围与输入输出
 
-本规范用于所有阶段的开发、审查和验证，目标是让修改范围、失败原因与完成证据一致。输入为任务、当前源码和阶段协议；输出为最小变更、可行动失败记录、实际命令日志和本次报告。
+本规范用于 `AI Mechanical Engineer Platform` 所有阶段的开发、审查和验证，目标是让修改范围、失败原因与完成证据一致。输入为任务、当前源码和阶段协议；输出为最小变更、可行动失败记录、实际命令日志和本次报告。
 
 ## 核心规则
 
@@ -15,6 +15,9 @@
 - `Agent` 不能直接调用 `Worker`。
 - `Gateway` 不能直接调用 `Worker`。
 - `LLM` 不能直接调用 `Worker`。
+- 强模型负责工程理解、规划与决策，业务经 `ModelRuntime` / `IModelProvider` 接入；模型名与供应商 SDK 留在适配层。
+- 正式 CAD 执行遵循 `Feature Registry → Verified Handler → SolidWorks API Evidence → Worker → SolidWorks Adapter`，模型 API 建议不构成证据。
+- 使用少量强 Agent 与确定性 Worker，已存在的确定性角色不得虚称为多次 LLM 推理。
 - 本地交互式主流程默认执行真实 CAD，默认 `dry_run=false`、`SW_VISIBLE=true`。
 - `dry_run=true`、`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时必须使用 Fake Worker 或在连接前失败关闭。
 - 不允许复制第三方 `scripts` 源码。
@@ -24,7 +27,17 @@
 
 执行任务前先确认当前阶段、涉及模块、允许修改目录、禁止修改目录、需要读取的说明文件和已有报告。涉及 `SolidWorks` API 时，必须先读取模块的 `api_evidence.md` 和最新诊断报告。
 
-### 本轮 V2.2-A 平台开发边界
+### 当前 V2.2-C CAD 恢复与复核边界
+
+当前执行 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)，范围为既有证据失配、阵列引用与方向、STEP 导出身份及两格式独立几何验收。2026-09-14 已完成受控重采、生产绑定与参数更新正式主流程，完整测试 684/684 通过；全局自检仍须保留夹套与轴类未通过项。2026-09-24 进行文档收尾、文件保留与源码指纹复核，以及新的完整构建、测试和自检，不重启 CAD、不扩大能力范围，也不重写旧报告。
+
+### V2.2-B 历史平台开发边界
+
+V2.2-B 执行 [强模型架构增量优化](v2_2_b_frontier_model_architecture.md)，当时范围为正式名称与中文定位统一、中立模型运行时、工作流接口解耦、可组合质量门禁及必要的默认流程职责收敛；该阶段不新增真实 CAD 档案，也不实现尚无用例的并行、条件执行器或整机功能。
+
+该阶段保留底层 `AI_Mechanical_Engineering_Agent_Platform` 目录和解决方案、程序集及命名空间，以兼容构建、加载和证据路径；源码绑定的 SolidWorks Handler、Adapter 与 evidence 当时原样保留。历史 `reviewrep` 始终只读。阶段结果、完整测试、全局自检和真实 CAD 验收分别记录，基线已有失败不因架构重命名而消失。
+
+### V2.2-A 既有任务与审批边界
 
 用户本轮已授权自主选择并推进下一阶段，当前入口为 [V2.2-A 平台任务生命周期与审批闭环](v2_2_a_task_approval_lifecycle.md)。前轮 `R01`–`R05` 已完成，本轮最小范围为 `R06` 的具体审批身份与原子匹配、任务状态及查询、宿主审批入口，以及恢复后的 `chief-engineer` 原后处理和 `QualityGate`。上轮“不进入 V2.1-C”限定上轮范围，本轮独立平台开发已有新授权，无需再次确认。
 
@@ -44,7 +57,7 @@ dotnet run --project src/Interfaces/CliHost -- self-check
 
 如果涉及真实 CAD，self-check、CI 和单元测试仍不能启动 CAD；本地交互式 `run-cad-workflow` 主流程则按 V2.0 默认启用规则运行。
 
-V2.2-A 由执行代理统一运行上述验证，并为定向自检选择本轮新目录，例如 `self-check --output output/validation/v2_2_a_task_approval`。文档代理不重复编译或测试；具体 API 和阶段字段已在 [阶段页](v2_2_a_task_approval_lifecycle.md) 登记，实际计数和日志继续回填。审批恢复须验证原业务收尾与统一质量门禁，不能仅凭审批消费成功、HTTP `200` 或核心工作流中间通过宣布任务完成。
+本轮由执行代理统一运行上述验证，定向输出使用 `self-check --output output/validation/v2_2_c_cad_baseline/final_self_check_20260924`；再次运行须选择新的目录，不能覆盖旧报告。文档代理不重复编译或测试；实际计数和日志回填 [V2.2-C 阶段页](v2_2_c_cad_baseline_recovery.md)。既有任务 API 与阶段字段仍见 [V2.2-A 合同](v2_2_a_task_approval_lifecycle.md)。审批恢复须验证原业务收尾与统一质量门禁，不能仅凭审批消费成功、HTTP `200` 或核心工作流中间通过宣布任务完成。
 
 ### 自检输出定向
 
@@ -65,6 +78,8 @@ V2.1-B 可靠性补强将 `schema_version` 升为 `2.1-b-reliability`，新增 `
 消费方必须检查 schema、迁移旧字段并处理 `null`；不能将 `null` 当作通过，也不能用内置检查组结果代替实际测试结果。这是有意的合同变更，禁止宣称旧消费方无需迁移即可完全兼容。
 
 V2.2-A 的当前 `schema_version` 为 `2.2-a-task-approval`，新增 `task_lifecycle_tracked`、`task_approval_roundtrip_supported`、`task_access_token_required`、`workflow_approval_identity_bound` 四个布尔行为检查字段。保留前轮孔字段的可空语义和迁移规则。四个新字段、完整测试统计及全局 `final_status` 必须分别列出，不能相互代替。
+
+V2.2-B 沿用该 schema，并增加 `frontier_architecture_checks` 字典，记录 `model_provider_contract_executed`、`default_planning_route_consolidated`、`quality_gate_extension_blocks_approval_bypass`、`workflow_contract_preserves_gate_blocking`。旧内部协作字段继续验证显式四角色兼容路线，新默认输入校验路径单独验证；任何字典项缺失或失败均不得宣称本轮行为通过，字典结果不能覆盖完整测试和全局失败。
 
 ## 失败处理
 
