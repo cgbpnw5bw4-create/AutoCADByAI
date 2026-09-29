@@ -1,0 +1,707 @@
+{
+  "schema_version": "v2.2-d-candidate-collection-2",
+  "started_at": "2026-09-28T01:30:11Z",
+  "status": "Failed",
+  "candidate_only": true,
+  "production_bindings_modified": false,
+  "independent_engineering_acceptance": "Pending",
+  "project_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform",
+  "items": [
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+        "size_bytes": 879,
+        "sha256": "9f82f30e128c299b8dea680595edcc01cf957bdc16eddce1491a8ed2eb5ab057"
+      },
+      "status": "Failed",
+      "smoke_process": {
+        "command": [
+          "C:\\Program Files\\dotnet\\dotnet.EXE",
+          "exec",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+          "--output",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_093011-9ac7734c\\01-smoke.log",
+        "started_at": "2026-09-28T01:30:11Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:30:15Z"
+      },
+      "new_reports": [
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_013011_6775579\\feature_execution_report.json"
+      ],
+      "report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_013011_6775579\\feature_execution_report.json",
+        "size_bytes": 16873,
+        "sha256": "0af4c5726df08f73569009ad4b132886dc161ea4c8ffcef1043d374fd5bd3c69"
+      }
+    }
+  ],
+  "updated_at": "2026-09-28T01:30:16Z",
+  "output_root": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts",
+  "config_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\config\\solidworks.local.json",
+  "cad_environment": {
+    "SW_TEMPLATE_PART_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_part.prtdot",
+    "SW_TEMPLATE_DRAWING_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_a3.drwdot",
+    "SW_CONNECT_TIMEOUT_SECONDS": "120",
+    "SW_EXECUTION_TIMEOUT_SECONDS": "300",
+    "SW_VISIBLE": "true",
+    "SW_FEATURE_EXECUTION_SMOKE_TEST": "true"
+  },
+  "frozen_baseline": {
+    "bound_sources": [
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+        "size_bytes": 4771,
+        "sha256": "093f7c3a9c7434afd4efff7a9c082af04f979888eb72c1ce0634a9f2a18e291b"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\AxialSectionGeometryValidator.cs",
+        "size_bytes": 6497,
+        "sha256": "46562ba826dc39e0e9d2fe475260383aca397f60b7178c60fd9a0c29f25ebbd0"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\EdgeSelection.cs",
+        "size_bytes": 12637,
+        "sha256": "6659c8e5a78dd455c1dad766d70b0217f562f55226b3df9e18ba14274c66860a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\ExpectedPartGeometry.cs",
+        "size_bytes": 3955,
+        "sha256": "6c1b626a5e1a4d61e4bc48bc9d875582ebba80958aa2d1adce0bed11aaab6411"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\FeatureParameterSchemaRegistry.cs",
+        "size_bytes": 5734,
+        "sha256": "cabf61e283d8b202143249361ead06640ea9cd479c8c8a9369d98cdbd286b87b"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GenericCadDescription.cs",
+        "size_bytes": 39482,
+        "sha256": "2a61572b219005fb6c7dbe9c013f9e869a590f4d3a886fa030a0813f7224d63a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GeometryValidation.cs",
+        "size_bytes": 23803,
+        "sha256": "d29701e686fd25122d30549c5d599ca49b5830096f4126105b4bea0e8f197874"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleFeatureDefinition.cs",
+        "size_bytes": 17862,
+        "sha256": "29ce35cf05171008469752f0dbd42d6704490103af3de62ab875a690bf239297"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleGeometryValidation.cs",
+        "size_bytes": 8696,
+        "sha256": "ec126f5c5e40916538b9a27384498d7eeaa6c40bb06a214f22fa247ab409f3ce"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HolePlanValidation.cs",
+        "size_bytes": 3505,
+        "sha256": "ce6d0c9030ac6765316b128822cf8137ec6887b307d2f1db5471ff3362a37d6a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\PartFamilies.cs",
+        "size_bytes": 49083,
+        "sha256": "6162fcbdbe5819d37453595da52eebcbef6c73303effcedffa5b8c14e9d99066"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\PartFamilyGenericModelFactory.cs",
+        "size_bytes": 16103,
+        "sha256": "b1cec079f633eb7b06faba1bfd505ff065bf80b40b0845d329c4cdf7f8f75ce8"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\ModelUpdateService.cs",
+        "size_bytes": 15554,
+        "sha256": "f775ba7e6ca75f936e7ee010cc1f05cc210f7a88ce0a406b78e0c1379fed8d76"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksArtifactValidator.cs",
+        "size_bytes": 53830,
+        "sha256": "2dc2b610dae2e161dd73578333727e27149c45230dbc51b77fa4f6f4b866aa60"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksBuildPlanValidator.cs",
+        "size_bytes": 7933,
+        "sha256": "afc5c59d44aaced68fc8bab554823c9af8d366ef4071ff6d9afbea99cb792804"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Chamfer\\ChamferHandler.cs",
+        "size_bytes": 5661,
+        "sha256": "6e9cdd665cdab52163f6f39331ad56ce8a5d46874086e45c4b027de57067246c"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Cut\\ExtrudeCutHandler.cs",
+        "size_bytes": 4554,
+        "sha256": "a9371c929a33f2b3ff576578f83f5e27a1813ee4c606aacc0df3958ff8dde715"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Extrude\\ExtrudeBossHandler.cs",
+        "size_bytes": 4945,
+        "sha256": "3d48802c675d6d0e8c2aeccf9209d9c83ed783796349b371535eb02363de9ca3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionEvidencePolicy.cs",
+        "size_bytes": 18859,
+        "sha256": "348365d15b9151017b7f1c2ab870b96315d634d7dcf9e9f260a79437325d3fd9"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionPipeline.cs",
+        "size_bytes": 4223,
+        "sha256": "56fa61139c4b53b856c631017753baf33c26e4db588223659d15fef4848e50fa"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerContracts.cs",
+        "size_bytes": 14850,
+        "sha256": "235f2b9e1616efd845fadacfb6f0beb129dec60b56d4c25a755df33694999774"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerRegistry.cs",
+        "size_bytes": 16367,
+        "sha256": "a3f672841298c87525efffd0c9c23556bf0d28b689cb1f8eaa8f4a82b4a8c124"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Fillet\\FilletHandler.cs",
+        "size_bytes": 5070,
+        "sha256": "91cbbd6280b1ea5e28f652f96ddb4cd8005034c05949f2b6079e04dee202b679"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\GeometryValidationEvidencePolicy.cs",
+        "size_bytes": 2833,
+        "sha256": "5ec8df6bfa9f90180444d5383bb90b26bc9c52c5a4eb8a9c7dae65957ae77017"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleExecutionStrategies.cs",
+        "size_bytes": 2584,
+        "sha256": "6ec8a8a8898003ac4a31d04bbc733a0dacb84b784cb92d1423eda509f7deb40e"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleHandler.cs",
+        "size_bytes": 10236,
+        "sha256": "3c844b11983bd48a3449074415c4f24f07b8a244ba4c39c950feb95db4116913"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Mirror\\MirrorHandler.cs",
+        "size_bytes": 6225,
+        "sha256": "51023d956ecee88d7e7141883f9545f547cf9bc54f4ef9b09a0e9beba55e63c2"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\PartFamilyProductionEvidencePolicy.cs",
+        "size_bytes": 11305,
+        "sha256": "26b6da4f7b56549f8a879a6731c1703be1d5982b79d0cfef7226c08adf922492"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\CircularPatternHandler.cs",
+        "size_bytes": 5998,
+        "sha256": "5aa318d981926233b85a58c80b254e793f4083bb40cc55f9eef679fbb1e1cc13"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\LinearPatternHandler.cs",
+        "size_bytes": 6379,
+        "sha256": "d1637831156d08a48ce764544921d255957c49bb0eb3906509fc6acf942ceef1"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\PatternParameterRules.cs",
+        "size_bytes": 4627,
+        "sha256": "cccb0c173a633a01a0135668c6ecd2de237520a11b7e31d2561be00f7c291a93"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\RealSolidWorksFeatureAdapter.cs",
+        "size_bytes": 69884,
+        "sha256": "541739b27c338e36cae485ccbba92917f3922c29a64a3fae9e79052ae26939a5"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Revolve\\RevolveBossHandler.cs",
+        "size_bytes": 4506,
+        "sha256": "eb6f5bd9bbdb853d026a499ad3be29d53b4d610ecbe830f0b2b7de8dcccb0a3f"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Sketch\\SketchHandler.cs",
+        "size_bytes": 21162,
+        "sha256": "e5deb55eb47ba519b8385a81472802ce9b157d68cfb423c0e80f7ad07b74a4cc"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksEdgeEnumerator.cs",
+        "size_bytes": 8026,
+        "sha256": "473c6f2cb519dac4673ccd6aec31588c365681e1b24076fcfe77c2f0633e4c0a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksFeatureGraphPartFamilyBuilder.cs",
+        "size_bytes": 5159,
+        "sha256": "8f9be10727c0a10e8b695cacdca2d6c3d641a3879c044562da6576261555b2ea"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksGeometryReader.cs",
+        "size_bytes": 18615,
+        "sha256": "45e5f524e4092033e15ab20ba2507802cf4bc581d3e3325bfd2ce6130aef1799"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DFeatureGraphPartFamilyBuilder.cs",
+        "size_bytes": 4326,
+        "sha256": "6b1e02467f0a36cefa2dc150bf22813cca2851be05f1875f6af30cd4357f96a3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DThreeCircleCutEvidencePolicy.cs",
+        "size_bytes": 34899,
+        "sha256": "0320c044a2c7e94c80e54e370d35a2e2eec8cc92eaccee4610d4b3052620ff81"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\PartFamilyBuilders.cs",
+        "size_bytes": 8704,
+        "sha256": "3a1cf92b8b9b6562cc90ca32661c1d3a5b3512d2e67e123ab6ad07a3dc347eea"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\RealSolidWorksWorker.cs",
+        "size_bytes": 43476,
+        "sha256": "2783e7d3f64380190f6b1e230734f19b8df18bd87f027820ceeaab66344066f4"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksComInterop.cs",
+        "size_bytes": 19469,
+        "sha256": "7a14bd5d9f8341657b34432072e2aa30092af33105d7c8e9f1891e2a9994681b"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPartFamilyRealBuilders.cs",
+        "size_bytes": 49678,
+        "sha256": "259a8b3f15704e836d973b55940d960b5461e79b3231d01cb1e3bd224d06dd29"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPlateBuilder.cs",
+        "size_bytes": 31941,
+        "sha256": "41ac366503c1f35aa7adbc8218f115c122257822d370a09726cddbe59aeaa0a3"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\Program.cs",
+        "size_bytes": 8425,
+        "sha256": "16a91e6ccf71197450f6fca601be4550632c20904fa52b329f45077b4c5079ab"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\SolidWorksEdgeProbe.csproj",
+        "size_bytes": 413,
+        "sha256": "bcba5b88df25c40544ad4c8c5c7f1e57cbec4003c0ed007bac37c3f89bad5529"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\FeatureExecutionSmokeRunner.cs",
+        "size_bytes": 34521,
+        "sha256": "61aadae75f7778792c08fb309b58e0453ef9209d4fa56d4d36c37867972bfc04"
+      }
+    ],
+    "runner_binaries": [
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+        "size_bytes": 411136,
+        "sha256": "bdccac65a8b8b5c1a78a83c7dbea6cc82790c8fe2cb6f9353e2b6d3f79018078"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+        "size_bytes": 19456,
+        "sha256": "b30319da790be9107d1f99d374cf085a09cc32b2adc3c09beb5b5fb38c39ffe4"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+        "size_bytes": 593920,
+        "sha256": "8ee0d134c5a1e6100734a5c312bde29c335cfc8812cbeaf566d605bb1ad33dd8"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+        "size_bytes": 14848,
+        "sha256": "1734dc7de9869de6b7216162228e89dcebe0806886ecc90acd76939a8f44e661"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\AgentContracts.dll",
+        "size_bytes": 27648,
+        "sha256": "69b6721a9f7b703d5097d72beda7fd76815c3564a0343b686a27b5662667b7b8"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+        "size_bytes": 411136,
+        "sha256": "bdccac65a8b8b5c1a78a83c7dbea6cc82790c8fe2cb6f9353e2b6d3f79018078"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModelRuntime.dll",
+        "size_bytes": 9216,
+        "sha256": "3e9dc3b595d31107fd08f1614efc36ec9be427b954cdf40eb9f352f55dda72cc"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModuleContracts.dll",
+        "size_bytes": 14848,
+        "sha256": "ae6cded9138823f083d395087aac5172e044e403d2246c71578ee781d9c18151"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\PlatformCore.dll",
+        "size_bytes": 999424,
+        "sha256": "845dbbb040c1b0e24fa3d5704b313909c17d5a01324929e1c0a122752e6bc932"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\QualityGate.dll",
+        "size_bytes": 28672,
+        "sha256": "943843f8a9e281d90cd7dfcb68b458b162e55fe9856b6f9b981b0b0f26cdca1a"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SkillContracts.dll",
+        "size_bytes": 13824,
+        "sha256": "32b2c95cb74f01daf9219a865b4c7f15240239c4ca4007c67e843d3ad8416e21"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+        "size_bytes": 61952,
+        "sha256": "3ac76a740169161602d74934a9cc8a88b23e5c23fbf715a02c9e4accb81fd0eb"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+        "size_bytes": 593920,
+        "sha256": "8ee0d134c5a1e6100734a5c312bde29c335cfc8812cbeaf566d605bb1ad33dd8"
+      },
+      {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+        "size_bytes": 14848,
+        "sha256": "1734dc7de9869de6b7216162228e89dcebe0806886ecc90acd76939a8f44e661"
+      }
+    ],
+    "build_log": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\diagnostic_build_03.log",
+      "size_bytes": 5207,
+      "sha256": "ff6e87141fdc446ec68215c41ca2a5aff37b62c93140b1b8c8ee79d1bcfc5989"
+    },
+    "collector_script": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collect_candidates.py",
+      "size_bytes": 37127,
+      "sha256": "007840e7e5e5e2d6f73398bd34444aea363c87bd214bd8a4f56fde6e221ec552"
+    }
+  },
+  "collector_script": {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collect_candidates.py",
+    "size_bytes": 37127,
+    "sha256": "007840e7e5e5e2d6f73398bd34444aea363c87bd214bd8a4f56fde6e221ec552"
+  },
+  "runner_binaries": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 411136,
+      "sha256": "bdccac65a8b8b5c1a78a83c7dbea6cc82790c8fe2cb6f9353e2b6d3f79018078"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+      "size_bytes": 19456,
+      "sha256": "b30319da790be9107d1f99d374cf085a09cc32b2adc3c09beb5b5fb38c39ffe4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 593920,
+      "sha256": "8ee0d134c5a1e6100734a5c312bde29c335cfc8812cbeaf566d605bb1ad33dd8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "1734dc7de9869de6b7216162228e89dcebe0806886ecc90acd76939a8f44e661"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\AgentContracts.dll",
+      "size_bytes": 27648,
+      "sha256": "69b6721a9f7b703d5097d72beda7fd76815c3564a0343b686a27b5662667b7b8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 411136,
+      "sha256": "bdccac65a8b8b5c1a78a83c7dbea6cc82790c8fe2cb6f9353e2b6d3f79018078"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModelRuntime.dll",
+      "size_bytes": 9216,
+      "sha256": "3e9dc3b595d31107fd08f1614efc36ec9be427b954cdf40eb9f352f55dda72cc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\ModuleContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "ae6cded9138823f083d395087aac5172e044e403d2246c71578ee781d9c18151"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\PlatformCore.dll",
+      "size_bytes": 999424,
+      "sha256": "845dbbb040c1b0e24fa3d5704b313909c17d5a01324929e1c0a122752e6bc932"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\QualityGate.dll",
+      "size_bytes": 28672,
+      "sha256": "943843f8a9e281d90cd7dfcb68b458b162e55fe9856b6f9b981b0b0f26cdca1a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SkillContracts.dll",
+      "size_bytes": 13824,
+      "sha256": "32b2c95cb74f01daf9219a865b4c7f15240239c4ca4007c67e843d3ad8416e21"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksFeatureExecutionSmokeRunner.dll",
+      "size_bytes": 61952,
+      "sha256": "3ac76a740169161602d74934a9cc8a88b23e5c23fbf715a02c9e4accb81fd0eb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 593920,
+      "sha256": "8ee0d134c5a1e6100734a5c312bde29c335cfc8812cbeaf566d605bb1ad33dd8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "1734dc7de9869de6b7216162228e89dcebe0806886ecc90acd76939a8f44e661"
+    }
+  ],
+  "bound_sources": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+      "size_bytes": 4771,
+      "sha256": "093f7c3a9c7434afd4efff7a9c082af04f979888eb72c1ce0634a9f2a18e291b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\AxialSectionGeometryValidator.cs",
+      "size_bytes": 6497,
+      "sha256": "46562ba826dc39e0e9d2fe475260383aca397f60b7178c60fd9a0c29f25ebbd0"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\EdgeSelection.cs",
+      "size_bytes": 12637,
+      "sha256": "6659c8e5a78dd455c1dad766d70b0217f562f55226b3df9e18ba14274c66860a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\ExpectedPartGeometry.cs",
+      "size_bytes": 3955,
+      "sha256": "6c1b626a5e1a4d61e4bc48bc9d875582ebba80958aa2d1adce0bed11aaab6411"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\FeatureParameterSchemaRegistry.cs",
+      "size_bytes": 5734,
+      "sha256": "cabf61e283d8b202143249361ead06640ea9cd479c8c8a9369d98cdbd286b87b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GenericCadDescription.cs",
+      "size_bytes": 39482,
+      "sha256": "2a61572b219005fb6c7dbe9c013f9e869a590f4d3a886fa030a0813f7224d63a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GeometryValidation.cs",
+      "size_bytes": 23803,
+      "sha256": "d29701e686fd25122d30549c5d599ca49b5830096f4126105b4bea0e8f197874"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleFeatureDefinition.cs",
+      "size_bytes": 17862,
+      "sha256": "29ce35cf05171008469752f0dbd42d6704490103af3de62ab875a690bf239297"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleGeometryValidation.cs",
+      "size_bytes": 8696,
+      "sha256": "ec126f5c5e40916538b9a27384498d7eeaa6c40bb06a214f22fa247ab409f3ce"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HolePlanValidation.cs",
+      "size_bytes": 3505,
+      "sha256": "ce6d0c9030ac6765316b128822cf8137ec6887b307d2f1db5471ff3362a37d6a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\PartFamilies.cs",
+      "size_bytes": 49083,
+      "sha256": "6162fcbdbe5819d37453595da52eebcbef6c73303effcedffa5b8c14e9d99066"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\PartFamilyGenericModelFactory.cs",
+      "size_bytes": 16103,
+      "sha256": "b1cec079f633eb7b06faba1bfd505ff065bf80b40b0845d329c4cdf7f8f75ce8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\ModelUpdateService.cs",
+      "size_bytes": 15554,
+      "sha256": "f775ba7e6ca75f936e7ee010cc1f05cc210f7a88ce0a406b78e0c1379fed8d76"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksArtifactValidator.cs",
+      "size_bytes": 53830,
+      "sha256": "2dc2b610dae2e161dd73578333727e27149c45230dbc51b77fa4f6f4b866aa60"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksBuildPlanValidator.cs",
+      "size_bytes": 7933,
+      "sha256": "afc5c59d44aaced68fc8bab554823c9af8d366ef4071ff6d9afbea99cb792804"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Chamfer\\ChamferHandler.cs",
+      "size_bytes": 5661,
+      "sha256": "6e9cdd665cdab52163f6f39331ad56ce8a5d46874086e45c4b027de57067246c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Cut\\ExtrudeCutHandler.cs",
+      "size_bytes": 4554,
+      "sha256": "a9371c929a33f2b3ff576578f83f5e27a1813ee4c606aacc0df3958ff8dde715"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Extrude\\ExtrudeBossHandler.cs",
+      "size_bytes": 4945,
+      "sha256": "3d48802c675d6d0e8c2aeccf9209d9c83ed783796349b371535eb02363de9ca3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionEvidencePolicy.cs",
+      "size_bytes": 18859,
+      "sha256": "348365d15b9151017b7f1c2ab870b96315d634d7dcf9e9f260a79437325d3fd9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionPipeline.cs",
+      "size_bytes": 4223,
+      "sha256": "56fa61139c4b53b856c631017753baf33c26e4db588223659d15fef4848e50fa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerContracts.cs",
+      "size_bytes": 14850,
+      "sha256": "235f2b9e1616efd845fadacfb6f0beb129dec60b56d4c25a755df33694999774"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerRegistry.cs",
+      "size_bytes": 16367,
+      "sha256": "a3f672841298c87525efffd0c9c23556bf0d28b689cb1f8eaa8f4a82b4a8c124"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Fillet\\FilletHandler.cs",
+      "size_bytes": 5070,
+      "sha256": "91cbbd6280b1ea5e28f652f96ddb4cd8005034c05949f2b6079e04dee202b679"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\GeometryValidationEvidencePolicy.cs",
+      "size_bytes": 2833,
+      "sha256": "5ec8df6bfa9f90180444d5383bb90b26bc9c52c5a4eb8a9c7dae65957ae77017"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleExecutionStrategies.cs",
+      "size_bytes": 2584,
+      "sha256": "6ec8a8a8898003ac4a31d04bbc733a0dacb84b784cb92d1423eda509f7deb40e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleHandler.cs",
+      "size_bytes": 10236,
+      "sha256": "3c844b11983bd48a3449074415c4f24f07b8a244ba4c39c950feb95db4116913"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Mirror\\MirrorHandler.cs",
+      "size_bytes": 6225,
+      "sha256": "51023d956ecee88d7e7141883f9545f547cf9bc54f4ef9b09a0e9beba55e63c2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\PartFamilyProductionEvidencePolicy.cs",
+      "size_bytes": 11305,
+      "sha256": "26b6da4f7b56549f8a879a6731c1703be1d5982b79d0cfef7226c08adf922492"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\CircularPatternHandler.cs",
+      "size_bytes": 5998,
+      "sha256": "5aa318d981926233b85a58c80b254e793f4083bb40cc55f9eef679fbb1e1cc13"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\LinearPatternHandler.cs",
+      "size_bytes": 6379,
+      "sha256": "d1637831156d08a48ce764544921d255957c49bb0eb3906509fc6acf942ceef1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\PatternParameterRules.cs",
+      "size_bytes": 4627,
+      "sha256": "cccb0c173a633a01a0135668c6ecd2de237520a11b7e31d2561be00f7c291a93"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\RealSolidWorksFeatureAdapter.cs",
+      "size_bytes": 69884,
+      "sha256": "541739b27c338e36cae485ccbba92917f3922c29a64a3fae9e79052ae26939a5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Revolve\\RevolveBossHandler.cs",
+      "size_bytes": 4506,
+      "sha256": "eb6f5bd9bbdb853d026a499ad3be29d53b4d610ecbe830f0b2b7de8dcccb0a3f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Sketch\\SketchHandler.cs",
+      "size_bytes": 21162,
+      "sha256": "e5deb55eb47ba519b8385a81472802ce9b157d68cfb423c0e80f7ad07b74a4cc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksEdgeEnumerator.cs",
+      "size_bytes": 8026,
+      "sha256": "473c6f2cb519dac4673ccd6aec31588c365681e1b24076fcfe77c2f0633e4c0a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksFeatureGraphPartFamilyBuilder.cs",
+      "size_bytes": 5159,
+      "sha256": "8f9be10727c0a10e8b695cacdca2d6c3d641a3879c044562da6576261555b2ea"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksGeometryReader.cs",
+      "size_bytes": 18615,
+      "sha256": "45e5f524e4092033e15ab20ba2507802cf4bc581d3e3325bfd2ce6130aef1799"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DFeatureGraphPartFamilyBuilder.cs",
+      "size_bytes": 4326,
+      "sha256": "6b1e02467f0a36cefa2dc150bf22813cca2851be05f1875f6af30cd4357f96a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DThreeCircleCutEvidencePolicy.cs",
+      "size_bytes": 34899,
+      "sha256": "0320c044a2c7e94c80e54e370d35a2e2eec8cc92eaccee4610d4b3052620ff81"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\PartFamilyBuilders.cs",
+      "size_bytes": 8704,
+      "sha256": "3a1cf92b8b9b6562cc90ca32661c1d3a5b3512d2e67e123ab6ad07a3dc347eea"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\RealSolidWorksWorker.cs",
+      "size_bytes": 43476,
+      "sha256": "2783e7d3f64380190f6b1e230734f19b8df18bd87f027820ceeaab66344066f4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksComInterop.cs",
+      "size_bytes": 19469,
+      "sha256": "7a14bd5d9f8341657b34432072e2aa30092af33105d7c8e9f1891e2a9994681b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPartFamilyRealBuilders.cs",
+      "size_bytes": 49678,
+      "sha256": "259a8b3f15704e836d973b55940d960b5461e79b3231d01cb1e3bd224d06dd29"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPlateBuilder.cs",
+      "size_bytes": 31941,
+      "sha256": "41ac366503c1f35aa7adbc8218f115c122257822d370a09726cddbe59aeaa0a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\Program.cs",
+      "size_bytes": 8425,
+      "sha256": "16a91e6ccf71197450f6fca601be4550632c20904fa52b329f45077b4c5079ab"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\SolidWorksEdgeProbe.csproj",
+      "size_bytes": 413,
+      "sha256": "bcba5b88df25c40544ad4c8c5c7f1e57cbec4003c0ed007bac37c3f89bad5529"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\FeatureExecutionSmokeRunner.cs",
+      "size_bytes": 34521,
+      "sha256": "61aadae75f7778792c08fb309b58e0453ef9209d4fa56d4d36c37867972bfc04"
+    }
+  ],
+  "freeze_checks": [
+    {
+      "stage": "01-before-candidate",
+      "at": "2026-09-28T01:30:11Z",
+      "stable": true
+    },
+    {
+      "stage": "01-after-candidate",
+      "at": "2026-09-28T01:30:15Z",
+      "stable": true
+    }
+  ],
+  "failure": {
+    "type": "RuntimeError",
+    "message": "逐特征报告与原输入的完整特征集合不符。",
+    "at": "2026-09-28T01:30:16Z"
+  },
+  "finished_at": "2026-09-28T01:30:16Z"
+}

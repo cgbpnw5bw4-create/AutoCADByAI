@@ -1,5 +1,17 @@
 # Sketch Handler API 证据
 
+## V2.2-D 当前受限证据
+
+2026-09-28 的通用轴/夹套证据由 `PartFamilyProductionEvidencePolicy` 与逐 Handler 档案共同控制；历史专用诊断不自动授权通用执行。当前范围为 RightPlane 闭合半截面、唯一构造轴、360°非薄壁凸台，以及 TopPlane 原点圆的盲拉伸/盲切夹套。实际源码、参数、调用读回、原生文件、STEP 和两次独立重开由本轮新清单绑定；详见项目 `docs/v2_2_d_shaft_jacket_real_baseline.md`。
+
+本机 SolidWorks `31.5.0` / Interop `31.5.0.52`。`ISketch` 不存在 `GetFeature`；使用 `IFeature.GetSpecificFeature2` 反查并验证真实 COM 身份。轮廓选择为 `IFeature.Select2(false,0)`，轴选择为 `ISketchSegment.Select4(true, ISelectData.Mark=16)`，构造属性读回 `true`。创建前选择数量必须为1/1/2。`FeatureRevolve2` 的20参数和角度、凸台/薄壁、单实体读回保存在每次诊断日志，角度严格 `2π`。
+
+官方合同：[完整旋转示例](https://help.solidworks.com/2021/English/api/sldworksapi/Create_360-degree_Revolve_Feature_Example_CSharp.htm)、[特征与具体对象互转](https://help.solidworks.com/2013/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeature~GetSpecificFeature2.html)、[旋转角读回](https://help.solidworks.com/2020/English/api/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IRevolveFeatureData2~GetRevolutionAngle.html)。官方文档只是接口依据，真实执行资格还必须通过本地实物和当前源码 evidence。
+
+曲面精确包络来自 `IBody2.GetExtremePoint` 六方向真实极值及3个显式输出参数，不能使用圆柱接缝顶点替代。重开探针从实际 `RevisionNumber` 记录运行版本；原生与 STEP 分别验收，不互相充当对方的几何证据。未绑定尺寸、部分角度、薄壁、任意约束和新显式孔能力仍拒绝。
+
+以下为历史阶段说明，旧版本号和未验证状态不覆盖当前源码绑定。
+
 ## 状态与范围
 
 `FeatureType=sketch`，`HandlerVersion=2.0-c.2`。V2.0-C 专用诊断已把严格参数轮廓 `standard_plane_top;line+center_rectangle+circle;empty_constraints;empty_dimensions;millimetres` 提升为 `api_evidence_status=verified`；任意面、arc、slot、约束和尺寸执行仍未授权。

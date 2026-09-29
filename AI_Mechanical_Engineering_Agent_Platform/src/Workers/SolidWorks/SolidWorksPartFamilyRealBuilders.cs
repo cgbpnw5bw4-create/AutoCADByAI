@@ -35,6 +35,7 @@ public sealed class SolidWorksPartFamilyBuildDiagnostics
     public string? GeometryValidationStatus { get; set; }
     public CADModelSpec? HoleModelSpec { get; set; }
     public GeometryValidationReport? HoleGeometryValidation { get; set; }
+    public MeasuredGeometry? MeasuredGeometry { get; set; }
     public int? MeasuredBodyCount { get; set; }
     public int? ExpectedBodyCount { get; set; }
     public double? GeometryVolumeRelativeTolerance { get; set; }
@@ -126,6 +127,8 @@ public static class SolidWorksPartFamilyBuildReportWriter
             geometry_validation_status = diagnostics.GeometryValidationStatus,
             hole_model_spec = diagnostics.HoleModelSpec,
             hole_geometry_validation = diagnostics.HoleGeometryValidation,
+            geometry_model_plan = context.Request.BuildPlan,
+            measured_geometry = diagnostics.MeasuredGeometry,
             measured_body_count = diagnostics.MeasuredBodyCount,
             expected_body_count = diagnostics.ExpectedBodyCount,
             geometry_volume_relative_tolerance = diagnostics.GeometryVolumeRelativeTolerance,
@@ -896,6 +899,7 @@ public abstract class SolidWorksPartFamilyBuilderBase : TextPlaceholderPartFamil
         diagnostics.GeometryVolumeRelativeTolerance = expected.VolumeRelativeTolerance;
         diagnostics.OperationsExecuted.Add("geometry_validation_started");
         var measurement = GeometryReader.Read(model);
+        diagnostics.MeasuredGeometry = measurement.Geometry;
         diagnostics.MeasuredBodyCount = measurement.Geometry?.BodyCount;
         diagnostics.MeasuredVolumeCubicMillimeters = measurement.Geometry?.VolumeCubicMillimeters;
         if (!measurement.IsSuccess)

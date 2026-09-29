@@ -1,0 +1,26 @@
+--- before/SelfCheckReport.cs
++++ after/SelfCheckReport.cs
+@@ -496,7 +496,13 @@
+     public bool FeatureApiEvidenceRequired { get; init; }
+ 
+     [JsonPropertyName("unverified_api_blocks_real_execution")]
+-    public bool UnverifiedApiBlocksRealExecution { get; init; }
++    public bool? UnverifiedApiBlocksRealExecution { get; init; }
++
++    [JsonPropertyName("unverified_evidence_negative_samples")]
++    public IReadOnlyDictionary<string, int> UnverifiedEvidenceNegativeSamples { get; init; } = new Dictionary<string, int>();
++
++    [JsonPropertyName("unverified_evidence_self_check_issues")]
++    public IReadOnlyList<string> UnverifiedEvidenceSelfCheckIssues { get; init; } = [];
+ 
+     [JsonPropertyName("feature_handler_docs_completed")]
+     public bool FeatureHandlerDocsCompleted { get; init; }
+@@ -646,7 +652,7 @@
+     public bool ComplexFeatureRegistrySupported { get; init; }
+ 
+     [JsonPropertyName("unverified_feature_blocks_execution")]
+-    public bool UnverifiedFeatureBlocksExecution { get; init; }
++    public bool? UnverifiedFeatureBlocksExecution { get; init; }
+ 
+     [JsonPropertyName("feature_library_documented")]
+     public bool FeatureLibraryDocumented { get; init; }

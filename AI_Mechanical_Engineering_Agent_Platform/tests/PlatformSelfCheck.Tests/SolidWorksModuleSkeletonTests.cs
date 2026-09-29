@@ -2082,6 +2082,7 @@ public sealed class SolidWorksModuleSkeletonTests
                     execution_mode = PartFamilyExecutionModes.GenericFeatureGraph,
                     execution_strategy = SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
                     solidworks_version = FeatureExecutionReportFixture.RuntimeVersion(),
+                    part_type = PlateBasic4HolesDefinition.Type,
                     final_status = "Passed",
                     feature_handler_reports = featureResults
                 }));

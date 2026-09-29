@@ -95,7 +95,8 @@ public sealed record FeatureExecutionReport(
     IReadOnlyList<string> Logs,
     IReadOnlyList<string> Issues,
     string ReportPath,
-    DateTimeOffset GeneratedAt);
+    DateTimeOffset GeneratedAt,
+    SolidWorksBuildPlan? BuildPlan = null);
 
 public sealed record FeatureExecutionSmokeInvocation(
     CADModelSpec ModelSpec,
@@ -123,6 +124,7 @@ public sealed class FeatureExecutionSmokeRunner
                 FeatureHandlerTypes.Sketch,
                 FeatureTypes.ExtrudeBoss,
                 FeatureTypes.ExtrudeCut,
+                FeatureTypes.RevolveBoss,
                 FeatureTypes.Hole,
                 // V2.1-A：圆角与倒角进入诊断白名单以采集 Feature 级证据。
                 // 白名单只决定诊断 Runner 允许演练什么，与生产证据门无关；
@@ -221,7 +223,7 @@ public sealed class FeatureExecutionSmokeRunner
             var plan = planResult.BuildPlan;
             if (!plan.ExecutionStrategy.Equals(
                     SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
-                    StringComparison.OrdinalIgnoreCase))
+                    StringComparison.OrdinalIgnoreCase) && !PartFamilyProductionEvidencePolicy.RequiresEvidence(plan.PartType))
             {
                 return await WriteAsync(
                     CreateReport(
@@ -362,7 +364,7 @@ public sealed class FeatureExecutionSmokeRunner
                     failureStage,
                     candidatePassed ? "CandidatePassed" : "Failed",
                     logs,
-                    issues.Distinct(StringComparer.OrdinalIgnoreCase).ToArray()),
+                    issues.Distinct(StringComparer.OrdinalIgnoreCase).ToArray()) with { BuildPlan = plan },
                 cancellationToken);
         }
         catch (OperationCanceledException)
@@ -472,7 +474,9 @@ public sealed class FeatureExecutionSmokeRunner
                     AllowRealCadExecution: true);
                 var builder = new SolidWorksFeatureGraphPartFamilyBuilder(
                     invocation.ModelSpec.PartType,
-                    invocation.HandlerRegistry);
+                    invocation.HandlerRegistry,
+                    expectedGeometry: PartTypeRegistry.CreateDefault().TryGetDefinition(invocation.ModelSpec.PartType, out var definition)
+                        ? definition.DescribeExpectedGeometry : null);
                 var buildResult = await session.ExecuteWithApplicationAsync(
                     (application, token) => builder.BuildAsync(
                         new PartFamilyBuildContext(

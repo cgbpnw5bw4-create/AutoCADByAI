@@ -1139,14 +1139,18 @@ public sealed class V19PartFamilyRealBuilderTests
         var volume = Math.PI / 4d * (140d * 140d - 120d * 120d) * 180d;
         return new MeasuredGeometry(
             RebuildPassed: true,
-            BoundingBox: new GeometryBoundingBox(0d, 0d, 0d, 140d, 140d, 180d),
-            ExactExtents: new GeometryBoundingBox(0d, 0d, 0d, 140d, 140d, 180d),
+            BoundingBox: new GeometryBoundingBox(-70d, -70d, 0d, 70d, 70d, 180d),
+            ExactExtents: new GeometryBoundingBox(-70d, -70d, 0d, 70d, 70d, 180d),
             BodyCount: 1,
             VolumeCubicMillimeters: volume,
             MassKilograms: null,
             MassPropertyVolumeCubicMillimeters: volume,
             CylindricalDiametersMm: [140d, 120d],
-            ReadIssues: []);
+            Cylinders: [new(140, 0, 0, 0, 0, 0, 1), new(120, 0, 0, 0, 0, 0, 1)],
+            ReadIssues: [],
+            Edges: new[] { (0d, 70d), (180d, 70d), (0d, 60d), (180d, 60d) }
+                .Select((pair, index) => new MeasuredEdge(index, EdgeKinds.Circle, 2 * Math.PI * pair.Item2,
+                    0, 0, pair.Item1, pair.Item2, [SurfaceKinds.Cylinder, SurfaceKinds.Plane], new(0, 0, 1))).ToArray());
     }
 
     private static CADModelSpec FlangeSpec() => new(

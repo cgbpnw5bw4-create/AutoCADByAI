@@ -1,0 +1,34 @@
+{
+  "schema_version": "2.2-a-task-approval",
+  "run_id": "platform-self-check-b7daee08f2ef4c73b74f81287f195dfa",
+  "generated_at": "2026-09-29T01:43:04.8264191+00:00",
+  "source_revision": "e87a635ba08eed117fda83fa2d82a303c82fb64d-dirty",
+  "latest_sldprt_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-d68074dae41440869776baf0bfdea818\\rebuild\\plate_basic_4holes.SLDPRT",
+  "latest_step_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-d68074dae41440869776baf0bfdea818\\rebuild\\plate_basic_4holes.STEP",
+  "latest_slddrw_path": null,
+  "latest_pdf_path": null,
+  "build_report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-d68074dae41440869776baf0bfdea818\\rebuild\\build_report.json",
+  "drawing_report_path": null,
+  "dimension_report_path": null,
+  "title_block_report_path": null,
+  "package_quality_report_path": null,
+  "source_report_final_status": {
+    "build_report": "Passed",
+    "drawing_report": "MissingOrInvalid",
+    "dimension_report": "MissingOrInvalid",
+    "title_block_report": "MissingOrInvalid",
+    "package_quality_report": "MissingOrInvalid"
+  },
+  "all_source_reports_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "deliverable_blocked_by": [
+    "drawing_report.final_status=MissingOrInvalid",
+    "dimension_report.final_status=MissingOrInvalid",
+    "title_block_report.final_status=MissingOrInvalid",
+    "package_quality_report.final_status=MissingOrInvalid",
+    "slddrw_artifact_missing_or_empty",
+    "pdf_artifact_missing_or_empty",
+    "package_quality_report.all_source_reports_passed!=true",
+    "package_quality_report.deliverable_status!=Deliverable"
+  ]
+}

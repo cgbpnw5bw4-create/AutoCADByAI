@@ -51,12 +51,12 @@ public sealed class CircularPatternHandler : FeatureHandlerBase
             "只读拓扑探针在产出零件上量到孔口圆心 (20,0)、(0,-20)、(-20,0)、(0,20)，恰好每 90 度一个，",
             "体积减少 848.23 立方毫米，与 3 个 Ø6 通孔的闭式解一致。",
             "创建后 IFeature.GetTypeName2 返回 CirPattern，证明选择集标记被按预期解读。"
-        ],        EvidenceId: "v2.2-c-20260914-refresh-CircularPatternHandler",
+        ],        EvidenceId: "v2.2-d-20260928-CircularPatternHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "principal_axis_circular_pattern;equal_spacing;criteria_resolved_axis",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/v2_2_c_refresh/20260914_012929_6066341/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a");
+        DiagnosticRunPath: "evidence/solidworks/v2_2_d_final/20260928_014800_6470914/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

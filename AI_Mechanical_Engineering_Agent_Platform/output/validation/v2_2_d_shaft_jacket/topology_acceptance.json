@@ -1,0 +1,400 @@
+{
+  "status": "Passed",
+  "checks": [
+    {
+      "input": "feature_pipeline_plate_linear_pattern",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094048-ec4941b7\\04-probe.json",
+        "size_bytes": 20506,
+        "sha256": "1e981c9d5c380acb6a20d11811d880a9e1db12ecd7c3559f0d6f6a4db097392b"
+      },
+      "expected_xz_mm": [
+        [
+          -30.0,
+          0.0
+        ],
+        [
+          -10.0,
+          0.0
+        ],
+        [
+          10.0,
+          0.0
+        ],
+        [
+          30.0,
+          0.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            29.999999999999996,
+            0
+          ],
+          [
+            10.000000000000002,
+            0
+          ],
+          [
+            -30,
+            0
+          ],
+          [
+            -9.999999999999998,
+            0
+          ]
+        ],
+        "10.0": [
+          [
+            29.999999999999996,
+            0
+          ],
+          [
+            10.000000000000002,
+            0
+          ],
+          [
+            -30,
+            0
+          ],
+          [
+            -9.999999999999998,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "feature_pipeline_plate_circular_pattern",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094048-ec4941b7\\05-probe.json",
+        "size_bytes": 22556,
+        "sha256": "d1aff2c983226ef67263e71c060db37c2e390cecd8e8a38dc9b51e3cc20edbb4"
+      },
+      "expected_xz_mm": [
+        [
+          20.0,
+          0.0
+        ],
+        [
+          0.0,
+          -20.0
+        ],
+        [
+          -20.0,
+          0.0
+        ],
+        [
+          0.0,
+          20.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            20,
+            0
+          ],
+          [
+            1.2246467991473533e-15,
+            -20
+          ],
+          [
+            -20,
+            -2.4492935982947065e-15
+          ],
+          [
+            -3.673940397442059e-15,
+            20
+          ]
+        ],
+        "10.0": [
+          [
+            20,
+            0
+          ],
+          [
+            1.2246467991473533e-15,
+            -20
+          ],
+          [
+            -20,
+            -2.4492935982947065e-15
+          ],
+          [
+            -3.673940397442059e-15,
+            20
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "feature_pipeline_plate_mirror",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094048-ec4941b7\\06-probe.json",
+        "size_bytes": 16725,
+        "sha256": "200e2a29b574c4b1f213603e4f8fadc9cbea6f87438c5cf72d6948076b8786f6"
+      },
+      "expected_xz_mm": [
+        [
+          -25.0,
+          -15.0
+        ],
+        [
+          25.0,
+          -15.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            25,
+            -15
+          ],
+          [
+            -25,
+            -15
+          ]
+        ],
+        "10.0": [
+          [
+            25,
+            -15
+          ],
+          [
+            -25,
+            -15
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_linear_opposite_edge",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094223-4e5362ec\\01-probe.json",
+        "size_bytes": 20506,
+        "sha256": "fafbe9ecd564efaa1059557d85938b29959b5de5e31193f31a7a30887ff0953c"
+      },
+      "expected_xz_mm": [
+        [
+          -30.0,
+          0.0
+        ],
+        [
+          -10.0,
+          0.0
+        ],
+        [
+          10.0,
+          0.0
+        ],
+        [
+          30.0,
+          0.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            29.999999999999996,
+            0
+          ],
+          [
+            10.000000000000002,
+            0
+          ],
+          [
+            -30,
+            0
+          ],
+          [
+            -9.999999999999998,
+            0
+          ]
+        ],
+        "10.0": [
+          [
+            29.999999999999996,
+            0
+          ],
+          [
+            10.000000000000002,
+            0
+          ],
+          [
+            -30,
+            0
+          ],
+          [
+            -9.999999999999998,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_linear_negative",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094223-4e5362ec\\02-probe.json",
+        "size_bytes": 18486,
+        "sha256": "ada6dca35cc61d7c876b661929452f3ca27d9c12cb159d98a760b9f53b238bdf"
+      },
+      "expected_xz_mm": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          15.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            0,
+            0
+          ],
+          [
+            30,
+            0
+          ],
+          [
+            15,
+            0
+          ]
+        ],
+        "10.0": [
+          [
+            0,
+            0
+          ],
+          [
+            30,
+            0
+          ],
+          [
+            15,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_circular_positive_quarter",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094223-4e5362ec\\03-probe.json",
+        "size_bytes": 20720,
+        "sha256": "da058b6036f2cd2f54365dc2cfd557014e48f52abbde0f858b4a3685541f5088"
+      },
+      "expected_xz_mm": [
+        [
+          20.0,
+          0.0
+        ],
+        [
+          14.142135623730951,
+          -14.142135623730951
+        ],
+        [
+          0.0,
+          -20.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            -14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            -20
+          ]
+        ],
+        "10.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            -14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            -20
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "input": "v2_2_c_pattern_circular_negative_quarter",
+      "probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094223-4e5362ec\\04-probe.json",
+        "size_bytes": 20708,
+        "sha256": "36659dd2c8a272d8163986ec476fe706893c9ef2c577bde29093be5acf3862f5"
+      },
+      "expected_xz_mm": [
+        [
+          20.0,
+          0.0
+        ],
+        [
+          14.142135623730951,
+          14.142135623730951
+        ],
+        [
+          0.0,
+          20.0
+        ]
+      ],
+      "actual_by_y_mm": {
+        "0.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            20
+          ]
+        ],
+        "10.0": [
+          [
+            20,
+            0
+          ],
+          [
+            14.142135623730953,
+            14.142135623730953
+          ],
+          [
+            1.2246467991473533e-15,
+            20
+          ]
+        ]
+      },
+      "passed": true
+    }
+  ]
+}

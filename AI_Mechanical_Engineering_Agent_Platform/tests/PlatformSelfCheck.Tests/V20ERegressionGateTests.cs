@@ -6,6 +6,18 @@ namespace PlatformSelfCheck.Tests;
 
 public sealed class V20ERegressionGateTests
 {
+    [Theory]
+    [InlineData("shaft_basic")]
+    [InlineData("jacket_basic")]
+    public void DesignConstraintRegressionFixturesCannotAuthorizeRealSketchExecution(string partType)
+    {
+        var model = PartFamilyRegressionModels.CreateDefault().Single(model => model.PartType == partType);
+        var plan = PartTypeRegistry.CreateDefault().GetDefinition(partType)!.GenerateBuildPlan("design-only", model.Spec).BuildPlan!;
+        var sketch = plan.Operations.First(operation => operation.OperationType == "CreateSketch");
+        var feature = SolidWorksWorker.Features.FeatureHandlerPlanAdapter.Adapt(sketch).Feature!;
+        Assert.False(new SolidWorksWorker.Features.Sketch.SketchHandler().ValidateParameterProfileForRealExecution(feature).IsValid);
+    }
+
     [Fact]
     public void CapabilityRegressionGateRejectsProtectedTrueToFalseRegression()
     {

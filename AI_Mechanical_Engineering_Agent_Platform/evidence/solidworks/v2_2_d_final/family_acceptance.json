@@ -1,0 +1,125 @@
+{
+  "schema_version": "v2.2-d-independent-family-acceptance-1",
+  "source_revision": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+  "solid_works_version": "31.5.0",
+  "candidate_only": true,
+  "cases": [
+    {
+      "part_type": "shaft_basic",
+      "plan_sha256": "e6718600fb5ab2af32a87e49d4aaefd84f3abaf34bc2182115d56137187d01f8",
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+        "size_bytes": 879,
+        "sha256": "9f82f30e128c299b8dea680595edcc01cf957bdc16eddce1491a8ed2eb5ab057"
+      },
+      "diagnostic_report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014622_7587652\\feature_execution_report.json",
+        "size_bytes": 16791,
+        "sha256": "0e9b40dde4dcd200d6f4c866f6779d9841fe11c74cb579d53d473283a8f21519"
+      },
+      "native": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014622_7587652\\model.SLDPRT",
+        "size_bytes": 89608,
+        "sha256": "493c7360722189736309c6be80f535d855e35911b34158fb09d14fac1cb64eda"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014622_7587652\\model.STEP",
+        "size_bytes": 23453,
+        "sha256": "b9a12818e3ea8555a0990b0c1a2ebea1d71088e2ef708dccaeaba8005eaec8cf"
+      },
+      "native_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\01-probe.json",
+        "size_bytes": 9274,
+        "sha256": "58534adfcf3c68752211fe94f8d5c96b56832c7a937f826353e476d352be52bb"
+      },
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\01-step-probe.json",
+        "size_bytes": 18747,
+        "sha256": "af2550f3563e463c1fe8ebe2b87a51e3ea663d490750febb06adc5aac4bc216b"
+      },
+      "engineering_acceptance": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\final_shaft_stepped_acceptance.json",
+        "size_bytes": 24218,
+        "sha256": "4d4ac2fd69da1c2fa8e6410c01a62343a55b5116240485bee47c86bd1b3600e6"
+      }
+    },
+    {
+      "part_type": "shaft_basic",
+      "plan_sha256": "fb24569cdfd23adf494da7ff82885810d94343b01ab805e8ac10a4c0dfb88adb",
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_plain_request.json",
+        "size_bytes": 795,
+        "sha256": "51f6782c189ce457702abbdfb629e5b4e1efed205c3dd65fc3908859fefa9901"
+      },
+      "diagnostic_report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014633_0574671\\feature_execution_report.json",
+        "size_bytes": 15237,
+        "sha256": "c68210b501fca0634a16dc61c4572aac0d1a6de1ace56cc2812cb2938f1da3e3"
+      },
+      "native": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014633_0574671\\model.SLDPRT",
+        "size_bytes": 79091,
+        "sha256": "4c60947af374beb7743c4e6a840168b70fe583098c096d37aba3bc2f2f02fa17"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014633_0574671\\model.STEP",
+        "size_bytes": 11895,
+        "sha256": "ff8c73e4bd1620dd5ba80250eab60855402664df36de45062394ee037d18fe19"
+      },
+      "native_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\02-probe.json",
+        "size_bytes": 5889,
+        "sha256": "c23ba7c44ab938cb214fd3a84f57a1125eb7d5f1215eaf3ad256db5cbccc44c5"
+      },
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\02-step-probe.json",
+        "size_bytes": 8905,
+        "sha256": "1fb6a938b11c591697c1e84b145be3c760b53c5f75080e79f7064e75e3282f4a"
+      },
+      "engineering_acceptance": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\final_shaft_plain_acceptance.json",
+        "size_bytes": 14877,
+        "sha256": "d658f7c9fa9c6eec5b01b3c730d6f0670168927a0b4d787d003b9017c4603133"
+      }
+    },
+    {
+      "part_type": "jacket_basic",
+      "plan_sha256": "2c5f321316e238f35681e76950519faea5620a3230b3522910e72dfc8aea9863",
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_jacket_request.json",
+        "size_bytes": 802,
+        "sha256": "9e4a71df60340fe95c932de485930aef99240fe9eaaac0dd4d75613513fe1c2e"
+      },
+      "diagnostic_report": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014641_8659700\\feature_execution_report.json",
+        "size_bytes": 15236,
+        "sha256": "e766f1a3e6ac4102e8c5207f332148d909b47e25b3913247c1376c5ddc55bda8"
+      },
+      "native": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014641_8659700\\model.SLDPRT",
+        "size_bytes": 69673,
+        "sha256": "18833c74ce1c2c07f37017bf0cced179ddcb783dafc60ab2cf8e9c9394060d68"
+      },
+      "step": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014641_8659700\\model.STEP",
+        "size_bytes": 17194,
+        "sha256": "c4bb359f6e2293ee8030a7d8f3d549ec4eb038e6b3e444bb1a04b100c2b4e762"
+      },
+      "native_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\03-probe.json",
+        "size_bytes": 8066,
+        "sha256": "7fc92a861f289fd749c167802479ebc26fb4a07159fa700e6826c5083acb1b31"
+      },
+      "step_probe": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\03-step-probe.json",
+        "size_bytes": 13747,
+        "sha256": "f2330dae21df5a7e2376f3fdfd9b16f72f6cdf1458d3ce73b06a8efe52f05c89"
+      },
+      "engineering_acceptance": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\final_jacket_acceptance.json",
+        "size_bytes": 19897,
+        "sha256": "fff10b5cf133ee4b7f84ebe91b734ced681a63160901a5b7e0a9aacf5064ff61"
+      }
+    }
+  ]
+}

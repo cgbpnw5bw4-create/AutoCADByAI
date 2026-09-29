@@ -1,0 +1,106 @@
+{
+  "issue": "HIGH-002",
+  "review_report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-09-29-v2.2-d-project-review.md",
+  "status": "Passed",
+  "build": {
+    "status": "Passed",
+    "errors": 0,
+    "warnings": 4,
+    "log": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_high002\\final_build.log",
+      "size_bytes": 9951,
+      "sha256": "a8f7237e25907323d66ec5b616d6d9e702bf19306727e3d000b4ed546905419d"
+    }
+  },
+  "tests": {
+    "total": 797,
+    "passed": 797,
+    "failed": 0,
+    "skipped": 0,
+    "new_regressions": 14,
+    "trx": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_high002\\final_tests\\full.trx",
+      "size_bytes": 1253090,
+      "sha256": "37fe534e8c798688b554681d345c88087c95bb6b2a5c547c483a7b4d18c78068"
+    }
+  },
+  "self_check": {
+    "final_status": "Passed",
+    "report": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_high002\\final_self_check\\reports\\platform_self_check_report.json",
+      "size_bytes": 58553,
+      "sha256": "85267b2d2849eb5e8f5197a37da14f581c1747e41e04cdf834ccdb4781e02936"
+    },
+    "capabilities": {
+      "unverified_api_blocks_real_execution": true,
+      "unverified_feature_blocks_execution": true
+    },
+    "observed_negative_samples": {
+      "unverified_api_blocks_real_execution": 1,
+      "unverified_feature_blocks_execution": 1
+    },
+    "issues": []
+  },
+  "historical_preservation": {
+    "checked_files": 1009,
+    "changed_files": [],
+    "snapshot": {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_high002\\protected_before.json",
+      "size_bytes": 317633,
+      "sha256": "937ce77209e6f25253d31a3a5c0e9522877ba8f959e04f39d8daa097d6d6b2b7"
+    }
+  },
+  "restored_test_fixtures": [
+    {
+      "name": "simple",
+      "changed_keys": [
+        "generated_at"
+      ],
+      "restored": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\simple\\reports\\build_report.json",
+        "size_bytes": 4267,
+        "sha256": "136752fa535b19d38528d63f4061c8174071d8b99b357707dde0bf9aea612497"
+      }
+    },
+    {
+      "name": "counterbore",
+      "changed_keys": [
+        "generated_at"
+      ],
+      "restored": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\counterbore\\reports\\build_report.json",
+        "size_bytes": 4362,
+        "sha256": "c382630c1bc8b225cc291a7b35f860d2d02e3acfcffba54b366be071b05b148b"
+      }
+    },
+    {
+      "name": "countersink",
+      "changed_keys": [
+        "generated_at"
+      ],
+      "restored": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\countersink\\reports\\build_report.json",
+        "size_bytes": 4364,
+        "sha256": "42d998ed4af7d8ecb99eeb7ff5a0916948f53b9963ec9b43d8e1e75930e2e36b"
+      }
+    },
+    {
+      "name": "tapped",
+      "changed_keys": [
+        "generated_at"
+      ],
+      "restored": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\tests\\v21_b\\tapped\\reports\\build_report.json",
+        "size_bytes": 4442,
+        "sha256": "aa9f0b7399aeb5353d83bc46104272cc8e5da439ce9e65e89b7a9b56a8c2aaa9"
+      }
+    }
+  ],
+  "cad_source_revisions_unchanged": {
+    "feature": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+    "v20d": "v2.0-d-three-circle-source-sha256:efc17d186b5ef03b6478bf46d593931adc45c7b543c50ba6c68197d381f7ab80"
+  },
+  "scope": "仅修改PlatformCore自检、增加14项测试及中文修复说明；未修改Worker、Adapter、能力基线、历史审查或CAD证据。",
+  "cad_execution": "本轮未启动SolidWorks、未重新采证。",
+  "build_note": "最终构建发生4次旧测试进程文件占用重试后成功；没有编译错误，随后完整测试及自检通过。"
+}

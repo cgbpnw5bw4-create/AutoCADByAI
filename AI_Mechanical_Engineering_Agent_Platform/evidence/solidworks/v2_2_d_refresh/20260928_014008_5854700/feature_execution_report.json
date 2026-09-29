@@ -1,0 +1,351 @@
+{
+  "run_id": "feature-execution-20260928_014008_5778552",
+  "execution_mode": "RealBuildGenericFeatureGraph",
+  "candidate_only": true,
+  "dedicated_smoke_flag_enabled": true,
+  "real_execution_allowed": true,
+  "solid_works_connected": true,
+  "real_cad_executed": true,
+  "solid_works_version": "31.5.0",
+  "input_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_jacket_request.json",
+  "build_plan_id": "solidworks-build-plan-feature-execution-smoke-373ed93bd8cb4d5d827ec883391384fc",
+  "model": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\model.SLDPRT",
+    "exists": true,
+    "size_bytes": 69274,
+    "status": "Passed"
+  },
+  "step": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\model.STEP",
+    "exists": true,
+    "size_bytes": 17188,
+    "status": "Passed"
+  },
+  "feature_handler_reports": [
+    {
+      "feature_id": "jacket_outer_sketch",
+      "feature_type": "sketch",
+      "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_outer_sketch",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:2044735cfee92ab75096b8cbe224c716658ecec4b615eaf3bc3b169ab76df5f9",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": null,
+      "volume_after_cubic_meters": null,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "jacket_body_extrude",
+      "feature_type": "extrude_boss",
+      "handler_name": "solidworks.extrude_boss@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_body_extrude",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:2044735cfee92ab75096b8cbe224c716658ecec4b615eaf3bc3b169ab76df5f9",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": 0,
+      "volume_after_cubic_meters": 0.0027708847204661992,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "jacket_inner_sketch",
+      "feature_type": "sketch",
+      "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_inner_sketch",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:2044735cfee92ab75096b8cbe224c716658ecec4b615eaf3bc3b169ab76df5f9",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": null,
+      "volume_after_cubic_meters": null,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "jacket_inner_cut",
+      "feature_type": "extrude_cut",
+      "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_inner_cut",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:2044735cfee92ab75096b8cbe224c716658ecec4b615eaf3bc3b169ab76df5f9",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": 0.0027708847204661992,
+      "volume_after_cubic_meters": 0.0007351326809400132,
+      "hole_type": null,
+      "hole_parameters": null
+    }
+  ],
+  "main_workflow_accepted": false,
+  "quality_gate_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "failure_stage": null,
+  "final_status": "CandidatePassed",
+  "logs": [
+    "SolidWorks COM session connected. CAD build execution is still controlled by RealSolidWorksWorker.",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_outer_sketch",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_body_extrude",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_inner_sketch",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:jacket_inner_cut",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "solidworks_document_closed: jacket_basic_b31211d20bbb4fb4b3954b3cd0bf8cdb.SLDPRT",
+    "operation_executed: new_part_started",
+    "operation_executed: new_part_success",
+    "operation_executed: feature_handler_success:jacket_outer_sketch:sketch",
+    "operation_executed: feature_handler_success:jacket_body_extrude:extrude_boss",
+    "operation_executed: feature_handler_success:jacket_inner_sketch:sketch",
+    "operation_executed: feature_handler_success:jacket_inner_cut:extrude_cut",
+    "operation_executed: geometry_validation_started",
+    "operation_executed: geometry_validation_success",
+    "operation_executed: part_save_started",
+    "operation_executed: part_save_success",
+    "operation_executed: step_export_started",
+    "operation_executed: step_export_document_identity_verified",
+    "operation_executed: step_export_success",
+    "operation_executed: delivery_artifacts_copied"
+  ],
+  "issues": [],
+  "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\feature_execution_report.json",
+  "generated_at": "2026-09-28T01:40:13.45542+00:00",
+  "build_plan": {
+    "plan_id": "solidworks-build-plan-feature-execution-smoke-373ed93bd8cb4d5d827ec883391384fc",
+    "source_cad_model_spec_id": "real-cad-jacket-basic-v2-1-a",
+    "target_cad_system": "SolidWorks",
+    "part_type": "jacket_basic",
+    "unit": "mm",
+    "operations": [
+      {
+        "operation_id": "op-001",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "center_x_mm": "0",
+          "center_y_mm": "0",
+          "radius_mm": "70",
+          "sketch_id": "jacket_outer_sketch",
+          "reference_plane": "TopPlane",
+          "entity_count": "1",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\u0022entity_id\u0022:\u0022jacket_outer_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u00220\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022radius_mm\u0022:\u002270\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+          "constraints": "[]"
+        },
+        "depends_on": [],
+        "expected_result": "Sketch jacket_outer_sketch created on TopPlane."
+      },
+      {
+        "operation_id": "op-002",
+        "operation_type": "ExtrudeBoss",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "depth_mm": "180",
+          "direction": "blind",
+          "feature_id": "jacket_body_extrude",
+          "feature_type": "extrude_boss",
+          "sketch_id": "jacket_outer_sketch",
+          "referenced_sketches": "[\u0022jacket_outer_sketch\u0022]"
+        },
+        "depends_on": [
+          "op-001"
+        ],
+        "expected_result": "Feature jacket_body_extrude compiled from extrude_boss."
+      },
+      {
+        "operation_id": "op-003",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "center_x_mm": "0",
+          "center_y_mm": "0",
+          "radius_mm": "60",
+          "sketch_id": "jacket_inner_sketch",
+          "reference_plane": "TopPlane",
+          "entity_count": "1",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\u0022entity_id\u0022:\u0022jacket_inner_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u00220\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022radius_mm\u0022:\u002260\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+          "constraints": "[]"
+        },
+        "depends_on": [
+          "op-002"
+        ],
+        "expected_result": "Sketch jacket_inner_sketch created on TopPlane."
+      },
+      {
+        "operation_id": "op-004",
+        "operation_type": "CutExtrude",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "depth_mm": "360",
+          "direction": "blind",
+          "through_all": "false",
+          "feature_id": "jacket_inner_cut",
+          "feature_type": "extrude_cut",
+          "sketch_id": "jacket_inner_sketch",
+          "referenced_sketches": "[\u0022jacket_inner_sketch\u0022]"
+        },
+        "depends_on": [
+          "op-003",
+          "op-002"
+        ],
+        "expected_result": "Feature jacket_inner_cut compiled from extrude_cut."
+      },
+      {
+        "operation_id": "op-005",
+        "operation_type": "SavePart",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "real-cad-jacket-basic-v2-1-a.SLDPRT"
+        },
+        "depends_on": [
+          "op-004"
+        ],
+        "expected_result": "SolidWorks part output saved."
+      },
+      {
+        "operation_id": "op-006",
+        "operation_type": "ExportStep",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "real-cad-jacket-basic-v2-1-a.STEP"
+        },
+        "depends_on": [
+          "op-005"
+        ],
+        "expected_result": "STEP output exported."
+      }
+    ],
+    "expected_artifacts": [
+      {
+        "artifact_id": "expected-part",
+        "artifact_type": "Part",
+        "file_path": "output/solidworks/artifacts/real-cad-jacket-basic-v2-1-a.SLDPRT",
+        "expected_extension": ".SLDPRT",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled SolidWorks part output."
+      },
+      {
+        "artifact_id": "expected-step",
+        "artifact_type": "Step",
+        "file_path": "output/solidworks/artifacts/real-cad-jacket-basic-v2-1-a.STEP",
+        "expected_extension": ".STEP",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled STEP output."
+      },
+      {
+        "artifact_id": "expected-build-report",
+        "artifact_type": "BuildReport",
+        "file_path": "output/solidworks/reports/build_report.json",
+        "expected_extension": ".json",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled build report."
+      }
+    ],
+    "validation_rules": [
+      "feature dependencies must form a directed acyclic graph",
+      "execution_order must be positive, unique and dependency-consistent",
+      "sketch and feature references must resolve before Worker execution"
+    ],
+    "risk_notes": [
+      "Compilation is descriptive only and does not connect to SolidWorks."
+    ],
+    "material": "Q235",
+    "features": {},
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    },
+    "dimensions": {
+      "outer_diameter_mm": "140",
+      "inner_diameter_mm": "120",
+      "length_mm": "180"
+    },
+    "execution_strategy": "feature_handler_graph",
+    "reference_geometry": {
+      "top_plane": "TopPlane",
+      "right_plane": "RightPlane",
+      "top_face": "TopFace"
+    }
+  }
+}

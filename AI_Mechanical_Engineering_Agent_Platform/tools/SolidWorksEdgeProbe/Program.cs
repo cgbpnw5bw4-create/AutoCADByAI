@@ -117,6 +117,15 @@ try
     }
 
     var result = new RealSolidWorksGeometryReader(com).Read(document);
+    // 记录本次独立重开的实际运行版本；不能用建模时版本或输入参数补值。
+    var runtimeVersion = com.TryInvoke(application, "RevisionNumber")?.ToString();
+    if (string.IsNullOrWhiteSpace(runtimeVersion))
+    {
+        Console.WriteLine("probe_runtime_version_missing");
+        return 5;
+    }
+    if (result.Geometry is not null)
+        result = result with { Geometry = result.Geometry with { SolidWorksVersion = runtimeVersion } };
     Console.WriteLine($"read_success={result.IsSuccess} failure_stage={result.FailureStage ?? "none"}");
     foreach (var issue in result.Issues)
     {

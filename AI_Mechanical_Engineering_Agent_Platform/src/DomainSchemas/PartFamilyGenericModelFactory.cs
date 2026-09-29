@@ -202,50 +202,57 @@ public static class PartFamilyGenericModelFactory
         var length = Parameter(source, "length_mm");
         var stepDiameters = Parameter(source, "optional_step_diameters");
         var stepLengths = Parameter(source, "optional_step_lengths");
+        var diameters = ParseList(stepDiameters).Prepend(double.Parse(diameter, CultureInfo.InvariantCulture)).ToArray();
+        var lengths = ParseList(stepLengths);
+        var totalLength = double.Parse(length, CultureInfo.InvariantCulture);
+        var sections = lengths.Prepend(totalLength - lengths.Sum()).ToArray();
+        var entities = new List<SketchEntity>();
+        var x = 0d;
+        var radius = diameters[0] / 2d;
+        void Line(double x1, double y1, double x2, double y2) => entities.Add(new(
+            $"shaft_profile_line_{entities.Count + 1}",
+            SketchEntityTypes.Line,
+            new Dictionary<string, string>
+            {
+                ["x1_mm"] = Number(x1), ["y1_mm"] = Number(y1),
+                ["x2_mm"] = Number(x2), ["y2_mm"] = Number(y2)
+            }));
+        Line(0, 0, 0, radius);
+        // 保留旧编译计划的语义元数据；执行几何完全来自下方明确坐标。
+        foreach (var pair in new Dictionary<string, string>
+        {
+            ["profile"] = "closed_half_section", ["diameter_mm"] = diameter, ["length_mm"] = length,
+            ["optional_step_diameters"] = stepDiameters, ["optional_step_lengths"] = stepLengths
+        })
+            ((Dictionary<string, string>)entities[0].Parameters)[pair.Key] = pair.Value;
+        for (var index = 0; index < sections.Length; index++)
+        {
+            Line(x, radius, x + sections[index], radius);
+            x += sections[index];
+            if (index + 1 < diameters.Length)
+            {
+                var nextRadius = diameters[index + 1] / 2d;
+                if (nextRadius != radius) Line(x, radius, x, nextRadius);
+                radius = nextRadius;
+            }
+        }
+        Line(totalLength, radius, totalLength, 0);
+        Line(totalLength, 0, 0, 0);
+        entities.Add(new SketchEntity("shaft_axis", SketchEntityTypes.ConstructionCenterLine,
+            new Dictionary<string, string>
+            {
+                ["axis"] = "shaft_axis", ["selection_mark"] = "16",
+                ["x1_mm"] = "0", ["y1_mm"] = "0", ["x2_mm"] = length, ["y2_mm"] = "0"
+            }, construction: true, executionOrder: entities.Count + 1));
         return Complete(
             source,
             [
                 new SketchDefinition(
                     "shaft_profile_sketch",
                     "RightPlane",
-                    [
-                        new SketchEntity(
-                            "shaft_half_profile",
-                            SketchEntityTypes.Line,
-                            new Dictionary<string, string>
-                            {
-                                ["profile"] = "closed_half_section",
-                                ["diameter_mm"] = diameter,
-                                ["length_mm"] = length,
-                                ["optional_step_diameters"] = stepDiameters,
-                                ["optional_step_lengths"] = stepLengths
-                            }),
-                        new SketchEntity(
-                            "shaft_axis",
-                            SketchEntityTypes.ConstructionCenterLine,
-                            new Dictionary<string, string>
-                            {
-                                ["axis"] = "shaft_axis",
-                                ["selection_mark"] = "16"
-                            },
-                            construction: true,
-                            executionOrder: 2)
-                    ],
-                    [
-                        new SketchConstraint(
-                            "shaft_axis_horizontal",
-                            SketchConstraintTypes.Horizontal,
-                            ["shaft_axis"]),
-                        CommonFeatureTemplates.CreateDimensionalConstraint("shaft_diameter", "shaft_half_profile", "diameter_mm", diameter),
-                        CommonFeatureTemplates.CreateDimensionalConstraint("shaft_length", "shaft_half_profile", "length_mm", length)
-                    ],
-                    new Dictionary<string, string>
-                    {
-                        ["diameter_mm"] = diameter,
-                        ["length_mm"] = length,
-                        ["optional_step_diameters"] = stepDiameters,
-                        ["optional_step_lengths"] = stepLengths
-                    },
+                    entities,
+                    [],
+                    new Dictionary<string, string>(),
                     executionOrder: 1)
             ],
             [
@@ -275,22 +282,8 @@ public static class PartFamilyGenericModelFactory
         return Complete(
             source,
             [
-                CommonFeatureTemplates.CreateCircleSketch(
-                    "jacket_outer_sketch",
-                    "jacket_outer_circle",
-                    "TopPlane",
-                    "outer_diameter_mm",
-                    outerDiameter,
-                    new Dictionary<string, string> { ["profile"] = "jacket_outer_circle" },
-                    executionOrder: 1),
-                CommonFeatureTemplates.CreateCircleSketch(
-                    "jacket_inner_sketch",
-                    "jacket_inner_circle",
-                    "TopPlane",
-                    "inner_diameter_mm",
-                    innerDiameter,
-                    new Dictionary<string, string> { ["profile"] = "jacket_inner_circle" },
-                    executionOrder: 2)
+                Circle("jacket_outer_sketch", "jacket_outer_circle", outerDiameter, 1),
+                Circle("jacket_inner_sketch", "jacket_inner_circle", innerDiameter, 2)
             ],
             [
                 new FeatureDefinition(
@@ -310,8 +303,6 @@ public static class PartFamilyGenericModelFactory
                     FeatureTypes.ExtrudeCut,
                     new Dictionary<string, string>
                     {
-                        ["cut_role"] = "jacket_bore",
-                        ["hole_diameter_mm"] = innerDiameter,
                         ["depth_mm"] = boreCutDepth,
                         ["direction"] = "blind",
                         ["through_all"] = "false"
@@ -322,6 +313,18 @@ public static class PartFamilyGenericModelFactory
                     executionOrder: 2)
             ]);
     }
+
+    private static SketchDefinition Circle(string sketchId, string entityId, string diameter, int order) =>
+        new(sketchId, "TopPlane",
+            [new SketchEntity(entityId, SketchEntityTypes.Circle, new Dictionary<string, string>
+            {
+                ["center_x_mm"] = "0", ["center_y_mm"] = "0", ["radius_mm"] = Scale(diameter, 0.5d)
+            })], [], new Dictionary<string, string>(), executionOrder: order);
+
+    private static double[] ParseList(string values) => string.IsNullOrWhiteSpace(values) ? []
+        : values.Split(',').Select(value => double.Parse(value.Trim(), CultureInfo.InvariantCulture)).ToArray();
+
+    private static string Number(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
     private static CADModelSpec Complete(
         CADModelSpec source,

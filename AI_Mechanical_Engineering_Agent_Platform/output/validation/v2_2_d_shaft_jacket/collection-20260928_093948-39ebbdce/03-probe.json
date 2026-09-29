@@ -1,0 +1,342 @@
+{
+  "input": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_refresh\\20260928_014008_5854700\\model.SLDPRT",
+  "interconnect_enabled": null,
+  "read_success": true,
+  "failure_stage": null,
+  "geometry": {
+    "RebuildPassed": true,
+    "BoundingBox": {
+      "MinXmm": -70.00000000000001,
+      "MinYmm": 0,
+      "MinZmm": -70.00000000000001,
+      "MaxXmm": 70.00000000000001,
+      "MaxYmm": 180,
+      "MaxZmm": 70.00000000000001
+    },
+    "ExactExtents": {
+      "MinXmm": -70.00000000000001,
+      "MinYmm": 0,
+      "MinZmm": -70.00000000000001,
+      "MaxXmm": 70.00000000000001,
+      "MaxYmm": 180,
+      "MaxZmm": 70.00000000000001
+    },
+    "BodyCount": 1,
+    "VolumeCubicMillimeters": 735132.680940013,
+    "MassKilograms": 0.735132680940013,
+    "MassPropertyVolumeCubicMillimeters": 735132.680940013,
+    "FeatureTypes": [
+      "FavoriteFolder",
+      "HistoryFolder",
+      "SelectionSetFolder",
+      "SensorFolder",
+      "DocsFolder",
+      "DetailCabinet",
+      "InkMarkupFolder",
+      "EnvFolder",
+      "SolidBodyFolder",
+      "SurfaceBodyFolder",
+      "CommentsFolder",
+      "EqnFolder",
+      "MaterialFolder",
+      "RefPlane",
+      "RefPlane",
+      "RefPlane",
+      "OriginProfileFeature",
+      "ConfigTableFolder",
+      "ProfileFeature",
+      "Extrusion",
+      "ProfileFeature",
+      "ICE"
+    ],
+    "Features": [
+      {
+        "Name": "\u6536\u85CF",
+        "TypeName": "FavoriteFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5386\u53F2\u8BB0\u5F55",
+        "TypeName": "HistoryFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u9009\u62E9\u96C6",
+        "TypeName": "SelectionSetFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u4F20\u611F\u5668",
+        "TypeName": "SensorFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u8BBE\u8BA1\u6D3B\u9875\u5939",
+        "TypeName": "DocsFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u6CE8\u89E3",
+        "TypeName": "DetailCabinet",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u6807\u6CE8",
+        "TypeName": "InkMarkupFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5149\u6E90\u3001\u76F8\u673A\u4E0E\u5E03\u666F",
+        "TypeName": "EnvFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5B9E\u4F53",
+        "TypeName": "SolidBodyFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u66F2\u9762\u5B9E\u4F53",
+        "TypeName": "SurfaceBodyFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5907\u6CE8",
+        "TypeName": "CommentsFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u65B9\u7A0B\u5F0F",
+        "TypeName": "EqnFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u6750\u8D28 \u003C\u672A\u6307\u5B9A\u003E",
+        "TypeName": "MaterialFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u524D\u89C6\u57FA\u51C6\u9762",
+        "TypeName": "RefPlane",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u4E0A\u89C6\u57FA\u51C6\u9762",
+        "TypeName": "RefPlane",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u53F3\u89C6\u57FA\u51C6\u9762",
+        "TypeName": "RefPlane",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u539F\u70B9",
+        "TypeName": "OriginProfileFeature",
+        "ErrorCode": null
+      },
+      {
+        "Name": "Tables",
+        "TypeName": "ConfigTableFolder",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u8349\u56FE1",
+        "TypeName": "ProfileFeature",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u51F8\u53F0-\u62C9\u4F381",
+        "TypeName": "Extrusion",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u8349\u56FE2",
+        "TypeName": "ProfileFeature",
+        "ErrorCode": null
+      },
+      {
+        "Name": "\u5207\u9664-\u62C9\u4F381",
+        "TypeName": "ICE",
+        "ErrorCode": null
+      }
+    ],
+    "CylindricalDiametersMm": [
+      140.00000000000003,
+      120
+    ],
+    "Cylinders": [
+      {
+        "DiameterMm": 140.00000000000003,
+        "OriginXmm": 0,
+        "OriginYmm": 180,
+        "OriginZmm": 0,
+        "AxisX": -0,
+        "AxisY": -1,
+        "AxisZ": -0
+      },
+      {
+        "DiameterMm": 120,
+        "OriginXmm": 0,
+        "OriginYmm": 360,
+        "OriginZmm": 0,
+        "AxisX": 0,
+        "AxisY": -1,
+        "AxisZ": 0
+      }
+    ],
+    "ReadIssues": [],
+    "SolidWorksVersion": null,
+    "GeometryEvidenceSourceRevision": "geometry-validation-source-sha256:b362b9df8cede021e69193c73e92b53f93ee671617d47d2fd7f3313704955a16",
+    "Edges": [
+      {
+        "Index": 0,
+        "Kind": "circle",
+        "LengthMm": 439.82297150257114,
+        "AnchorXMm": 0,
+        "AnchorYMm": 180,
+        "AnchorZMm": 0,
+        "RadiusMm": 70.00000000000001,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 1,
+        "Kind": "circle",
+        "LengthMm": 439.82297150257114,
+        "AnchorXMm": 0,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": 70.00000000000001,
+        "AdjacentSurfaceKinds": [
+          "cylinder",
+          "plane"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      },
+      {
+        "Index": 2,
+        "Kind": "circle",
+        "LengthMm": 376.99111843077515,
+        "AnchorXMm": 0,
+        "AnchorYMm": 180,
+        "AnchorZMm": 0,
+        "RadiusMm": 60,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": -0,
+          "Y": -1,
+          "Z": -0
+        }
+      },
+      {
+        "Index": 3,
+        "Kind": "circle",
+        "LengthMm": 376.99111843077515,
+        "AnchorXMm": 0,
+        "AnchorYMm": 0,
+        "AnchorZMm": 0,
+        "RadiusMm": 60,
+        "AdjacentSurfaceKinds": [
+          "plane",
+          "cylinder"
+        ],
+        "Direction": {
+          "X": 0,
+          "Y": 1,
+          "Z": 0
+        }
+      }
+    ],
+    "Holes": null
+  },
+  "edge_count": 4,
+  "edges": [
+    {
+      "Index": 0,
+      "Kind": "circle",
+      "LengthMm": 439.82297150257114,
+      "AnchorXMm": 0,
+      "AnchorYMm": 180,
+      "AnchorZMm": 0,
+      "RadiusMm": 70.00000000000001,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 1,
+      "Kind": "circle",
+      "LengthMm": 439.82297150257114,
+      "AnchorXMm": 0,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": 70.00000000000001,
+      "AdjacentSurfaceKinds": [
+        "cylinder",
+        "plane"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    },
+    {
+      "Index": 2,
+      "Kind": "circle",
+      "LengthMm": 376.99111843077515,
+      "AnchorXMm": 0,
+      "AnchorYMm": 180,
+      "AnchorZMm": 0,
+      "RadiusMm": 60,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": -0,
+        "Y": -1,
+        "Z": -0
+      }
+    },
+    {
+      "Index": 3,
+      "Kind": "circle",
+      "LengthMm": 376.99111843077515,
+      "AnchorXMm": 0,
+      "AnchorYMm": 0,
+      "AnchorZMm": 0,
+      "RadiusMm": 60,
+      "AdjacentSurfaceKinds": [
+        "plane",
+        "cylinder"
+      ],
+      "Direction": {
+        "X": 0,
+        "Y": 1,
+        "Z": 0
+      }
+    }
+  ]
+}

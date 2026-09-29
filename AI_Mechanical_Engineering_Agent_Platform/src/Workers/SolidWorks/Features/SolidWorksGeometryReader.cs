@@ -222,57 +222,9 @@ public sealed class RealSolidWorksGeometryReader : ISolidWorksGeometryReader
 
     private GeometryBoundingBox ReadExactExtents(IReadOnlyList<object> bodies)
     {
-        // GetExtremePoint is the most general API for a tight body envelope, but
-        // some out-of-process RCWs do not expose its by-ref overload through
-        // IDispatch. Vertices are real B-rep entities and provide an exact
-        // envelope for the planar plate family; use them first so the reader
-        // does not turn a valid real model into a false failure solely because
-        // of the late-bound marshaler.
-        var vertexExtents = TryReadVertexExtents(bodies);
-        return vertexExtents ?? ReadExtremePointExtents(bodies);
-    }
-
-    private GeometryBoundingBox? TryReadVertexExtents(IReadOnlyList<object> bodies)
-    {
-        var minimum = new[] { double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity };
-        var maximum = new[] { double.NegativeInfinity, double.NegativeInfinity, double.NegativeInfinity };
-        var vertexCount = 0;
-        foreach (var body in bodies)
-        {
-            var verticesRaw = _com.TryInvoke(body, "GetVertices");
-            if (verticesRaw is null)
-            {
-                return null;
-            }
-
-            var vertices = verticesRaw is Array vertexArray
-                ? vertexArray.Cast<object?>().Where(value => value is not null).Cast<object>().ToArray()
-                : [verticesRaw];
-            foreach (var vertex in vertices)
-            {
-                Own(vertex);
-                var point = _com.TryInvoke(vertex, "GetPoint") as Array;
-                if (point is null || point.Length < 3)
-                {
-                    return null;
-                }
-
-                for (var index = 0; index < 3; index++)
-                {
-                    var coordinate = ToFiniteDouble(point.GetValue(index), "IVertex.GetPoint") * MetersToMillimeters;
-                    minimum[index] = Math.Min(minimum[index], coordinate);
-                    maximum[index] = Math.Max(maximum[index], coordinate);
-                }
-
-                vertexCount++;
-            }
-        }
-
-        return vertexCount > 0 &&
-               !minimum.Any(value => !double.IsFinite(value)) &&
-               !maximum.Any(value => !double.IsFinite(value))
-            ? new GeometryBoundingBox(minimum[0], minimum[1], minimum[2], maximum[0], maximum[1], maximum[2])
-            : null;
+        // 曲面实体的接缝顶点不覆盖径向极值；优先使用官方六方向极值 API。
+        // 不回退到近似 GetPartBox 或不完整的顶点包络。
+        return ReadExtremePointExtents(bodies);
     }
 
     private GeometryBoundingBox ReadExtremePointExtents(IReadOnlyList<object> bodies)

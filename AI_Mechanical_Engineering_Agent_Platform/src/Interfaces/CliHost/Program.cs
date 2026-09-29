@@ -133,6 +133,8 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
     Console.WriteLine($"Real execution effective: {runtimeOptions.EnableRealExecution}");
     Console.WriteLine($"Visible mode: {runtimeOptions.Visible}");
     Console.WriteLine($"Gateway status: {response.Status}");
+    if (!string.Equals(response.Status, "completed", StringComparison.OrdinalIgnoreCase))
+        foreach (var issue in response.Issues) Console.Error.WriteLine(issue);
     Console.WriteLine($"Output directory: {e2eOutputDirectory}");
     Console.WriteLine($"E2E report: {reportPath}");
     Console.WriteLine($"Release manifest: {Path.Combine(e2eOutputDirectory, "release_manifest.json")}");
@@ -232,8 +234,9 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
     CADModelSpec modelSpec,
     string projectRoot,
     string outputDirectory,
-    string runId) =>
-    new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    string runId)
+{
+    var context = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["request_id"] = runId,
         ["operation"] = input.Operation!,
@@ -247,11 +250,12 @@ static IReadOnlyDictionary<string, string> ToGatewayContext(
         ["structured_input_received"] = "true",
         ["gateway_invoked"] = "true",
         ["project_root"] = projectRoot,
-        ["solidworks_output_directory"] = outputDirectory,
-        ["parameter_update_json"] = input.ParameterUpdate is null
-            ? string.Empty
-            : JsonSerializer.Serialize(input.ParameterUpdate, JsonOptions())
+        ["solidworks_output_directory"] = outputDirectory
     };
+    if (input.ParameterUpdate is not null)
+        context["parameter_update_json"] = JsonSerializer.Serialize(input.ParameterUpdate, JsonOptions());
+    return context;
+}
 
 static CADModelSpec? ResolveModelSpec(CadWorkflowInput? input)
 {

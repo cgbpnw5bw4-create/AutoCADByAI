@@ -31,7 +31,7 @@ public sealed class SolidWorksBuildPlanReviewer : IReviewer
 
         if (plan.ExecutionStrategy.Equals(
                 SolidWorksBuildExecutionStrategies.PartFamilyBuilder,
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase) || definition.RequiresDetailedGeometry)
         {
             issues.AddRange(definition.ReviewBuildPlan(plan));
         }

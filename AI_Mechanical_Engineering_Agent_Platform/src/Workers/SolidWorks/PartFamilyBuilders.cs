@@ -67,7 +67,7 @@ public sealed class PartFamilyBuilderRegistry
     /// <param name="plateBuilder">
     /// 保留参数以兼容既有调用方。统一内核后已不再使用零件专用的 plate builder。
     /// </param>
-    public static PartFamilyBuilderRegistry CreateDefault(ISolidWorksPlateBuilder? plateBuilder = null)
+    public static PartFamilyBuilderRegistry CreateDefault(ISolidWorksPlateBuilder? plateBuilder = null, string? evidenceRoot = null)
     {
         _ = plateBuilder;
         var handlers = Features.FeatureHandlerRegistry.CreateDefault();
@@ -76,7 +76,9 @@ public sealed class PartFamilyBuilderRegistry
             .Select(definition => new Features.SolidWorksFeatureGraphPartFamilyBuilder(
                 definition.PartType,
                 handlers,
-                supportsRealExecution: definition.SupportsRealExecution,
+                supportsRealExecution: definition.SupportsRealExecution &&
+                    (!Features.PartFamilyProductionEvidencePolicy.RequiresEvidence(definition.PartType) ||
+                     Features.PartFamilyProductionEvidencePolicy.IsActive(definition.PartType, evidenceRoot)),
                 expectedGeometry: definition.DescribeExpectedGeometry)));
     }
 

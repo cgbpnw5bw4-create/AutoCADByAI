@@ -1,0 +1,237 @@
+{
+  "run_id": "feature-execution-20260928_012612_6480113",
+  "execution_mode": "RealBuildGenericFeatureGraph",
+  "candidate_only": true,
+  "dedicated_smoke_flag_enabled": true,
+  "real_execution_allowed": true,
+  "solid_works_connected": true,
+  "real_cad_executed": true,
+  "solid_works_version": "31.5.0",
+  "input_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+  "build_plan_id": "solidworks-build-plan-feature-execution-smoke-92ac83acd3bf4e78890a01dd9802ff8f",
+  "model": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012612_6556762\\model.SLDPRT",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "step": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012612_6556762\\model.STEP",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "feature_handler_reports": [
+    {
+      "feature_id": "shaft_profile_sketch",
+      "feature_type": "sketch",
+      "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": "sketch_execution_failed",
+      "logs": [],
+      "issues": [
+        "sketch_execution_failed: \u65CB\u8F6C\u8F6E\u5ED3\u7F3A\u5C11\u771F\u5B9E IFeature\uFF0C\u4E0D\u80FD\u7528 ISketch \u66FF\u4EE3\u3002"
+      ],
+      "adapter_id": null,
+      "adapter_version": null,
+      "result_object_validated": false,
+      "rebuild_passed": false,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012612_6556762\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:7f9e13f24c0db324db21d4018ad6a9e89fd859bff15814e7819eddbab520e4dd",
+      "geometry_change_validated": false,
+      "volume_before_cubic_meters": null,
+      "volume_after_cubic_meters": null,
+      "hole_type": null,
+      "hole_parameters": null
+    }
+  ],
+  "main_workflow_accepted": false,
+  "quality_gate_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "failure_stage": "sketch_execution_failed",
+  "final_status": "Failed",
+  "logs": [
+    "SolidWorks COM session connected. CAD build execution is still controlled by RealSolidWorksWorker.",
+    "operation_executed: new_part_started",
+    "operation_executed: new_part_success"
+  ],
+  "issues": [
+    "sketch_execution_failed: sketch_execution_failed: \u65CB\u8F6C\u8F6E\u5ED3\u7F3A\u5C11\u771F\u5B9E IFeature\uFF0C\u4E0D\u80FD\u7528 ISketch \u66FF\u4EE3\u3002",
+    "artifact_validation_failed: .SLDPRT source artifact is missing or empty.",
+    "artifact_validation_failed: .STEP source artifact is missing or empty.",
+    "step_export_failed: normalized STEP artifact failed content validation: STEP file could not be read: Could not find file \u0027D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012612_6556762\\model.STEP\u0027.",
+    "feature_result_invalid: every executed feature must report a validated result object, successful rebuild, and validated geometry change."
+  ],
+  "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012612_6556762\\feature_execution_report.json",
+  "generated_at": "2026-09-28T01:26:27.8207097+00:00",
+  "build_plan": {
+    "plan_id": "solidworks-build-plan-feature-execution-smoke-92ac83acd3bf4e78890a01dd9802ff8f",
+    "source_cad_model_spec_id": "real-cad-shaft-basic-v2-0-a",
+    "target_cad_system": "SolidWorks",
+    "part_type": "shaft_basic",
+    "unit": "mm",
+    "operations": [
+      {
+        "operation_id": "op-001",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "RightPlane",
+        "parameters": {
+          "x1_mm": "180",
+          "y1_mm": "0",
+          "x2_mm": "0",
+          "y2_mm": "0",
+          "profile": "closed_half_section",
+          "diameter_mm": "40",
+          "length_mm": "180",
+          "optional_step_diameters": "32,24",
+          "optional_step_lengths": "40,30",
+          "sketch_id": "shaft_profile_sketch",
+          "reference_plane": "RightPlane",
+          "entity_count": "9",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\u0022entity_id\u0022:\u0022shaft_profile_line_1\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u00220\u0022,\u0022y1_mm\u0022:\u00220\u0022,\u0022x2_mm\u0022:\u00220\u0022,\u0022y2_mm\u0022:\u002220\u0022,\u0022profile\u0022:\u0022closed_half_section\u0022,\u0022diameter_mm\u0022:\u002240\u0022,\u0022length_mm\u0022:\u0022180\u0022,\u0022optional_step_diameters\u0022:\u002232,24\u0022,\u0022optional_step_lengths\u0022:\u002240,30\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_2\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u00220\u0022,\u0022y1_mm\u0022:\u002220\u0022,\u0022x2_mm\u0022:\u0022110\u0022,\u0022y2_mm\u0022:\u002220\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_3\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u0022110\u0022,\u0022y1_mm\u0022:\u002220\u0022,\u0022x2_mm\u0022:\u0022110\u0022,\u0022y2_mm\u0022:\u002216\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_4\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u0022110\u0022,\u0022y1_mm\u0022:\u002216\u0022,\u0022x2_mm\u0022:\u0022150\u0022,\u0022y2_mm\u0022:\u002216\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_5\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u0022150\u0022,\u0022y1_mm\u0022:\u002216\u0022,\u0022x2_mm\u0022:\u0022150\u0022,\u0022y2_mm\u0022:\u002212\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_6\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u0022150\u0022,\u0022y1_mm\u0022:\u002212\u0022,\u0022x2_mm\u0022:\u0022180\u0022,\u0022y2_mm\u0022:\u002212\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_7\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u0022180\u0022,\u0022y1_mm\u0022:\u002212\u0022,\u0022x2_mm\u0022:\u0022180\u0022,\u0022y2_mm\u0022:\u00220\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_profile_line_8\u0022,\u0022entity_type\u0022:\u0022line\u0022,\u0022parameters\u0022:{\u0022x1_mm\u0022:\u0022180\u0022,\u0022y1_mm\u0022:\u00220\u0022,\u0022x2_mm\u0022:\u00220\u0022,\u0022y2_mm\u0022:\u00220\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false},{\u0022entity_id\u0022:\u0022shaft_axis\u0022,\u0022entity_type\u0022:\u0022construction_centerline\u0022,\u0022parameters\u0022:{\u0022axis\u0022:\u0022shaft_axis\u0022,\u0022selection_mark\u0022:\u002216\u0022,\u0022x1_mm\u0022:\u00220\u0022,\u0022y1_mm\u0022:\u00220\u0022,\u0022x2_mm\u0022:\u0022180\u0022,\u0022y2_mm\u0022:\u00220\u0022},\u0022construction\u0022:true,\u0022execution_order\u0022:9,\u0022IsConstructionCenterLine\u0022:true}]",
+          "constraints": "[]"
+        },
+        "depends_on": [],
+        "expected_result": "Sketch shaft_profile_sketch created on RightPlane."
+      },
+      {
+        "operation_id": "op-002",
+        "operation_type": "CreateCenterLine",
+        "sketch_plane": "RightPlane",
+        "parameters": {
+          "axis": "shaft_axis",
+          "selection_mark": "16",
+          "x1_mm": "0",
+          "y1_mm": "0",
+          "x2_mm": "180",
+          "y2_mm": "0",
+          "sketch_id": "shaft_profile_sketch",
+          "entity_id": "shaft_axis",
+          "entity_type": "construction_centerline",
+          "construction": "true"
+        },
+        "depends_on": [
+          "op-001"
+        ],
+        "expected_result": "Construction centerline shaft_axis created for sketch shaft_profile_sketch."
+      },
+      {
+        "operation_id": "op-003",
+        "operation_type": "RevolveBoss",
+        "sketch_plane": "RightPlane",
+        "parameters": {
+          "feature_api": "FeatureRevolve2",
+          "angle_degrees": "360",
+          "profile_selection_mark": "0",
+          "axis_selection_mark": "16",
+          "feature_id": "shaft_revolve",
+          "feature_type": "revolve_boss",
+          "sketch_id": "shaft_profile_sketch",
+          "referenced_sketches": "[\u0022shaft_profile_sketch\u0022]"
+        },
+        "depends_on": [
+          "op-001",
+          "op-002"
+        ],
+        "expected_result": "Feature shaft_revolve compiled from revolve_boss."
+      },
+      {
+        "operation_id": "op-004",
+        "operation_type": "SavePart",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "real-cad-shaft-basic-v2-0-a.SLDPRT"
+        },
+        "depends_on": [
+          "op-003"
+        ],
+        "expected_result": "SolidWorks part output saved."
+      },
+      {
+        "operation_id": "op-005",
+        "operation_type": "ExportStep",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "real-cad-shaft-basic-v2-0-a.STEP"
+        },
+        "depends_on": [
+          "op-004"
+        ],
+        "expected_result": "STEP output exported."
+      }
+    ],
+    "expected_artifacts": [
+      {
+        "artifact_id": "expected-part",
+        "artifact_type": "Part",
+        "file_path": "output/solidworks/artifacts/real-cad-shaft-basic-v2-0-a.SLDPRT",
+        "expected_extension": ".SLDPRT",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled SolidWorks part output."
+      },
+      {
+        "artifact_id": "expected-step",
+        "artifact_type": "Step",
+        "file_path": "output/solidworks/artifacts/real-cad-shaft-basic-v2-0-a.STEP",
+        "expected_extension": ".STEP",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled STEP output."
+      },
+      {
+        "artifact_id": "expected-build-report",
+        "artifact_type": "BuildReport",
+        "file_path": "output/solidworks/reports/build_report.json",
+        "expected_extension": ".json",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled build report."
+      }
+    ],
+    "validation_rules": [
+      "feature dependencies must form a directed acyclic graph",
+      "execution_order must be positive, unique and dependency-consistent",
+      "sketch and feature references must resolve before Worker execution"
+    ],
+    "risk_notes": [
+      "Compilation is descriptive only and does not connect to SolidWorks."
+    ],
+    "material": "45 steel",
+    "features": {},
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    },
+    "dimensions": {
+      "diameter_mm": "40",
+      "length_mm": "180",
+      "optional_step_diameters": "32,24",
+      "optional_step_lengths": "40,30"
+    },
+    "execution_strategy": "part_family_builder",
+    "reference_geometry": {
+      "top_plane": "TopPlane",
+      "right_plane": "RightPlane",
+      "top_face": "TopFace"
+    }
+  }
+}

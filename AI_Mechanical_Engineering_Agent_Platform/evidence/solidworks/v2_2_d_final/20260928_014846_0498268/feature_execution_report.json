@@ -1,0 +1,400 @@
+{
+  "run_id": "feature-execution-20260928_014846_0416347",
+  "execution_mode": "RealBuildGenericFeatureGraph",
+  "candidate_only": true,
+  "dedicated_smoke_flag_enabled": true,
+  "real_execution_allowed": true,
+  "solid_works_connected": true,
+  "real_cad_executed": true,
+  "solid_works_version": "31.5.0",
+  "input_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\v2_2_c_pattern_linear_opposite_edge.json",
+  "build_plan_id": "solidworks-build-plan-feature-execution-smoke-5e6ac3792f5e41d2acef4152fe14dbd0",
+  "model": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\model.SLDPRT",
+    "exists": true,
+    "size_bytes": 76470,
+    "status": "Passed"
+  },
+  "step": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\model.STEP",
+    "exists": true,
+    "size_bytes": 37093,
+    "status": "Passed"
+  },
+  "feature_handler_reports": [
+    {
+      "feature_id": "plate_profile",
+      "feature_type": "sketch",
+      "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_profile",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": null,
+      "volume_after_cubic_meters": null,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "plate_boss",
+      "feature_type": "extrude_boss",
+      "handler_name": "solidworks.extrude_boss@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_boss",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": 0,
+      "volume_after_cubic_meters": 5.9999999999999995E-05,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "seed_cut_profile",
+      "feature_type": "sketch",
+      "handler_name": "solidworks.sketch@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_profile",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": null,
+      "volume_after_cubic_meters": null,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "seed_cut",
+      "feature_type": "extrude_cut",
+      "handler_name": "solidworks.extrude_cut@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": 5.9999999999999995E-05,
+      "volume_after_cubic_meters": 5.9717256661176915E-05,
+      "hole_type": null,
+      "hole_parameters": null
+    },
+    {
+      "feature_id": "seed_cut_pattern",
+      "feature_type": "linear_pattern",
+      "handler_name": "solidworks.linear_pattern@2.0-c.2/diagnostic-candidate",
+      "api_evidence_status": "diagnostic_candidate",
+      "failure_stage": null,
+      "logs": [
+        "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_pattern",
+        "feature_result_non_null:true",
+        "feature_rebuild_passed:true"
+      ],
+      "issues": [],
+      "adapter_id": "solidworks.real-feature-adapter",
+      "adapter_version": "2.0-c.2",
+      "result_object_validated": true,
+      "rebuild_passed": true,
+      "evidence_id": "v2.0-c-diagnostic-candidate-only",
+      "evidence_handler_version": "2.0-c.2",
+      "evidence_parameter_profile": "exact feature_execution_smoke input only",
+      "evidence_solid_works_version": "31.5.0",
+      "evidence_diagnostic_run_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\feature_execution_report.json",
+      "evidence_source_revision": "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048",
+      "geometry_change_validated": true,
+      "volume_before_cubic_meters": 5.9717256661176915E-05,
+      "volume_after_cubic_meters": 5.8869026644707675E-05,
+      "hole_type": null,
+      "hole_parameters": null
+    }
+  ],
+  "main_workflow_accepted": false,
+  "quality_gate_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "failure_stage": null,
+  "final_status": "CandidatePassed",
+  "logs": [
+    "SolidWorks COM session connected. CAD build execution is still controlled by RealSolidWorksWorker.",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_profile",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:plate_boss",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_profile",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "feature_adapter_success:solidworks.real-feature-adapter@2.0-c.2:seed_cut_pattern",
+    "feature_result_non_null:true",
+    "feature_rebuild_passed:true",
+    "solidworks_document_closed: plate_basic_4holes_d21dd03bd8384c73b190b246d1024dbd.SLDPRT",
+    "operation_executed: new_part_started",
+    "operation_executed: new_part_success",
+    "operation_executed: feature_handler_success:plate_profile:sketch",
+    "operation_executed: feature_handler_success:plate_boss:extrude_boss",
+    "operation_executed: feature_handler_success:seed_cut_profile:sketch",
+    "operation_executed: feature_handler_success:seed_cut:extrude_cut",
+    "operation_executed: feature_handler_success:seed_cut_pattern:linear_pattern",
+    "operation_executed: part_save_started",
+    "operation_executed: part_save_success",
+    "operation_executed: step_export_started",
+    "operation_executed: step_export_document_identity_verified",
+    "operation_executed: step_export_success",
+    "operation_executed: delivery_artifacts_copied"
+  ],
+  "issues": [],
+  "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_final\\20260928_014846_0498268\\feature_execution_report.json",
+  "generated_at": "2026-09-28T01:48:52.4345511+00:00",
+  "build_plan": {
+    "plan_id": "solidworks-build-plan-feature-execution-smoke-5e6ac3792f5e41d2acef4152fe14dbd0",
+    "source_cad_model_spec_id": "v2_2_c_pattern_linear_opposite_edge",
+    "target_cad_system": "SolidWorks",
+    "part_type": "plate_basic_4holes",
+    "unit": "mm",
+    "operations": [
+      {
+        "operation_id": "op-001",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "center_x_mm": "0",
+          "center_y_mm": "0",
+          "width_mm": "100",
+          "height_mm": "60",
+          "sketch_id": "plate_profile",
+          "reference_plane": "TopPlane",
+          "entity_count": "1",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\u0022entity_id\u0022:\u0022plate_rectangle\u0022,\u0022entity_type\u0022:\u0022rectangle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u00220\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022width_mm\u0022:\u0022100\u0022,\u0022height_mm\u0022:\u002260\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+          "constraints": "[]"
+        },
+        "depends_on": [],
+        "expected_result": "Sketch plate_profile created on TopPlane."
+      },
+      {
+        "operation_id": "op-002",
+        "operation_type": "ExtrudeBoss",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "depth_mm": "10",
+          "direction": "blind",
+          "feature_id": "plate_boss",
+          "feature_type": "extrude_boss",
+          "sketch_id": "plate_profile",
+          "referenced_sketches": "[\u0022plate_profile\u0022]"
+        },
+        "depends_on": [
+          "op-001"
+        ],
+        "expected_result": "Feature plate_boss compiled from extrude_boss."
+      },
+      {
+        "operation_id": "op-003",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "center_x_mm": "-30",
+          "center_y_mm": "0",
+          "radius_mm": "3",
+          "sketch_id": "seed_cut_profile",
+          "reference_plane": "TopPlane",
+          "entity_count": "1",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\u0022entity_id\u0022:\u0022seed_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u0022-30\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022radius_mm\u0022:\u00223\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+          "constraints": "[]"
+        },
+        "depends_on": [
+          "op-002"
+        ],
+        "expected_result": "Sketch seed_cut_profile created on TopPlane."
+      },
+      {
+        "operation_id": "op-004",
+        "operation_type": "CutExtrude",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "depth_mm": "20",
+          "through_all": "false",
+          "feature_id": "seed_cut",
+          "feature_type": "extrude_cut",
+          "sketch_id": "seed_cut_profile",
+          "referenced_sketches": "[\u0022seed_cut_profile\u0022]"
+        },
+        "depends_on": [
+          "op-003",
+          "op-002"
+        ],
+        "expected_result": "Feature seed_cut compiled from extrude_cut."
+      },
+      {
+        "operation_id": "op-005",
+        "operation_type": "LinearPattern",
+        "sketch_plane": "",
+        "parameters": {
+          "direction": "x",
+          "direction_selection": "{\u0022kind\u0022: \u0022line\u0022, \u0022length_mm\u0022: 100, \u0022anchor_x_mm\u0022: 0, \u0022anchor_y_mm\u0022: 10, \u0022anchor_z_mm\u0022: -30, \u0022expected_count\u0022: 1}",
+          "instance_count": "4",
+          "spacing_mm": "20",
+          "seed_feature": "seed_cut",
+          "feature_id": "seed_cut_pattern",
+          "feature_type": "linear_pattern",
+          "referenced_features": "[\u0022seed_cut\u0022]"
+        },
+        "depends_on": [
+          "op-004"
+        ],
+        "expected_result": "Feature seed_cut_pattern compiled from linear_pattern."
+      },
+      {
+        "operation_id": "op-006",
+        "operation_type": "SavePart",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "v2_2_c_pattern_linear_opposite_edge.SLDPRT"
+        },
+        "depends_on": [
+          "op-005"
+        ],
+        "expected_result": "SolidWorks part output saved."
+      },
+      {
+        "operation_id": "op-007",
+        "operation_type": "ExportStep",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "v2_2_c_pattern_linear_opposite_edge.STEP"
+        },
+        "depends_on": [
+          "op-006"
+        ],
+        "expected_result": "STEP output exported."
+      }
+    ],
+    "expected_artifacts": [
+      {
+        "artifact_id": "expected-part",
+        "artifact_type": "Part",
+        "file_path": "output/solidworks/artifacts/v2_2_c_pattern_linear_opposite_edge.SLDPRT",
+        "expected_extension": ".SLDPRT",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled SolidWorks part output."
+      },
+      {
+        "artifact_id": "expected-step",
+        "artifact_type": "Step",
+        "file_path": "output/solidworks/artifacts/v2_2_c_pattern_linear_opposite_edge.STEP",
+        "expected_extension": ".STEP",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled STEP output."
+      },
+      {
+        "artifact_id": "expected-build-report",
+        "artifact_type": "BuildReport",
+        "file_path": "output/solidworks/reports/build_report.json",
+        "expected_extension": ".json",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled build report."
+      }
+    ],
+    "validation_rules": [
+      "feature dependencies must form a directed acyclic graph",
+      "execution_order must be positive, unique and dependency-consistent",
+      "sketch and feature references must resolve before Worker execution"
+    ],
+    "risk_notes": [
+      "Compilation is descriptive only and does not connect to SolidWorks."
+    ],
+    "material": "Q235",
+    "features": {},
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    },
+    "dimensions": {
+      "length_mm": "100",
+      "width_mm": "60",
+      "thickness_mm": "10",
+      "hole_count": "4",
+      "hole_diameter_mm": "10"
+    },
+    "execution_strategy": "feature_handler_graph",
+    "reference_geometry": {
+      "primary_plane": "TopPlane"
+    }
+  }
+}

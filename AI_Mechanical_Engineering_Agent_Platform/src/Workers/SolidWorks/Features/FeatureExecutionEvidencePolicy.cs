@@ -23,6 +23,15 @@ public static partial class FeatureExecutionEvidencePolicy
         "src/Workers/SolidWorks/Features/RealSolidWorksFeatureAdapter.cs",
         "src/Workers/SolidWorks/Features/SolidWorksFeatureGraphPartFamilyBuilder.cs",
         "src/Workers/SolidWorks/Features/Sketch/SketchHandler.cs",
+        "src/Workers/SolidWorks/Features/Revolve/RevolveBossHandler.cs",
+        "src/Workers/SolidWorks/Features/PartFamilyProductionEvidencePolicy.cs",
+        "src/Workers/SolidWorks/Features/SolidWorksGeometryReader.cs",
+        "src/Workers/SolidWorks/PartFamilyBuilders.cs",
+        "src/DomainSchemas/PartFamilies.cs",
+        "src/DomainSchemas/PartFamilyGenericModelFactory.cs",
+        "src/DomainSchemas/ExpectedPartGeometry.cs",
+        "src/DomainSchemas/AxialSectionGeometryValidator.cs",
+        "tools/SolidWorksEdgeProbe/Program.cs",
         "src/Workers/SolidWorks/Features/Extrude/ExtrudeBossHandler.cs",
         "src/Workers/SolidWorks/Features/Cut/ExtrudeCutHandler.cs",
         "src/Workers/SolidWorks/Features/Hole/HoleHandler.cs",
@@ -35,6 +44,7 @@ public static partial class FeatureExecutionEvidencePolicy
         "src/DomainSchemas/GeometryValidation.cs",
         "src/DomainSchemas/EdgeSelection.cs",
         "src/Modules/CADModeling/validators/SolidWorksBuildPlanValidator.cs",
+        "src/Modules/CADModeling/reviewers/SolidWorksBuildPlanReviewer.cs",
         // V2.1-A：圆角取证后必须同样绑定其源码，否则改动 FilletHandler
         // 不会让证据失效，等于给它开了一个别人没有的后门。
         "src/Workers/SolidWorks/Features/Fillet/FilletHandler.cs",
@@ -79,11 +89,12 @@ public static partial class FeatureExecutionEvidencePolicy
 
     public static FeatureHandlerValidationResult ValidateEvidence(
         IFeatureHandler handler,
-        FeatureDefinition feature)
+        FeatureDefinition feature,
+        FeatureApiEvidence? evidenceOverride = null)
     {
         ArgumentNullException.ThrowIfNull(handler);
         ArgumentNullException.ThrowIfNull(feature);
-        var evidence = handler.ApiEvidence;
+        var evidence = evidenceOverride ?? handler.ApiEvidence;
         var issues = new List<string>();
 
         if (!evidence.AllowsRealExecution)

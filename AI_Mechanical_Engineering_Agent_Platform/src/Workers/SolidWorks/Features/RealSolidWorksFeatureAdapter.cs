@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using DomainSchemas;
 using SolidWorksWorker.Features.Pattern;
@@ -61,6 +62,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     private readonly ISolidWorksComFacade _com;
     private readonly Dictionary<string, SketchComArtifact> _sketches =
         new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _axisConfirmations = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>已创建特征的 COM 句柄，按 feature_id 索引。阵列与镜像的种子由此取回。</summary>
     private readonly Dictionary<string, object> _features = new(StringComparer.OrdinalIgnoreCase);
@@ -123,6 +125,72 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                     volumeBefore,
                     VolumeChangeExpectation.Increase);
             }));
+    }
+
+    public Task<FeatureHandlerExecutionResult> ExecuteRevolveBossAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Guard(PartFamilyFailureStages.ShaftRevolveFailed, () =>
+        {
+            var validation = new Revolve.RevolveBossHandler().Validate(feature);
+            if (!validation.IsValid) throw Stage(validation.FailureStage!, string.Join("; ", validation.Issues));
+            var sketchId = operation.Parameters.GetValueOrDefault("sketch_id");
+            if (sketchId is null || !feature.ReferencedSketches[0].Equals(sketchId, StringComparison.OrdinalIgnoreCase) ||
+                !_sketches.TryGetValue(sketchId, out var sketch) || sketch.Axis is null ||
+                sketch.ReferencePlane != "RightPlane" || operation.SketchPlane != "RightPlane" ||
+                !operation.DependsOn.Contains(sketch.OperationId, StringComparer.OrdinalIgnoreCase) ||
+                !_axisConfirmations.TryGetValue(sketch.OperationId, out var axisOperation) ||
+                !operation.DependsOn.Contains(axisOperation, StringComparer.OrdinalIgnoreCase) ||
+                operation.DependsOn.Any(dependency => _sketches.TryGetValue(dependency, out var other) && !ReferenceEquals(other, sketch)))
+                throw Stage(PartFamilyFailureStages.FeatureArtifactMissing, "旋转必须直接依赖唯一已校验闭合草图及其构造轴确认步骤。");
+            if (_com.TryGetProperty(sketch.Axis, "ConstructionGeometry") is not true)
+                throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "构造轴读回不是 ConstructionGeometry=true。");
+            var volumeBefore = MeasureSolidVolume();
+            if (volumeBefore != 0d)
+                throw Stage(PartFamilyFailureStages.InvalidFeatureParameter, "本档案只支持首次建立单一旋转实体。");
+            SelectSketch(sketch);
+            var selectionManager = Own(_com.TryGetProperty(_model, "SelectionManager"))
+                ?? throw Stage(PartFamilyFailureStages.FeatureArtifactMissing, "缺少 SelectionManager。");
+            var selectData = Own(_com.TryInvoke(selectionManager, "CreateSelectData"))
+                ?? throw Stage(PartFamilyFailureStages.FeatureArtifactMissing, "轴选择数据创建失败。");
+            if (!_com.TrySetProperty(selectData, "Mark", 16) ||
+                _com.TryGetProperty(selectData, "Mark") is not int mark || mark != 16 ||
+                !_com.TryInvokeBool(sketch.Axis, "Select4", true, selectData) ||
+                _com.TryInvoke(selectionManager, "GetSelectedObjectCount2", 0) is not int profileCount || profileCount != 1 ||
+                _com.TryInvoke(selectionManager, "GetSelectedObjectCount2", 16) is not int axisCount || axisCount != 1 ||
+                _com.TryInvoke(selectionManager, "GetSelectedObjectCount2", -1) is not int selectedCount || selectedCount != 2)
+                throw Stage(PartFamilyFailureStages.FeatureArtifactMissing, "必须选中一个 mark 0 草图和一个 mark 16 构造轴。");
+            var manager = Own(_com.TryGetProperty(_model, "FeatureManager"))
+                ?? throw Stage(PartFamilyFailureStages.ShaftRevolveFailed, "缺少 FeatureManager。");
+            object?[] arguments =
+            [
+                true, true, false, false, false, false, 0, 0,
+                2d * Math.PI, 0d, false, false, 0.01d, 0.01d, 0, 0d, 0d, true, true, true
+            ];
+            var resultObject = Own(_com.InvokeWithArgs(manager, "FeatureRevolve2", arguments));
+            VerifyCreatedFeatureKind(resultObject, "Revolution", "旋转实体");
+            var result = ValidateFeatureResult(feature, operation, resultObject, volumeBefore, VolumeChangeExpectation.Increase);
+            var definition = Own(_com.TryInvoke(resultObject, "GetDefinition"));
+            var actualAngle = _com.TryInvoke(definition, "GetRevolutionAngle", true);
+            if (actualAngle is not double angle || !double.IsFinite(angle) || Math.Abs(angle - 2d * Math.PI) > 1e-9 ||
+                _com.TryInvoke(definition, "IsBossFeature") is not true || _com.TryInvoke(definition, "IsThinFeature") is not false)
+                throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "旋转读回必须为完整 360° 非薄壁实体凸台。");
+            var bodies = _com.TryInvoke(_model, "GetBodies2", 0, false);
+            OwnReturned(bodies);
+            if (bodies is not Array bodyArray || bodyArray.Length != 1)
+                throw Stage(PartFamilyFailureStages.FeatureResultInvalid, "旋转结果必须恰好为一个实体。");
+            return result with { Logs = result.Logs.Concat(
+            [
+                "revolve_selection:profile_IFeature.Select2_mark_0;axis_ISketchSegment.Select4_mark_16",
+                "revolve_axis_construction_geometry:true",
+                $"revolve_api_arguments:{JsonSerializer.Serialize(arguments)}",
+                $"revolve_angle_readback_radians:{angle:R};feature_type:Revolution;solid_body_count:1"
+            ]).ToArray() };
+        }));
     }
 
     public Task<FeatureHandlerExecutionResult> ExecuteExtrudeCutAsync(
@@ -821,12 +889,35 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
         _ownedReferences.Clear();
         _ownedReferenceSet.Clear();
         _sketches.Clear();
+        _axisConfirmations.Clear();
     }
 
     private FeatureHandlerExecutionResult CreateSketch(
         FeatureDefinition feature,
         SolidWorksOperation operation)
     {
+        var isRightPlane = (feature.TargetReference ?? operation.SketchPlane).Equals("RightPlane", StringComparison.OrdinalIgnoreCase);
+        if (isRightPlane)
+        {
+            var validation = Sketch.RevolveProfileRules.Validate(feature);
+            if (!validation.IsValid) throw Stage(validation.FailureStage!, string.Join("; ", validation.Issues));
+        }
+        if (operation.OperationType == "CreateCenterLine")
+        {
+            var axisSketchId = feature.Parameters.GetValueOrDefault("sketch_id");
+            if (!isRightPlane || !Sketch.RevolveProfileRules.IsCenterLine(feature) || axisSketchId is null ||
+                !_sketches.TryGetValue(axisSketchId, out var existing) || existing.Axis is null ||
+                existing.AxisId != feature.Parameters.GetValueOrDefault("entity_id") ||
+                operation.DependsOn.Count != 1 || operation.DependsOn[0] != existing.OperationId ||
+                existing.AxisParameters is null ||
+                new[] { "x1_mm", "y1_mm", "x2_mm", "y2_mm" }.Any(key =>
+                    Coordinate(feature.Parameters, key) != Coordinate(existing.AxisParameters, key)) ||
+                !_axisConfirmations.TryAdd(existing.OperationId, operation.OperationId))
+                throw Stage(PartFamilyFailureStages.FeatureArtifactMissing, "中心线确认必须精确引用本次同草图已创建的唯一构造轴。");
+            _sketches[operation.OperationId] = existing;
+            return Passed(feature, operation, geometryChangeValidated: true) with
+                { Logs = ["construction_centerline_reference_confirmed;construction_geometry:true"] };
+        }
         if (!feature.Parameters.TryGetValue("entities", out var entitiesJson))
         {
             throw Stage(
@@ -848,12 +939,16 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
 
         RequireEmptyCollection(feature.Parameters, "constraints");
         RequireEmptyCollection(feature.Parameters, "dimensions");
+        if (!isRightPlane && entities.Any(entity => entity.IsConstructionCenterLine))
+            throw Stage(PartFamilyFailureStages.InvalidFeatureParameter, "TopPlane 档案不授权构造轴。");
         SelectExactPlane(feature.TargetReference ?? operation.SketchPlane);
 
         var sketchManager = Own(_com.TryGetProperty(_model, "SketchManager"))
             ?? throw Stage(PartFamilyFailureStages.SketchExecutionFailed, "SketchManager is unavailable.");
         var entered = false;
         object? sketchFeature = null;
+        object? axis = null;
+        SketchEntity? axisDefinition = null;
         try
         {
             _com.Invoke(sketchManager, "InsertSketch", true);
@@ -865,16 +960,25 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
 
             foreach (var entity in entities)
             {
-                CreateSketchEntity(sketchManager, entity);
+                var created = CreateSketchEntity(sketchManager, entity);
+                if (entity.IsConstructionCenterLine) { axis = created; axisDefinition = entity; }
             }
 
-            // Some supported SolidWorks dispatches expose ISketch.GetFeature as null even
-            // though GetActiveSketch2 returns a valid, selectable ISketch. The acceptance
-            // contract for a sketch is the non-null sketch object plus non-null geometry.
-            sketchFeature = Own(_com.TryInvoke(activeSketch, "GetFeature")) ?? activeSketch;
-
+            // TopPlane 保留既有执行合同，本次仅修复独立 RightPlane 档案。
+            if (!isRightPlane)
+                sketchFeature = Own(_com.TryInvoke(activeSketch, "GetFeature")) ?? activeSketch;
             _com.Invoke(sketchManager, "InsertSketch", true);
             entered = false;
+            if (isRightPlane)
+            {
+                // ISketch 没有 GetFeature。树末尾仅是候选，必须反向取得同一个草图才可接受。
+                sketchFeature = Own(_com.Invoke(_model, "FeatureByPositionReverse", 0));
+                if (sketchFeature is null || _com.TryInvoke(sketchFeature, "GetTypeName2") is not "ProfileFeature")
+                    throw Stage(PartFamilyFailureStages.SketchExecutionFailed, "旋转轮廓缺少真实二维草图 IFeature。");
+                var specificSketch = Own(_com.Invoke(sketchFeature, "GetSpecificFeature2"));
+                if (!SameComIdentity(activeSketch, specificSketch))
+                    throw Stage(PartFamilyFailureStages.SketchExecutionFailed, "候选 IFeature 与本次创建的旋转草图身份不一致。");
+            }
         }
         finally
         {
@@ -886,7 +990,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
 
         EnsureModelRebuild();
         var artifact = new SketchComArtifact(
-            sketchFeature,
+            sketchFeature ?? throw new InvalidOperationException("草图未解析到有效建模对象。"),
             entities.Select(entity => entity.EntityType).ToHashSet(StringComparer.OrdinalIgnoreCase),
             entities
                 .Where(entity =>
@@ -894,7 +998,9 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                         SketchEntityTypes.Circle,
                         StringComparison.OrdinalIgnoreCase))
                 .Select(entity => CircleRadius(entity.Parameters) * 2d)
-                .ToArray());
+                .ToArray(),
+            operation.OperationId, isRightPlane ? "RightPlane" : operation.SketchPlane,
+            axis, axisDefinition?.EntityId, axisDefinition?.Parameters);
         _sketches[operation.OperationId] = artifact;
         _sketches[feature.FeatureId] = artifact;
         if (feature.Parameters.TryGetValue("sketch_id", out var sketchId) &&
@@ -909,10 +1015,37 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
             geometryChangeValidated: true);
     }
 
-    private void CreateSketchEntity(object sketchManager, SketchEntity entity)
+    private static bool SameComIdentity(object expected, object? actual)
+    {
+        if (ReferenceEquals(expected, actual)) return true;
+        if (actual is null || !OperatingSystem.IsWindows() ||
+            !Marshal.IsComObject(expected) || !Marshal.IsComObject(actual)) return false;
+        nint expectedIdentity = 0, actualIdentity = 0;
+        try
+        {
+            expectedIdentity = Marshal.GetIUnknownForObject(expected);
+            actualIdentity = Marshal.GetIUnknownForObject(actual);
+            return expectedIdentity == actualIdentity;
+        }
+        finally
+        {
+            if (actualIdentity != 0) Marshal.Release(actualIdentity);
+            if (expectedIdentity != 0) Marshal.Release(expectedIdentity);
+        }
+    }
+
+    private object CreateSketchEntity(object sketchManager, SketchEntity entity)
     {
         object? created;
-        if (entity.EntityType.Equals(SketchEntityTypes.Line, StringComparison.OrdinalIgnoreCase))
+        if (entity.IsConstructionCenterLine)
+        {
+            created = _com.Invoke(sketchManager, "CreateCenterLine",
+                Coordinate(entity.Parameters, "x1_mm"), Coordinate(entity.Parameters, "y1_mm"), 0d,
+                Coordinate(entity.Parameters, "x2_mm"), Coordinate(entity.Parameters, "y2_mm"), 0d);
+            if (created is null || _com.TryGetProperty(created, "ConstructionGeometry") is not true)
+                throw Stage(PartFamilyFailureStages.SketchGeometryCreateFailed, "CreateCenterLine 未返回可验证的构造线。");
+        }
+        else if (entity.EntityType.Equals(SketchEntityTypes.Line, StringComparison.OrdinalIgnoreCase))
         {
             created = _com.Invoke(
                 sketchManager,
@@ -979,6 +1112,7 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
                 PartFamilyFailureStages.SketchGeometryCreateFailed,
                 $"Sketch entity {entity.EntityId} returned no geometry object.");
         }
+        return created!;
     }
 
     private FeatureHandlerExecutionResult ValidateFeatureResult(
@@ -1464,7 +1598,12 @@ public sealed class RealSolidWorksFeatureAdapter : ISolidWorksFeatureAdapter
     private sealed record SketchComArtifact(
         object Feature,
         IReadOnlySet<string> EntityTypes,
-        IReadOnlyList<double> CircleDiametersMm);
+        IReadOnlyList<double> CircleDiametersMm,
+        string OperationId,
+        string ReferencePlane,
+        object? Axis = null,
+        string? AxisId = null,
+        IReadOnlyDictionary<string, string>? AxisParameters = null);
 
     private enum VolumeChangeExpectation
     {

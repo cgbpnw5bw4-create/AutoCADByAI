@@ -1,0 +1,151 @@
+{
+  "request_id": "v21-b",
+  "plan_id": "solidworks-build-plan-v21-b",
+  "part_type": "plate_basic_4holes",
+  "part_family_definition": "PlateBasic4HolesDefinition",
+  "part_family_builder": "SolidWorksFeatureGraphPartFamilyBuilder",
+  "parameter_schema": [
+    {
+      "Name": "length_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Plate length in millimetres.",
+      "DefaultValue": "160",
+      "MinimumValue": 10,
+      "MaximumValue": 2000,
+      "HasRange": true
+    },
+    {
+      "Name": "width_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Plate width in millimetres.",
+      "DefaultValue": "80",
+      "MinimumValue": 10,
+      "MaximumValue": 2000,
+      "HasRange": true
+    },
+    {
+      "Name": "thickness_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Plate thickness in millimetres.",
+      "DefaultValue": "12",
+      "MinimumValue": 1,
+      "MaximumValue": 200,
+      "HasRange": true
+    },
+    {
+      "Name": "hole_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Through-hole diameter in millimetres.",
+      "DefaultValue": "10",
+      "MinimumValue": 1,
+      "MaximumValue": 100,
+      "HasRange": true
+    },
+    {
+      "Name": "hole_count",
+      "ValueKind": 1,
+      "Required": true,
+      "Description": "Fixed four-hole count.",
+      "DefaultValue": "4",
+      "MinimumValue": 4,
+      "MaximumValue": 4,
+      "HasRange": true
+    }
+  ],
+  "api_evidence": "feature_handler_registry_preflight_required; handler evidence is evaluated per node",
+  "dimensions": {
+    "length_mm": "100",
+    "width_mm": "60",
+    "thickness_mm": "20",
+    "hole_count": "4",
+    "hole_diameter_mm": "6"
+  },
+  "material": "Q235",
+  "features": {},
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "build_report.json"
+  ],
+  "drawing_requirements": {
+    "generate_drawing": "false"
+  },
+  "execution_options": {
+    "dry_run": "true"
+  },
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "real_cad_executed": false,
+  "operations": [
+    {
+      "OperationId": "op-001",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "center_x_mm": "0",
+        "center_y_mm": "0",
+        "width_mm": "100",
+        "height_mm": "60",
+        "sketch_id": "plate_profile",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "0",
+        "dimensions": "{}",
+        "entities": "[{\u0022entity_id\u0022:\u0022plate_rectangle\u0022,\u0022entity_type\u0022:\u0022rectangle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u00220\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022width_mm\u0022:\u0022100\u0022,\u0022height_mm\u0022:\u002260\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[]"
+      }
+    },
+    {
+      "OperationId": "op-002",
+      "OperationType": "ExtrudeBoss",
+      "Parameters": {
+        "depth_mm": "20",
+        "direction": "blind",
+        "feature_id": "plate_boss",
+        "feature_type": "extrude_boss",
+        "sketch_id": "plate_profile",
+        "referenced_sketches": "[\u0022plate_profile\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-003",
+      "OperationType": "CreateHole",
+      "Parameters": {
+        "hole_type": "TappedHole",
+        "diameter_mm": "5",
+        "depth_mm": "12",
+        "through_all": "false",
+        "position": "[{\u0022x_mm\u0022:0,\u0022y_mm\u0022:0,\u0022z_mm\u0022:0}]",
+        "reference_face": "plate_boss:end_face",
+        "quantity": "1",
+        "thread_standard": "ISO_METRIC",
+        "thread_size": "M6",
+        "thread_pitch": "1",
+        "thread_depth_mm": "10",
+        "tap_drill_diameter_mm": "5",
+        "feature_id": "test_hole",
+        "feature_type": "hole"
+      }
+    },
+    {
+      "OperationId": "op-004",
+      "OperationType": "SavePart",
+      "Parameters": {
+        "file_name": "hole_tapped_plate.SLDPRT"
+      }
+    },
+    {
+      "OperationId": "op-005",
+      "OperationType": "ExportStep",
+      "Parameters": {
+        "file_name": "hole_tapped_plate.STEP"
+      }
+    }
+  ],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-09-07T01:52:34.6774442+00:00"
+}

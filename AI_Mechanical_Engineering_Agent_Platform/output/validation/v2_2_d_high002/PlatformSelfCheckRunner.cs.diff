@@ -1,0 +1,172 @@
+--- before/PlatformSelfCheckRunner.cs
++++ after/PlatformSelfCheckRunner.cs
+@@ -853,6 +853,13 @@
+             FeatureHandlerValidationSupported = v20BFeatureHandlerChecks.FeatureHandlerValidationSupported,
+             FeatureApiEvidenceRequired = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
+             UnverifiedApiBlocksRealExecution = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
++            UnverifiedEvidenceNegativeSamples = new Dictionary<string, int>
++            {
++                ["unverified_api_blocks_real_execution"] = v20BFeatureHandlerChecks.EvidenceRejectionProbe.ObservedNegativeSamples,
++                ["unverified_feature_blocks_execution"] = v21AComplexFeatureChecks.EvidenceRejectionProbe.ObservedNegativeSamples
++            },
++            UnverifiedEvidenceSelfCheckIssues = v20BFeatureHandlerChecks.EvidenceRejectionProbe.Issues
++                .Concat(v21AComplexFeatureChecks.EvidenceRejectionProbe.Issues).ToArray(),
+             FeatureHandlerDocsCompleted = v20BFeatureHandlerChecks.FeatureHandlerDocsCompleted,
+             V20BDocumented = v20BFeatureHandlerChecks.V20BDocumented,
+             FeatureAdapterLayerExists = v20CFeatureAdapterChecks.FeatureAdapterLayerExists,
+@@ -1762,38 +1769,11 @@
+                 !issue.Contains(
+                     PartFamilyFailureStages.UnsupportedFeatureType,
+                     StringComparison.OrdinalIgnoreCase));
+-        // 判据是"注册表里存在未取证 Handler，且它在连接 COM 之前被拒绝"，
+-        // 不是"注册表恰好有 5 个 Handler"。写死数量会在每次注册新 Handler 时
+-        // 把这条保护悄悄关掉——V2.1-A 注册五个复杂特征后就真的发生过。
+-        // 独立克隆一份未验证证据，验证拒绝行为，不要求生产注册表永远保留缺口。
+-        var unverifiedEvidenceRejected = false;
+-        var probeHandler = handlers.FirstOrDefault();
+-        var originalEvidence = probeHandler is null ? null : EvidenceFor(probeHandler);
+-        var missingEvidence = originalEvidence?.GetType().GetMethod("<Clone>$")?.Invoke(originalEvidence, null);
+-        if (missingEvidence is not null)
+-        {
+-            missingEvidence.GetType().GetProperty("Status")!.SetValue(missingEvidence, "unverified");
+-            var rejection = workerAssembly?.GetType("SolidWorksWorker.Features.FeatureExecutionEvidencePolicy")?
+-                .GetMethod("ValidateEvidence")?.Invoke(null,
+-                    [probeHandler, new FeatureDefinition("self-check-missing-evidence", "sketch", new Dictionary<string, string>()), missingEvidence]);
+-            unverifiedEvidenceRejected = rejection?.GetType().GetProperty("IsValid")?.GetValue(rejection) is false &&
+-                rejection.GetType().GetProperty("FailureStage")?.GetValue(rejection)?.ToString() == PartFamilyFailureStages.FeatureApiUnverified;
+-        }
+-
+-        // This is deliberately a behavioral contract check.  Earlier versions
+-        // read RealSolidWorksWorker.cs and compared string offsets, which could
+-        // be satisfied by comments and broke whenever the source was refactored.
+-        // The dedicated worker test owns the injected-session assertion that
+-        // ConnectAsync remains at zero for this same unverified handler case.
+-        var preflightRunsBeforeConnection =
+-            realWorkerType?.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+-                .Any(method => method.Name == "ExecuteAsync") == true &&
+-            registryType?.GetMethod(
+-                "ValidateForRealExecution",
+-                BindingFlags.Public | BindingFlags.Instance) is not null;
+-        var unverifiedApiBlocksRealExecution =
+-            unverifiedEvidenceRejected &&
+-            preflightRunsBeforeConnection;
++        // 在隔离注册表中先确认合法旋转计划可通过，再仅撤销证据状态并重跑真实预检。
++        // 这里只证明注册表准入拒绝；Worker 在连接前停止仍由独立的零连接次数测试验证。
++        var rejectionProbe = FeatureEvidenceRejectionSelfCheck.Run(workerAssembly,
++            [FeatureEvidenceRejectionSelfCheck.RevolveSample()]);
++        var unverifiedApiBlocksRealExecution = rejectionProbe.Passed;
+ 
+         // A registry that exposes an extensible registration boundary and
+         // resolves every installed handler proves the architectural property
+@@ -1855,7 +1835,7 @@
+             featureApiEvidenceRequired,
+             unverifiedApiBlocksRealExecution,
+             featureHandlerDocsCompleted,
+-            v20BDocumented);
++            v20BDocumented, rejectionProbe);
+     }
+ 
+     private static V20CFeatureAdapterSelfCheckResult RunV20CFeatureAdapterChecks(
+@@ -2445,6 +2425,10 @@
+             }
+         }
+ 
++        var rejectionProbe = FeatureEvidenceRejectionSelfCheck.Run(workerAssembly,
++            [FeatureEvidenceRejectionSelfCheck.FilletSample()]);
++        bool? unverifiedFeatureBlocksExecution = unverifiedBlocksExecution ? rejectionProbe.Passed : false;
++
+         // 边选择模型：判据必须可鉴别——既要能唯一命中，也要在不唯一时拒绝。
+         // 用固定夹具而非真实 CAD，因此自检不依赖 SolidWorks。
+         MeasuredEdge Rim(int index, double x, double y) =>
+@@ -2507,11 +2491,11 @@
+             circularPatternRegistered,
+             mirrorRegistered,
+             complexFeatureRegistrySupported,
+-            unverifiedBlocksExecution,
++            unverifiedFeatureBlocksExecution,
+             featureLibraryDocumented,
+             regressionPassed,
+             v21ADocumented,
+-            edgeSelectionModelSupported);
++            edgeSelectionModelSupported, rejectionProbe);
+     }
+ 
+     private static IEnumerable<(string FeatureType, Dictionary<string, string> Parameters)> ComplexFeatureSamples()
+@@ -2767,9 +2751,7 @@
+ 
+         var flangeRegressionPassed = flangeUsesPartFamilyDefinition && v18PartFamilyChecks.FlangeDryRunPassed;
+         var shaftRegressionPassed = shaftUsesPartFamilyDefinition && v18PartFamilyChecks.ShaftDryRunPassed;
+-        var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(
+-            projectRoot,
+-            new Dictionary<string, bool>(v21BHoleChecks, StringComparer.OrdinalIgnoreCase)
++        var capabilities = new Dictionary<string, bool>(v21BHoleChecks, StringComparer.OrdinalIgnoreCase)
+             {
+                 ["all_part_families_use_registry"] = v19PartFamilyChecks.AllPartFamiliesUseRegistry,
+                 ["feature_production_evidence_active"] = v20CFeatureAdapterChecks.FeatureProductionEvidenceActive,
+@@ -2780,16 +2762,19 @@
+                 ["feature_api_evidence_required"] = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
+                 // 这两条在 V2.1-A 注册五个复杂特征时曾静默退化：判据里写死了
+                 // "注册表恰好 5 个 Handler"。没有任何门拦住，因为它们当时不在基线里。
+-                ["unverified_api_blocks_real_execution"] = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
+                 ["feature_handler_no_direct_com_access"] = v20CFeatureAdapterChecks.FeatureHandlerNoDirectComAccess,
+-                ["unverified_feature_blocks_execution"] = v21AComplexFeatureChecks.UnverifiedFeatureBlocksExecution,
+                 ["complex_feature_registry_supported"] = v21AComplexFeatureChecks.ComplexFeatureRegistrySupported,
+                 ["edge_selection_model_supported"] = v21AComplexFeatureChecks.EdgeSelectionModelSupported,
+                 ["v2_0_d_production_evidence_active"] = v20DModelRebuildChecks.ProductionEvidenceActive,
+                 ["v2_0_e_controlled_plate_evidence_active"] = controlledPlateEvidenceActive,
+                 ["v2_0_e_step_content_gate_active"] = stepContentGateActive,
+                 ["v2_0_e_unified_part_family_builders"] = unifiedPartFamilyBuilders
+-            });
++            };
++        FeatureEvidenceRejectionSelfCheck.AddObserved(capabilities, "unverified_api_blocks_real_execution",
++            v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution);
++        FeatureEvidenceRejectionSelfCheck.AddObserved(capabilities, "unverified_feature_blocks_execution",
++            v21AComplexFeatureChecks.UnverifiedFeatureBlocksExecution);
++        var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(projectRoot, capabilities);
+ 
+         return new(
+             unifiedPartFamilyBuilders,
+@@ -7089,9 +7074,9 @@
+         bool RevolveHandlerRegistered,
+         bool FeatureHandlerValidationSupported,
+         bool FeatureApiEvidenceRequired,
+-        bool UnverifiedApiBlocksRealExecution,
++        bool? UnverifiedApiBlocksRealExecution,
+         bool FeatureHandlerDocsCompleted,
+-        bool V20BDocumented)
++        bool V20BDocumented, RejectionProbeResult EvidenceRejectionProbe)
+     {
+         public bool AllPassed =>
+             FeatureHandlerRegistryExists &&
+@@ -7103,7 +7088,7 @@
+             RevolveHandlerRegistered &&
+             FeatureHandlerValidationSupported &&
+             FeatureApiEvidenceRequired &&
+-            UnverifiedApiBlocksRealExecution &&
++            UnverifiedApiBlocksRealExecution == true &&
+             FeatureHandlerDocsCompleted &&
+             V20BDocumented;
+     }
+@@ -7173,11 +7158,11 @@
+         bool CircularPatternHandlerRegistered,
+         bool MirrorHandlerRegistered,
+         bool ComplexFeatureRegistrySupported,
+-        bool UnverifiedFeatureBlocksExecution,
++        bool? UnverifiedFeatureBlocksExecution,
+         bool FeatureLibraryDocumented,
+         bool FeatureRegressionTestsPassed,
+         bool V21ADocumented,
+-        bool EdgeSelectionModelSupported)
++        bool EdgeSelectionModelSupported, RejectionProbeResult EvidenceRejectionProbe)
+     {
+         public bool AllPassed =>
+             FilletHandlerRegistered &&
+@@ -7186,7 +7171,7 @@
+             CircularPatternHandlerRegistered &&
+             MirrorHandlerRegistered &&
+             ComplexFeatureRegistrySupported &&
+-            UnverifiedFeatureBlocksExecution &&
++            UnverifiedFeatureBlocksExecution == true &&
+             FeatureLibraryDocumented &&
+             FeatureRegressionTestsPassed &&
+             V21ADocumented &&

@@ -155,6 +155,15 @@ public interface ISolidWorksFeatureAdapter : IDisposable
         FeatureHandlerExecutionState state,
         CancellationToken cancellationToken = default);
 
+    // 旧 Adapter 没有实现旋转时保持失败关闭，不要求替身伪造支持。
+    Task<FeatureHandlerExecutionResult> ExecuteRevolveBossAsync(
+        FeatureDefinition feature,
+        SolidWorksOperation operation,
+        FeatureHandlerExecutionState state,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(FeatureHandlerExecutionResult.Failed(
+            PartFamilyFailureStages.FeatureApiUnverified, "当前 Adapter 未实现受限实体旋转。"));
+
     Task<FeatureHandlerExecutionResult> ExecuteExtrudeCutAsync(
         FeatureDefinition feature,
         SolidWorksOperation operation,

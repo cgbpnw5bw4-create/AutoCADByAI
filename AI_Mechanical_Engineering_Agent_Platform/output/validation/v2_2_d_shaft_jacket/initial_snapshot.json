@@ -1,0 +1,1503 @@
+{
+  "stage": "V2.2-D",
+  "head": "e87a635ba08eed117fda83fa2d82a303c82fb64d",
+  "starting_git_status": "",
+  "historical_files": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260817_030717_0748932\\feature_execution_report.json",
+      "size_bytes": 12830,
+      "sha256": "191eb094b3bdfaa51e69e161ff8d6237e7de96e3692f18f7fedd270632c1e0ae"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260817_030717_0748932\\model.SLDPRT",
+      "size_bytes": 88772,
+      "sha256": "71d44a2d10e6f15c75c278e2aaf15b3b5524e99a128d51fb4b42dc3f155b7023"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260817_030717_0748932\\model.STEP",
+      "size_bytes": 26379,
+      "sha256": "3aa05b6dc99e5ab08d43ff56b230d3b6b82c102a05289d2cf1f85d8bc466736c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260817_052445_7480784\\feature_execution_report.json",
+      "size_bytes": 12830,
+      "sha256": "57155c3f3ec5f55da77412e8c5b2db1e3335b1763b0a93d7e0b9cc48b9a62861"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260817_052445_7480784\\model.SLDPRT",
+      "size_bytes": 88307,
+      "sha256": "8c304fc659137e32f9ee8f444d08e0f545eaa5ca4d173517155dde7bd0a08375"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260817_052445_7480784\\model.STEP",
+      "size_bytes": 26377,
+      "sha256": "4b88b9afd787f3eaaced11aca0f88adbbb7890b55f0cbe8ff8c667e81595c63f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034002_0594196\\feature_execution_report.json",
+      "size_bytes": 1508,
+      "sha256": "36fa7df46d7930a556aa80c088576999a9c28bc3e17e82c74adf67c9bf1d53f1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034109_5176084\\feature_execution_report.json",
+      "size_bytes": 2298,
+      "sha256": "e016d2fac6b61f41ea018a623e2009f62283692f33d62f631625c3ec6e762372"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034143_9836278\\feature_execution_report.json",
+      "size_bytes": 11292,
+      "sha256": "cf230cc199329f0f15a21dc3a5d8d6b5558f3e9a04778ebed3bd47f4cf4dac56"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034143_9836278\\model.SLDPRT",
+      "size_bytes": 88423,
+      "sha256": "c67656dd4852a5b36e40d4ab9586b14923c16658415d60fc48d181bb271431bf"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_034143_9836278\\model.STEP",
+      "size_bytes": 36974,
+      "sha256": "ade81d86993d0e27c73a45bdb29d65b8f2224a1252f74faa6e166a9d3d832dad"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_074819_4327602\\feature_execution_report.json",
+      "size_bytes": 12830,
+      "sha256": "e14ae86454f6e5073b4ffdc234340e50476eadb106ed8c81552cd8e37ea2af8d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_074819_4327602\\model.SLDPRT",
+      "size_bytes": 88770,
+      "sha256": "d6b5b2df6580cf78fc7ff254eab6324eff2046ecc53a0741f5cd7c08883b8326"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_074819_4327602\\model.STEP",
+      "size_bytes": 26383,
+      "sha256": "4b86656bc797a4755ebb40451870c3baf90904471ad8261f04086e0032577128"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_075154_1657037\\feature_execution_report.json",
+      "size_bytes": 11291,
+      "sha256": "001a6793a5ac72ad0d1414f9f3d498ea380a70ed441482a6eff4f6fac97e0691"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_075154_1657037\\model.SLDPRT",
+      "size_bytes": 88743,
+      "sha256": "26fcf680ae1c8e117f320be1182c029b21fd2c641c9a9bfd9f354236352dc3e9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260821_075154_1657037\\model.STEP",
+      "size_bytes": 26380,
+      "sha256": "dea56bbcd77e6af9c5a98f2c2f16c18a2989222c09f6a3e3767c373da0e8821e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260824_072219_4629586\\feature_execution_report.json",
+      "size_bytes": 12829,
+      "sha256": "748eb413e00921326f03e48255d749ecc4dcc48f15a22839ffb6736e87540962"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260824_072219_4629586\\model.SLDPRT",
+      "size_bytes": 92470,
+      "sha256": "fb67528fd0539164e44c66452059c48497118bb6dd52eb2bc71f185f0dea2373"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260824_072219_4629586\\model.STEP",
+      "size_bytes": 26373,
+      "sha256": "8c80a33a6a49291fecd522614ccea997b8f4b96dc593c015d958021e55dccd2f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260824_072412_0314453\\feature_execution_report.json",
+      "size_bytes": 11291,
+      "sha256": "0eba1525e92d47f9cd1d2954ad7aca23811c89296b3a69739cdcbf9df0088c37"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260824_072412_0314453\\model.SLDPRT",
+      "size_bytes": 89057,
+      "sha256": "7dbb04d0278341fc466272e860190c355c921c02369a1b121ecdfcda327329b5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260824_072412_0314453\\model.STEP",
+      "size_bytes": 26381,
+      "sha256": "993d0a056bee50fc47e01291556031c8f1026b1c9107ac30e0a4c9ca2210f774"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_004717_8435323\\feature_execution_report.json",
+      "size_bytes": 1632,
+      "sha256": "ad5659f817e3022636a6c5c59cc0c721bd92f6dbddbc4dec3f2f6fc8344571c0"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_004932_6339500\\feature_execution_report.json",
+      "size_bytes": 14439,
+      "sha256": "5357228d810977f0d3587fc86b08f3e284deb1c69974440a81959ccaa430108a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_004932_6339500\\model.SLDPRT",
+      "size_bytes": 102139,
+      "sha256": "7591bacc9fb105bad4de23a78d68f8eb10a674ada50784ddf6e3e5d0ebb66602"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_004932_6339500\\model.STEP",
+      "size_bytes": 34206,
+      "sha256": "af32adcab03dd168e4a43e1f2e69ff344a4f7fe478524bce3320844220d3de0b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005054_2550581\\feature_execution_report.json",
+      "size_bytes": 14439,
+      "sha256": "156694066fb145f435f78377c9ab7fc6c2e10655703feb434df0a8c1fe5318e6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005054_2550581\\model.SLDPRT",
+      "size_bytes": 102938,
+      "sha256": "b994963f479b2ac448ac7967ecbcf3dfaaa78e57b3d9c59e4e621114b60ea42e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005054_2550581\\model.STEP",
+      "size_bytes": 34215,
+      "sha256": "dedc33ebb3a5658f21514d1a74ef1129379457874e8d34abd7e98f83dfb5eb98"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005532_0876776\\feature_execution_report.json",
+      "size_bytes": 14439,
+      "sha256": "3e90c9af8350ae2097f3dda9afd856ecf89ceebac2f4e65f92d9ac1eb5eda47e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005532_0876776\\model.SLDPRT",
+      "size_bytes": 102115,
+      "sha256": "a50bd76a74e5fb28bdb31b03e82d9144cd8767cc5b0e236a61243063b6bfedc6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005532_0876776\\model.STEP",
+      "size_bytes": 34193,
+      "sha256": "cb92494a35b58a0fa55b90ba38de951625c40e37721d4fb0e58397cc5e5bc672"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005719_1931363\\feature_execution_report.json",
+      "size_bytes": 11291,
+      "sha256": "1a055970163557da15736f053277a95ddf77cbe8d492edace696c9d4cdd522a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005719_1931363\\model.SLDPRT",
+      "size_bytes": 88474,
+      "sha256": "741435f134223697d90e1022081edfc3a5e488de6fdc2848b40b85cc8ed44a19"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260826_005719_1931363\\model.STEP",
+      "size_bytes": 34212,
+      "sha256": "d0651fccfce7b8289b04752150af9890e3a4d9adb8b1396c1e8bea8aac748fd2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010108_0103869\\feature_execution_report.json",
+      "size_bytes": 14446,
+      "sha256": "998b0d627f0a740f1d905561517ffdb98dac2c56e46ada5f3d22d7ccd9422ab7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010108_0103869\\model.SLDPRT",
+      "size_bytes": 91045,
+      "sha256": "349d31bd97631de53ce15706f1d494dfbe558b222fdbd4eef474285c1fd99a66"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010108_0103869\\model.STEP",
+      "size_bytes": 33740,
+      "sha256": "ea0a6faac05d4a1c32ddf785fd19326b33a9f5e6cdcb402d5b2039b560c9cab6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010115_1344195\\feature_execution_report.json",
+      "size_bytes": 14439,
+      "sha256": "51a17086c317d5b5ada7dbd24b103c92c9150ce4d15ec0ed0911701026c76151"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010115_1344195\\model.SLDPRT",
+      "size_bytes": 102443,
+      "sha256": "b37d00c72899d65201146caf873302ccad7847a0866e91c64a98f7eaee55883b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010115_1344195\\model.STEP",
+      "size_bytes": 33739,
+      "sha256": "c399af683b52feaa5e63ea4cc29c8cb47ec0e669fd166893cbaaac6d036ef798"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010122_7675981\\feature_execution_report.json",
+      "size_bytes": 11291,
+      "sha256": "7d52c2a9fc9106a06502cc5fe74e8a76f34edd570757da85e48b9a00277ed843"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010122_7675981\\model.SLDPRT",
+      "size_bytes": 89447,
+      "sha256": "b4085d0afbc1c6a0ee2c864b0edf9384bcb3aa6d8453f7b8ea59344871d5d49b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_010122_7675981\\model.STEP",
+      "size_bytes": 33738,
+      "sha256": "801bb20204fd3375b7646de9a58a8b1d123107f08a2584a445134497666ed5e4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013450_9483764\\feature_execution_report.json",
+      "size_bytes": 14439,
+      "sha256": "406786b51bc2d5611d681c91597e2ac4c565b0f7fa79702ad19eb11c5a993d84"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013450_9483764\\model.SLDPRT",
+      "size_bytes": 102983,
+      "sha256": "6c090d1f45cd7af3c41587918e4fbe1833167ab973e26998f70ed2f02fc4d198"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013450_9483764\\model.STEP",
+      "size_bytes": 36960,
+      "sha256": "172415c0a624e74c6ad1a023aff7d2bfe915244d86da5c820fbb02320b934afd"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013458_5120084\\feature_execution_report.json",
+      "size_bytes": 14446,
+      "sha256": "db4a571277917fc2a72dc07e0ea8422880195bde2c965d7919264f641c92e2a4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013458_5120084\\model.SLDPRT",
+      "size_bytes": 91832,
+      "sha256": "73c9f3396bb7c647c28940e8f02d7738b4a2903233fc1ea81c743f8ef31b9d49"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013458_5120084\\model.STEP",
+      "size_bytes": 36961,
+      "sha256": "ec6deb8b278c5a9581ae1d0196a99509ed0e1111fb11fcbf351f6652d0e7d42f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013506_1934041\\feature_execution_report.json",
+      "size_bytes": 9830,
+      "sha256": "071ccfc8791e22c274a0fb200a0ec01a3aaf8bc9d024502032fc6a582e62d5d6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013506_1934041\\model.SLDPRT",
+      "size_bytes": 92595,
+      "sha256": "f090957d51da35ed1f31f025341d82825b3dd625082de842ba1bea823b5e0ac6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013506_1934041\\model.STEP",
+      "size_bytes": 36958,
+      "sha256": "30e0edc66b71afee5f1cbdc5cfe26db73780a1948863cad1052e3ab7229081e3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013512_8050139\\feature_execution_report.json",
+      "size_bytes": 12991,
+      "sha256": "c41170eb3b66254a062a0bba8e270726e803537ac874c97bb14785ea651cf330"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013512_8050139\\model.SLDPRT",
+      "size_bytes": 97386,
+      "sha256": "350bdc946db3b0d77341044b0e3ee0577256f90f6e11073585050e7b742f2b10"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013512_8050139\\model.STEP",
+      "size_bytes": 36956,
+      "sha256": "54d87c8ea5f1f75b3ac8aea3afb6c4b7c663e688f8a98e984a36ea08c292c814"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013518_8066930\\feature_execution_report.json",
+      "size_bytes": 9794,
+      "sha256": "a72379a96fa1fda85288159b291752e9c4e4401ef32b0c903186e294f4531377"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013518_8066930\\model.SLDPRT",
+      "size_bytes": 86543,
+      "sha256": "2d4dad0a5c4faeef2d5a92c336ebe9cfea11a584eeb47cda25501114c7e9adc4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013518_8066930\\model.STEP",
+      "size_bytes": 36961,
+      "sha256": "387eb861e1ac4059a5508ea2b85959adcf23f384b6f789da74612cab732374f9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013524_5247307\\feature_execution_report.json",
+      "size_bytes": 11292,
+      "sha256": "932a1695ac572977a8117e272ea6130ad75b99bb79a3355d85c5da88fc8d633e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013524_5247307\\model.SLDPRT",
+      "size_bytes": 88839,
+      "sha256": "d2aa7fe08ba69974ac684073321ade9eb851698228c7be23f131123d27ee5dfe"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_013524_5247307\\model.STEP",
+      "size_bytes": 36947,
+      "sha256": "2e11556306b9d77e9457e154e78e1168528f7897b134996a14a9d054caac172b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014622_5303003\\feature_execution_report.json",
+      "size_bytes": 14439,
+      "sha256": "18613434fd92d2000bfe1295098d412d1f886a5053d7bc86951ff4dce338cbb6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014622_5303003\\model.SLDPRT",
+      "size_bytes": 102798,
+      "sha256": "e580e6568ac5ab8725ad141537acd5bd23b54e5958bc83fcc62d4e089cb8ca09"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014622_5303003\\model.STEP",
+      "size_bytes": 42403,
+      "sha256": "0fb5c534e81d6aad646b603cc28a8cfab91aac4f225309e183f51e759b0b66ce"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014630_2660931\\feature_execution_report.json",
+      "size_bytes": 14446,
+      "sha256": "cf37d1ab322e4ae620a2058d2a51e5265fd36c7d04cf91e858785cc36b4558b5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014630_2660931\\model.SLDPRT",
+      "size_bytes": 91397,
+      "sha256": "d45fb1d42b57ad8bd5a236a0c907f27345a8e67ce0a4b97846e134c7c528d48c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014630_2660931\\model.STEP",
+      "size_bytes": 42398,
+      "sha256": "b95013407a95ca013c218df01229ae0bc7a8db40aecf0b18f4044a7644ffa3e6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014638_3133239\\feature_execution_report.json",
+      "size_bytes": 9831,
+      "sha256": "cbeb08ab926f77f59ede4a1a4eb0c13f73c0db9d73737284d502ab43c4b0bc38"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014638_3133239\\model.SLDPRT",
+      "size_bytes": 84779,
+      "sha256": "b21731364f5c0ed697709b2a5782e4267f8ef0241341646d9f0630e5e123eb2a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014638_3133239\\model.STEP",
+      "size_bytes": 42395,
+      "sha256": "b32ed6833ccc9674e71aa3669b86d50be4ce36bafe04b2222b72cb4f06378f72"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014645_3608011\\feature_execution_report.json",
+      "size_bytes": 12991,
+      "sha256": "dcc6ea32e8abf66a96b05627933c8456b002503586b6778e2401dac43629cdf6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014645_3608011\\model.SLDPRT",
+      "size_bytes": 96894,
+      "sha256": "b40f05ce829753cd35dc9a748a0a18e03e667754438d7cf1a33b48119a6754bd"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014645_3608011\\model.STEP",
+      "size_bytes": 42388,
+      "sha256": "c3d232f5debee70752b8c33b61dfc5d96c3125c67f7b6eedb003bf5ce0dcd6c8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014652_1288900\\feature_execution_report.json",
+      "size_bytes": 9795,
+      "sha256": "0a68c1166cd6040bb220db433ffe2a91614cfa1c62b4995f30f292771e27d7fa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014652_1288900\\model.SLDPRT",
+      "size_bytes": 86939,
+      "sha256": "723bb8e8d3f74fb56954628305782b0d60b60513f603a03d4f71527fa4ec2170"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014652_1288900\\model.STEP",
+      "size_bytes": 42400,
+      "sha256": "3bba127558d41429d83cf4023b48e2e2cefb783aca024896bc64572d744f374b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014658_0776754\\feature_execution_report.json",
+      "size_bytes": 11291,
+      "sha256": "34a9bb12956204ade94bbbee2c92bcbcdc52c32e82e950522885316de173bda0"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014658_0776754\\model.SLDPRT",
+      "size_bytes": 89154,
+      "sha256": "39c7d8d46bd88fbf8eaad6d4044ad74d30dfa43eb34ad631ee6808be51a7a118"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\20260828_014658_0776754\\model.STEP",
+      "size_bytes": 42390,
+      "sha256": "09cce742a7342a5cfd96846ed5ace6a98d36212065c40eb7aa96ec5bef9428db"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013221_3210868\\feature_execution_report.json",
+      "size_bytes": 13669,
+      "sha256": "875750ae5660bcc36cd87d4cb12d7c3b10a3c5328cfa67feea47ba245bffc46c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013221_3210868\\model.SLDPRT",
+      "size_bytes": 76939,
+      "sha256": "751f631b4ca8b829dcbb176a1086220f0e9efd8209d84e844c38e996b3473d28"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013221_3210868\\model.STEP",
+      "size_bytes": 26373,
+      "sha256": "bc47fa46f2d70b50c75f34db618d8c8b2c086bcb19c66fdf11553d9eff0017f1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013221_3210868\\probe.json",
+      "size_bytes": 5668,
+      "sha256": "9c296543a939346a9e8333994a022e334a062c7e5fbdab94590fbfe470d76eac"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013221_3210868\\probe_console.log",
+      "size_bytes": 1863,
+      "sha256": "76022dbc055d4ecf73d95280a14b8adc17d984068b1acca3c467f4b5890a656d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013408_5080299\\feature_execution_report.json",
+      "size_bytes": 15367,
+      "sha256": "c097022ce9a2653483a7ed8adb2f249f21c673d77990d99e7f3e36d75a015d59"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013408_5080299\\model.SLDPRT",
+      "size_bytes": 92441,
+      "sha256": "b00a8f11815c67b61212416baf6b23d037037771c878c7a9b9bfb38c7ca49cf6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013408_5080299\\model.STEP",
+      "size_bytes": 26378,
+      "sha256": "07197004bd899d428228295ef14bb16cb9c27923efd829a77f56df4a13acbee3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013408_5080299\\probe.json",
+      "size_bytes": 6401,
+      "sha256": "0b433a2c95dfafa6ed7f0348df494081070352c1d4da0e06357cc95e20c0c5c8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013408_5080299\\probe_console.log",
+      "size_bytes": 2103,
+      "sha256": "fdcdebd9f68ddf9a92982c79b59fb8b78fc4fe681c883b7cc57713665d33047f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013423_5400787\\feature_execution_report.json",
+      "size_bytes": 15376,
+      "sha256": "49a850a03fbcf54a51f64e0f01f966f3731d9e9e0df18a9707408ce49fbd3835"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013423_5400787\\model.SLDPRT",
+      "size_bytes": 80717,
+      "sha256": "3c0e6263408078fda87f83853343406845b6ac2392c4f18762ece46eb3cd6dcb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013423_5400787\\model.STEP",
+      "size_bytes": 26377,
+      "sha256": "6ae9dc91cd3a629442285d16137408126564a7287a7fdf6bfeeb077500de0a03"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013423_5400787\\probe.json",
+      "size_bytes": 6439,
+      "sha256": "4ad315a04da739714f37f971c4623e559b5fdd973620a9c7d8b33e21036b388f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013423_5400787\\probe_console.log",
+      "size_bytes": 2099,
+      "sha256": "4baa122dd138822095647d6a9bab7cdc9e42e12833e867d6508165b8942d7ab5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013438_4901315\\feature_execution_report.json",
+      "size_bytes": 10249,
+      "sha256": "f12b10380af9479b13e9e80ce4004aa0de25c2b876164fbd73d13720ef4f9728"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013438_4901315\\model.SLDPRT",
+      "size_bytes": 80562,
+      "sha256": "4514236fc56f0ffd209e0ece67959fdc13357c0263598e9edf40421b23b104b3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013438_4901315\\model.STEP",
+      "size_bytes": 26362,
+      "sha256": "8f49e57bcdc6c4e0cb3b117df69982409526cb0453ba37f57ecb2feee15410a1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013438_4901315\\probe.json",
+      "size_bytes": 7314,
+      "sha256": "590e3088584b9a3de9ef1e7a405b65586209ea6900266c4f8d7d0754e2fc66bf"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013438_4901315\\probe_console.log",
+      "size_bytes": 2195,
+      "sha256": "9e3dbd544fc0056a9956e16f591db3533138bd5d37f64f15bdfab4f5a6180ef7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013451_0073586\\feature_execution_report.json",
+      "size_bytes": 13557,
+      "sha256": "00091dad8ca9901e6becd24b22d450a57cbc841211365b03edf6104b014847a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013451_0073586\\model.SLDPRT",
+      "size_bytes": 84958,
+      "sha256": "7ccb0bcc0d18f9a8e2523c491b9e3994431fbe060bff897c843fe3c97360775c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013451_0073586\\model.STEP",
+      "size_bytes": 26360,
+      "sha256": "9c044bdbbab72f81667646f9c05e2d58ff1413c129f6882c161d80a999c72ddf"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013451_0073586\\probe.json",
+      "size_bytes": 8053,
+      "sha256": "d119a0ff4af3e9a36d82bdd98910ce3831a4e13dfcb32234269ba252528b42a1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013451_0073586\\probe_console.log",
+      "size_bytes": 2362,
+      "sha256": "f4628af6fa543636ba8819b3f0ac148180976074b7247bee50a7ae0ce9eaf874"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013503_7710789\\feature_execution_report.json",
+      "size_bytes": 10213,
+      "sha256": "0ea99f3b285edf679d65198c8cb96c24d991e40efc20749c827e0bad1b5cf449"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013503_7710789\\model.SLDPRT",
+      "size_bytes": 74232,
+      "sha256": "321dc7043d5b556df5d91500884d5d71735794e54ff4a25c955add1c6d10b096"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013503_7710789\\model.STEP",
+      "size_bytes": 26375,
+      "sha256": "4bbce5e03caca35a53c04c6f401727942aa8cbbb874ddf565fa55ef83da00010"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013503_7710789\\probe.json",
+      "size_bytes": 5746,
+      "sha256": "65bccaaedda22343345f4caf93f16dc0037df2e5f0b4f598a510d9e0b239615c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013503_7710789\\probe_console.log",
+      "size_bytes": 1863,
+      "sha256": "59832ef5244483c528a378e9747eec665af0375c044612fd2037a8fc5ef97695"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013514_0906527\\feature_execution_report.json",
+      "size_bytes": 12073,
+      "sha256": "222e4204444fe3924af4d51da9e445ed5070ca34ccd05aea25ed0028cb6cef38"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013514_0906527\\model.SLDPRT",
+      "size_bytes": 78150,
+      "sha256": "7f9b6c5e72f367707515e47e54eb99f118fd74d446996ccb9d599efc3c07fde9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013514_0906527\\model.STEP",
+      "size_bytes": 26386,
+      "sha256": "ce8f731f5a5585876095b2b217adf57ea374bae65eca909af5ca5f5cb59ea8bf"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013514_0906527\\probe.json",
+      "size_bytes": 7248,
+      "sha256": "1a825d11ccb2ecd0e19a16acdee538088e9ea87f6a49983bad0f7bb9be622ab1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\20260907_013514_0906527\\probe_console.log",
+      "size_bytes": 2195,
+      "sha256": "2356360a33eeefa4efd970a523226930d1104f20894b319f62311f49aa5881ba"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\base_console.log",
+      "size_bytes": 261,
+      "sha256": "db94dadb93611cb637cd5b2c187eb2abeaf25cfcba58eba0b43f94c92e6a407c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\feature_pipeline_plate_chamfer_console.log",
+      "size_bytes": 261,
+      "sha256": "4e6dc5e52eef1d84ab9cb727c72b74a03d256bb34188019fa9a1f6a60e9e924a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\feature_pipeline_plate_circular_pattern_console.log",
+      "size_bytes": 261,
+      "sha256": "fff0e41b45112fb097765f15c375d3656cb74068c476be91bb6f7fc1228a9566"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\feature_pipeline_plate_fillet_console.log",
+      "size_bytes": 261,
+      "sha256": "d9f89c5634945c291333f2113839f8589836c2c3292c9a87ac5794d7fff5985d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\feature_pipeline_plate_linear_pattern_console.log",
+      "size_bytes": 261,
+      "sha256": "0bdb735d8f2f4b88bebf6b8b5b4487c908da747db33e6f05ed741248c4dbb9dc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\feature_pipeline_plate_mirror_console.log",
+      "size_bytes": 261,
+      "sha256": "32715ce536120da9642cbe7c27b8a69bd15603e8f98a2453d187721cf7972f40"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\independent_verification.json",
+      "size_bytes": 14875,
+      "sha256": "f3b3100de96a1a76ebb7d05d3b8e957b5ddc38657afac100364ecf40d6afbd37"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_1_b_refresh\\parameter_update_plate_console.log",
+      "size_bytes": 261,
+      "sha256": "c5d66483d850b5834525f6d4717cd236323261db7465d84b1253d60f5f76d642"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_073601_0292174\\feature_execution_report.json",
+      "size_bytes": 1893,
+      "sha256": "ae93cb7300a7cd9e5ff7bf124eeb81f74a4edadb5547f3d0d1e733a1c215d2c7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074101_7962718\\feature_execution_report.json",
+      "size_bytes": 10351,
+      "sha256": "621cc08b8ff646fa3074626e9ec5657322130211a38012d48be8ab50f47b4c17"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074101_7962718\\model.SLDPRT",
+      "size_bytes": 75421,
+      "sha256": "436c91732f0618875625fd233475476a59558f44dac7d2cf7a39ce689d2a83da"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074101_7962718\\model.STEP",
+      "size_bytes": 26373,
+      "sha256": "db907cebbde7e78819382e3975e4e974e8f873bac96bf777a4c3b5dafc5a89a9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074110_8490249\\feature_execution_report.json",
+      "size_bytes": 10329,
+      "sha256": "e314a6b25648e7bdc77c1da6e687062d3aad08cd29c63949fe082bdc7259ff7d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074110_8490249\\model.SLDPRT",
+      "size_bytes": 74322,
+      "sha256": "7dcded48404fc0a670d35e61a7c3a0a830eceb72337d67bae806af1b5bc2255a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074110_8490249\\model.STEP",
+      "size_bytes": 26387,
+      "sha256": "c7416e2cd461d4eeed2dc93060be9ba04d7b7a1bdd7bc5a2c462d1d0832b750b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074121_0647238\\feature_execution_report.json",
+      "size_bytes": 13686,
+      "sha256": "71c83facfe8d24595c4dcf506629ea2d85ff2e18f805aca10d65e499f6deebfc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074121_0647238\\model.SLDPRT",
+      "size_bytes": 78400,
+      "sha256": "eebab333c98d78d4215bd84494857fc6400baa463dc537ada6001377b46f9932"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074121_0647238\\model.STEP",
+      "size_bytes": 26374,
+      "sha256": "48af955fc8d9d6b60191d935a0f993eeb16c838d4fcf19868126c837a725b24c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074132_7576663\\feature_execution_report.json",
+      "size_bytes": 13688,
+      "sha256": "821a80316d89dae257332f079f6165736d96e1c4979f57b83a77b27fbd6544e9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074132_7576663\\model.SLDPRT",
+      "size_bytes": 78733,
+      "sha256": "9d1cf06aed9a3552125f62a66c50ac863bb4c89b20f09af691c2b14a4d1935de"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260909_074132_7576663\\model.STEP",
+      "size_bytes": 26387,
+      "sha256": "2756cfa4ae5db46eb8184741d1f7c10c77778e341bc3eb76e342ae30f7640472"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_005110_8771419\\feature_execution_report.json",
+      "size_bytes": 10418,
+      "sha256": "e3171a16474d96dce22d8d7642f906ba30de7be7a7564e4537212f4c0717e3ac"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_005110_8771419\\model.SLDPRT",
+      "size_bytes": 76086,
+      "sha256": "85f9e3e272ccbc4bc6b4cd6da0124c5407d575f5e05dfbb945933548b02ce16e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_005110_8771419\\model.STEP",
+      "size_bytes": 36938,
+      "sha256": "02dfbea05e747da47a82c4fb2f7bda9e39aa0aace29129eeda4f91f1c62bfcca"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_005129_3029502\\feature_execution_report.json",
+      "size_bytes": 10412,
+      "sha256": "18fb06c5411fefbd30d357c1e60b0a34e4f881824c09d6db8b438f07534f4137"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_005129_3029502\\model.SLDPRT",
+      "size_bytes": 74411,
+      "sha256": "59288be336a79960bea847eba1fb1988a5ef13597ddce79bac42605c67bede37"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_005129_3029502\\model.STEP",
+      "size_bytes": 36951,
+      "sha256": "9f0f0785396f795c3a9dfccc8cd1600a908f71008232b0781d67890a0349d22d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_010727_8339770\\feature_execution_report.json",
+      "size_bytes": 10418,
+      "sha256": "c0ebe0976ce88a6e2394a1c5b97ff4d301de455336c05191cf79021de8c7bb1c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_010727_8339770\\model.SLDPRT",
+      "size_bytes": 75367,
+      "sha256": "8524333f4e529b2fd1a24f1ff7134adb4a0f0cc4b824ab7e3727727c52636a67"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_010727_8339770\\model.STEP",
+      "size_bytes": 36961,
+      "sha256": "143b2846d996e1e129dd2634d86ea397f8f9ccdee8a3824d1668c3a6e3aec3dc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_010745_9706728\\feature_execution_report.json",
+      "size_bytes": 10413,
+      "sha256": "07692154f79b947c95ac4eaa4379627892271f8a667aea0667a88c7170541296"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_010745_9706728\\model.SLDPRT",
+      "size_bytes": 73348,
+      "sha256": "192a32de2a48d6bdaebb45614186bef768dc6b53c56908a843e65f9d58b35cef"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_010745_9706728\\model.STEP",
+      "size_bytes": 36957,
+      "sha256": "b34f7a90534afd3d8809f662429c80450b1a5799ed1cfc5a7bb957e6a0f22f26"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011135_8749263\\feature_execution_report.json",
+      "size_bytes": 11285,
+      "sha256": "a10ea44a89c2d4931ab0e26c0a85c2284ba23cd5c574c3654ba0018ac18bda3f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011231_5326232\\feature_execution_report.json",
+      "size_bytes": 10418,
+      "sha256": "feb74df40dfd954e5e863c2fcdc2b051f7e5a3bc2e75a2d28939ddfc12f10aaf"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011231_5326232\\model.SLDPRT",
+      "size_bytes": 75033,
+      "sha256": "ac19cad8537e59c7a24a48adae6db18ea8c9a02ac941e0cdb3e596bb07e5557f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011231_5326232\\model.STEP",
+      "size_bytes": 37087,
+      "sha256": "bdf729656c15a29629179b6e36c879935631aabd5788d4ffcb6d80966dd877eb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011251_3122438\\feature_execution_report.json",
+      "size_bytes": 10413,
+      "sha256": "c2d71b5091e35e818b5b36151729c75fe3ebe321fb6700e18c6c2984d6883e7a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011251_3122438\\model.SLDPRT",
+      "size_bytes": 73041,
+      "sha256": "de252d1e742e04707be61b46f6b966fa79b92e5134e751472ea62abc8a8af0e3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011251_3122438\\model.STEP",
+      "size_bytes": 31802,
+      "sha256": "b86e8de22fe3479033b506e4c3e724e579e86e7290408041a87a6fcef982c706"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011308_6245540\\feature_execution_report.json",
+      "size_bytes": 13755,
+      "sha256": "97ca2009c487c9601993527b5fcf9fdefaba000aaaee64109fa9da772ddaa5bf"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011308_6245540\\model.SLDPRT",
+      "size_bytes": 77422,
+      "sha256": "f3d43e16f3c2f3b8bbb670e284878db592d366de11a159b4b2f2f238bf536ac4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011308_6245540\\model.STEP",
+      "size_bytes": 37157,
+      "sha256": "a65c5e2f2470677850774ece1e2cbff01777f0fb461ed7c4ac117ac2bcb27c83"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011326_3104796\\feature_execution_report.json",
+      "size_bytes": 13755,
+      "sha256": "aafcf46ff88727948a460cb6181dab4b9518c6e1ef01e4c3ec7d32fe2121a460"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011326_3104796\\model.SLDPRT",
+      "size_bytes": 78030,
+      "sha256": "5b8e39dd4e48a5437fdd7e4a705f446c7f54429576b60dc6865fc971ecc4e390"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011326_3104796\\model.STEP",
+      "size_bytes": 37130,
+      "sha256": "d56117d6f742c194d14330537705649a7e69df00280dea3aa7c1dc29345ec51a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\feature_execution_report.json",
+      "size_bytes": 10567,
+      "sha256": "c6f221a197715e66a070c08c988da10e0de3d08e0e3d404eef5ec0c34569f116"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.SLDPRT",
+      "size_bytes": 76225,
+      "sha256": "5b5a4a2a6aa58ace540544abd84dbe06604924b6ea46e17c65749f76295598fa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011856_1675389\\model.STEP",
+      "size_bytes": 37090,
+      "sha256": "45da968aa00bfb91a9abb75c9934a5506d278cffb8e2e96b37e90491b58e83dd"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\feature_execution_report.json",
+      "size_bytes": 10562,
+      "sha256": "3f6f8e29e9fae43777ab67f7c63b88c6a41917b5f6ce3401812dea44e33eca40"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.SLDPRT",
+      "size_bytes": 73262,
+      "sha256": "52b82867dc2a9090dbd6b4e681ce4b26f2e7d931caab5b9bd4481c68739f5b10"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011911_0079415\\model.STEP",
+      "size_bytes": 31798,
+      "sha256": "0872ee395aabf4e94da6566a4f7ca37942d830dc7f7190af67c0f331b1478dfb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\feature_execution_report.json",
+      "size_bytes": 13904,
+      "sha256": "7ed20301e6d23d331b42332eabce5fa769f4bb0fdf979f8dc408c35dcc3501b8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.SLDPRT",
+      "size_bytes": 77758,
+      "sha256": "3a5faba22c9603d989a1eebd4cad72f8101b46752327883f88fba1248198ba7b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011929_5760485\\model.STEP",
+      "size_bytes": 37146,
+      "sha256": "d7f430ed295d0e37312ffd5943cb1065d5dfb37270f0fd79612abf8e76a06087"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\feature_execution_report.json",
+      "size_bytes": 13904,
+      "sha256": "109af7d95a0786a6ea867a9d5e6e797ba1be0718bdf4cda2d9b54bf0bd2531e3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.SLDPRT",
+      "size_bytes": 78182,
+      "sha256": "137f4cbce363c2266d49df36abe61edfd795412b09a73f470eea46c107fd0be0"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_direction_validation\\20260914_011949_4099338\\model.STEP",
+      "size_bytes": 37117,
+      "sha256": "005c426271eb450afe8d5dc7ca12f1d299a85122f524ef92196d0b88d3cfc6a7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_environment_probe\\20260909_072840_7316264\\feature_execution_report.json",
+      "size_bytes": 13786,
+      "sha256": "ad21e61ee072716a47a30d42d20e32b79fddc931b91ca0033e89ebbb9ea21f0a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_environment_probe\\20260909_072840_7316264\\model.SLDPRT",
+      "size_bytes": 73488,
+      "sha256": "225fa8eb35093e2e80f8c42d111766411ab9aa4df3f45e33cc2bce37d4de1bbd"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_environment_probe\\20260909_072840_7316264\\model.STEP",
+      "size_bytes": 26387,
+      "sha256": "9d937b04e1f42a228fe8bdaeba3449171c7bce44890e97c393a1c4b42be3be85"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_environment_probe\\20260909_072840_7316264\\probe.json",
+      "size_bytes": 5678,
+      "sha256": "88d2f3ef1d9211abd3b179d8350b7abbceeb52f2186eb9456f8da08fe6d12696"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_export_probe\\20260914_005333_0990500\\feature_execution_report.json",
+      "size_bytes": 10349,
+      "sha256": "15cd50a1e87222ac49338023187be87eae0fdd6425ed20ffd12d2eac5e2daa81"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_export_probe\\20260914_005333_0990500\\model.SLDPRT",
+      "size_bytes": 73878,
+      "sha256": "c3181530eb343951084891d572d81135d072d75ae06d81f32478589b5c7c36cb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_export_probe\\20260914_005333_0990500\\model.STEP",
+      "size_bytes": 36935,
+      "sha256": "888377bd7d72958e17cf28b285dbb1a56b22cdfb6ae2861c4f3f1b4f11b0560e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074159_0755385\\feature_execution_report.json",
+      "size_bytes": 13686,
+      "sha256": "f3a700c7b889379e3a858fe367fed46079bc446f434e18050152bd39e5bf4045"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074159_0755385\\model.SLDPRT",
+      "size_bytes": 73715,
+      "sha256": "d0da35f307dc03dc06483d32aea27b1df98dea008a9b40dcf7c921f2b160d34b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074159_0755385\\model.STEP",
+      "size_bytes": 26376,
+      "sha256": "b590961571f1758aa61aa2016784d43ebf88e3603619fbd10c229ce394076ff3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074211_2890725\\feature_execution_report.json",
+      "size_bytes": 15368,
+      "sha256": "964896b131c92a8d49f85be220d18d3a72f2b5be40a24f66e29123b98419469e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074211_2890725\\model.SLDPRT",
+      "size_bytes": 86996,
+      "sha256": "bab9835d381e534712ed59b7af8619979a794b98a3fab11bad8bdcb4d0bcdc7c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074211_2890725\\model.STEP",
+      "size_bytes": 26370,
+      "sha256": "f4cc2824287c97e297c5fc5a68babccd34c1e41d60668757e6167d42f1f59ff1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074223_8116476\\feature_execution_report.json",
+      "size_bytes": 15376,
+      "sha256": "f91d4d5089fac188ff031e15db980029ec24c7640ba9828fa0e17d8ad98cb1f3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074223_8116476\\model.SLDPRT",
+      "size_bytes": 76493,
+      "sha256": "e2e2be5131b34f31bffabd7f96fd2742c8b4796aebe1fd32015c25cc54998715"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074223_8116476\\model.STEP",
+      "size_bytes": 26372,
+      "sha256": "1e3b09a162f1eb51f7a90fb0a4e30c0d49a9caf24012179dd9ac8ebbdc79b056"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074237_2239759\\feature_execution_report.json",
+      "size_bytes": 10249,
+      "sha256": "01b22e9204f60d2d93e9d5b5aa968e5cc46f488f1485c6a6af2135a9a9c09b1f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074237_2239759\\model.SLDPRT",
+      "size_bytes": 76849,
+      "sha256": "de015e50180078bfecb8eeb2032745a3734842461c68b12c825424a3d140964c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074237_2239759\\model.STEP",
+      "size_bytes": 26366,
+      "sha256": "ac926db34f1eca5eff258fe5c1826efcbbb3244274dd850960cfae168cec757f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074248_7325903\\feature_execution_report.json",
+      "size_bytes": 13555,
+      "sha256": "eed03e068adab421e7d7be888d92cbd6f4fa2b15f49594fdb2135454cb93b025"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074248_7325903\\model.SLDPRT",
+      "size_bytes": 81297,
+      "sha256": "c8d6764d4df8d464d06e4b9f802abb989135a0e6f85aabdb9769ddd5b1e8eb7c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074248_7325903\\model.STEP",
+      "size_bytes": 26383,
+      "sha256": "9a75d169f5898713cfa244fb979e2dc65c9664b91848256ebd7270723dea5b6e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074302_4493341\\feature_execution_report.json",
+      "size_bytes": 10213,
+      "sha256": "ddb1c1ff1fa405656b314c72e5d5369c2156c4d788a2d3df45679d1a292c47e3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074302_4493341\\model.SLDPRT",
+      "size_bytes": 70680,
+      "sha256": "b871add4ed524c4e146d3abb68dfaf74d8912d5f71fe32c9bfe5445c18852de5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074302_4493341\\model.STEP",
+      "size_bytes": 26386,
+      "sha256": "35ecb098ef6e04b92a2d6afd1275115c4560e1f8c9b5890cb2baedd745a8df92"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074314_6629135\\feature_execution_report.json",
+      "size_bytes": 12072,
+      "sha256": "6229922a286e32ddb4d62d39b155cfcb07d13b976a6090dcbbd5175ac9fd9303"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074314_6629135\\model.SLDPRT",
+      "size_bytes": 75094,
+      "sha256": "821a86403c481a5146e9ea4522be34180dcad8145f5ae6080bfb55052ad2cdb1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260909_074314_6629135\\model.STEP",
+      "size_bytes": 26386,
+      "sha256": "a74bb9d5cd6a4b77100e00d6200ccb9051fe7fe71c90a8fde5cb281562939485"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012031_1648643\\feature_execution_report.json",
+      "size_bytes": 13902,
+      "sha256": "959f0484a4c4f8d9a0e0f2af479d27f5ddb44a076e18eb186befb3740b9ff8d4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012031_1648643\\model.SLDPRT",
+      "size_bytes": 71970,
+      "sha256": "76c3c2f67e7a79f4b400e5935dffbb3d4f0a8f64bd9918fc00f0738ce9e05d3c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012031_1648643\\model.STEP",
+      "size_bytes": 26518,
+      "sha256": "d40fbfe9e7d94d374a255679d2722523d579a1c97e6b7d1fccfe6f8bfc39c2c6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012048_3032867\\feature_execution_report.json",
+      "size_bytes": 15584,
+      "sha256": "e4293ffa2e5d102d03d73118a92f258e95d688da7980d0877999376c2316b79c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012048_3032867\\model.SLDPRT",
+      "size_bytes": 86625,
+      "sha256": "6d024db8ea2eb03ab7e78bc56d166fd97dd25f252d8c884d68c8530afec99373"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012048_3032867\\model.STEP",
+      "size_bytes": 34324,
+      "sha256": "cde8892faaa15359710df74df11516084fd36bbc103c1ea9e6799b3fbb74cbb2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012822_1801536\\feature_execution_report.json",
+      "size_bytes": 13902,
+      "sha256": "b97a7fc7d7ec57ad3b3596dfff452cd928e8a66dd422cec2a8d9c2b8d847eb0b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012822_1801536\\model.SLDPRT",
+      "size_bytes": 71815,
+      "sha256": "8d1a345aa01c40cf171397f8b9adcee843149af3d95f3a16842e07d848b931e6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012822_1801536\\model.STEP",
+      "size_bytes": 26521,
+      "sha256": "40f4b4e71963b0febd708144b534c022105a607add0466c3f1113718a8568cc6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012835_8513506\\feature_execution_report.json",
+      "size_bytes": 15584,
+      "sha256": "7d701e14033566803cc4204248b0916f08b8ed743a2e4f58ead2ff250eb494fe"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012835_8513506\\model.SLDPRT",
+      "size_bytes": 86475,
+      "sha256": "7ee22a99e625fc440d087232ed25b5d0d12a82a1ea926363045b193176894391"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012835_8513506\\model.STEP",
+      "size_bytes": 34335,
+      "sha256": "6109703ed925b393f485c4824cd624c805fd5d39f2b0eec0abd9fe83e74f5055"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012854_4152919\\feature_execution_report.json",
+      "size_bytes": 15592,
+      "sha256": "d80a9df7927575470d294d3edfca256ee25e1ec9d77d25c6c78a75449236a92a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012854_4152919\\model.SLDPRT",
+      "size_bytes": 76557,
+      "sha256": "c4ca263a6cab33ee833bccea97236c0d887b1b9f5c3e5393b9f9934ae20ccb91"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012854_4152919\\model.STEP",
+      "size_bytes": 33874,
+      "sha256": "785acdabe6351c7796a573b77e5070009d32eb1f5858bf38d2c6b3050313941e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012912_2394344\\feature_execution_report.json",
+      "size_bytes": 10464,
+      "sha256": "007c005c0f37fae2bd53caf4dcb37800d280d2f27403dee826e44d0f09751267"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012912_2394344\\model.SLDPRT",
+      "size_bytes": 75272,
+      "sha256": "dad4a3f507b16531063a3d560a9f71278c1514b1968833f8a1a72786ba5c8d06"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012912_2394344\\model.STEP",
+      "size_bytes": 37078,
+      "sha256": "1341f56fa3a8b9411e69bab6974b314af17cd8256dcf2cf0343493c20d830cf6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012929_6066341\\feature_execution_report.json",
+      "size_bytes": 13773,
+      "sha256": "e52fa5ffcbafa7ffac67151cfcdb6fefd674998562258db08fa934db69e300cd"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012929_6066341\\model.SLDPRT",
+      "size_bytes": 80646,
+      "sha256": "b57a88c83259e3bc680ff5b863fa31703006ab8d08b7b4a7a1b603e116b7c5d7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012929_6066341\\model.STEP",
+      "size_bytes": 42521,
+      "sha256": "844a1a56a0b5e8438e1d1b5057aecea1c55ee5a1b22c86fd63b280de50064437"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012947_5186294\\feature_execution_report.json",
+      "size_bytes": 10429,
+      "sha256": "b7078d678969e0ebfca0015c5433102b849b303e48bc01f897ac9490399250cb"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012947_5186294\\model.SLDPRT",
+      "size_bytes": 69234,
+      "sha256": "0f2dcac3c5dab916be49bbcc0b40e0619a673d73654e9b0222ba706dff5d5213"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_012947_5186294\\model.STEP",
+      "size_bytes": 26532,
+      "sha256": "8a9b425b3fce50545286b2cb64d6be6ad9f850f190a332b73280bc13bdc64f15"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_013003_7170234\\feature_execution_report.json",
+      "size_bytes": 12290,
+      "sha256": "bc02385f5317810775c0d50a42de2ba4e8cae0eaceb89f18ca23110be5641d0d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_013003_7170234\\model.SLDPRT",
+      "size_bytes": 74557,
+      "sha256": "12ebd2f5ef0ece4341026789a191aa3c187d0cdd782dbdcd7aa0ec40ff8071ef"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_c_refresh\\20260914_013003_7170234\\model.STEP",
+      "size_bytes": 37102,
+      "sha256": "a36664b6f3de2bc5dfadcf52530379d869f6b483b6c9133b85fdae932d6fe695"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\artifacts\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\release_manifest.json",
+      "size_bytes": 7101,
+      "sha256": "50c6a4ee8754ed0fa6b0fe811b9da586578f117777464a42ecf14bbc0af94598"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\e2e_execution_report.json",
+      "size_bytes": 4681,
+      "sha256": "05e2e17b1e29d7b5d3e95f81d2a92b6dde8629bff7d13eac80d30c0c1ba5a904"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\package_quality_report.json",
+      "size_bytes": 4799,
+      "sha256": "f6e22134479a7aa17654db96afe5ef45cc03dd74d529708bb648ddd3511f20e9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260914_013300_785-0341267380e64d5c8450fbee7c216bd9\\reports\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\build_report.json",
+      "size_bytes": 11747,
+      "sha256": "a7f0443ea90437617e045fd04b8df009f37e0cf8260cdc4686d4c85de2a0ce9b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\feature_execution_report.json",
+      "size_bytes": 9785,
+      "sha256": "2b0b3c2d8e1d8daecf6fb5d3d3ce48a44d4f283b781c172f71d5e8e3f7937111"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\geometry_validation_report.json",
+      "size_bytes": 15968,
+      "sha256": "118321a1c9fdb0fe71c095ff2eebfe25ab9ad37e5f70df608443de1c037b0de2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.SLDPRT",
+      "size_bytes": 74358,
+      "sha256": "4d70a11f42661cc4a958b246acb14f07d0773931e6b8906b388d442106903f15"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\plate_basic_4holes.STEP",
+      "size_bytes": 37103,
+      "sha256": "2ef16523497d1375cca1323839f1520078097340517deddc2eb00d13cfff2198"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-afc6a5d983084a0d8df01f297d35d4c6\\rebuild\\rebuild_report.json",
+      "size_bytes": 1405,
+      "sha256": "139830db63cd2bbc7008887acd7c1defe29f260f35e8e3825866ef6d11893c78"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\main_release_geometry_unique_20260914\\verification.json",
+      "size_bytes": 48527,
+      "sha256": "d2c2e6cc96ecb63e67459df5597a64604dcdaff04022ed616061b6fcaaf3adc7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_c_cad_baseline\\verification_summary_20260924.json",
+      "size_bytes": 4151,
+      "sha256": "6c56aa8c521b1a491132c81c2e5d592c2a6018017c0f09a38664237e5f241f5c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.5-v0.6-review.md",
+      "size_bytes": 8487,
+      "sha256": "5155a55350f197cbba8a5305d29646f610903b17a8b97b340a0c552ea4037b4d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.7-fix-review.md",
+      "size_bytes": 14202,
+      "sha256": "e8216c3106289e0e945d0a09ea061241a5bcab1072cb86a38c5602313f83d779"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.7-post-review.md",
+      "size_bytes": 19457,
+      "sha256": "c56a731a1081991dfc4b7baf106ebe2fe33936e00b2e7f1f5ac889cb6ca611ab"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.7-review.md",
+      "size_bytes": 13299,
+      "sha256": "95b03b0ac2650d0f2f676536fd0cd7fa05a84107abb8bf82f58d34e5d2a2442d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.8-review.md",
+      "size_bytes": 18265,
+      "sha256": "9809626fc6412286df7a8a00189b01ab6dbf043f83c4a19736b2c88b3320b17e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.8-second-review.md",
+      "size_bytes": 11058,
+      "sha256": "0d84b417f24319885ba7f7d809766e670ae2244cafe45a2b3c9d8f3b45b89c79"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.9-a-markdown-skill-reference-review.md",
+      "size_bytes": 20835,
+      "sha256": "6633e6481aeae7d6d3c73fbb310c4dc1a7ec2ba72d85221b17b07c4455cb5a64"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-26-v0.9-A-review.md",
+      "size_bytes": 8833,
+      "sha256": "b3e85074015182afb243a5ae087893270072a865529bd864b7a17c8354ae76d7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-26-v0.9-B-fix-review.md",
+      "size_bytes": 25121,
+      "sha256": "f8705e042441e7a59e5a5c7579c10749927acd71f7a8a910c7f1b96a64f1c69e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-26-v0.9-B-review.md",
+      "size_bytes": 24785,
+      "sha256": "516836155ae625db7f4635a3a62de65ee2c2b4740073d0b0dbd7dd4c512acef3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-29-v0.9-B-review.md",
+      "size_bytes": 31663,
+      "sha256": "1f0d783969045373fa341c674ae1936cfb238c799c55b0270d72033397c7fc1c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-29-v1.0-A-review.md",
+      "size_bytes": 1956,
+      "sha256": "bd3c0de8990bad74b4b43d4ca7b666c623bf4a51524091c3bdef1a81425bb150"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-A-review.md",
+      "size_bytes": 32600,
+      "sha256": "67ffbd575deb2bf28eb0355ffa5e44185cde7001fd3933bad3e567ff96cb3c7b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-B-deep-review.md",
+      "size_bytes": 23408,
+      "sha256": "b1a8127dad3e2a131e4e908b842b7456a3b7d4d3deeb5ff0b8fb4d91b1b2ed70"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-b-repair-cut-holes-review.md",
+      "size_bytes": 17628,
+      "sha256": "cdced116369b8fcd5a8e13e6d8ae4e0015c1520faac1eb2069ac27928196bcd1"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-B-review.md",
+      "size_bytes": 23136,
+      "sha256": "9bbbeec831f0b24892b149dc8334a84d8309a05c9137a0ff56fa927101ae4479"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-docs-agents-review.md",
+      "size_bytes": 36129,
+      "sha256": "bb10ccc2d00e5939d2d524a136ad6acb8c476bd9e1bf6247ac358d0b045f0993"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-01-v1.0-B-repair-followup-review.md",
+      "size_bytes": 22954,
+      "sha256": "19b4e60f0bef4c06d1fd0a09fc3eb1837d11288b68a609dbca1f0016709ba328"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.0-B-stage-gate-re-review.md",
+      "size_bytes": 17486,
+      "sha256": "3b161e7f6cb898e66e921cf04a05e343b1a71335e2b28b65201e35dc08c2117a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.0-B-stage-gate-review.md",
+      "size_bytes": 22417,
+      "sha256": "312557d71c59e92e8cac6eebb387386dc10d9dd32ceec684929b532c81c2c506"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.2-review.md",
+      "size_bytes": 16430,
+      "sha256": "4c3ab8aa87eb798942e3522afcf46cadf0693d20f81e5bea392ff34555d1873e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.3-hardening-review.md",
+      "size_bytes": 13228,
+      "sha256": "3a2bd5fe5373bddd17f5d7042e346a00846f9382432aa6eb59797dfe998a057d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.3-review.md",
+      "size_bytes": 16585,
+      "sha256": "36ad163a7f521f433b78acbdc79f1cc5a7cbc81117a47446375ad2259cf64f65"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.4-stage-gate-review.md",
+      "size_bytes": 17916,
+      "sha256": "98ab402f9de1a1e78ef528d792142516a3c05b7516fa104e423a3eb1cf45efaa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.5-router-refactor-review.md",
+      "size_bytes": 12439,
+      "sha256": "5a81e4be5fc36700e17c772496db1a181a21cd27e964b284639b87fd7fa35b06"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.5-stage-gate-review.md",
+      "size_bytes": 17365,
+      "sha256": "c34f0e056e78ef22ba7c7000d7216e5011819996fcbcbaf16fc51992555e72d2"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-10-v1.6-stage-gate-re-review.md",
+      "size_bytes": 21337,
+      "sha256": "11f0d436c53e4da6bc7d0d0789014ce7059c8e52115611a5b26e26267ab8ecc5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-10-v1.6-stage-gate-review.md",
+      "size_bytes": 35344,
+      "sha256": "d98dafa357f58c189a47f5a94bdc230d787c1a0a71e82ba581b2aab30cf70044"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-16-v1.7-stage-gate-re-review.md",
+      "size_bytes": 15241,
+      "sha256": "d27289a19f861c8c1bfa6881f9d882eeef19baa8469ddc126571aa89ebf70f5c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-16-v1.7-stage-gate-review.md",
+      "size_bytes": 25045,
+      "sha256": "f2618181d35d67d5c3505de72e20c3c66778d477e1273aba8b3909eb4ea7a603"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-20-v1.8-re-review.md",
+      "size_bytes": 7034,
+      "sha256": "d4e75b788055bea4e413938f42819abbef74934ccb9b257a1f6a128963ff2cb7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-20-v1.8-review.md",
+      "size_bytes": 18854,
+      "sha256": "41526c622150613d9ae3ad299884999d15b84a74ded4ed8b4a9c131df51b3925"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-20-v1.9-review.md",
+      "size_bytes": 19941,
+      "sha256": "d77845e67bfac5db0bab7a1538244f32ef3a4b62720171779c3bdfc2f41e4dfc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-27-v2.0-re-review.md",
+      "size_bytes": 10845,
+      "sha256": "3a5b83227f1f353dc34b5229c35008bc31933f035acd27f326db852003f3c756"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-27-v2.0-review.md",
+      "size_bytes": 13939,
+      "sha256": "1809909641ab9ea2e41da5b1be9eb1f18081ab70db9f2af94bee688e5bbc2480"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-30-v2.0-ab-stage-gate-review.md",
+      "size_bytes": 17886,
+      "sha256": "df73ec38483f112ab3e4ff1327bc66f72ddf0a1dd11ca437dc22bb6ceb53de52"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-03-v2.0-c-review.md",
+      "size_bytes": 22058,
+      "sha256": "cc859c43234072090943128857867332c6c58a8dc0ca770098fe3fe000288b99"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-03-v2.0-d-review.md",
+      "size_bytes": 21016,
+      "sha256": "ad9a554392ad529f55e39b31a3ef58ce050fc661cac727a0867f5ce45f3b93de"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-17-v2.1-a-review.md",
+      "size_bytes": 43486,
+      "sha256": "22bd28ef12cf428ce7b12b8b36f616e28854bcdaff48e19148cb3d5c49f6ea7c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-21-v2.0-e-re-review.md",
+      "size_bytes": 11932,
+      "sha256": "cb534ef1dcb5de9e125c3e9c532ff0a3e38b4c429246fea59378fc61fe4bca3b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-21-v2.0-e-review.md",
+      "size_bytes": 17272,
+      "sha256": "d144899c7034eeaff0f149812f9182c549e8ec771d90a313f0921574fd18a057"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-09-07-v2.1-a-complex-feature-library-review.md",
+      "size_bytes": 34383,
+      "sha256": "ef95a311fa5d79f65275052acae533e637dac8d8138fc689687df39d3d1de894"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-09-07-v2.1-b-hole-features-review.md",
+      "size_bytes": 29737,
+      "sha256": "1cfb4e26679753e171fbcf9ffd0ab7015ccc531f5a6691775d15399a2bbef17c"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\CLAUDE_CODE_REVIEW_PROTOCOL.md",
+      "size_bytes": 13097,
+      "sha256": "206a702ac8109bdac612e053376cd919dc2206e1d20c842b05f68d289783b92f"
+    }
+  ],
+  "historical_review_paths": [
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.5-v0.6-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.7-fix-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.7-post-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.7-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.8-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.8-second-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-25-v0.9-a-markdown-skill-reference-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-26-v0.9-A-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-26-v0.9-B-fix-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-26-v0.9-B-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-29-v0.9-B-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-29-v1.0-A-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-A-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-B-deep-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-b-repair-cut-holes-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-B-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-06-30-v1.0-docs-agents-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-01-v1.0-B-repair-followup-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.0-B-stage-gate-re-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.0-B-stage-gate-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.2-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.3-hardening-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.3-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.4-stage-gate-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.5-router-refactor-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-02-v1.5-stage-gate-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-10-v1.6-stage-gate-re-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-10-v1.6-stage-gate-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-16-v1.7-stage-gate-re-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-16-v1.7-stage-gate-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-20-v1.8-re-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-20-v1.8-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-20-v1.9-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-27-v2.0-re-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-27-v2.0-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-07-30-v2.0-ab-stage-gate-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-03-v2.0-c-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-03-v2.0-d-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-17-v2.1-a-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-21-v2.0-e-re-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-08-21-v2.0-e-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-09-07-v2.1-a-complex-feature-library-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\2026-09-07-v2.1-b-hole-features-review.md",
+    "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\reviewrep\\CLAUDE_CODE_REVIEW_PROTOCOL.md"
+  ]
+}

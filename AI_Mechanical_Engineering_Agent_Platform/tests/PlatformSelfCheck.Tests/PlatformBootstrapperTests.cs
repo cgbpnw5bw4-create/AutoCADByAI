@@ -65,7 +65,8 @@ public sealed class PlatformBootstrapperTests
         var platform = PlatformBootstrapper.CreateDefault();
         var outputRoot = Path.Combine(Path.GetTempPath(), "ai_me_self_check_tests", Guid.NewGuid().ToString("N"));
 
-        var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot);
+        var report = await PlatformSelfCheckRunner.RunAsync(platform, outputRoot,
+            partFamilyEvidenceRoot: Path.Combine(outputRoot, "missing-family-evidence"));
 
         var reportPath = Path.Combine(outputRoot, "reports", "platform_self_check_report.json");
         Assert.True(File.Exists(reportPath));

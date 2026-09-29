@@ -405,6 +405,7 @@ public sealed class V20CFeatureAdapterTests
             };
             var buildReport = WriteJson(root, "build_report.json", new
             {
+                part_type = PlateBasic4HolesDefinition.Type,
                 real_cad_executed = true,
                 real_cad_connected = true,
                 solidworks_version = "33.5.0",

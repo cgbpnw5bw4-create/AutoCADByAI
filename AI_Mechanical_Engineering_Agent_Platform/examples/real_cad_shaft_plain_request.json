@@ -1,0 +1,32 @@
+{
+  "operation": "build_part_family_release_package",
+  "cad_model_spec": {
+    "model_id": "real-cad-shaft-plain-v2-2-d",
+    "model_type": "shaft_basic",
+    "unit": "mm",
+    "parameters": {
+      "diameter_mm": "40",
+      "length_mm": "180"
+    },
+    "reference_geometry": {},
+    "sketches": [],
+    "features": [],
+    "material": "45 steel",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json"
+    ],
+    "drawing_requirements": {
+      "generate_drawing": "false",
+      "generate_dimensions": "false",
+      "generate_title_block": "false",
+      "generate_release_package": "true"
+    },
+    "execution_options": {
+      "dry_run": "false"
+    }
+  }
+}

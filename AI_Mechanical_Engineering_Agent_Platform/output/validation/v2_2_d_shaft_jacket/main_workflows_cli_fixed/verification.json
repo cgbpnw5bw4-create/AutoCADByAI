@@ -1,0 +1,4263 @@
+{
+  "status": "Failed",
+  "configuration": {
+    "config_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\config\\solidworks.local.json",
+    "cad_environment": {
+      "SW_TEMPLATE_PART_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_part.prtdot",
+      "SW_TEMPLATE_DRAWING_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_a3.drwdot",
+      "SW_CONNECT_TIMEOUT_SECONDS": "120",
+      "SW_EXECUTION_TIMEOUT_SECONDS": "300",
+      "SW_VISIBLE": "true",
+      "SW_FEATURE_EXECUTION_SMOKE_TEST": "true"
+    }
+  },
+  "cases": [
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+        "size_bytes": 879,
+        "sha256": "9f82f30e128c299b8dea680595edcc01cf957bdc16eddce1491a8ed2eb5ab057"
+      },
+      "status": "Passed",
+      "process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\CliHost.dll",
+          "run-cad-workflow",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\main.log",
+        "started_at": "2026-09-28T01:58:31Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:36Z"
+      },
+      "release_directory": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b",
+      "files_before": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.SLDPRT",
+          "size_bytes": 89345,
+          "sha256": "c8fcad2ec6b8a8fc72da16e1fb5fe587219f9afe99728bf3309e8a6a51a8f8ad"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.SLDPRT",
+          "size_bytes": 89345,
+          "sha256": "c8fcad2ec6b8a8fc72da16e1fb5fe587219f9afe99728bf3309e8a6a51a8f8ad"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.STEP",
+          "size_bytes": 23448,
+          "sha256": "5369676234a650d80fb6f730669af06bfe500e18ce6d9cc14b6a7b71e033f134"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.STEP",
+          "size_bytes": 23448,
+          "sha256": "5369676234a650d80fb6f730669af06bfe500e18ce6d9cc14b6a7b71e033f134"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\build_report.json",
+          "size_bytes": 23113,
+          "sha256": "ea19663cb9c15b09233a3bcb08fa6abc89f08ad446accc902589f47852f207f2"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\build_report.json",
+          "size_bytes": 23113,
+          "sha256": "ea19663cb9c15b09233a3bcb08fa6abc89f08ad446accc902589f47852f207f2"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\release_manifest.json",
+          "size_bytes": 4314,
+          "sha256": "73ba87e0d2becc70e49851e38d9b21a559bf695ea7f411cd9f78089e9c9b6a99"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\package_quality_report.json",
+          "size_bytes": 4747,
+          "sha256": "d2d5e8852860729a2ece85c4f672efff5d340f216b7bf995109a07a2d4e9b90a"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\e2e_execution_report.json",
+          "size_bytes": 2954,
+          "sha256": "68fbf3be0bc87bf82f1b916260acaa54cc10a5b535a265f11daa6c1af1ed6891"
+        }
+      },
+      "probe_input_copies": {
+        "native": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.SLDPRT",
+            "size_bytes": 89345,
+            "sha256": "c8fcad2ec6b8a8fc72da16e1fb5fe587219f9afe99728bf3309e8a6a51a8f8ad"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\native_7a748eba18e44635a3738ceb53d6fd26.SLDPRT",
+            "size_bytes": 89345,
+            "sha256": "c8fcad2ec6b8a8fc72da16e1fb5fe587219f9afe99728bf3309e8a6a51a8f8ad"
+          }
+        },
+        "step": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.STEP",
+            "size_bytes": 23448,
+            "sha256": "5369676234a650d80fb6f730669af06bfe500e18ce6d9cc14b6a7b71e033f134"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\step_0f5cd95a88c44e8ca1211ee81d6216e3.STEP",
+            "size_bytes": 23448,
+            "sha256": "5369676234a650d80fb6f730669af06bfe500e18ce6d9cc14b6a7b71e033f134"
+          }
+        }
+      },
+      "native_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\native_7a748eba18e44635a3738ceb53d6fd26.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\native_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\native_probe.log",
+        "started_at": "2026-09-28T01:58:36Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:39Z"
+      },
+      "step_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\step_0f5cd95a88c44e8ca1211ee81d6216e3.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\step_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\step_probe.log",
+        "started_at": "2026-09-28T01:58:39Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:43Z"
+      },
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 183971.6657942183,
+          "step_mm3": 183971.66579421828,
+          "absolute_difference_mm3": 2.9103830456733704e-11,
+          "tolerance_mm3": 0.1839716657942183,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -20.0,
+              "step_mm": -20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": -20.0,
+              "step_mm": -20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -180.0,
+              "step_mm": -180.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 20.0,
+              "step_mm": 20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 20.0,
+              "step_mm": 20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "cylinders": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_unique": [
+            {
+              "diameter_mm": 40.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "diameter_mm": 32.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "diameter_mm": 24.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "step_unique": [
+            {
+              "diameter_mm": 24.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "diameter_mm": 32.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "diameter_mm": 40.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "circles": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_edge_count": 6,
+          "step_edge_count": 12,
+          "native_unique": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 4,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 5,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "step_unique": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 4,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 5,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "native_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 4,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 5,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "step_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                12.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 75.39822368615503,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 12,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -150.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -150,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                16.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 100.53096491487338,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 16,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -110.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 4,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -110,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 5,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "native_excluded_edges": [],
+          "step_excluded_edges": [],
+          "native_inferred_tori": [],
+          "missing_mouths_in_step": [],
+          "unexpected_mouths_in_step": [],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      },
+      "engineering_acceptance": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\independent_geometry_acceptance.json",
+        "size_bytes": 24281,
+        "sha256": "25fb7d4f8990862cf945f28bf446696a1fd29808caaf8ae97843a977254f5b2a"
+      },
+      "probes": {
+        "native": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\native_probe.json",
+          "size_bytes": 9338,
+          "sha256": "c8ca7eaf4997b6b0a08eafe268de632ac2dca71c7b3d000d7b56e2fb3aea4539"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_request\\step_probe.json",
+          "size_bytes": 18844,
+          "sha256": "a446afa27b26fb8082406ba1647b1b7ad42cfe664cbf0161d7517b156c331802"
+        }
+      },
+      "files_after": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.SLDPRT",
+          "size_bytes": 89345,
+          "sha256": "c8fcad2ec6b8a8fc72da16e1fb5fe587219f9afe99728bf3309e8a6a51a8f8ad"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.SLDPRT",
+          "size_bytes": 89345,
+          "sha256": "c8fcad2ec6b8a8fc72da16e1fb5fe587219f9afe99728bf3309e8a6a51a8f8ad"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\shaft_basic.STEP",
+          "size_bytes": 23448,
+          "sha256": "5369676234a650d80fb6f730669af06bfe500e18ce6d9cc14b6a7b71e033f134"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\artifacts\\shaft_basic.STEP",
+          "size_bytes": 23448,
+          "sha256": "5369676234a650d80fb6f730669af06bfe500e18ce6d9cc14b6a7b71e033f134"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-1e196ec77fe94681922f7e64192cfecb\\build_report.json",
+          "size_bytes": 23113,
+          "sha256": "ea19663cb9c15b09233a3bcb08fa6abc89f08ad446accc902589f47852f207f2"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\build_report.json",
+          "size_bytes": 23113,
+          "sha256": "ea19663cb9c15b09233a3bcb08fa6abc89f08ad446accc902589f47852f207f2"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\release_manifest.json",
+          "size_bytes": 4314,
+          "sha256": "73ba87e0d2becc70e49851e38d9b21a559bf695ea7f411cd9f78089e9c9b6a99"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\package_quality_report.json",
+          "size_bytes": 4747,
+          "sha256": "d2d5e8852860729a2ece85c4f672efff5d340f216b7bf995109a07a2d4e9b90a"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015831_534-47ee47f40ae74362be5046277a47fc6b\\reports\\e2e_execution_report.json",
+          "size_bytes": 2954,
+          "sha256": "68fbf3be0bc87bf82f1b916260acaa54cc10a5b535a265f11daa6c1af1ed6891"
+        }
+      }
+    },
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_plain_request.json",
+        "size_bytes": 795,
+        "sha256": "51f6782c189ce457702abbdfb629e5b4e1efed205c3dd65fc3908859fefa9901"
+      },
+      "status": "Passed",
+      "process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\CliHost.dll",
+          "run-cad-workflow",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_plain_request.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\main.log",
+        "started_at": "2026-09-28T01:58:43Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:47Z"
+      },
+      "release_directory": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972",
+      "files_before": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.SLDPRT",
+          "size_bytes": 79069,
+          "sha256": "344db72c059c5d01d8624e335acf018e4e95a213ba2b36916f97e9be5416f2ff"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.SLDPRT",
+          "size_bytes": 79069,
+          "sha256": "344db72c059c5d01d8624e335acf018e4e95a213ba2b36916f97e9be5416f2ff"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.STEP",
+          "size_bytes": 11901,
+          "sha256": "27066786b491364b68229f7fab3074aa22d6f1359e2d3b3609d3afc22a27f013"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.STEP",
+          "size_bytes": 11901,
+          "sha256": "27066786b491364b68229f7fab3074aa22d6f1359e2d3b3609d3afc22a27f013"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\build_report.json",
+          "size_bytes": 19542,
+          "sha256": "2d3bea7060f143d150dbdbebf95e8512bd966be0f55ec81dd94c75b897fb7aac"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\build_report.json",
+          "size_bytes": 19542,
+          "sha256": "2d3bea7060f143d150dbdbebf95e8512bd966be0f55ec81dd94c75b897fb7aac"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\release_manifest.json",
+          "size_bytes": 4315,
+          "sha256": "e2ca2cc68d6365b39ccaef01d38a6754c58740d62266332270f03e2470e4aecd"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\package_quality_report.json",
+          "size_bytes": 4748,
+          "sha256": "485cce6a7dcca86cedf4114ad6fdd60964c2c05073deeed66c487aae40fc851d"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\e2e_execution_report.json",
+          "size_bytes": 2954,
+          "sha256": "d004e411dfecdba9d7b742e59d2e3032baba2ccaf86599b7f01f03e26ac4924e"
+        }
+      },
+      "probe_input_copies": {
+        "native": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.SLDPRT",
+            "size_bytes": 79069,
+            "sha256": "344db72c059c5d01d8624e335acf018e4e95a213ba2b36916f97e9be5416f2ff"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\native_df16de3d42224ee4a47bb1fd5d0f4db0.SLDPRT",
+            "size_bytes": 79069,
+            "sha256": "344db72c059c5d01d8624e335acf018e4e95a213ba2b36916f97e9be5416f2ff"
+          }
+        },
+        "step": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.STEP",
+            "size_bytes": 11901,
+            "sha256": "27066786b491364b68229f7fab3074aa22d6f1359e2d3b3609d3afc22a27f013"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\step_0d74c07ae5754e0caefc2dfc2319b6af.STEP",
+            "size_bytes": 11901,
+            "sha256": "27066786b491364b68229f7fab3074aa22d6f1359e2d3b3609d3afc22a27f013"
+          }
+        }
+      },
+      "native_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\native_df16de3d42224ee4a47bb1fd5d0f4db0.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\native_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\native_probe.log",
+        "started_at": "2026-09-28T01:58:47Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:50Z"
+      },
+      "step_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\step_0d74c07ae5754e0caefc2dfc2319b6af.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\step_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\step_probe.log",
+        "started_at": "2026-09-28T01:58:50Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:53Z"
+      },
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 226194.67105846512,
+          "step_mm3": 226194.67105846512,
+          "absolute_difference_mm3": 0.0,
+          "tolerance_mm3": 0.2261946710584651,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -20.0,
+              "step_mm": -20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": -20.0,
+              "step_mm": -20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -180.0,
+              "step_mm": -180.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 20.0,
+              "step_mm": 20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 20.0,
+              "step_mm": 20.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "cylinders": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_unique": [
+            {
+              "diameter_mm": 40.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "step_unique": [
+            {
+              "diameter_mm": 40.0,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "circles": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_edge_count": 2,
+          "step_edge_count": 4,
+          "native_unique": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "step_unique": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "native_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "step_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                -180.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": -180,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ],
+              "normal": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 125.66370614359172,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 20,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 1
+                }
+              }
+            }
+          ],
+          "native_excluded_edges": [],
+          "step_excluded_edges": [],
+          "native_inferred_tori": [],
+          "missing_mouths_in_step": [],
+          "unexpected_mouths_in_step": [],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      },
+      "engineering_acceptance": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\independent_geometry_acceptance.json",
+        "size_bytes": 14948,
+        "sha256": "024135bc15283ca4518d8239fff58fdd24f2b79bcc9e66654ee7962e427c40dd"
+      },
+      "probes": {
+        "native": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\native_probe.json",
+          "size_bytes": 5959,
+          "sha256": "a38b87b9bfdb078fe5974f4bce91c582e6c3a97771665a80dd4b2fde83b82713"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_shaft_plain_request\\step_probe.json",
+          "size_bytes": 9005,
+          "sha256": "3e0f8873a64a7c1c016fd495541059a233c84bab5630d4edbb4cceba92664bf6"
+        }
+      },
+      "files_after": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.SLDPRT",
+          "size_bytes": 79069,
+          "sha256": "344db72c059c5d01d8624e335acf018e4e95a213ba2b36916f97e9be5416f2ff"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.SLDPRT",
+          "size_bytes": 79069,
+          "sha256": "344db72c059c5d01d8624e335acf018e4e95a213ba2b36916f97e9be5416f2ff"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\shaft_basic.STEP",
+          "size_bytes": 11901,
+          "sha256": "27066786b491364b68229f7fab3074aa22d6f1359e2d3b3609d3afc22a27f013"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\artifacts\\shaft_basic.STEP",
+          "size_bytes": 11901,
+          "sha256": "27066786b491364b68229f7fab3074aa22d6f1359e2d3b3609d3afc22a27f013"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\shaft_basic\\solidworks-main-workflow-task-755d45a967084434b2cebd4b9be28186\\build_report.json",
+          "size_bytes": 19542,
+          "sha256": "2d3bea7060f143d150dbdbebf95e8512bd966be0f55ec81dd94c75b897fb7aac"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\build_report.json",
+          "size_bytes": 19542,
+          "sha256": "2d3bea7060f143d150dbdbebf95e8512bd966be0f55ec81dd94c75b897fb7aac"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\release_manifest.json",
+          "size_bytes": 4315,
+          "sha256": "e2ca2cc68d6365b39ccaef01d38a6754c58740d62266332270f03e2470e4aecd"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\package_quality_report.json",
+          "size_bytes": 4748,
+          "sha256": "485cce6a7dcca86cedf4114ad6fdd60964c2c05073deeed66c487aae40fc851d"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\shaft_basic\\cad-e2e-20260928_015843_332-d711b0bb13e141d7b4896c26d3f45972\\reports\\e2e_execution_report.json",
+          "size_bytes": 2954,
+          "sha256": "d004e411dfecdba9d7b742e59d2e3032baba2ccaf86599b7f01f03e26ac4924e"
+        }
+      }
+    },
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_jacket_request.json",
+        "size_bytes": 802,
+        "sha256": "9e4a71df60340fe95c932de485930aef99240fe9eaaac0dd4d75613513fe1c2e"
+      },
+      "status": "Passed",
+      "process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\CliHost.dll",
+          "run-cad-workflow",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_jacket_request.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\main.log",
+        "started_at": "2026-09-28T01:58:53Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:58:58Z"
+      },
+      "release_directory": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3",
+      "files_before": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.SLDPRT",
+          "size_bytes": 68996,
+          "sha256": "1884de9e828e825ff1bc89147b4454575f9fdd9f7ed9398fb185c9dc0155d924"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.SLDPRT",
+          "size_bytes": 68996,
+          "sha256": "1884de9e828e825ff1bc89147b4454575f9fdd9f7ed9398fb185c9dc0155d924"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.STEP",
+          "size_bytes": 17185,
+          "sha256": "e207bd15a3ef8a6ee9390d38ef9d931a1e0536a08e5266197d4dc15a5457c32f"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.STEP",
+          "size_bytes": 17185,
+          "sha256": "e207bd15a3ef8a6ee9390d38ef9d931a1e0536a08e5266197d4dc15a5457c32f"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\build_report.json",
+          "size_bytes": 20951,
+          "sha256": "752826bf79c8600a66a42cdbbfadec592a93912a5ea625d0ac1c1a283f565450"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\build_report.json",
+          "size_bytes": 20951,
+          "sha256": "752826bf79c8600a66a42cdbbfadec592a93912a5ea625d0ac1c1a283f565450"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\release_manifest.json",
+          "size_bytes": 4330,
+          "sha256": "828333c01037e9b9c0ec1f42fb95daabd59ff6b0fd59884294ff79b61f1cdec2"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\package_quality_report.json",
+          "size_bytes": 4754,
+          "sha256": "65d5772cac461b44faf26c7fbae1eb0f36a96d4f175e8c136ca634c1900cbc34"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\e2e_execution_report.json",
+          "size_bytes": 2960,
+          "sha256": "c787e368a48a7fee41acef3b64d8a366229036e21c5722355ea59b3d4df52f5a"
+        }
+      },
+      "probe_input_copies": {
+        "native": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.SLDPRT",
+            "size_bytes": 68996,
+            "sha256": "1884de9e828e825ff1bc89147b4454575f9fdd9f7ed9398fb185c9dc0155d924"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\native_14243ed4ad5f40f5b0e3ce4c680520ef.SLDPRT",
+            "size_bytes": 68996,
+            "sha256": "1884de9e828e825ff1bc89147b4454575f9fdd9f7ed9398fb185c9dc0155d924"
+          }
+        },
+        "step": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.STEP",
+            "size_bytes": 17185,
+            "sha256": "e207bd15a3ef8a6ee9390d38ef9d931a1e0536a08e5266197d4dc15a5457c32f"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\step_52ef02b9d7074b1c8a968569711282cc.STEP",
+            "size_bytes": 17185,
+            "sha256": "e207bd15a3ef8a6ee9390d38ef9d931a1e0536a08e5266197d4dc15a5457c32f"
+          }
+        }
+      },
+      "native_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\native_14243ed4ad5f40f5b0e3ce4c680520ef.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\native_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\native_probe.log",
+        "started_at": "2026-09-28T01:58:58Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:59:01Z"
+      },
+      "step_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\step_52ef02b9d7074b1c8a968569711282cc.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\step_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\step_probe.log",
+        "started_at": "2026-09-28T01:59:01Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:59:03Z"
+      },
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 735132.680940013,
+          "step_mm3": 735132.6809400124,
+          "absolute_difference_mm3": 5.820766091346741e-10,
+          "tolerance_mm3": 0.735132680940013,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -70.00000000000001,
+              "step_mm": -70.0,
+              "absolute_difference_mm": 1.4210854715202004e-14,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -70.00000000000001,
+              "step_mm": -70.0,
+              "absolute_difference_mm": 1.4210854715202004e-14,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 70.00000000000001,
+              "step_mm": 70.0,
+              "absolute_difference_mm": 1.4210854715202004e-14,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 180.0,
+              "step_mm": 180.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 70.00000000000001,
+              "step_mm": 70.0,
+              "absolute_difference_mm": 1.4210854715202004e-14,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "cylinders": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_unique": [
+            {
+              "diameter_mm": 140.00000000000003,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "diameter_mm": 120.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "step_unique": [
+            {
+              "diameter_mm": 120.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "diameter_mm": 140.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "circles": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_edge_count": 4,
+          "step_edge_count": 8,
+          "native_unique": [
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                70.00000000000001
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 439.82297150257114,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 70.00000000000001,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                70.00000000000001
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 439.82297150257114,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 70.00000000000001,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": -1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "step_unique": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": -1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                70.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 439.822971502571,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 70,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                70.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 439.822971502571,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 70,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "native_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                70.00000000000001
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 439.82297150257114,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 70.00000000000001,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                70.00000000000001
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 439.82297150257114,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 70.00000000000001,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": -1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "step_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                60.0
+              ],
+              "normal": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 376.99111843077515,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 60,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": -1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                0.0,
+                0.0,
+                70.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 439.822971502571,
+                "AnchorXMm": 0,
+                "AnchorYMm": 0,
+                "AnchorZMm": 0,
+                "RadiusMm": 70,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                0.0,
+                180.0,
+                0.0,
+                70.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 439.822971502571,
+                "AnchorXMm": 0,
+                "AnchorYMm": 180,
+                "AnchorZMm": 0,
+                "RadiusMm": 70,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "native_excluded_edges": [],
+          "step_excluded_edges": [],
+          "native_inferred_tori": [],
+          "missing_mouths_in_step": [],
+          "unexpected_mouths_in_step": [],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      },
+      "engineering_acceptance": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\independent_geometry_acceptance.json",
+        "size_bytes": 19958,
+        "sha256": "9aa74a4e13a4d7c39bb1a3de47a11aea3733ab77cca6751101d75b9c5bd50308"
+      },
+      "probes": {
+        "native": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\native_probe.json",
+          "size_bytes": 8132,
+          "sha256": "2ef17b17dd9fc01770fe59990eee14c962bfb8c0b8ea2afdfd17724db5b0a80d"
+        },
+        "step": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\real_cad_jacket_request\\step_probe.json",
+          "size_bytes": 13842,
+          "sha256": "3166c9d0e937211c5d803c0e83bc7e91051727221609e3c4b7260a00b52f2f41"
+        }
+      },
+      "files_after": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.SLDPRT",
+          "size_bytes": 68996,
+          "sha256": "1884de9e828e825ff1bc89147b4454575f9fdd9f7ed9398fb185c9dc0155d924"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.SLDPRT",
+          "size_bytes": 68996,
+          "sha256": "1884de9e828e825ff1bc89147b4454575f9fdd9f7ed9398fb185c9dc0155d924"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\jacket_basic.STEP",
+          "size_bytes": 17185,
+          "sha256": "e207bd15a3ef8a6ee9390d38ef9d931a1e0536a08e5266197d4dc15a5457c32f"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\artifacts\\jacket_basic.STEP",
+          "size_bytes": 17185,
+          "sha256": "e207bd15a3ef8a6ee9390d38ef9d931a1e0536a08e5266197d4dc15a5457c32f"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\jacket_basic\\solidworks-main-workflow-task-55c55581f18941a097f8e244077e59d3\\build_report.json",
+          "size_bytes": 20951,
+          "sha256": "752826bf79c8600a66a42cdbbfadec592a93912a5ea625d0ac1c1a283f565450"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\build_report.json",
+          "size_bytes": 20951,
+          "sha256": "752826bf79c8600a66a42cdbbfadec592a93912a5ea625d0ac1c1a283f565450"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\release_manifest.json",
+          "size_bytes": 4330,
+          "sha256": "828333c01037e9b9c0ec1f42fb95daabd59ff6b0fd59884294ff79b61f1cdec2"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\package_quality_report.json",
+          "size_bytes": 4754,
+          "sha256": "65d5772cac461b44faf26c7fbae1eb0f36a96d4f175e8c136ca634c1900cbc34"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\jacket_basic\\cad-e2e-20260928_015853_327-fbc28276d7224e78a34b96f4a0ac56d3\\reports\\e2e_execution_report.json",
+          "size_bytes": 2960,
+          "sha256": "c787e368a48a7fee41acef3b64d8a366229036e21c5722355ea59b3d4df52f5a"
+        }
+      }
+    },
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+        "size_bytes": 4771,
+        "sha256": "093f7c3a9c7434afd4efff7a9c082af04f979888eb72c1ce0634a9f2a18e291b"
+      },
+      "status": "Running",
+      "process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\CliHost.dll",
+          "run-cad-workflow",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\main.log",
+        "started_at": "2026-09-28T01:59:04Z",
+        "timeout_seconds": 600,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:59:19Z"
+      },
+      "release_directory": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d",
+      "files_before": {
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\plate_basic_4holes.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\plate_basic_4holes.SLDPRT",
+          "size_bytes": 74958,
+          "sha256": "bd44b4c73a7627219c42c152012c1d7ef0e347d7c085a8d3add07137f4c76242"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\artifacts\\plate_basic_4holes.SLDPRT": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\artifacts\\plate_basic_4holes.SLDPRT",
+          "size_bytes": 74958,
+          "sha256": "bd44b4c73a7627219c42c152012c1d7ef0e347d7c085a8d3add07137f4c76242"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\plate_basic_4holes.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\plate_basic_4holes.STEP",
+          "size_bytes": 37106,
+          "sha256": "d8cdf5cd6569aa3c79faa0b4362ae1f32d340214b37ae217ee9d7baa8fbaf0ea"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\artifacts\\plate_basic_4holes.STEP": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\artifacts\\plate_basic_4holes.STEP",
+          "size_bytes": 37106,
+          "sha256": "d8cdf5cd6569aa3c79faa0b4362ae1f32d340214b37ae217ee9d7baa8fbaf0ea"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\build_report.json",
+          "size_bytes": 21074,
+          "sha256": "5d60186999204002126ad6b76ce9aa9c890f8e0f6858ffeca563e301f08b26bc"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\build_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\build_report.json",
+          "size_bytes": 21074,
+          "sha256": "5d60186999204002126ad6b76ce9aa9c890f8e0f6858ffeca563e301f08b26bc"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\feature_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\feature_execution_report.json",
+          "size_bytes": 9726,
+          "sha256": "7c03bc1135b64bc1c033b092294e557f1263aa8d27c536c35c19d15ef85c6a76"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\feature_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\feature_execution_report.json",
+          "size_bytes": 9726,
+          "sha256": "7c03bc1135b64bc1c033b092294e557f1263aa8d27c536c35c19d15ef85c6a76"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\geometry_validation_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\geometry_validation_report.json",
+          "size_bytes": 15972,
+          "sha256": "be11f781db04dde4c975e11ccc60562cb6708656b3bd7dd917de769478c72b9f"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\geometry_validation_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\geometry_validation_report.json",
+          "size_bytes": 15972,
+          "sha256": "be11f781db04dde4c975e11ccc60562cb6708656b3bd7dd917de769478c72b9f"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\rebuild_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\real\\plate_basic_4holes\\solidworks-main-workflow-task-a9a30ed271e44a26bc47a3172bcdc77a\\rebuild\\rebuild_report.json",
+          "size_bytes": 1405,
+          "sha256": "4c23bec3f167215a4a948f982b2e2b3538a4652c6a1855670aec93222c888384"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\rebuild_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\rebuild_report.json",
+          "size_bytes": 1405,
+          "sha256": "4c23bec3f167215a4a948f982b2e2b3538a4652c6a1855670aec93222c888384"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\release_manifest.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\release_manifest.json",
+          "size_bytes": 7103,
+          "sha256": "6eb31816c8a28229d244f265ebe96ed917950554b04d2890c5d55b8b8148132a"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\package_quality_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\package_quality_report.json",
+          "size_bytes": 4799,
+          "sha256": "a8b21fdb82d1a49497999d0ac71045e99d7f5dd532b773792a956b4bee6a0932"
+        },
+        "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\e2e_execution_report.json": {
+          "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\reports\\e2e_execution_report.json",
+          "size_bytes": 4681,
+          "sha256": "79ab102f5ba5bb0255aa11dda16bd9097dd23641b123f60fa6366ea5bb5c4a8c"
+        }
+      },
+      "probe_input_copies": {
+        "native": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\artifacts\\plate_basic_4holes.SLDPRT",
+            "size_bytes": 74958,
+            "sha256": "bd44b4c73a7627219c42c152012c1d7ef0e347d7c085a8d3add07137f4c76242"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\native_7795c4e351b44a55a8df067fcfdd95ab.SLDPRT",
+            "size_bytes": 74958,
+            "sha256": "bd44b4c73a7627219c42c152012c1d7ef0e347d7c085a8d3add07137f4c76242"
+          }
+        },
+        "step": {
+          "source": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\e2e\\plate_basic_4holes\\cad-e2e-20260928_015904_263-dd1a20118fa74c84ad5456611a89445d\\artifacts\\plate_basic_4holes.STEP",
+            "size_bytes": 37106,
+            "sha256": "d8cdf5cd6569aa3c79faa0b4362ae1f32d340214b37ae217ee9d7baa8fbaf0ea"
+          },
+          "copy": {
+            "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\step_8f1d87a79f5d4c4d94c51a3f80073bf3.STEP",
+            "size_bytes": 37106,
+            "sha256": "d8cdf5cd6569aa3c79faa0b4362ae1f32d340214b37ae217ee9d7baa8fbaf0ea"
+          }
+        }
+      },
+      "native_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\native_7795c4e351b44a55a8df067fcfdd95ab.SLDPRT",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\native_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\native_probe.log",
+        "started_at": "2026-09-28T01:59:19Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:59:23Z"
+      },
+      "step_process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\step_8f1d87a79f5d4c4d94c51a3f80073bf3.STEP",
+          "--confirm-real-cad",
+          "--json",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\step_probe.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows_cli_fixed\\parameter_update_plate\\step_probe.log",
+        "started_at": "2026-09-28T01:59:23Z",
+        "timeout_seconds": 300,
+        "exit_code": 0,
+        "finished_at": "2026-09-28T01:59:27Z"
+      },
+      "step_geometry_match": {
+        "body_count": {
+          "native": 1,
+          "step": 1,
+          "matched": true
+        },
+        "volume": {
+          "native_mm3": 295287.6110196154,
+          "step_mm3": 295287.6110196153,
+          "absolute_difference_mm3": 5.820766091346741e-11,
+          "tolerance_mm3": 0.29528761101961537,
+          "matched": true
+        },
+        "exact_extents": {
+          "tolerance_mm": 0.001,
+          "coordinates": [
+            {
+              "coordinate": "MinXmm",
+              "native_mm": -100.0,
+              "step_mm": -100.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinYmm",
+              "native_mm": 0.0,
+              "step_mm": 0.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MinZmm",
+              "native_mm": -50.0,
+              "step_mm": -50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxXmm",
+              "native_mm": 100.0,
+              "step_mm": 100.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxYmm",
+              "native_mm": 15.0,
+              "step_mm": 15.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            },
+            {
+              "coordinate": "MaxZmm",
+              "native_mm": 50.0,
+              "step_mm": 50.0,
+              "absolute_difference_mm": 0.0,
+              "matched": true
+            }
+          ],
+          "matched": true
+        },
+        "cylinders": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_unique": [
+            {
+              "diameter_mm": 10.000000000000009,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                -80.0,
+                0.0,
+                30.0
+              ]
+            },
+            {
+              "diameter_mm": 10.000000000000009,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                80.0,
+                0.0,
+                30.0
+              ]
+            },
+            {
+              "diameter_mm": 10.00000000000001,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                -80.0,
+                0.0,
+                -30.0
+              ]
+            },
+            {
+              "diameter_mm": 10.00000000000001,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                80.0,
+                0.0,
+                -30.0
+              ]
+            }
+          ],
+          "step_unique": [
+            {
+              "diameter_mm": 10.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                80.0,
+                0.0,
+                -30.0
+              ]
+            },
+            {
+              "diameter_mm": 10.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                -80.0,
+                0.0,
+                -30.0
+              ]
+            },
+            {
+              "diameter_mm": 10.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                80.0,
+                0.0,
+                30.0
+              ]
+            },
+            {
+              "diameter_mm": 10.0,
+              "axis": [
+                -0.0,
+                1.0,
+                -0.0
+              ],
+              "perpendicular_origin_mm": [
+                -80.0,
+                0.0,
+                30.0
+              ]
+            }
+          ],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "circles": {
+          "tolerance_mm": 0.001,
+          "direction_tolerance": 1e-06,
+          "native_edge_count": 8,
+          "step_edge_count": 16,
+          "native_unique": [
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 12,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 13,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 14,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 15,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 16,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 17,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 18,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 19,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "step_unique": [
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 4,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 5,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 6,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 7,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "native_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 12,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 13,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 14,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 15,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                30.0,
+                5.000000000000004
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 16,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589796,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5.000000000000004,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 17,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 18,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                -30.0,
+                5.000000000000005
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 19,
+                "Kind": "circle",
+                "LengthMm": 31.415926535897963,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5.000000000000005,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "step_coaxial_mouths": [
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 0,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 1,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                0.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 2,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                0.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 3,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 0,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "plane",
+                  "cylinder"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 4,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 5,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": 30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                -80.0,
+                15.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 6,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": -80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            },
+            {
+              "point_radius_mm": [
+                80.0,
+                15.0,
+                -30.0,
+                5.0
+              ],
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "edge": {
+                "Index": 7,
+                "Kind": "circle",
+                "LengthMm": 31.41592653589793,
+                "AnchorXMm": 80,
+                "AnchorYMm": 15,
+                "AnchorZMm": -30,
+                "RadiusMm": 5,
+                "AdjacentSurfaceKinds": [
+                  "cylinder",
+                  "plane"
+                ],
+                "Direction": {
+                  "X": 0,
+                  "Y": 1,
+                  "Z": 0
+                }
+              }
+            }
+          ],
+          "native_excluded_edges": [],
+          "step_excluded_edges": [],
+          "native_inferred_tori": [],
+          "missing_mouths_in_step": [],
+          "unexpected_mouths_in_step": [],
+          "missing_in_step": [],
+          "unexpected_in_step": [],
+          "matched": true
+        },
+        "passed": true
+      }
+    }
+  ],
+  "execution_files_before": [
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\parameter_update_plate.json",
+      "size_bytes": 4771,
+      "sha256": "093f7c3a9c7434afd4efff7a9c082af04f979888eb72c1ce0634a9f2a18e291b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\AxialSectionGeometryValidator.cs",
+      "size_bytes": 6497,
+      "sha256": "46562ba826dc39e0e9d2fe475260383aca397f60b7178c60fd9a0c29f25ebbd0"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\EdgeSelection.cs",
+      "size_bytes": 12637,
+      "sha256": "6659c8e5a78dd455c1dad766d70b0217f562f55226b3df9e18ba14274c66860a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\ExpectedPartGeometry.cs",
+      "size_bytes": 3955,
+      "sha256": "6c1b626a5e1a4d61e4bc48bc9d875582ebba80958aa2d1adce0bed11aaab6411"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\FeatureParameterSchemaRegistry.cs",
+      "size_bytes": 5734,
+      "sha256": "cabf61e283d8b202143249361ead06640ea9cd479c8c8a9369d98cdbd286b87b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GenericCadDescription.cs",
+      "size_bytes": 39482,
+      "sha256": "2a61572b219005fb6c7dbe9c013f9e869a590f4d3a886fa030a0813f7224d63a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\GeometryValidation.cs",
+      "size_bytes": 23803,
+      "sha256": "d29701e686fd25122d30549c5d599ca49b5830096f4126105b4bea0e8f197874"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleFeatureDefinition.cs",
+      "size_bytes": 17862,
+      "sha256": "29ce35cf05171008469752f0dbd42d6704490103af3de62ab875a690bf239297"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HoleGeometryValidation.cs",
+      "size_bytes": 8696,
+      "sha256": "ec126f5c5e40916538b9a27384498d7eeaa6c40bb06a214f22fa247ab409f3ce"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\HolePlanValidation.cs",
+      "size_bytes": 3505,
+      "sha256": "ce6d0c9030ac6765316b128822cf8137ec6887b307d2f1db5471ff3362a37d6a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\PartFamilies.cs",
+      "size_bytes": 49177,
+      "sha256": "7a5226a728ebd94e2edf27f20afd3ce6db1f774b16ed1754d905fb685dfc50b8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\DomainSchemas\\PartFamilyGenericModelFactory.cs",
+      "size_bytes": 16103,
+      "sha256": "b1cec079f633eb7b06faba1bfd505ff065bf80b40b0845d329c4cdf7f8f75ce8"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\ModelUpdateService.cs",
+      "size_bytes": 15554,
+      "sha256": "f775ba7e6ca75f936e7ee010cc1f05cc210f7a88ce0a406b78e0c1379fed8d76"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\reviewers\\SolidWorksBuildPlanReviewer.cs",
+      "size_bytes": 2910,
+      "sha256": "15ed15ffce9f18157b7331ea1eb17a407293b9c88240216b76e1670c1aae4c29"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksArtifactValidator.cs",
+      "size_bytes": 53830,
+      "sha256": "2dc2b610dae2e161dd73578333727e27149c45230dbc51b77fa4f6f4b866aa60"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Modules\\CADModeling\\validators\\SolidWorksBuildPlanValidator.cs",
+      "size_bytes": 7933,
+      "sha256": "afc5c59d44aaced68fc8bab554823c9af8d366ef4071ff6d9afbea99cb792804"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Chamfer\\ChamferHandler.cs",
+      "size_bytes": 5651,
+      "sha256": "768081402a0ba67d395bcb893d5e0dc2007e1b634aa1287f632470d88d5b9c3e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Cut\\ExtrudeCutHandler.cs",
+      "size_bytes": 4659,
+      "sha256": "f2a57177bfac9d49752d71053d8c733cdfe8d8c102f06a201c1e4db21ec98437"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Extrude\\ExtrudeBossHandler.cs",
+      "size_bytes": 4935,
+      "sha256": "9bad871d5246ad1978c6dac7c2a57e8586b9ba64349cdcc75ca31794abc22cda"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionEvidencePolicy.cs",
+      "size_bytes": 18935,
+      "sha256": "1e8057a7034c54fe1e340fb954ab71f51cae9a3431bb28a7fc83ca3e3103a386"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionPipeline.cs",
+      "size_bytes": 4223,
+      "sha256": "56fa61139c4b53b856c631017753baf33c26e4db588223659d15fef4848e50fa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerContracts.cs",
+      "size_bytes": 14850,
+      "sha256": "235f2b9e1616efd845fadacfb6f0beb129dec60b56d4c25a755df33694999774"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureHandlerRegistry.cs",
+      "size_bytes": 16367,
+      "sha256": "a3f672841298c87525efffd0c9c23556bf0d28b689cb1f8eaa8f4a82b4a8c124"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Fillet\\FilletHandler.cs",
+      "size_bytes": 5060,
+      "sha256": "87cd6a25953c6dfe03870c328535813250d5dbff0848bb1b4d424fa7f494dadd"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\GeometryValidationEvidencePolicy.cs",
+      "size_bytes": 2833,
+      "sha256": "5ec8df6bfa9f90180444d5383bb90b26bc9c52c5a4eb8a9c7dae65957ae77017"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleExecutionStrategies.cs",
+      "size_bytes": 2584,
+      "sha256": "6ec8a8a8898003ac4a31d04bbc733a0dacb84b784cb92d1423eda509f7deb40e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Hole\\HoleHandler.cs",
+      "size_bytes": 10226,
+      "sha256": "7830575476a364821f4d0c95d97dee0aa5e0247fa0d8f41837bd6f92ace73468"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Mirror\\MirrorHandler.cs",
+      "size_bytes": 6215,
+      "sha256": "b98f8067bcc875a16fc7ac058d01c3c5d2c0d49609e7cef356ed012ce5cf18f0"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\PartFamilyProductionEvidencePolicy.cs",
+      "size_bytes": 11625,
+      "sha256": "fd5bf3d2548c226cdbf36238b768097994f3e701f262faee68f2314b5e129cc6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\CircularPatternHandler.cs",
+      "size_bytes": 5988,
+      "sha256": "8298832a94fd8d7d559516acf482ccc8a4a7ed4e58266050b5a0770c268e9d60"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\LinearPatternHandler.cs",
+      "size_bytes": 6369,
+      "sha256": "c24227ea34f33530c28b003a53339b4c62df39357233e93c4e8084a372321c77"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Pattern\\PatternParameterRules.cs",
+      "size_bytes": 4627,
+      "sha256": "cccb0c173a633a01a0135668c6ecd2de237520a11b7e31d2561be00f7c291a93"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\RealSolidWorksFeatureAdapter.cs",
+      "size_bytes": 69966,
+      "sha256": "2804de0b60c760cfedb53e95754b05dd4e64cea8262cfce2a71cab529064218a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Revolve\\RevolveBossHandler.cs",
+      "size_bytes": 4819,
+      "sha256": "ea5feeb29a386108a7177254a648af2fb24d01159cdeb81dd4fe3e4759127568"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\Sketch\\SketchHandler.cs",
+      "size_bytes": 21482,
+      "sha256": "473c983ebf2aef0de7e1d73dc8960992fdb0aee8ee718b8d84ea994dded64178"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksEdgeEnumerator.cs",
+      "size_bytes": 8026,
+      "sha256": "473c6f2cb519dac4673ccd6aec31588c365681e1b24076fcfe77c2f0633e4c0a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksFeatureGraphPartFamilyBuilder.cs",
+      "size_bytes": 5159,
+      "sha256": "8f9be10727c0a10e8b695cacdca2d6c3d641a3879c044562da6576261555b2ea"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\SolidWorksGeometryReader.cs",
+      "size_bytes": 18615,
+      "sha256": "45e5f524e4092033e15ab20ba2507802cf4bc581d3e3325bfd2ce6130aef1799"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DFeatureGraphPartFamilyBuilder.cs",
+      "size_bytes": 4326,
+      "sha256": "6b1e02467f0a36cefa2dc150bf22813cca2851be05f1875f6af30cd4357f96a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\V20DThreeCircleCutEvidencePolicy.cs",
+      "size_bytes": 34897,
+      "sha256": "39eea0cb0db89ebf296475ad289a3e1027fbef721b5670e1398e1bbdbc3184fa"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\PartFamilyBuilders.cs",
+      "size_bytes": 8704,
+      "sha256": "3a1cf92b8b9b6562cc90ca32661c1d3a5b3512d2e67e123ab6ad07a3dc347eea"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\RealSolidWorksWorker.cs",
+      "size_bytes": 43476,
+      "sha256": "2783e7d3f64380190f6b1e230734f19b8df18bd87f027820ceeaab66344066f4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksComInterop.cs",
+      "size_bytes": 19469,
+      "sha256": "7a14bd5d9f8341657b34432072e2aa30092af33105d7c8e9f1891e2a9994681b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPartFamilyRealBuilders.cs",
+      "size_bytes": 49678,
+      "sha256": "259a8b3f15704e836d973b55940d960b5461e79b3231d01cb1e3bd224d06dd29"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\SolidWorksPlateBuilder.cs",
+      "size_bytes": 31941,
+      "sha256": "41ac366503c1f35aa7adbc8218f115c122257822d370a09726cddbe59aeaa0a3"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\Program.cs",
+      "size_bytes": 8895,
+      "sha256": "371ab3e0f6d6e2d85849a73563706128f1d6732653ba291700c9feba8c8f2168"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\SolidWorksEdgeProbe.csproj",
+      "size_bytes": 413,
+      "sha256": "bcba5b88df25c40544ad4c8c5c7f1e57cbec4003c0ed007bac37c3f89bad5529"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksFeatureExecutionSmokeRunner\\FeatureExecutionSmokeRunner.cs",
+      "size_bytes": 34521,
+      "sha256": "61aadae75f7778792c08fb309b58e0453ef9209d4fa56d4d36c37867972bfc04"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\Program.cs",
+      "size_bytes": 19681,
+      "sha256": "dfac8c1b3749b7428dce7426974c92cdcd1bacb31833cd227bed3884f409ab24"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\AgentContracts.dll",
+      "size_bytes": 27648,
+      "sha256": "793e052b3defbc8d930df679ccd7af26e8521221d7b7d9fb4b468e86f27f2776"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\AgentGatewayHost.dll",
+      "size_bytes": 36352,
+      "sha256": "efa121d59768864ac6a3637b34429d0701b8400556944d6f43a13d477056504e"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\AgentRuntime.Microsoft.dll",
+      "size_bytes": 56832,
+      "sha256": "a91bc936d2f052b04535999355e41f32f193a31dfd8e5f216b7b3784584c0543"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\AutoCADWorker.dll",
+      "size_bytes": 5632,
+      "sha256": "8d0be6f2f8ebdde32ed76686cf3e736892f5bdc1925749bd042dbb5d3b0fa4c5"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\CliHost.dll",
+      "size_bytes": 39936,
+      "sha256": "2aedeef93ff6dccf0f09a8b3ada8496dc4c45b8d50a569c6df06424b837fc1c4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 412160,
+      "sha256": "43d5978ad856836670022fdc3669918a808d63eb206238ef45c5c8e420f6858b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Google.Protobuf.dll",
+      "size_bytes": 489568,
+      "sha256": "b71be7a4e721d1b79456a0b52602a01a4414eb09bab4a04400f6f9d8a3895157"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Agents.AI.Abstractions.dll",
+      "size_bytes": 261944,
+      "sha256": "5b44bbe48c279cdee643190c51f7386701e49bf9f40d18a00d2cd78407a230db"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Agents.AI.dll",
+      "size_bytes": 791352,
+      "sha256": "c65a30a1e9c49ea73552fd85b7a72f0824e40c7041e2f1faceec5ef18d229cc7"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Extensions.AI.Abstractions.dll",
+      "size_bytes": 668984,
+      "sha256": "9be438464b011aa325c93307eadb72db2998f72287bcab5875ae9f67327e631f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Extensions.AI.dll",
+      "size_bytes": 507704,
+      "sha256": "eaab9cf14be28057eb2dfeadd31a5cf8d10e41dd46bf35337fb9c664290b9ba9"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Extensions.AI.Evaluation.dll",
+      "size_bytes": 67424,
+      "sha256": "663a352e9f883aa229df0ad38a81ccb13512f0deccd6172d4a7c2c19c6aeccad"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Extensions.Compliance.Abstractions.dll",
+      "size_bytes": 43584,
+      "sha256": "a6eae4c69aaf0f427cccc6af173f25536c9e046083d5e3cec5489754dcbc60ac"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.Extensions.VectorData.Abstractions.dll",
+      "size_bytes": 81952,
+      "sha256": "8984ce9b95a23a3ba8b06676f4e574efadc6d45c91420359668358e06557f175"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Microsoft.ML.Tokenizers.dll",
+      "size_bytes": 325896,
+      "sha256": "04b9cb9a6bce333071e071c6735a8914bb55e1ea1f197707ed71bf4cabf6ca77"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\ModelRuntime.dll",
+      "size_bytes": 9216,
+      "sha256": "3e9dc3b595d31107fd08f1614efc36ec9be427b954cdf40eb9f352f55dda72cc"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\ModuleContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "2633a529d516621a5e02fe828cb2128aa624af5ef519f40d877ac19a91c5471f"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\PlatformCore.dll",
+      "size_bytes": 999424,
+      "sha256": "5510c2167eab359f0587cc7e108d0a78e2df9817e1fc15d49b1f0aeb38dacf6a"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\QualityGate.dll",
+      "size_bytes": 28672,
+      "sha256": "2ecef267e5ad8571b4e4d8dec49be4d4c1b68980f1110ac46632c2f44b161443"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\SkillContracts.dll",
+      "size_bytes": 13824,
+      "sha256": "e66eba0fff439681568a522feaf49ae2eb531aef73ca310db8b8b9136eeb4f6d"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 594432,
+      "sha256": "adbfc47a69b4fda9756be552d24d309d6eade23d0bb66ee8ff23fb74f2afc029"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\Storage.dll",
+      "size_bytes": 12288,
+      "sha256": "f9cdc1b079bab53ce49c10126d61b4f62ece11c659c8a6e3d72ef986cf8a33a4"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\System.Numerics.Tensors.dll",
+      "size_bytes": 517928,
+      "sha256": "bcf16d3d886829cd731bcf9f26d685cff04d819c23bde4f1eece5a0fb2284041"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "27e9fdec4d938ae083c4ce2592edad84107cee4091e109f3fa3c6edbfb3944d6"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\DomainSchemas.dll",
+      "size_bytes": 412160,
+      "sha256": "43d5978ad856836670022fdc3669918a808d63eb206238ef45c5c8e420f6858b"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksEdgeProbe.dll",
+      "size_bytes": 19968,
+      "sha256": "84775af31e79b15e5a34882bb4ed881cbd3910c6bfba213fea07f49799997b70"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+      "size_bytes": 594432,
+      "sha256": "adbfc47a69b4fda9756be552d24d309d6eade23d0bb66ee8ff23fb74f2afc029"
+    },
+    {
+      "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\tools\\SolidWorksEdgeProbe\\bin\\Debug\\net10.0\\WorkerContracts.dll",
+      "size_bytes": 14848,
+      "sha256": "27e9fdec4d938ae083c4ce2592edad84107cee4091e109f3fa3c6edbfb3944d6"
+    }
+  ],
+  "updated_at": "2026-09-28T01:59:27Z",
+  "failure": "参数更新发布件四孔落点不匹配。"
+}

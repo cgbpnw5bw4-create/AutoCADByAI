@@ -15,20 +15,20 @@ namespace SolidWorksWorker.Features;
 /// </summary>
 public static partial class V20DThreeCircleCutEvidencePolicy
 {
-    public const string EvidenceId = "v2.2-c-20260914-three-circle-parameter-rebuild";
+    public const string EvidenceId = "v2.2-d-20260928-three-circle-parameter-rebuild";
     public const string ParameterProfile =
         "three_circles;diameter_10_mm;blind;single_end;positive_depth_mm;through_all_false;single_body_scope;plate_basic_4holes";
     public const string SolidWorksVersion = "31.5.0";
     public const string SampleInputRelativePath = "examples/parameter_update_plate.json";
     public const string CandidateDiagnosticRelativePath =
-        "evidence/solidworks/v2_2_c_refresh/20260914_013003_7170234/feature_execution_report.json";
+        "evidence/solidworks/v2_2_d_final/20260928_014831_1577398/feature_execution_report.json";
 
     // These values deliberately bind the exact sample and candidate run. They
     // are normalized out of the source-revision calculation below so that a
     // refreshed diagnostic can update them without creating a circular hash.
     public const string SampleInputSha256 = "093F7C3A9C7434AFD4EFFF7A9C082AF04F979888EB72C1CE0634A9F2A18E291B";
-    public const string CandidateReportSha256 = "BC02385F5317810775C0D50A42DE2BA4E8CAE0EACEB89F18CA23110BE5641D0D";
-    public const string SourceRevision = "v2.0-d-three-circle-source-sha256:3f20fa75e8d828208d211cfed5f9a46b8c93332ba31cd6238ad5d1437cf928dc";
+    public const string CandidateReportSha256 = "B54A30978B2A3FD69EF9B909DA9383D1EDABB5A752127F5EC373ED19148D4A5F";
+    public const string SourceRevision = "v2.0-d-three-circle-source-sha256:efc17d186b5ef03b6478bf46d593931adc45c7b543c50ba6c68197d381f7ab80";
 
     private const string SourceRevisionPrefix = "v2.0-d-three-circle-source-sha256:";
     private const double Tolerance = 1e-6;

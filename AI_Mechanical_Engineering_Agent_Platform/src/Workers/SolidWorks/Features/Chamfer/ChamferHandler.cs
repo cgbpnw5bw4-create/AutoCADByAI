@@ -48,12 +48,12 @@ public sealed class ChamferHandler : FeatureHandlerBase
             "plane+cone 圆边与两条 y=1.00 的 cylinder+cone 圆边，正是 1 mm×45° 倒角应有的锥面环；",
             "体积减少 33.5 立方毫米，与 Pappus 闭式解 33.51 立方毫米在四位有效数字上一致。"
         ],
-        EvidenceId: "v2.2-c-20260914-refresh-ChamferHandler",
+        EvidenceId: "v2.2-d-20260928-ChamferHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "distance_angle_edge_chamfer;angle_distance_type;criteria_resolved_selection",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/v2_2_c_refresh/20260914_012854_4152919/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a");
+        DiagnosticRunPath: "evidence/solidworks/v2_2_d_final/20260928_014727_7291835/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

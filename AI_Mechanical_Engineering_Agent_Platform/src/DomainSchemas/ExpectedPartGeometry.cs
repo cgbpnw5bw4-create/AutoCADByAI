@@ -7,7 +7,12 @@ namespace DomainSchemas;
 public sealed record ExpectedPartGeometry(
     int BodyCount,
     double VolumeCubicMillimeters,
-    double VolumeRelativeTolerance);
+    double VolumeRelativeTolerance,
+    IReadOnlyList<AxialSectionGeometry>? AxialSections = null);
+
+/// <summary>直筒或阶梯轴的截面区间；尺寸由输入参数独立推导，单位毫米。</summary>
+public sealed record AxialSectionGeometry(
+    double StartMm, double EndMm, double OuterDiameterMm, double InnerDiameterMm = 0d);
 
 public sealed record PartGeometryValidationResult(
     bool IsValid,
@@ -60,6 +65,11 @@ public static class PartGeometryValidator
         }
 
         var measuredVolume = measured.VolumeCubicMillimeters;
+        if (expected.AxialSections is { Count: > 0 } sections)
+        {
+            foreach (var issue in AxialSectionGeometryValidator.Validate(sections, measured))
+                Fail(PartFamilyFailureStages.ParameterGeometryMismatch, issue);
+        }
         if (measuredVolume is null || !double.IsFinite(measuredVolume.Value) || measuredVolume.Value <= 0d)
         {
             Fail(

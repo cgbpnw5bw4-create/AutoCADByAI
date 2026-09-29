@@ -47,12 +47,12 @@ public sealed class MirrorHandler : FeatureHandlerBase
             "只读拓扑探针在产出零件上量到新孔位于 (x=-25, z=-15)——只有 x 变号，z 不变，",
             "正是关于 YZ 面镜像应有的结果；体积减少 282.74 立方毫米，与一个 Ø6 通孔的闭式解一致。",
             "创建后 IFeature.GetTypeName2 返回 MirrorPattern，证明两组选择集标记被按预期解读。"
-        ],        EvidenceId: "v2.2-c-20260914-refresh-MirrorHandler",
+        ],        EvidenceId: "v2.2-d-20260928-MirrorHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "standard_plane_feature_mirror;right_plane_verified",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/v2_2_c_refresh/20260914_012947_5186294/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a");
+        DiagnosticRunPath: "evidence/solidworks/v2_2_d_final/20260928_014817_9086433/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {

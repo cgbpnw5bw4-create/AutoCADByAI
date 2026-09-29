@@ -1,0 +1,706 @@
+{
+  "plan_sha256": "2c5f321316e238f35681e76950519faea5620a3230b3522910e72dfc8aea9863",
+  "expected": {
+    "body_count": 1,
+    "volume_cubic_millimeters": 735132.6809400115,
+    "volume_relative_tolerance": 0.002,
+    "axial_sections": [
+      {
+        "start_mm": 0,
+        "end_mm": 180,
+        "outer_diameter_mm": 140,
+        "inner_diameter_mm": 120
+      }
+    ]
+  },
+  "results": [
+    {
+      "probe_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\03-probe.json",
+      "measured": {
+        "rebuild_passed": true,
+        "bounding_box": {
+          "min_xmm": -70.00000000000001,
+          "min_ymm": 0,
+          "min_zmm": -70.00000000000001,
+          "max_xmm": 70.00000000000001,
+          "max_ymm": 180,
+          "max_zmm": 70.00000000000001
+        },
+        "exact_extents": {
+          "min_xmm": -70.00000000000001,
+          "min_ymm": 0,
+          "min_zmm": -70.00000000000001,
+          "max_xmm": 70.00000000000001,
+          "max_ymm": 180,
+          "max_zmm": 70.00000000000001
+        },
+        "body_count": 1,
+        "volume_cubic_millimeters": 735132.6809400133,
+        "mass_kilograms": 0.735132680940013,
+        "mass_property_volume_cubic_millimeters": 735132.680940013,
+        "feature_types": [
+          "FavoriteFolder",
+          "HistoryFolder",
+          "SelectionSetFolder",
+          "SensorFolder",
+          "DocsFolder",
+          "DetailCabinet",
+          "InkMarkupFolder",
+          "EnvFolder",
+          "SolidBodyFolder",
+          "SurfaceBodyFolder",
+          "CommentsFolder",
+          "EqnFolder",
+          "MaterialFolder",
+          "RefPlane",
+          "RefPlane",
+          "RefPlane",
+          "OriginProfileFeature",
+          "ConfigTableFolder",
+          "ProfileFeature",
+          "Extrusion",
+          "ProfileFeature",
+          "ICE"
+        ],
+        "features": [
+          {
+            "name": "\u6536\u85CF",
+            "type_name": "FavoriteFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5386\u53F2\u8BB0\u5F55",
+            "type_name": "HistoryFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u9009\u62E9\u96C6",
+            "type_name": "SelectionSetFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u4F20\u611F\u5668",
+            "type_name": "SensorFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u8BBE\u8BA1\u6D3B\u9875\u5939",
+            "type_name": "DocsFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u6CE8\u89E3",
+            "type_name": "DetailCabinet",
+            "error_code": null
+          },
+          {
+            "name": "\u6807\u6CE8",
+            "type_name": "InkMarkupFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5149\u6E90\u3001\u76F8\u673A\u4E0E\u5E03\u666F",
+            "type_name": "EnvFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5B9E\u4F53",
+            "type_name": "SolidBodyFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u66F2\u9762\u5B9E\u4F53",
+            "type_name": "SurfaceBodyFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5907\u6CE8",
+            "type_name": "CommentsFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u65B9\u7A0B\u5F0F",
+            "type_name": "EqnFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u6750\u8D28 \u003C\u672A\u6307\u5B9A\u003E",
+            "type_name": "MaterialFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u524D\u89C6\u57FA\u51C6\u9762",
+            "type_name": "RefPlane",
+            "error_code": null
+          },
+          {
+            "name": "\u4E0A\u89C6\u57FA\u51C6\u9762",
+            "type_name": "RefPlane",
+            "error_code": null
+          },
+          {
+            "name": "\u53F3\u89C6\u57FA\u51C6\u9762",
+            "type_name": "RefPlane",
+            "error_code": null
+          },
+          {
+            "name": "\u539F\u70B9",
+            "type_name": "OriginProfileFeature",
+            "error_code": null
+          },
+          {
+            "name": "Tables",
+            "type_name": "ConfigTableFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u8349\u56FE1",
+            "type_name": "ProfileFeature",
+            "error_code": null
+          },
+          {
+            "name": "\u51F8\u53F0-\u62C9\u4F381",
+            "type_name": "Extrusion",
+            "error_code": null
+          },
+          {
+            "name": "\u8349\u56FE2",
+            "type_name": "ProfileFeature",
+            "error_code": null
+          },
+          {
+            "name": "\u5207\u9664-\u62C9\u4F381",
+            "type_name": "ICE",
+            "error_code": null
+          }
+        ],
+        "cylindrical_diameters_mm": [
+          140.00000000000003,
+          120
+        ],
+        "cylinders": [
+          {
+            "diameter_mm": 140.00000000000003,
+            "origin_xmm": 0,
+            "origin_ymm": 180,
+            "origin_zmm": 0,
+            "axis_x": -0,
+            "axis_y": -1,
+            "axis_z": -0
+          },
+          {
+            "diameter_mm": 120,
+            "origin_xmm": 0,
+            "origin_ymm": 360,
+            "origin_zmm": 0,
+            "axis_x": 0,
+            "axis_y": -1,
+            "axis_z": 0
+          }
+        ],
+        "read_issues": [],
+        "solid_works_version": "31.5.0",
+        "geometry_evidence_source_revision": "geometry-validation-source-sha256:ba916f16039b85d30719db039c7aa7b5324f68f07980f7221e04cff64b13f7eb",
+        "edges": [
+          {
+            "index": 0,
+            "kind": "circle",
+            "length_mm": 439.82297150257114,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 180,
+            "anchor_z_mm": 0,
+            "radius_mm": 70.00000000000001,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 1,
+            "kind": "circle",
+            "length_mm": 439.82297150257114,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 0,
+            "anchor_z_mm": 0,
+            "radius_mm": 70.00000000000001,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "plane"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 2,
+            "kind": "circle",
+            "length_mm": 376.99111843077515,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 180,
+            "anchor_z_mm": 0,
+            "radius_mm": 60,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": -0,
+              "y": -1,
+              "z": -0
+            }
+          },
+          {
+            "index": 3,
+            "kind": "circle",
+            "length_mm": 376.99111843077515,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 0,
+            "anchor_z_mm": 0,
+            "radius_mm": 60,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          }
+        ],
+        "holes": null
+      },
+      "validation": {
+        "is_valid": true,
+        "failure_stage": null,
+        "issues": [],
+        "expected_volume_cubic_millimeters": 735132.6809400115,
+        "measured_volume_cubic_millimeters": 735132.6809400133
+      }
+    },
+    {
+      "probe_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\collection-20260928_094622-8a31844a\\03-step-probe.json",
+      "measured": {
+        "rebuild_passed": true,
+        "bounding_box": {
+          "min_xmm": -70,
+          "min_ymm": 0,
+          "min_zmm": -70,
+          "max_xmm": 70,
+          "max_ymm": 180,
+          "max_zmm": 70
+        },
+        "exact_extents": {
+          "min_xmm": -70,
+          "min_ymm": 0,
+          "min_zmm": -70,
+          "max_xmm": 70,
+          "max_ymm": 180,
+          "max_zmm": 70
+        },
+        "body_count": 1,
+        "volume_cubic_millimeters": 735132.6809400123,
+        "mass_kilograms": 0.7351326809400125,
+        "mass_property_volume_cubic_millimeters": 735132.6809400124,
+        "feature_types": [
+          "FavoriteFolder",
+          "HistoryFolder",
+          "SelectionSetFolder",
+          "SensorFolder",
+          "DocsFolder",
+          "DetailCabinet",
+          "InkMarkupFolder",
+          "EnvFolder",
+          "SolidBodyFolder",
+          "SurfaceBodyFolder",
+          "CommentsFolder",
+          "EqnFolder",
+          "MaterialFolder",
+          "RefPlane",
+          "RefPlane",
+          "RefPlane",
+          "OriginProfileFeature",
+          "ConfigTableFolder",
+          "MBimport"
+        ],
+        "features": [
+          {
+            "name": "\u6536\u85CF",
+            "type_name": "FavoriteFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5386\u53F2\u8BB0\u5F55",
+            "type_name": "HistoryFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u9009\u62E9\u96C6",
+            "type_name": "SelectionSetFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u4F20\u611F\u5668",
+            "type_name": "SensorFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u8BBE\u8BA1\u6D3B\u9875\u5939",
+            "type_name": "DocsFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u6CE8\u89E3",
+            "type_name": "DetailCabinet",
+            "error_code": null
+          },
+          {
+            "name": "\u6807\u6CE8",
+            "type_name": "InkMarkupFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5149\u6E90\u3001\u76F8\u673A\u4E0E\u5E03\u666F",
+            "type_name": "EnvFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5B9E\u4F53",
+            "type_name": "SolidBodyFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u66F2\u9762\u5B9E\u4F53",
+            "type_name": "SurfaceBodyFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u5907\u6CE8",
+            "type_name": "CommentsFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u65B9\u7A0B\u5F0F",
+            "type_name": "EqnFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u6750\u8D28 \u003C\u672A\u6307\u5B9A\u003E",
+            "type_name": "MaterialFolder",
+            "error_code": null
+          },
+          {
+            "name": "\u524D\u89C6\u57FA\u51C6\u9762",
+            "type_name": "RefPlane",
+            "error_code": null
+          },
+          {
+            "name": "\u4E0A\u89C6\u57FA\u51C6\u9762",
+            "type_name": "RefPlane",
+            "error_code": null
+          },
+          {
+            "name": "\u53F3\u89C6\u57FA\u51C6\u9762",
+            "type_name": "RefPlane",
+            "error_code": null
+          },
+          {
+            "name": "\u539F\u70B9",
+            "type_name": "OriginProfileFeature",
+            "error_code": null
+          },
+          {
+            "name": "Tables",
+            "type_name": "ConfigTableFolder",
+            "error_code": null
+          },
+          {
+            "name": "model.STEP\u003C1\u003E",
+            "type_name": "MBimport",
+            "error_code": null
+          }
+        ],
+        "cylindrical_diameters_mm": [
+          120,
+          140,
+          140,
+          120
+        ],
+        "cylinders": [
+          {
+            "diameter_mm": 120,
+            "origin_xmm": 0,
+            "origin_ymm": 360,
+            "origin_zmm": 0,
+            "axis_x": 0,
+            "axis_y": -1,
+            "axis_z": 0
+          },
+          {
+            "diameter_mm": 140,
+            "origin_xmm": 0,
+            "origin_ymm": 180,
+            "origin_zmm": 0,
+            "axis_x": 0,
+            "axis_y": -1,
+            "axis_z": 0
+          },
+          {
+            "diameter_mm": 140,
+            "origin_xmm": 0,
+            "origin_ymm": 180,
+            "origin_zmm": 0,
+            "axis_x": 0,
+            "axis_y": -1,
+            "axis_z": 0
+          },
+          {
+            "diameter_mm": 120,
+            "origin_xmm": 0,
+            "origin_ymm": 360,
+            "origin_zmm": 0,
+            "axis_x": 0,
+            "axis_y": -1,
+            "axis_z": 0
+          }
+        ],
+        "read_issues": [],
+        "solid_works_version": "31.5.0",
+        "geometry_evidence_source_revision": "geometry-validation-source-sha256:ba916f16039b85d30719db039c7aa7b5324f68f07980f7221e04cff64b13f7eb",
+        "edges": [
+          {
+            "index": 0,
+            "kind": "circle",
+            "length_mm": 376.99111843077515,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 0,
+            "anchor_z_mm": 0,
+            "radius_mm": 60,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 1,
+            "kind": "circle",
+            "length_mm": 376.99111843077515,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 180,
+            "anchor_z_mm": 0,
+            "radius_mm": 60,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": -1,
+              "z": 0
+            }
+          },
+          {
+            "index": 2,
+            "kind": "circle",
+            "length_mm": 439.822971502571,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 0,
+            "anchor_z_mm": 0,
+            "radius_mm": 70,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "plane"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 3,
+            "kind": "circle",
+            "length_mm": 439.822971502571,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 180,
+            "anchor_z_mm": 0,
+            "radius_mm": 70,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 4,
+            "kind": "line",
+            "length_mm": 180,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 90,
+            "anchor_z_mm": -70,
+            "radius_mm": null,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": -1,
+              "z": 0
+            }
+          },
+          {
+            "index": 5,
+            "kind": "circle",
+            "length_mm": 439.822971502571,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 0,
+            "anchor_z_mm": 0,
+            "radius_mm": 70,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "plane"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 6,
+            "kind": "line",
+            "length_mm": 180,
+            "anchor_x_mm": 8.57252759403148E-15,
+            "anchor_y_mm": 90,
+            "anchor_z_mm": 70,
+            "radius_mm": null,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": -1,
+              "z": 0
+            }
+          },
+          {
+            "index": 7,
+            "kind": "circle",
+            "length_mm": 439.822971502571,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 180,
+            "anchor_z_mm": 0,
+            "radius_mm": 70,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 8,
+            "kind": "line",
+            "length_mm": 180,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 90,
+            "anchor_z_mm": -60,
+            "radius_mm": null,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": -1,
+              "z": 0
+            }
+          },
+          {
+            "index": 9,
+            "kind": "circle",
+            "length_mm": 376.99111843077515,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 0,
+            "anchor_z_mm": 0,
+            "radius_mm": 60,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          {
+            "index": 10,
+            "kind": "line",
+            "length_mm": 180,
+            "anchor_x_mm": 7.34788079488412E-15,
+            "anchor_y_mm": 90,
+            "anchor_z_mm": 60,
+            "radius_mm": null,
+            "adjacent_surface_kinds": [
+              "cylinder",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": -1,
+              "z": 0
+            }
+          },
+          {
+            "index": 11,
+            "kind": "circle",
+            "length_mm": 376.99111843077515,
+            "anchor_x_mm": 0,
+            "anchor_y_mm": 180,
+            "anchor_z_mm": 0,
+            "radius_mm": 60,
+            "adjacent_surface_kinds": [
+              "plane",
+              "cylinder"
+            ],
+            "direction": {
+              "x": 0,
+              "y": -1,
+              "z": 0
+            }
+          }
+        ],
+        "holes": null
+      },
+      "validation": {
+        "is_valid": true,
+        "failure_stage": null,
+        "issues": [],
+        "expected_volume_cubic_millimeters": 735132.6809400115,
+        "measured_volume_cubic_millimeters": 735132.6809400123
+      }
+    }
+  ]
+}

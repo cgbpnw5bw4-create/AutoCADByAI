@@ -40,12 +40,12 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
             "V2.0-C diagnostic verified a 20 mm blind FeatureCut4 call after reactivating the dependency sketch.",
             "Solid volume decreased from 5.9999999999999995E-05 to 5.9214601836602546E-05 cubic metres; four-view review shows the cut."
         ],
-        EvidenceId: "v2.2-c-20260914-refresh-ExtrudeCutHandler",
+        EvidenceId: "v2.2-d-20260928-ExtrudeCutHandler",
         HandlerVersion: "2.0-c.2",
         ParameterProfile: "blind;single_end;positive_depth_mm;through_all_false;no_thin;single_body_scope",
         SolidWorksVersion: "31.5.0",
-        DiagnosticRunPath: "evidence/solidworks/v2_2_c_refresh/20260914_012822_1801536/feature_execution_report.json",
-        SourceRevision: "feature-execution-source-sha256:ba63ade9e1428efbb7754406d5284879adbf369019494369cef8b32e2e78120a");
+        DiagnosticRunPath: "evidence/solidworks/v2_2_d_final/20260928_014654_0264082/feature_execution_report.json",
+        SourceRevision: "feature-execution-source-sha256:e484715785d2ba21ea7ae3efbca5238f37a4fbc988cb37b9658603d33e22a048");
 
     public override FeatureHandlerValidationResult Validate(FeatureDefinition feature)
     {
@@ -56,7 +56,7 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
                 $"{PartFamilyFailureStages.UnsupportedFeatureType}: {feature.FeatureType} cannot be handled by {nameof(ExtrudeCutHandler)}.");
         }
 
-        var unknownParameters = RejectUnknownParameters(feature, "through_all", "depth_mm");
+        var unknownParameters = RejectUnknownParameters(feature, "through_all", "depth_mm", "direction");
         if (!unknownParameters.IsValid)
         {
             return unknownParameters;
@@ -76,7 +76,8 @@ public sealed class ExtrudeCutHandler : FeatureHandlerBase
             double.TryParse(depthText, NumberStyles.Float, CultureInfo.InvariantCulture, out var depth) &&
             double.IsFinite(depth) &&
             depth > 0;
-        if (!validThroughAll || throughAll || !positiveDepth)
+        if (!validThroughAll || throughAll || !positiveDepth ||
+            (feature.Parameters.TryGetValue("direction", out var direction) && direction != "blind"))
         {
             return FeatureHandlerValidationResult.Failed(
                 PartFamilyFailureStages.InvalidFeatureParameter,

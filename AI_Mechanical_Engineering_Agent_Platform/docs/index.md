@@ -1,5 +1,8 @@
 # 项目入口
 
+当前开发入口为 [V2.2-D 轴类与夹套真实能力基线](v2_2_d_shaft_jacket_real_baseline.md)。本轮限定真实轴类/夹套、两格式独立几何验收及证据复验，保留平台架构和历史记录。下述 V2.2-C 统计属于上一阶段。
+
+
 ## 项目定位
 
 `AI Mechanical Engineer Platform` 是面向机械设计、CAD 自动化、`SolidWorks`、`AutoCAD` 和后续工业软件适配的平台。强模型负责工程理解、规划和决策；平台负责工程约束、确定性执行、真实 CAD/API 能力和结果验收。架构逐步收敛为少量强 Agent 与多个确定性 Worker。
@@ -33,13 +36,13 @@
 
 ## 当前开发入口
 
-当前开发阶段为 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)。2026-09-14 已完成既有 8 项 CAD 证据失败恢复、阵列引用与带符号方向修复、STEP 导出身份修复及重采；完整测试 684/684 通过，参数更新正式主流程为 `Passed` / `Deliverable`，发布件两格式独立复核通过。
+上一阶段为 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)。2026-09-14 已完成既有 8 项 CAD 证据失败恢复、阵列引用与带符号方向修复、STEP 导出身份修复及重采；完整测试 684/684 通过，参数更新正式主流程为 `Passed` / `Deliverable`，发布件两格式独立复核通过。
 
 9 月 9 日候选的旧 STEP 语义失配和 9 月 14 日中间连续导出失败均保留原始记录，生产绑定只使用最终修复后新采集并独立验收的证据。9 月 14 日全局 self-check 仍为 `Failed`：夹套生产证据与真实执行未激活，轴类真实工作流自检亦未通过。2026-09-24 保留文件与源码指纹复核通过，重新构建 0 警告、0 错误，完整测试仍为 684/684 通过；本次 self-check 退出码 2，恢复相关门禁与中文检查通过，全局仍保留上述既有缺口。见 [本次验证汇总](../output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json)，不以历史结果代替本次运行。
 
 默认工程流程仅做规划输入校验，具体 CAD 计划沿用原 Skill/Validator；该校验步骤不调用模型或生成计划。旧四角色确定性占位路线保留为显式兼容入口，不能把默认流程收敛描述为减少四次真实 LLM 推理。
 
-前轮 [V2.2-B 强模型架构成果](v2_2_b_frontier_model_architecture.md) 和 [V2.2-A 任务生命周期与审批合同](v2_2_a_task_approval_lifecycle.md) 保留，本轮不继续扩展平台架构。当前阶段允许受控真机诊断与主流程恢复；历史审查与旧 evidence 保留，未获本轮有效证据的能力继续失败关闭。具体范围和实际验证记录以 V2.2-C 阶段页为准。
+前轮 [V2.2-B 强模型架构成果](v2_2_b_frontier_model_architecture.md) 和 [V2.2-A 任务生命周期与审批合同](v2_2_a_task_approval_lifecycle.md) 保留，本轮不继续扩展平台架构。当前阶段允许受控真机诊断与主流程恢复；历史审查与旧 evidence 保留，未获本轮有效证据的能力继续失败关闭。本轮范围和实际验证记录以 V2.2-D 阶段页为准。
 
 宿主合同已登记：首次消息返回任务信息和仅返回一次的 `task_access_token`，后续 `GET /tasks/{taskId}`、`POST /tasks/{taskId}/approvals` 使用 `X-Task-Access-Token`。首次消息同步执行；任务与审批仅保存在单进程内存，恢复继续原后处理与门禁，Microsoft advisory 不重复调用 LLM。字段、状态码和验证记录见阶段页；`2.2-a-task-approval` 的四个新行为字段不代表完整测试或全局自检通过。
 

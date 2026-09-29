@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 
 namespace DomainSchemas;
 
@@ -189,6 +190,8 @@ public interface IPartFamilyDefinition
     /// 可见的能力缺口（见 docs/cad_capability_matrix.md），不是默认通过。
     /// </summary>
     ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan) => null;
+
+    bool RequiresDetailedGeometry => false;
 
     PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec);
 
@@ -500,9 +503,24 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
 
     public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
-    // V2.0-E 的统一执行器仍会在 Handler evidence 门禁再次校验。这里提前声明
-    // revolve_boss 尚未有受控 Feature 证据，避免 Definition 层错误声称 shaft 可真实执行。
-    public bool SupportsRealExecution => false;
+    // 实现声明不构成授权；默认 Builder 和 Worker 还必须验证当前零件族及 Handler 实证。
+    public bool SupportsRealExecution => true;
+    public bool RequiresDetailedGeometry => true;
+
+    public ExpectedPartGeometry? DescribeExpectedGeometry(SolidWorksBuildPlan plan)
+    {
+        var dimensions = plan.Dimensions;
+        if (dimensions is null || !double.TryParse(dimensions.GetValueOrDefault("diameter_mm"), NumberStyles.Float, CultureInfo.InvariantCulture, out var diameter) ||
+            !double.TryParse(dimensions.GetValueOrDefault("length_mm"), NumberStyles.Float, CultureInfo.InvariantCulture, out var length) ||
+            !double.IsFinite(diameter) || !double.IsFinite(length) || diameter <= 0 || length <= 0) return null;
+        var stepDiameters = PartFamilyParameters.ParseNumberList(dimensions.GetValueOrDefault("optional_step_diameters") ?? "");
+        var stepLengths = PartFamilyParameters.ParseNumberList(dimensions.GetValueOrDefault("optional_step_lengths") ?? "");
+        if (stepDiameters.Count != stepLengths.Count || stepLengths.Sum() >= length || stepDiameters.Any(d => d <= 0) || stepLengths.Any(l => l <= 0)) return null;
+        var sections = new List<AxialSectionGeometry> { new(0, length - stepLengths.Sum(), diameter) };
+        for (var i = 0; i < stepLengths.Count; i++) sections.Add(new(sections[^1].EndMm, sections[^1].EndMm + stepLengths[i], stepDiameters[i]));
+        return new(1, sections.Sum(s => Math.PI / 4 * s.OuterDiameterMm * s.OuterDiameterMm * (s.EndMm - s.StartMm)),
+            JacketGeometryValidator.VolumeRelativeTolerance, sections);
+    }
 
     public PartFamilyBuildPlanResult GenerateBuildPlan(string taskId, CADModelSpec spec)
     {
@@ -516,7 +534,7 @@ public sealed class ShaftBasicDefinition : IPartFamilyDefinition
             taskId,
             PartFamilyPlanFactory.UseProvidedGraphOrCreate(
                 spec,
-                PartFamilyGenericModelFactory.CreateShaftBasic));
+                PartFamilyGenericModelFactory.CreateShaftBasic) with { RequiresFeatureHandlerPipeline = true });
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
@@ -527,7 +545,7 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
 {
     public const string Type = "jacket_basic";
     public const string ProductionEvidenceStatus =
-        "v2_1_a_jacket_structured_runtime_evidence_pending; real execution remains fail-closed";
+        "v2_2_d_jacket_scoped_runtime_evidence_required; feature and family evidence gates remain mandatory";
 
     public string PartType => Type;
 
@@ -546,9 +564,9 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
 
     public string RealExecutionMode => PartFamilyExecutionModes.GenericFeatureGraph;
 
-    // V2.1-A 保持冻结。它可以继续参与 schema、BuildPlan 与 dry-run，
-    // 但不能因 V2.0-E 的通用 Feature Handler 证据而获得真实 CAD 授权。
-    public bool SupportsRealExecution => false;
+    // 不能因共享 Handler 证据获得零件族授权；当前族实证由默认 Builder/Worker 再次校验。
+    public bool SupportsRealExecution => true;
+    public bool RequiresDetailedGeometry => true;
 
     /// <summary>
     /// 直筒同轴夹套的理论体积：pi/4 * (Do^2 - Di^2) * L，单实体。
@@ -566,7 +584,8 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
         }
 
         var volume = Math.PI / 4d * ((outer * outer) - (inner * inner)) * length;
-        return new ExpectedPartGeometry(1, volume, JacketGeometryValidator.VolumeRelativeTolerance);
+        return new ExpectedPartGeometry(1, volume, JacketGeometryValidator.VolumeRelativeTolerance,
+            [new(0, length, outer, inner)]);
     }
 
     private static bool TryPositiveDimension(
@@ -593,7 +612,7 @@ public sealed class JacketBasicDefinition : IPartFamilyDefinition
             taskId,
             PartFamilyPlanFactory.UseProvidedGraphOrCreate(
                 spec,
-                PartFamilyGenericModelFactory.CreateJacketBasic));
+                PartFamilyGenericModelFactory.CreateJacketBasic) with { RequiresFeatureHandlerPipeline = true });
     }
 
     public IReadOnlyList<string> ReviewBuildPlan(SolidWorksBuildPlan plan) =>
@@ -840,12 +859,9 @@ internal static class PartFamilyPlanFactory
         var innerSketch = OperationAt(plan, 2, "CreateSketch", issues, "jacket inner profile");
         var innerCut = OperationAt(plan, 3, "CutExtrude", issues, "jacket bore cut");
 
-        RequireMapped(plan, outerSketch, "outer_diameter_mm", "outer_diameter_mm", issues);
+        ValidateCircleMapping(outerSketch, "outer_diameter_mm");
         RequireMapped(plan, extrude, "length_mm", "depth_mm", issues);
-        RequireMapped(plan, innerSketch, "inner_diameter_mm", "inner_diameter_mm", issues);
-        RequireMapped(plan, innerCut, "inner_diameter_mm", "hole_diameter_mm", issues);
-        RequireValue(outerSketch, "profile", "jacket_outer_circle", issues);
-        RequireValue(innerCut, "cut_role", "jacket_bore", issues);
+        ValidateCircleMapping(innerSketch, "inner_diameter_mm");
         RequireValue(innerCut, "direction", "blind", issues);
         RequireValue(innerCut, "through_all", "false", issues);
         if (!string.Equals(innerSketch?.SketchPlane, "TopPlane", StringComparison.OrdinalIgnoreCase))
@@ -871,6 +887,21 @@ internal static class PartFamilyPlanFactory
         }
 
         return issues;
+
+        void ValidateCircleMapping(SolidWorksOperation? sketch, string dimension)
+        {
+            try
+            {
+                var entities = JsonSerializer.Deserialize<SketchEntity[]>(sketch?.Parameters.GetValueOrDefault("entities") ?? "[]") ?? [];
+                if (sketch?.SketchPlane != "TopPlane" || entities.Length != 1 || entities[0].EntityType != SketchEntityTypes.Circle ||
+                    !double.TryParse(entities[0].Parameters.GetValueOrDefault("radius_mm"), NumberStyles.Float, CultureInfo.InvariantCulture, out var radius) ||
+                    !double.TryParse(plan.Dimensions?.GetValueOrDefault(dimension), NumberStyles.Float, CultureInfo.InvariantCulture, out var diameter) ||
+                    !double.IsFinite(radius) || !double.IsFinite(diameter) || radius <= 0 || Math.Abs(radius * 2 - diameter) > 1e-6 ||
+                    entities[0].Parameters.GetValueOrDefault("center_x_mm", "0") != "0" || entities[0].Parameters.GetValueOrDefault("center_y_mm", "0") != "0")
+                    issues.Add($"jacket circle must map {dimension} to a single origin-centred TopPlane circle.");
+            }
+            catch (JsonException) { issues.Add("jacket circle entities JSON is invalid."); }
+        }
     }
 
     private static SolidWorksOperation? OperationAt(

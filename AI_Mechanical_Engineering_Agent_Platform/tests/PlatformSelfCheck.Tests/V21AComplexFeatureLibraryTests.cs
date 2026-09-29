@@ -89,7 +89,7 @@ public sealed class V21AComplexFeatureLibraryTests
         // 判据对象取自注册表里"自报 unverified"的 Handler，而不是写死的清单：
         // 每补一块真机证据就要改一次清单，正是"保护随迁移消失"的老毛病。
         // V2.1-A 五个复杂特征全部取证后，这里的对象自然变成 revolve_boss。
-        var registry = FeatureHandlerRegistry.CreateDefault();
+        var registry = UnverifiedRevolveFixture.CreateRegistry();
         var unverified = registry.GetAll()
             .Where(handler => string.Equals(
                 handler.ApiEvidence.Status,

@@ -129,7 +129,8 @@ public sealed class V20BFeatureHandlerRegistryTests
             new FeatureDefinition(
                 "revolve-1",
                 FeatureTypes.RevolveBoss,
-                new Dictionary<string, string> { ["angle_degrees"] = "360" })
+                new Dictionary<string, string> { ["angle_degrees"] = "360", ["profile_selection_mark"] = "0", ["axis_selection_mark"] = "16" },
+                referencedSketches: ["profile"], targetReference: "RightPlane")
         };
 
         Assert.All(features, feature =>
@@ -166,7 +167,7 @@ public sealed class V20BFeatureHandlerRegistryTests
     public void CompleteGraphPreflightCollectsUnverifiedEvidenceBeforeExecution()
     {
         var plan = UnverifiedRevolvePlan();
-        var registry = FeatureHandlerRegistry.CreateDefault();
+        var registry = UnverifiedRevolveFixture.CreateRegistry();
 
         var preflight = registry.ValidateForRealExecution(plan);
 
@@ -219,7 +220,8 @@ public sealed class V20BFeatureHandlerRegistryTests
             IsUnitTestEnvironment: false,
             VisibleModeDefault: true,
             ForceFakeWorker: false);
-        var worker = new RealSolidWorksWorker(session, options);
+        var worker = new RealSolidWorksWorker(session, options, null, null, null, null, null, null,
+            featureHandlerRegistry: UnverifiedRevolveFixture.CreateRegistry());
         try
         {
             var result = await worker.ExecuteAsync(
@@ -286,12 +288,15 @@ public sealed class V20BFeatureHandlerRegistryTests
                 new SolidWorksOperation(
                 "v20-b-unverified-revolve",
                 "RevolveBoss",
-                "TopPlane",
+                "RightPlane",
                 new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ["feature_id"] = "v20-b-unverified-revolve",
                     ["feature_type"] = FeatureTypes.RevolveBoss,
-                    ["angle_degrees"] = "360"
+                    ["angle_degrees"] = "360",
+                    ["profile_selection_mark"] = "0",
+                    ["axis_selection_mark"] = "16",
+                    ["sketch_id"] = "profile"
                 },
                 [],
                 "Unverified revolve evidence probe.")

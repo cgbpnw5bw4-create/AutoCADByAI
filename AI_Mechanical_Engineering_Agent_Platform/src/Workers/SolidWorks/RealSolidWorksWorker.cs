@@ -155,9 +155,12 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
         IPartFamilyBuilder? partFamilyBuilder = null;
         var usesFeatureHandlerGraph =
             isPartFamilyBuild &&
-            request.BuildPlan.ExecutionStrategy.Equals(
+            (request.BuildPlan.ExecutionStrategy.Equals(
                 SolidWorksBuildExecutionStrategies.FeatureHandlerGraph,
-                StringComparison.OrdinalIgnoreCase);
+                StringComparison.OrdinalIgnoreCase) ||
+             (PartFamilyProductionEvidencePolicy.RequiresEvidence(request.BuildPlan.PartType) &&
+              _partFamilyBuilderRegistry.TryGetBuilder(request.BuildPlan.PartType, out var familyGraphBuilder) &&
+              familyGraphBuilder is SolidWorksFeatureGraphPartFamilyBuilder));
 
         if (ShouldRejectBeforeConnection(request, options))
         {
@@ -276,6 +279,18 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 realCadConnected: false,
                 preflight,
                 PartFamilyFailureStages.PartFamilyApiEvidenceInsufficient);
+        }
+
+        if (isPartFamilyBuild)
+        {
+            var familyEvidence = PartFamilyProductionEvidencePolicy.ValidateForRealExecution(request.BuildPlan);
+            if (!familyEvidence.IsValid)
+            {
+                issues.AddRange(familyEvidence.Issues);
+                logs.Add("COM connection was not attempted because independent part-family CAD evidence is missing or stale.");
+                return Result(request, "Rejected", "RealPreflightOnly", logs, issues,
+                    realCadConnected: false, preflight, familyEvidence.FailureStage);
+            }
         }
 
         var environmentProbe = _executionEnvironmentProbe.Probe();
@@ -441,6 +456,17 @@ public sealed class RealSolidWorksWorker : ISolidWorksWorker
                 }
             }
 
+            if (isPartFamilyBuild)
+            {
+                var familyRuntime = PartFamilyProductionEvidencePolicy.ValidateForRealExecution(request.BuildPlan,
+                    actualVersion: connection.SolidWorksVersion ?? "missing");
+                if (!familyRuntime.IsValid)
+                {
+                    issues.AddRange(familyRuntime.Issues);
+                    return RealBuildFailureResult(request, "Rejected", logs, issues, true, connectedPreflight,
+                        options, familyRuntime.FailureStage!, partFamilyBuilder);
+                }
+            }
             logs.Add("operation_executed: connection_success");
             if (request.ConnectionSmokeTestOnly)
             {

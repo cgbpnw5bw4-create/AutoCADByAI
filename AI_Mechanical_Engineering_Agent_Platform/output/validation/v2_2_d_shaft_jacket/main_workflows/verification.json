@@ -1,0 +1,40 @@
+{
+  "status": "Failed",
+  "configuration": {
+    "config_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\config\\solidworks.local.json",
+    "cad_environment": {
+      "SW_TEMPLATE_PART_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_part.prtdot",
+      "SW_TEMPLATE_DRAWING_PATH": "C:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 2023\\templates\\gb_a3.drwdot",
+      "SW_CONNECT_TIMEOUT_SECONDS": "120",
+      "SW_EXECUTION_TIMEOUT_SECONDS": "300",
+      "SW_VISIBLE": "true",
+      "SW_FEATURE_EXECUTION_SMOKE_TEST": "true"
+    }
+  },
+  "cases": [
+    {
+      "input": {
+        "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+        "size_bytes": 879,
+        "sha256": "9f82f30e128c299b8dea680595edcc01cf957bdc16eddce1491a8ed2eb5ab057"
+      },
+      "status": "Running",
+      "process": {
+        "command": [
+          "dotnet",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\CliHost.dll",
+          "run-cad-workflow",
+          "--input",
+          "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json"
+        ],
+        "log_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_2_d_shaft_jacket\\main_workflows\\real_cad_shaft_request\\main.log",
+        "started_at": "2026-09-28T01:56:04Z",
+        "timeout_seconds": 600,
+        "exit_code": 2,
+        "finished_at": "2026-09-28T01:56:05Z"
+      }
+    }
+  ],
+  "updated_at": "2026-09-28T01:56:05Z",
+  "failure": "正式主流程失败：real_cad_shaft_request.json"
+}

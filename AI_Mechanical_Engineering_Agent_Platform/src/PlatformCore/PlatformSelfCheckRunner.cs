@@ -81,7 +81,8 @@ public static class PlatformSelfCheckRunner
         PlatformKernel platform,
         string outputRoot,
         string? projectRoot = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? partFamilyEvidenceRoot = null)
     {
         Directory.CreateDirectory(Path.Combine(outputRoot, "reports"));
         var root = projectRoot ?? PlatformPathResolver.FindProjectRoot();
@@ -208,7 +209,7 @@ public static class PlatformSelfCheckRunner
         var realCadE2eLocalAuthorizationProfileSupported = v17E2eChecks.LocalAuthorizationProfileSupported;
         var realCadE2eLocalAuthorizationDefaultDisabled = v17E2eChecks.LocalAuthorizationDefaultDisabled;
         var v18PartFamilyChecks = await RunV18PartFamilyChecksAsync(root, platform, outputRoot, versionStageText, cancellationToken);
-        var v19PartFamilyChecks = RunV19PartFamilyChecks(root, platform, versionStageText, v18PartFamilyChecks);
+        var v19PartFamilyChecks = RunV19PartFamilyChecks(root, platform, versionStageText, v18PartFamilyChecks, partFamilyEvidenceRoot);
         var v20SolidWorksDefaultOnChecks = RunV20SolidWorksDefaultOnChecks();
         var v20AGenericCadModelSpecChecks = RunV20AGenericCadModelSpecChecks(root, platform, versionStageText);
         var v20BFeatureHandlerChecks = RunV20BFeatureHandlerChecks(root, platform, versionStageText);
@@ -242,13 +243,13 @@ public static class PlatformSelfCheckRunner
             v20CFeatureAdapterChecks,
             v20DModelRebuildChecks,
             v21AComplexFeatureChecks,
-            capabilityChecks);
+            capabilityChecks, partFamilyEvidenceRoot);
         var v21AJacketChecks = await RunV21AJacketChecksAsync(
             root,
             platform,
             versionStageText,
             outputRoot,
-            cancellationToken);
+            cancellationToken, partFamilyEvidenceRoot);
         var moduleAgentsRegistered = ModuleAgentsRegistered(platform);
         var placeholderAgentIsFallbackOnly = platform.AgentRegistry.GetAll().All(agent => agent.GetType() != typeof(PlaceholderAgent));
 
@@ -852,6 +853,13 @@ public static class PlatformSelfCheckRunner
             FeatureHandlerValidationSupported = v20BFeatureHandlerChecks.FeatureHandlerValidationSupported,
             FeatureApiEvidenceRequired = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
             UnverifiedApiBlocksRealExecution = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
+            UnverifiedEvidenceNegativeSamples = new Dictionary<string, int>
+            {
+                ["unverified_api_blocks_real_execution"] = v20BFeatureHandlerChecks.EvidenceRejectionProbe.ObservedNegativeSamples,
+                ["unverified_feature_blocks_execution"] = v21AComplexFeatureChecks.EvidenceRejectionProbe.ObservedNegativeSamples
+            },
+            UnverifiedEvidenceSelfCheckIssues = v20BFeatureHandlerChecks.EvidenceRejectionProbe.Issues
+                .Concat(v21AComplexFeatureChecks.EvidenceRejectionProbe.Issues).ToArray(),
             FeatureHandlerDocsCompleted = v20BFeatureHandlerChecks.FeatureHandlerDocsCompleted,
             V20BDocumented = v20BFeatureHandlerChecks.V20BDocumented,
             FeatureAdapterLayerExists = v20CFeatureAdapterChecks.FeatureAdapterLayerExists,
@@ -1104,7 +1112,7 @@ public static class PlatformSelfCheckRunner
         string projectRoot,
         PlatformKernel platform,
         string versionStageText,
-        V18PartFamilySelfCheckResult v18)
+        V18PartFamilySelfCheckResult v18, string? partFamilyEvidenceRoot)
     {
         var definitions = PartTypeRegistry.CreateDefault().GetAll();
         var workerAssembly = platform.WorkerRegistry.GetByName("FakeSolidWorksWorker")?.GetType().Assembly;
@@ -1150,7 +1158,8 @@ public static class PlatformSelfCheckRunner
         var flangeInputExists = File.Exists(Path.Combine(projectRoot, "examples", "real_cad_flange_request.json"));
         var shaftInputExists = File.Exists(Path.Combine(projectRoot, "examples", "real_cad_shaft_request.json"));
         var flangeRealWorkflowSupported = operationSupported && flangeInputExists && flangeRealBuilderImplemented && flangeDefinition.SupportsRealExecution;
-        var shaftRealWorkflowSupported = operationSupported && shaftInputExists && shaftRealBuilderImplemented && shaftDefinition.SupportsRealExecution;
+        var shaftRealWorkflowSupported = operationSupported && shaftInputExists && shaftRealBuilderImplemented && shaftDefinition.SupportsRealExecution &&
+            FamilyEvidenceActive(workerAssembly, ShaftBasicDefinition.Type, partFamilyEvidenceRoot);
         var runtimeDefaults = SolidWorksRuntimeOptions.FromEnvironment(new Dictionary<string, string?>());
         var defaultDisabled = !runtimeDefaults.EnableRealExecution && !runtimeDefaults.MainWorkflowExecutionEnabled;
 
@@ -1690,12 +1699,15 @@ public static class PlatformSelfCheckRunner
             new(
                 "v20-b-revolve",
                 "RevolveBoss",
-                "Front Plane",
+                "RightPlane",
                 new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ["feature_id"] = "v20-b-revolve",
                     ["feature_type"] = FeatureTypes.RevolveBoss,
-                    ["angle_degrees"] = "360"
+                    ["angle_degrees"] = "360",
+                    ["profile_selection_mark"] = "0",
+                    ["axis_selection_mark"] = "16",
+                    ["sketch_id"] = "v20-b-sketch"
                 },
                 ["v20-b-sketch"],
                 "Self-check revolve probe.")
@@ -1757,38 +1769,11 @@ public static class PlatformSelfCheckRunner
                 !issue.Contains(
                     PartFamilyFailureStages.UnsupportedFeatureType,
                     StringComparison.OrdinalIgnoreCase));
-        // 判据是"注册表里存在未取证 Handler，且它在连接 COM 之前被拒绝"，
-        // 不是"注册表恰好有 5 个 Handler"。写死数量会在每次注册新 Handler 时
-        // 把这条保护悄悄关掉——V2.1-A 注册五个复杂特征后就真的发生过。
-        var hasUnverifiedHandlerEvidence =
-            handlers.Length > 0 &&
-            handlers.Any(handler =>
-                string.Equals(
-                    EvidenceStatus(handler),
-                    "unverified",
-                    StringComparison.OrdinalIgnoreCase));
-
-        // This is deliberately a behavioral contract check.  Earlier versions
-        // read RealSolidWorksWorker.cs and compared string offsets, which could
-        // be satisfied by comments and broke whenever the source was refactored.
-        // The dedicated worker test owns the injected-session assertion that
-        // ConnectAsync remains at zero for this same unverified handler case.
-        var preflightRunsBeforeConnection =
-            realWorkerType?.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .Any(method => method.Name == "ExecuteAsync") == true &&
-            registryType?.GetMethod(
-                "ValidateForRealExecution",
-                BindingFlags.Public | BindingFlags.Instance) is not null;
-        var unverifiedApiBlocksRealExecution =
-            hasUnverifiedHandlerEvidence &&
-            preflightResult is not null &&
-            !preflightPassed &&
-            string.Equals(
-                preflightFailureStage,
-                PartFamilyFailureStages.FeatureApiUnverified,
-                StringComparison.OrdinalIgnoreCase) &&
-            preflightIssues.Length >= 1 &&
-            preflightRunsBeforeConnection;
+        // 在隔离注册表中先确认合法旋转计划可通过，再仅撤销证据状态并重跑真实预检。
+        // 这里只证明注册表准入拒绝；Worker 在连接前停止仍由独立的零连接次数测试验证。
+        var rejectionProbe = FeatureEvidenceRejectionSelfCheck.Run(workerAssembly,
+            [FeatureEvidenceRejectionSelfCheck.RevolveSample()]);
+        var unverifiedApiBlocksRealExecution = rejectionProbe.Passed;
 
         // A registry that exposes an extensible registration boundary and
         // resolves every installed handler proves the architectural property
@@ -1850,7 +1835,7 @@ public static class PlatformSelfCheckRunner
             featureApiEvidenceRequired,
             unverifiedApiBlocksRealExecution,
             featureHandlerDocsCompleted,
-            v20BDocumented);
+            v20BDocumented, rejectionProbe);
     }
 
     private static V20CFeatureAdapterSelfCheckResult RunV20CFeatureAdapterChecks(
@@ -2020,7 +2005,7 @@ public static class PlatformSelfCheckRunner
 
                 var result = validateEvidence.Invoke(
                     null,
-                    [handler, new FeatureDefinition($"self-check-{featureType}", featureType, new Dictionary<string, string>())]);
+                    [handler, new FeatureDefinition($"self-check-{featureType}", featureType, new Dictionary<string, string>()), null]);
                 return result?.GetType().GetProperty("IsValid")?.GetValue(result) is true;
             });
         }
@@ -2258,6 +2243,10 @@ public static class PlatformSelfCheckRunner
             markdownChineseCheck);
     }
 
+    private static bool FamilyEvidenceActive(Assembly? workerAssembly, string partType, string? evidenceRoot) =>
+        workerAssembly?.GetType("SolidWorksWorker.Features.PartFamilyProductionEvidencePolicy")?
+            .GetMethod("IsActive")?.Invoke(null, [partType, evidenceRoot]) is true;
+
     private static bool ValidateFeatureGraphProductionEvidence(
         Assembly? workerAssembly,
         SolidWorksBuildPlan? buildPlan)
@@ -2436,6 +2425,11 @@ public static class PlatformSelfCheckRunner
             }
         }
 
+        var rejectionProbe = FeatureEvidenceRejectionSelfCheck.Run(workerAssembly,
+            [FeatureEvidenceRejectionSelfCheck.FilletSample()]);
+        bool? unverifiedFeatureBlocksExecution = rejectionProbe.Passed.HasValue
+            ? unverifiedBlocksExecution && rejectionProbe.Passed.Value : null;
+
         // 边选择模型：判据必须可鉴别——既要能唯一命中，也要在不唯一时拒绝。
         // 用固定夹具而非真实 CAD，因此自检不依赖 SolidWorks。
         MeasuredEdge Rim(int index, double x, double y) =>
@@ -2498,11 +2492,11 @@ public static class PlatformSelfCheckRunner
             circularPatternRegistered,
             mirrorRegistered,
             complexFeatureRegistrySupported,
-            unverifiedBlocksExecution,
+            unverifiedFeatureBlocksExecution,
             featureLibraryDocumented,
             regressionPassed,
             v21ADocumented,
-            edgeSelectionModelSupported);
+            edgeSelectionModelSupported, rejectionProbe);
     }
 
     private static IEnumerable<(string FeatureType, Dictionary<string, string> Parameters)> ComplexFeatureSamples()
@@ -2568,7 +2562,7 @@ public static class PlatformSelfCheckRunner
         V20CFeatureAdapterSelfCheckResult v20CFeatureAdapterChecks,
         V20DModelRebuildSelfCheckResult v20DModelRebuildChecks,
         V21AComplexFeatureSelfCheckResult v21AComplexFeatureChecks,
-        IReadOnlyDictionary<string, bool> v21BHoleChecks)
+        IReadOnlyDictionary<string, bool> v21BHoleChecks, string? partFamilyEvidenceRoot)
     {
         var definitions = PartTypeRegistry.CreateDefault().GetAll();
         var workerAssembly = platform.WorkerRegistry
@@ -2626,10 +2620,12 @@ public static class PlatformSelfCheckRunner
                 JacketBasicDefinition.Type,
                 StringComparison.OrdinalIgnoreCase));
         var v21ARealExecutionFrozen =
-            jacketDefinition?.SupportsRealExecution == false &&
-            jacketBuilder?.GetType()
-                .GetProperty("SupportsRealExecution", BindingFlags.Public | BindingFlags.Instance)?
-                .GetValue(jacketBuilder) is false;
+            !FamilyEvidenceActive(workerAssembly, JacketBasicDefinition.Type, partFamilyEvidenceRoot);
+        // 历史冻结是状态，不是必须永远缺少能力；行为保护仍要求缺证据立即拒绝。
+        var familyEvidenceGateVerified = !FamilyEvidenceActive(workerAssembly, JacketBasicDefinition.Type,
+            Path.Combine(projectRoot, "output", "self-check-missing-evidence", Guid.NewGuid().ToString("N"))) &&
+            !FamilyEvidenceActive(workerAssembly, ShaftBasicDefinition.Type,
+            Path.Combine(projectRoot, "output", "self-check-missing-evidence", Guid.NewGuid().ToString("N")));
         var v20EDocumented =
             versionStageText.Contains("V2.0-E", StringComparison.OrdinalIgnoreCase) &&
             File.Exists(Path.Combine(
@@ -2733,8 +2729,13 @@ public static class PlatformSelfCheckRunner
                 : jacketDefinitionForGeometry.DescribeExpectedGeometry(geometryPlan);
             if (expectedGeometry is { BodyCount: 1 } && expectedGeometry.VolumeCubicMillimeters > 0d)
             {
+                // 明确标注为纯算法夹具；真实 CAD 证据另由生产策略验收。
                 MeasuredGeometry Measured(int bodies, double volume) =>
-                    new(true, null, null, bodies, volume, null, null);
+                    new(true, null, new(-70, -70, 0, 70, 70, 180), bodies, volume, null, null,
+                        Cylinders: [new(140, 0, 0, 0, 0, 0, 1), new(120, 0, 0, 0, 0, 0, 1)],
+                        Edges: new[] { (0d, 70d), (180d, 70d), (0d, 60d), (180d, 60d) }
+                            .Select((pair, index) => new MeasuredEdge(index, EdgeKinds.Circle, 2 * Math.PI * pair.Item2,
+                                0, 0, pair.Item1, pair.Item2, [SurfaceKinds.Cylinder, SurfaceKinds.Plane], new(0, 0, 1))).ToArray());
 
                 var accepts = PartGeometryValidator
                     .Validate(expectedGeometry, Measured(1, expectedGeometry.VolumeCubicMillimeters))
@@ -2751,9 +2752,7 @@ public static class PlatformSelfCheckRunner
 
         var flangeRegressionPassed = flangeUsesPartFamilyDefinition && v18PartFamilyChecks.FlangeDryRunPassed;
         var shaftRegressionPassed = shaftUsesPartFamilyDefinition && v18PartFamilyChecks.ShaftDryRunPassed;
-        var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(
-            projectRoot,
-            new Dictionary<string, bool>(v21BHoleChecks, StringComparer.OrdinalIgnoreCase)
+        var capabilities = new Dictionary<string, bool>(v21BHoleChecks, StringComparer.OrdinalIgnoreCase)
             {
                 ["all_part_families_use_registry"] = v19PartFamilyChecks.AllPartFamiliesUseRegistry,
                 ["feature_production_evidence_active"] = v20CFeatureAdapterChecks.FeatureProductionEvidenceActive,
@@ -2762,18 +2761,20 @@ public static class PlatformSelfCheckRunner
                 ["shaft_artifact_validation_supported"] = v19PartFamilyChecks.ShaftArtifactValidationSupported,
                 ["v2_0_e_geometry_validation_platform_wide"] = geometryValidationPlatformWide,
                 ["feature_api_evidence_required"] = v20BFeatureHandlerChecks.FeatureApiEvidenceRequired,
-                // 这两条在 V2.1-A 注册五个复杂特征时曾静默退化：判据里写死了
-                // "注册表恰好 5 个 Handler"。没有任何门拦住，因为它们当时不在基线里。
-                ["unverified_api_blocks_real_execution"] = v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution,
                 ["feature_handler_no_direct_com_access"] = v20CFeatureAdapterChecks.FeatureHandlerNoDirectComAccess,
-                ["unverified_feature_blocks_execution"] = v21AComplexFeatureChecks.UnverifiedFeatureBlocksExecution,
                 ["complex_feature_registry_supported"] = v21AComplexFeatureChecks.ComplexFeatureRegistrySupported,
                 ["edge_selection_model_supported"] = v21AComplexFeatureChecks.EdgeSelectionModelSupported,
                 ["v2_0_d_production_evidence_active"] = v20DModelRebuildChecks.ProductionEvidenceActive,
                 ["v2_0_e_controlled_plate_evidence_active"] = controlledPlateEvidenceActive,
                 ["v2_0_e_step_content_gate_active"] = stepContentGateActive,
                 ["v2_0_e_unified_part_family_builders"] = unifiedPartFamilyBuilders
-            });
+            };
+        // 拒绝类判据缺少负样本时省略快照键，由既有基线门报告未观测并阻断。
+        FeatureEvidenceRejectionSelfCheck.AddObserved(capabilities, "unverified_api_blocks_real_execution",
+            v20BFeatureHandlerChecks.UnverifiedApiBlocksRealExecution);
+        FeatureEvidenceRejectionSelfCheck.AddObserved(capabilities, "unverified_feature_blocks_execution",
+            v21AComplexFeatureChecks.UnverifiedFeatureBlocksExecution);
+        var capabilityRegression = SelfCheckCapabilityRegressionGate.Evaluate(projectRoot, capabilities);
 
         return new(
             unifiedPartFamilyBuilders,
@@ -2794,7 +2795,7 @@ public static class PlatformSelfCheckRunner
             regressionModelsSupported,
             flangeRegressionPassed,
             shaftRegressionPassed,
-            geometryValidationPlatformWide);
+            geometryValidationPlatformWide, familyEvidenceGateVerified);
     }
 
     private static async Task<V21AJacketSelfCheckResult> RunV21AJacketChecksAsync(
@@ -2802,7 +2803,7 @@ public static class PlatformSelfCheckRunner
         PlatformKernel platform,
         string versionStageText,
         string outputRoot,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, string? partFamilyEvidenceRoot)
     {
         var registry = PartTypeRegistry.CreateDefault();
         var definition = registry.GetDefinition(JacketBasicDefinition.Type) as JacketBasicDefinition;
@@ -2863,6 +2864,7 @@ public static class PlatformSelfCheckRunner
         // 夹套 BuildPlan 通过与真实 Worker 相同的 Handler / evidence 前置校验。
         var jacketProductionEvidenceActive =
             jacketBuilder?.GetType().GetProperty("SupportsRealExecution")?.GetValue(jacketBuilder) is true &&
+            FamilyEvidenceActive(workerAssembly, JacketBasicDefinition.Type, partFamilyEvidenceRoot) &&
             ValidateFeatureGraphProductionEvidence(workerAssembly, plan);
 
         var jacketDryRunPassed = false;
@@ -7072,9 +7074,9 @@ public static class PlatformSelfCheckRunner
         bool RevolveHandlerRegistered,
         bool FeatureHandlerValidationSupported,
         bool FeatureApiEvidenceRequired,
-        bool UnverifiedApiBlocksRealExecution,
+        bool? UnverifiedApiBlocksRealExecution,
         bool FeatureHandlerDocsCompleted,
-        bool V20BDocumented)
+        bool V20BDocumented, RejectionProbeResult EvidenceRejectionProbe)
     {
         public bool AllPassed =>
             FeatureHandlerRegistryExists &&
@@ -7086,7 +7088,7 @@ public static class PlatformSelfCheckRunner
             RevolveHandlerRegistered &&
             FeatureHandlerValidationSupported &&
             FeatureApiEvidenceRequired &&
-            UnverifiedApiBlocksRealExecution &&
+            UnverifiedApiBlocksRealExecution == true &&
             FeatureHandlerDocsCompleted &&
             V20BDocumented;
     }
@@ -7156,11 +7158,11 @@ public static class PlatformSelfCheckRunner
         bool CircularPatternHandlerRegistered,
         bool MirrorHandlerRegistered,
         bool ComplexFeatureRegistrySupported,
-        bool UnverifiedFeatureBlocksExecution,
+        bool? UnverifiedFeatureBlocksExecution,
         bool FeatureLibraryDocumented,
         bool FeatureRegressionTestsPassed,
         bool V21ADocumented,
-        bool EdgeSelectionModelSupported)
+        bool EdgeSelectionModelSupported, RejectionProbeResult EvidenceRejectionProbe)
     {
         public bool AllPassed =>
             FilletHandlerRegistered &&
@@ -7169,7 +7171,7 @@ public static class PlatformSelfCheckRunner
             CircularPatternHandlerRegistered &&
             MirrorHandlerRegistered &&
             ComplexFeatureRegistrySupported &&
-            UnverifiedFeatureBlocksExecution &&
+            UnverifiedFeatureBlocksExecution == true &&
             FeatureLibraryDocumented &&
             FeatureRegressionTestsPassed &&
             V21ADocumented &&
@@ -7195,13 +7197,13 @@ public static class PlatformSelfCheckRunner
         bool RegressionModelsSupported,
         bool FlangeRegressionPassed,
         bool ShaftRegressionPassed,
-        bool GeometryValidationPlatformWide)
+        bool GeometryValidationPlatformWide, bool FamilyEvidenceGateVerified)
     {
         public bool AllPassed =>
             UnifiedPartFamilyBuilders &&
             ControlledPlateEvidenceActive &&
             StepContentGateActive &&
-            V21ARealExecutionFrozen &&
+            FamilyEvidenceGateVerified &&
             V20EDocumented &&
             CapabilityRegressionGatePassed &&
             PartFamilyDefinitionSupported &&

@@ -4,7 +4,7 @@
 
 项目正式名称为 `AI Mechanical Engineer Platform`。平台面向机械设计、CAD 自动化、`SolidWorks`、`AutoCAD` 及后续工业软件适配，采用少量强 Agent 与多个确定性 Worker：强模型负责工程理解、规划和决策，平台负责工程约束、确定性执行、真实 CAD/API 能力和结果验收。
 
-保留 `AI_Mechanical_Engineering_Agent_Platform` 底层目录及解决方案文件名，继续兼容现有构建命令、程序集、命名空间、工具路径和来源绑定证据；正式名称调整不授权全局替换这些稳定标识。当前阶段见 [V2.2-C CAD 基线恢复与阵列证据重采](docs/v2_2_c_cad_baseline_recovery.md)，保留 V2.2-B 架构成果；阶段恢复、完整测试与全局自检分别报告。
+保留 `AI_Mechanical_Engineering_Agent_Platform` 底层目录及解决方案文件名，继续兼容现有构建命令、程序集、命名空间、工具路径和来源绑定证据；正式名称调整不授权全局替换这些稳定标识。当前阶段见 [V2.2-D 轴类与夹套真实能力基线](docs/v2_2_d_shaft_jacket_real_baseline.md)，保留 V2.2-B 架构成果；阶段恢复、完整测试与全局自检分别报告。
 
 ## 架构边界
 

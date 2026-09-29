@@ -106,10 +106,15 @@ public sealed class LateBoundSolidWorksComFacade : ISolidWorksComFacade
         // 均为 out int；装箱的 0 不会自动成为引用参数，必须显式标记。
         // SaveAs 的 ExportData 还要求 IDispatch，空指针封送由 TryExtensionSaveAs 处理。
         if ((args.Length == 4 && name is "ActivateDoc3" or "LoadFile4") ||
-            (args.Length == 6 && name == "SaveAs"))
+            (args.Length == 6 && name is "SaveAs" or "GetExtremePoint"))
         {
             var modifier = new ParameterModifier(args.Length);
             if (args.Length == 4) modifier[3] = true;
+            else if (name == "GetExtremePoint")
+            {
+                // IBody2.GetExtremePoint 的三个输出坐标均为 ref double。
+                modifier[3] = modifier[4] = modifier[5] = true;
+            }
             else
             {
                 // IModelDocExtension.SaveAs 的 Errors 和 Warnings。

@@ -1,0 +1,37 @@
+{
+  "run_id": "feature-execution-20260928_012418_4037176",
+  "execution_mode": "RealBuildGenericFeatureGraph",
+  "candidate_only": true,
+  "dedicated_smoke_flag_enabled": true,
+  "real_execution_allowed": true,
+  "solid_works_connected": false,
+  "real_cad_executed": false,
+  "solid_works_version": null,
+  "input_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\examples\\real_cad_shaft_request.json",
+  "build_plan_id": "solidworks-build-plan-feature-execution-smoke-c2bb0196010049a8bda50ffea4e22fa5",
+  "model": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012418_4127328\\model.SLDPRT",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "step": {
+    "file_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012418_4127328\\model.STEP",
+    "exists": false,
+    "size_bytes": 0,
+    "status": "NotGenerated"
+  },
+  "feature_handler_reports": [],
+  "main_workflow_accepted": false,
+  "quality_gate_passed": false,
+  "deliverable_status": "NotDeliverable",
+  "failure_stage": "feature_adapter_missing",
+  "final_status": "Failed",
+  "logs": [],
+  "issues": [
+    "feature_adapter_missing: the diagnostic input must compile to feature_handler_graph."
+  ],
+  "report_path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\evidence\\solidworks\\v2_2_d_diagnostic_attempts\\20260928_012418_4127328\\feature_execution_report.json",
+  "generated_at": "2026-09-28T01:24:18.4734571+00:00",
+  "build_plan": null
+}

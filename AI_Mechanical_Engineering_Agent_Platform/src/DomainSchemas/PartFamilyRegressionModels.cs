@@ -41,7 +41,7 @@ public static class PartFamilyRegressionModels
                 }))),
         new(
             ShaftBasicDefinition.Type,
-            PartFamilyGenericModelFactory.CreateShaftBasic(new CADModelSpec(
+            RetainDesignConstraint(PartFamilyGenericModelFactory.CreateShaftBasic(new CADModelSpec(
                 "regression-shaft-basic",
                 ShaftBasicDefinition.Type,
                 new Dictionary<string, string>
@@ -50,10 +50,10 @@ public static class PartFamilyRegressionModels
                     ["length_mm"] = "180",
                     ["optional_step_diameters"] = "32,24",
                     ["optional_step_lengths"] = "40,30"
-                }))),
+                })), "shaft_axis", "length_mm", "180")),
         new(
             JacketBasicDefinition.Type,
-            PartFamilyGenericModelFactory.CreateJacketBasic(new CADModelSpec(
+            RetainDesignConstraint(PartFamilyGenericModelFactory.CreateJacketBasic(new CADModelSpec(
                 "regression-jacket-basic",
                 JacketBasicDefinition.Type,
                 new Dictionary<string, string>
@@ -61,6 +61,14 @@ public static class PartFamilyRegressionModels
                     ["outer_diameter_mm"] = "140",
                     ["inner_diameter_mm"] = "120",
                     ["length_mm"] = "180"
-                })))
+                })), "jacket_outer_circle", "outer_diameter_mm", "140"))
     ];
+
+    // 保留历史设计约束的领域/编译回归覆盖。此输入仅用于 dry-run；
+    // 真实 Handler 仍拒绝非空约束，不能把模板编译通过当作约束 API 证据。
+    private static CADModelSpec RetainDesignConstraint(CADModelSpec spec, string entityId, string parameter, string value) =>
+        spec with { Sketches = spec.Sketches.Select(sketch => sketch.Entities.Any(entity => entity.EntityId == entityId)
+            ? sketch with { Constraints = [CommonFeatureTemplates.CreateDimensionalConstraint(
+                $"{entityId}_design_dimension", entityId, parameter, value)] }
+            : sketch).ToArray() };
 }

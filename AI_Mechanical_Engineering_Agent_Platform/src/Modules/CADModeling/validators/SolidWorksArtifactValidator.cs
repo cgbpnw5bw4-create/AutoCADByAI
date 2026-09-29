@@ -428,6 +428,33 @@ public sealed class SolidWorksArtifactValidator : IValidator
     /// </summary>
     private static void ValidateGeometryEvidence(JsonElement root, List<string> issues)
     {
+        if (root.TryGetProperty("geometry_model_plan", out var declaredPlan) && declaredPlan.ValueKind == JsonValueKind.Object &&
+            declaredPlan.TryGetProperty("part_type", out var planFamily) &&
+            (!root.TryGetProperty("part_type", out var reportFamily) || reportFamily.ValueKind != JsonValueKind.String ||
+             !string.Equals(planFamily.GetString(), reportFamily.GetString(), StringComparison.OrdinalIgnoreCase)))
+            issues.Add("geometry_evidence_invalid: 报告零件族身份缺失或与实测计划不一致。");
+        if (root.TryGetProperty("part_type", out var family) && family.ValueKind == JsonValueKind.String &&
+            PartTypeRegistry.CreateDefault().TryGetDefinition(family.GetString(), out var definition) && definition.RequiresDetailedGeometry)
+        {
+            // 当前新增真实族必须从真实读数与输入计划独立复算；不能用报告自报容差或 NotDeclared 放行。
+            try
+            {
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+                var plan = root.TryGetProperty("geometry_model_plan", out var planJson) ? planJson.Deserialize<SolidWorksBuildPlan>(options) : null;
+                var measured = root.TryGetProperty("measured_geometry", out var geometryJson) ? geometryJson.Deserialize<MeasuredGeometry>(options) : null;
+                var expected = plan is null ? null : definition.DescribeExpectedGeometry(plan);
+                if (plan is null || plan.PartType != definition.PartType || plan.Unit != "mm" ||
+                    expected?.AxialSections is not { Count: > 0 } || definition.ReviewBuildPlan(plan).Count != 0 ||
+                    !PartGeometryValidator.Validate(expected, measured).IsValid)
+                    issues.Add("geometry_evidence_invalid: 零件族缺少完整计划和实测拓扑，或独立尺寸/同轴/台阶/体积复算失败。");
+                RequireTrue(root, "geometry_validation_attempted", "build_report", issues);
+                RequireString(root, "geometry_validation_status", "Passed", "build_report", issues);
+            }
+            catch (Exception ex) when (ex is JsonException or ArgumentException or InvalidOperationException)
+            {
+                issues.Add($"geometry_evidence_invalid: {ex.Message}");
+            }
+        }
         var featureReports = root.TryGetProperty("feature_handler_reports", out var reportArray) && reportArray.ValueKind == JsonValueKind.Array
             ? reportArray.EnumerateArray().ToArray() : [];
         if (featureReports.Any(r => r.TryGetProperty("hole_parameters", out var p) && p.ValueKind == JsonValueKind.Object && p.TryGetProperty("hole_type", out _)) ||
@@ -531,6 +558,9 @@ public sealed class SolidWorksArtifactValidator : IValidator
             using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
             var root = document.RootElement;
             RequireTrue(root, "real_cad_executed", "build_report", issues);
+            if (!root.TryGetProperty("part_type", out var family) || family.ValueKind != JsonValueKind.String ||
+                !PartTypeRegistry.CreateDefault().TryGetDefinition(family.GetString(), out _))
+                issues.Add("geometry_evidence_invalid: 通用建模报告缺少已注册零件族身份，不能降级为未声明几何。");
             RequireTrue(root, "real_cad_connected", "build_report", issues);
             RequireTrue(root, "sldprt_save_success", "build_report", issues);
             RequireTrue(root, "step_export_success", "build_report", issues);

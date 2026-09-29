@@ -1,5 +1,8 @@
 # AI Mechanical Engineer Platform
 
+当前开发入口为 [V2.2-D 轴类与夹套真实能力基线](docs/v2_2_d_shaft_jacket_real_baseline.md)。本轮限定真实轴类/夹套、两格式独立几何验收及证据复验，保留平台架构和历史记录。下述 V2.2-C 统计属于上一阶段。 V2.2-D 完整测试783/783通过，全局 self-check 恢复为 Passed；真实能力限定于本阶段三组受证轴类/夹套输入。
+
+
 ## 目标与适用范围
 
 本项目面向机械设计、CAD 自动化和后续整机设计。核心分工是：**强模型负责工程理解、规划和决策；平台负责工程约束、确定性执行、真实 CAD/API 能力和结果验收。**
@@ -35,17 +38,17 @@ Feature Registry → Verified Handler → SolidWorks API Evidence → Worker →
 ## 执行步骤
 
 1. 先读 [项目入口](docs/index.md)、[执行规范](docs/project_execution_standard.md)、[Codex 执行协议](docs/codex_execution_protocol.md) 和 [版本索引](docs/version_stage_index.md)。
-2. 核对 [当前架构](docs/architecture.md)、[Agent 职责](docs/agent_standard.md) 与 [质量门禁](docs/quality_gate.md)。当前 CAD 恢复与验证见 [V2.2-C 阶段页](docs/v2_2_c_cad_baseline_recovery.md)，架构改动保留于 [V2.2-B 阶段页](docs/v2_2_b_frontier_model_architecture.md)。
+2. 核对 [当前架构](docs/architecture.md)、[Agent 职责](docs/agent_standard.md) 与 [质量门禁](docs/quality_gate.md)。当前 CAD 恢复与验证见 [V2.2-D 阶段页](docs/v2_2_d_shaft_jacket_real_baseline.md)，架构改动保留于 [V2.2-B 阶段页](docs/v2_2_b_frontier_model_architecture.md)。
 3. 涉及真实 CAD 时读取对应模块和 Worker 的 `api_evidence.md`、`failure_repair.md`、最新诊断与验收报告，再进入受控主流程。
 4. 在本目录运行构建、完整测试和定向自检：
 
 ```powershell
 dotnet build AI_Mechanical_Engineering_Agent_Platform.sln
 dotnet test
-dotnet run --project src/Interfaces/CliHost -- self-check --output output/validation/v2_2_c_cad_baseline/final_self_check_20260924
+dotnet run --project src/Interfaces/CliHost -- self-check --output "output/validation/v2_2_d_shaft_jacket/manual_self_check_$(Get-Date -Format yyyyMMdd_HHmmssfff)"
 ```
 
-自检、单元测试、CI 与 `dry_run=true` 不得启动 SolidWorks。本地交互式真实主流程遵循现有默认启用策略及失败关闭条件。每次验证使用新的输出目录，保留此前报告；上述 9 月 24 日复核命令的实际结果已记录在阶段页，后续运行须使用新的输出目录。
+自检、单元测试、CI 与 `dry_run=true` 不得启动 SolidWorks。本地交互式真实主流程遵循现有默认启用策略及失败关闭条件。每次验证使用新的输出目录，保留此前报告；当前实际结果见 V2.2-D 阶段页，上述命令按时间生成新的自检目录。
 
 ## 名称与兼容范围
 
