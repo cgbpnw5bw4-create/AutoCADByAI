@@ -113,6 +113,13 @@ public sealed class MicrosoftAgentAdapter : IAgent, IHumanApprovalAgent
 
     private async Task<AgentOutput> ExecuteChiefEngineerRuntimeThenWorkflowAsync(AgentContext context)
     {
+        // V2.3 在工作流中只规划一次，不先生成 advisory 再调用同一个模型。
+        if (EngineeringPlanningStep.IsRequested(context))
+        {
+            var planned = await _platformAgent!.ExecuteAsync(context);
+            return planned with { RuntimeMetadata = new RuntimeMetadata("Microsoft", null, null, false, null,
+                planned.Artifacts.Any(artifact => artifact.Kind == "EngineeringModelInvocationReport")) };
+        }
         var runtimeOutput = await _microsoftInvoker!.InvokeAsync(_manifest, context);
         var workflowOutput = await _platformAgent!.ExecuteAsync(context);
         if (workflowOutput.InternalCollaborationReport?.HumanApprovalRequest is not null)

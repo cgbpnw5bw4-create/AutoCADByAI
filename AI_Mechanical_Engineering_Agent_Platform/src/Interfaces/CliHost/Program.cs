@@ -3,6 +3,7 @@ using System.Text.Json;
 using AgentGatewayHost;
 using AgentRuntime.Microsoft;
 using DomainSchemas;
+using ModelRuntime;
 using PlatformCore;
 using PlatformCore.Modules.CADModeling;
 
@@ -29,6 +30,111 @@ if (args.Length > 0 && string.Equals(args[0], "self-check", StringComparison.Ord
     Console.WriteLine($"Hole self-check group: {(report.HoleSelfCheckGroupPassed ? "Passed" : "Failed")}");
     foreach (var issue in report.HoleSelfCheckIssues) Console.Error.WriteLine(issue);
     return report.FinalStatus == "Passed" ? 0 : 2;
+}
+
+if (args.Length > 0 && string.Equals(args[0], "run-engineering-plan", StringComparison.OrdinalIgnoreCase))
+{
+    var projectRoot = FindProjectRoot(Directory.GetCurrentDirectory());
+    try
+    {
+        string? inputPath = null;
+        string? responsePath = null;
+        var dryRun = false;
+        for (var index = 1; index < args.Length; index++)
+        {
+            switch (args[index])
+            {
+                case "--input" when inputPath is null && index + 1 < args.Length:
+                    inputPath = Path.GetFullPath(args[++index]);
+                    break;
+                case "--response" when responsePath is null && index + 1 < args.Length:
+                    responsePath = Path.GetFullPath(args[++index]);
+                    break;
+                case "--dry-run" when !dryRun:
+                    dryRun = true;
+                    break;
+                default:
+                    throw new ArgumentException($"engineering_plan_invalid_options: 无效或重复参数 {args[index]}。");
+            }
+        }
+        if (inputPath is null) throw new ArgumentException("engineering_plan_invalid_options: 缺少 --input <自然语言需求文件>。");
+        var requirement = await File.ReadAllTextAsync(inputPath);
+        if (string.IsNullOrWhiteSpace(requirement)) throw new ArgumentException("engineering_requirement_missing: 自然语言需求不能为空。");
+        var runId = $"engineering-{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss_fff}-{Guid.NewGuid():N}";
+        var outputDirectory = Path.Combine(projectRoot, "output", "solidworks", "engineering", runId);
+        EngineeringPlanReplayProvider? replay = null;
+        PlatformKernel platform;
+        if (responsePath is null)
+        {
+            platform = RuntimePlatformFactory.CreateDefault(projectRoot);
+        }
+        else
+        {
+            replay = new EngineeringPlanReplayProvider(await File.ReadAllTextAsync(responsePath));
+            platform = PlatformBootstrapper.CreateDefault(projectRoot);
+            platform.EngineeringPlanningRuntime = new ModelRuntime.ModelRuntime(replay);
+        }
+        if (!dryRun) SolidWorksLocalExecutionProfile.Load(projectRoot).ApplyToCurrentProcess();
+        var context = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["engineering_planning"] = "true",
+            ["engineering_plan_source"] = replay is null ? "live" : "replay",
+            ["request_id"] = runId,
+            ["project_root"] = projectRoot,
+            ["engineering_output_directory"] = outputDirectory,
+            ["solidworks_output_directory"] = outputDirectory,
+            ["dry_run"] = dryRun ? "true" : "false",
+            ["gateway_invoked"] = "true"
+        };
+        var response = await new AgentMessageDispatcher(platform).DispatchAsync("chief-engineer",
+            new GatewayMessageRequest("CliHost", "cli", runId, Environment.UserName, requirement, [], context));
+        var e2ePath = response?.Artifacts.FirstOrDefault(artifact =>
+            artifact.Kind.Equals("E2eExecutionReport", StringComparison.OrdinalIgnoreCase))?.Path;
+        string? finalStatus = null;
+        string? deliverableStatus = null;
+        var realCadExecuted = false;
+        if (e2ePath is not null && File.Exists(e2ePath))
+        {
+            using var document = JsonDocument.Parse(await File.ReadAllTextAsync(e2ePath));
+            finalStatus = ReadString(document.RootElement, "final_status");
+            deliverableStatus = ReadString(document.RootElement, "deliverable_status");
+            realCadExecuted = string.Equals(ReadString(document.RootElement, "real_cad_executed"), "true", StringComparison.OrdinalIgnoreCase);
+        }
+        var completed = string.Equals(response?.Status, "completed", StringComparison.OrdinalIgnoreCase);
+        var invocationPath = response?.Artifacts.FirstOrDefault(artifact => artifact.Kind == "EngineeringModelInvocationReport")?.Path;
+        int? modelCalls = replay?.Calls;
+        if (invocationPath is not null && File.Exists(invocationPath))
+        {
+            using var invocation = JsonDocument.Parse(await File.ReadAllTextAsync(invocationPath));
+            modelCalls = invocation.RootElement.GetProperty("model_calls").GetInt32();
+        }
+        else if (platform.EngineeringPlanningRuntime is null) modelCalls = 0;
+        var passed = dryRun ? completed : completed && realCadExecuted && finalStatus == "Passed" && deliverableStatus == "Deliverable";
+        Directory.CreateDirectory(outputDirectory);
+        var reportPath = Path.Combine(outputDirectory, "engineering_execution_report.json");
+        await File.WriteAllTextAsync(reportPath, JsonSerializer.Serialize(new
+        {
+            schema_version = "2.3", run_id = runId, requirement, plan_source = replay is null ? "live" : "replay",
+            model_calls = modelCalls, dry_run = dryRun, real_cad_executed = realCadExecuted,
+            final_status = passed ? "Passed" : "Failed", simulation_status = dryRun ? completed ? "Passed" : "Failed" : null,
+            deliverable_status = dryRun ? "NotDeliverable" : deliverableStatus ?? "NotDeliverable",
+            gateway_status = response?.Status, failure_stage = response?.FailureStage,
+            quality_gate = response?.GateDecision, issues = response?.Issues, artifacts = response?.Artifacts,
+            e2e_execution_report = e2ePath
+        }, JsonOptions()));
+        Console.WriteLine($"plan_source={(replay is null ? "live" : "replay")}");
+        Console.WriteLine($"final_status={(passed ? "Passed" : "Failed")}");
+        Console.WriteLine($"real_cad_executed={realCadExecuted.ToString().ToLowerInvariant()}");
+        Console.WriteLine($"deliverable_status={(dryRun ? "NotDeliverable" : deliverableStatus ?? "NotDeliverable")}");
+        Console.WriteLine($"engineering_execution_report={reportPath}");
+        if (!passed) foreach (var issue in response?.Issues ?? []) Console.Error.WriteLine(issue);
+        return passed ? 0 : 2;
+    }
+    catch (Exception exception) when (exception is IOException or JsonException or ArgumentException or NotSupportedException)
+    {
+        Console.Error.WriteLine($"engineering_plan_input_failed: {exception.Message}");
+        return 2;
+    }
 }
 
 if (CadDryRunCliContract.IsInvocation(args))
@@ -157,6 +263,7 @@ if (SolidWorksE2eCliContract.IsInvocation(args))
 
 Console.WriteLine("Usage:");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- self-check [--output <directory>]");
+Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-engineering-plan --input examples/v2_3_jacket_requirement.txt [--response examples/v2_3_jacket_plan_response.json] [--dry-run]");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_plate_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_flange_request.json");
 Console.WriteLine("  dotnet run --project src/Interfaces/CliHost -- run-cad-workflow --input examples/real_cad_shaft_request.json");
@@ -353,6 +460,17 @@ static string FindProjectRoot(string startDirectory)
 
 static string ToSafePathSegment(string value) =>
     string.Concat(value.Select(character => Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
+
+internal sealed class EngineeringPlanReplayProvider(string response) : IModelProvider
+{
+    public int Calls { get; private set; }
+    public Task<string> GenerateAsync(ModelRequest request, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Calls++;
+        return Task.FromResult(response);
+    }
+}
 
 internal sealed class CadWorkflowInput
 {

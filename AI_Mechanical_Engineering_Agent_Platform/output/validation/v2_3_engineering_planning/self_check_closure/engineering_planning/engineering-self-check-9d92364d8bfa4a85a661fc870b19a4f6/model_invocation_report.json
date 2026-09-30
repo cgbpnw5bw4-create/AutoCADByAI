@@ -1,0 +1,8 @@
+{
+  "purpose": "DesignPlanning",
+  "model_calls": 1,
+  "plan_source": "self-check-probe",
+  "requirement": "\u5EFA\u6A21\u5706\u7B52\u5939\u5957\uFF0C\u5916\u5F84140 mm\uFF0C\u5185\u5F84120 mm\uFF0C\u8F74\u5411\u957F\u5EA6180 mm\u3002\u8F93\u51FASLDPRT\u548CSTEP\u3002",
+  "task_id": "task-e525f6483de14689ba04a0745780f517",
+  "real_cad_executed": false
+}

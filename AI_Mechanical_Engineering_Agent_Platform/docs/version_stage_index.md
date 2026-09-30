@@ -1,11 +1,11 @@
 # 版本阶段索引
 
-当前开发入口为 [V2.2-D 轴类与夹套真实能力基线](v2_2_d_shaft_jacket_real_baseline.md)。本轮限定真实轴类/夹套、两格式独立几何验收及证据复验，保留平台架构和历史记录。下述 V2.2-C 统计属于上一阶段。
+当前开发入口为 [V2.3 工程规划闭环](v2_3_engineering_planning_loop.md)。本轮以已有真实 evidence 的140/120/180 mm夹套建立自然语言到既有 CAD 质量链的首个受限闭环；历史阶段记录保留，本轮验证结果单独登记。
 
 
 ## 阶段列表
 
-`AI Mechanical Engineer Platform` 上一阶段入口为 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)。本轮保留 V2.2-B 架构成果；2026-09-14 已完成既有 CAD 基线恢复，完整测试 684/684 通过，正式参数更新主流程及实物复核通过，全局 self-check 仍为 `Failed`。2026-09-24 继续文档收尾与独立复核，实际结果见阶段页，历史候选与失败结论不被覆盖。
+`AI Mechanical Engineer Platform` 上一阶段入口为 [V2.2-D 轴类与夹套真实能力基线](v2_2_d_shaft_jacket_real_baseline.md)，已登记783/783测试、全局 self-check `Passed` 及受限真实 CAD 验收。本轮复用该夹套证据及 V2.2-B 模型运行时，不更改证据或降低基线。更早的 V2.2-C 684/684测试与全局 `Failed` 保留为当时结果，不能代替当前验证。
 
 | 阶段 | 目标 | 不做什么 | 关键交付物 | 说明文件 | self-check 字段 | 审查报告位置 |
 |---|---|---|---|---|---|---|
@@ -48,6 +48,8 @@
 | V2.2-A | 平台任务生命周期与审批闭环 | 不扩展 CAD；不实施类型交接、持久化或真实证据修复；不绕过原业务收尾与质量门禁 | 具体审批身份、原子匹配防重放、任务访问令牌、状态查询与宿主审批入口、恢复后的 `chief-engineer` 原后处理和 `QualityGate` | [阶段合同与验收](v2_2_a_task_approval_lifecycle.md) | `task_lifecycle_tracked`、`task_approval_roundtrip_supported`、`task_access_token_required`、`workflow_approval_identity_bound` | 本轮指定输出目录及阶段页实际验证记录，待回填 |
 | V2.2-B | 强模型架构增量优化与正式名称统一 | 不强改底层标识；不改来源绑定 CAD 代码与 evidence；不实现空壳并行/条件引擎或专项 Gate | `ModelRuntime` / `IModelProvider`、`IWorkflowEngine`、`IQualityGate` 与组合裁决、默认单步骤规划输入校验、Worker 桥接权限收敛、中文定位与兼容说明 | [阶段合同与验证](v2_2_b_frontier_model_architecture.md) | `frontier_architecture_checks` 四项行为；沿用既有阶段字段与全局自检，实际结果另列 | `output/validation/v2_2_b_frontier/` |
 | V2.2-C | CAD 基线恢复与阵列证据重采 | 不继续扩展平台架构；不改旧报告或以修改长度/hash 恢复通过；不扩展未受证孔及装配能力 | 单种子与编译到执行引用绑定、带符号方向与过原点主轴约束、STEP 身份与封送修复、四方向及七组生产重采、参数更新主流程及完整验证记录 | [恢复范围与验证](v2_2_c_cad_baseline_recovery.md) | 9 月 14 日原 8 项失败已消除，V2.0-E 为 Passed；全局仍 Failed，9 月 24 日复核另列 | `output/validation/v2_2_c_cad_baseline/`、`evidence/solidworks/v2_2_c_refresh/` |
+| V2.2-D | 轴类与夹套真实能力基线 | 不扩展模型架构或任意尺寸，不改旧 evidence，不用候选通过替代正式交付 | 受限轴类/夹套实证、双格式独立重开、正式发布复核、783/783测试及全局自检通过 | [真实能力基线](v2_2_d_shaft_jacket_real_baseline.md) | 既有轴类、夹套生产证据与真实工作流字段，以及能力回归门 | `output/validation/v2_2_d_shaft_jacket/`、`evidence/solidworks/v2_2_d_final/` |
+| V2.3 | 首个工程规划闭环 | 不另建 CAD Schema，不让模型调用 API，不扩展多 Agent、并行或通用工作流语言，不用审批放行无效计划 | `EngineeringPlan`、严格解析与工程规则、既有模板映射、显式工程规划入口、受限夹套真实验收 | [规划合同与验证](v2_3_engineering_planning_loop.md) | 新增 `engineering_planning_checks` 字典，旧 schema 和基线保留 | 本轮新输出目录及阶段页实际验证记录 |
 
 > `V2.1-A` 编号说明：该标签此前指向圆筒夹套零件族，经决定作废并改派给复杂特征库。夹套本身继续有效，其文档与自检字段保留为历史记录，不再代表阶段编号。
 
@@ -61,7 +63,15 @@
 
 开始新任务时先定位阶段，再读取对应说明文件。阶段未完成时不得提前进入下一阶段。
 
-本轮进入 V2.2-C，保留 V2.2-B 强模型架构和 V2.2-A 任务审批行为，按当前阶段页恢复既有 CAD 证据与主流程。未验证能力继续阻断，规则测试、候选通过、完整测试和正式 CAD 交付分别记录，不用新阶段名称覆盖历史失败。
+本轮进入 V2.3，保留 V2.2-B 模型运行时、V2.2-A 任务审批行为和 V2.2-D 真实 CAD 能力基线。未验证能力继续阻断；响应重放、实时模型稳定性、规则测试、完整测试、全局自检和正式 CAD 交付分别记录，不用新阶段名称覆盖历史失败。
+
+## V2.3 准入与范围
+
+目标是验证自然语言工程思考经过确定性校验后能进入原 CAD 质量链。输入为原始自然语言、`IModelProvider` 响应及已受证夹套档案；输出为 `EngineeringPlan`、原合同映射、失败诊断和同次真实产物及发布裁决。首个样例为外径140 mm、内径120 mm、长度180 mm，输出 `SLDPRT` 和 `STEP`；材料、承载、压力及制造适用性未纳入验收。
+
+先读取 [阶段页](v2_3_engineering_planning_loop.md) 和需求理解模块四份协议，再核对严格解析、原文绑定与工程规则、模板映射、模型权限及原门禁未被绕过；由执行代理统一运行完整 build、test、定向 self-check 和正式工程入口，并独立重开两格式核对几何。缺参、风险、假设、未知或重复字段、原文尺寸不符与未知附加要求均拒绝，不能静默套用受证样例默认值。
+
+实时模型缺失时必须报告 `engineering_model_not_configured`，不能回退默认零件；`--response` 仅用于明确响应重放，不能宣称真实模型稳定性通过。禁止修改绑定 Handler、Adapter、旧 evidence、只读 `reviewrep` 或能力基线；出现真实 CAD/API 失败仍进入已有失败修复和证据链。
 
 ## V2.2-C 准入与范围
 

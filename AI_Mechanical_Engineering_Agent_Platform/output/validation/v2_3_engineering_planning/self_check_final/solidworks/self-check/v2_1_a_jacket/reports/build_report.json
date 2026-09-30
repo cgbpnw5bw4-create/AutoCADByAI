@@ -1,0 +1,133 @@
+{
+  "request_id": "self-check-v21-a-jacket-6ab89d8e89e94dc8b89b442d80fae286",
+  "plan_id": "solidworks-build-plan-self-check-v21-a-jacket",
+  "part_type": "jacket_basic",
+  "part_family_definition": "JacketBasicDefinition",
+  "part_family_builder": "SolidWorksFeatureGraphPartFamilyBuilder",
+  "parameter_schema": [
+    {
+      "Name": "outer_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Jacket outer diameter.",
+      "DefaultValue": "140",
+      "MinimumValue": 2,
+      "MaximumValue": 3000,
+      "HasRange": true
+    },
+    {
+      "Name": "inner_diameter_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Jacket inner diameter.",
+      "DefaultValue": "120",
+      "MinimumValue": 1,
+      "MaximumValue": 2990,
+      "HasRange": true
+    },
+    {
+      "Name": "length_mm",
+      "ValueKind": 0,
+      "Required": true,
+      "Description": "Jacket axial length.",
+      "DefaultValue": "180",
+      "MinimumValue": 1,
+      "MaximumValue": 10000,
+      "HasRange": true
+    }
+  ],
+  "api_evidence": "feature_handler_registry_preflight_required; handler evidence is evaluated per node",
+  "dimensions": {
+    "outer_diameter_mm": "140",
+    "inner_diameter_mm": "120",
+    "length_mm": "180"
+  },
+  "material": "Q235",
+  "features": {},
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "build_report.json"
+  ],
+  "drawing_requirements": {},
+  "execution_options": {},
+  "execution_mode": "Fake",
+  "dry_run": true,
+  "real_cad_executed": false,
+  "operations": [
+    {
+      "OperationId": "op-001",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "center_x_mm": "0",
+        "center_y_mm": "0",
+        "radius_mm": "70",
+        "sketch_id": "jacket_outer_sketch",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "0",
+        "dimensions": "{}",
+        "entities": "[{\u0022entity_id\u0022:\u0022jacket_outer_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u00220\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022radius_mm\u0022:\u002270\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[]"
+      }
+    },
+    {
+      "OperationId": "op-002",
+      "OperationType": "ExtrudeBoss",
+      "Parameters": {
+        "depth_mm": "180",
+        "direction": "blind",
+        "feature_id": "jacket_body_extrude",
+        "feature_type": "extrude_boss",
+        "sketch_id": "jacket_outer_sketch",
+        "referenced_sketches": "[\u0022jacket_outer_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-003",
+      "OperationType": "CreateSketch",
+      "Parameters": {
+        "center_x_mm": "0",
+        "center_y_mm": "0",
+        "radius_mm": "60",
+        "sketch_id": "jacket_inner_sketch",
+        "reference_plane": "TopPlane",
+        "entity_count": "1",
+        "constraint_count": "0",
+        "dimensions": "{}",
+        "entities": "[{\u0022entity_id\u0022:\u0022jacket_inner_circle\u0022,\u0022entity_type\u0022:\u0022circle\u0022,\u0022parameters\u0022:{\u0022center_x_mm\u0022:\u00220\u0022,\u0022center_y_mm\u0022:\u00220\u0022,\u0022radius_mm\u0022:\u002260\u0022},\u0022construction\u0022:false,\u0022execution_order\u0022:null,\u0022IsConstructionCenterLine\u0022:false}]",
+        "constraints": "[]"
+      }
+    },
+    {
+      "OperationId": "op-004",
+      "OperationType": "CutExtrude",
+      "Parameters": {
+        "depth_mm": "360",
+        "direction": "blind",
+        "through_all": "false",
+        "feature_id": "jacket_inner_cut",
+        "feature_type": "extrude_cut",
+        "sketch_id": "jacket_inner_sketch",
+        "referenced_sketches": "[\u0022jacket_inner_sketch\u0022]"
+      }
+    },
+    {
+      "OperationId": "op-005",
+      "OperationType": "SavePart",
+      "Parameters": {
+        "file_name": "self-check-v21-a-jacket.SLDPRT"
+      }
+    },
+    {
+      "OperationId": "op-006",
+      "OperationType": "ExportStep",
+      "Parameters": {
+        "file_name": "self-check-v21-a-jacket.STEP"
+      }
+    }
+  ],
+  "failure_stage": null,
+  "final_status": "Passed",
+  "generated_at": "2026-09-30T05:35:11.7293575+00:00"
+}

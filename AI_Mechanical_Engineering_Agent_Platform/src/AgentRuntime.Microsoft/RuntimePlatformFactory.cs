@@ -33,5 +33,9 @@ public static class RuntimePlatformFactory
             modelProvider);
 
         platform.AgentRegistry.Register(runtimeAwareChief);
+        platform.EngineeringPlanningRuntime = configuration.EffectiveMode == AgentRuntimeMode.Microsoft
+            ? new ModelRuntime.ModelRuntime(modelProvider ?? new ConfiguredModelProvider(
+                modelClient ?? new RuntimeModelClientFactory().Create(configuration), configuration))
+            : null;
     }
 }

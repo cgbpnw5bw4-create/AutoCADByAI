@@ -1,0 +1,104 @@
+{
+  "schema_version": "2.3",
+  "phase_implementation_status": "Implemented",
+  "platform_validation_status": "Passed",
+  "cad_acceptance_status": "Passed",
+  "live_model_acceptance_status": "NotVerified",
+  "full_v2_3_acceptance_status": "IncompleteLiveModelValidation",
+  "limitation": "当前平台模型提供商未配置；固定响应重放不能证明实时模型稳定理解自然语言。",
+  "model_runtime": "ModelRuntime / IModelProvider",
+  "build": {
+    "warnings": 0,
+    "exit_code": 0,
+    "log": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\build_clean_final.log",
+    "errors": 0
+  },
+  "tests": {
+    "log": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\test_full_final.log",
+    "exit_code": 0,
+    "total": 865,
+    "v23_total": 68,
+    "v23_passed": 68,
+    "trx": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\tests\\v23_full_final.trx",
+    "failed": 0,
+    "passed": 865
+  },
+  "self_check": {
+    "report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\self_check_closure\\reports\\platform_self_check_report.json",
+    "engineering_planning_checks": {
+      "engineering_plan_model_contract_executed": true,
+      "engineering_plan_maps_existing_cad_schema": true,
+      "engineering_plan_public_route_dry_run_completed": true,
+      "engineering_plan_invalid_inputs_blocked": true,
+      "engineering_plan_missing_runtime_rejected": true
+    },
+    "markdown_chinese_check_passed": true,
+    "final_status": "Passed",
+    "exit_code": 0,
+    "capability_regression_passed": true
+  },
+  "dry_run": {
+    "deliverable_status": "NotDeliverable",
+    "final_status": "Passed",
+    "real_cad_executed": false,
+    "plan_source": "replay",
+    "report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_052957_295-6bab328a6ee248beb59541429cce8d41\\engineering_execution_report.json"
+  },
+  "real_cad": {
+    "real_cad_executed": true,
+    "reopen_identity": {
+      "checked_files": 17,
+      "passed": true,
+      "issues": []
+    },
+    "geometry_report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\cad_acceptance\\independent_geometry_acceptance.json",
+    "format_results": [
+      {
+        "source": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\cad_acceptance\\native_probe.json",
+        "passed": true,
+        "body_count": 1,
+        "volume_cubic_millimeters": 735132.680940013
+      },
+      {
+        "source": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\cad_acceptance\\step_probe.json",
+        "passed": true,
+        "body_count": 1,
+        "volume_cubic_millimeters": 735132.6809400123
+      }
+    ],
+    "quality_gate_passed": true,
+    "deliverable_status": "Deliverable",
+    "engineering_report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_054001_065-585eca8296a34df58dbba6ee05a12e3a\\engineering_execution_report.json",
+    "all_source_reports_passed": true,
+    "release_manifest": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_054001_065-585eca8296a34df58dbba6ee05a12e3a\\release_manifest.json",
+    "solidworks_version": "31.5.0",
+    "plan_execution_identity": {
+      "passed": true,
+      "planned_fingerprint": "2c5f321316e238f35681e76950519faea5620a3230b3522910e72dfc8aea9863",
+      "executed_fingerprint": "2c5f321316e238f35681e76950519faea5620a3230b3522910e72dfc8aea9863",
+      "algorithm": "PartFamilyProductionEvidencePolicy.ComputePlanFingerprint",
+      "failure_stage": null
+    },
+    "final_status": "Passed",
+    "model_calls": 1,
+    "output_directory": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_054001_065-585eca8296a34df58dbba6ee05a12e3a",
+    "plan_source": "replay"
+  },
+  "rejected_scenarios": [
+    "未知/重复/缺少字段",
+    "模型执行选项或API/evidence授权文本",
+    "非受证族/尺寸/单位/输出",
+    "原文缺参/冲突/风险/假设",
+    "压力/螺纹等未受支持的要求",
+    "大小写旧CAD上下文覆盖",
+    "未配置模型提供商或模型失败"
+  ],
+  "live_runtime_rejection_report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_053021_847-d0c411b4e4b34f079a7022580a5b946f\\engineering_execution_report.json",
+  "protected_history": {
+    "checked_files": 383,
+    "passed": true,
+    "issues": []
+  },
+  "fixture_restore_report": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\fixture_runs\\restore_verification.json",
+  "next_step": "配置现有模型提供商，在同一受证档案上反复运行实时自然语言与拒绝用例，补齐稳定性证据后再加入受证档案。"
+}

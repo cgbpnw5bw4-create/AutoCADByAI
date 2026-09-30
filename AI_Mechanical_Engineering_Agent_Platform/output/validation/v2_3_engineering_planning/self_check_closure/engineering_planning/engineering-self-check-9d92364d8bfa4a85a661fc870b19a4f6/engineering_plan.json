@@ -1,0 +1,24 @@
+{
+  "schema_version": "2.3",
+  "requirement": "\u5EFA\u6A21\u5706\u7B52\u5939\u5957\uFF0C\u5916\u5F84140 mm\uFF0C\u5185\u5F84120 mm\uFF0C\u8F74\u5411\u957F\u5EA6180 mm\u3002\u8F93\u51FASLDPRT\u548CSTEP\u3002",
+  "decision": "ready",
+  "rationale": "\u9700\u6C42\u5B8C\u6574\uFF0C\u6620\u5C04\u5DF2\u6709\u53D7\u8BC1\u5939\u5957\u51E0\u4F55\u6863\u6848\u3002",
+  "cad_model_spec": {
+    "model_id": "self-check-jacket",
+    "model_type": "jacket_basic",
+    "unit": "mm",
+    "parameters": {
+      "outer_diameter_mm": "140",
+      "inner_diameter_mm": "120",
+      "length_mm": "180"
+    },
+    "material": "",
+    "output_requirements": [
+      "SLDPRT",
+      "STEP"
+    ]
+  },
+  "assumptions": [],
+  "missing_parameters": [],
+  "risks": []
+}

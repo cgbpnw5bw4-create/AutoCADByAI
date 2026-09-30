@@ -24,6 +24,8 @@ public sealed class PlatformKernel
 
     public IWorkflowEngine WorkflowEngine { get; }
 
+    public ModelRuntime.ModelRuntime? EngineeringPlanningRuntime { get; set; }
+
     public AgentRegistry AgentRegistry { get; }
 
     public SkillRegistry SkillRegistry { get; }

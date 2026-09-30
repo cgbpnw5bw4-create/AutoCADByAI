@@ -1,0 +1,172 @@
+{
+  "build_plan": {
+    "plan_id": "solidworks-build-plan-task-53ef5967873c45cdb484c4b2d076ceef",
+    "source_cad_model_spec_id": "engineering-jacket-task-53ef5967873c45cdb484c4b2d076ceef",
+    "target_cad_system": "SolidWorks",
+    "part_type": "jacket_basic",
+    "unit": "mm",
+    "operations": [
+      {
+        "operation_id": "op-001",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "center_x_mm": "0",
+          "center_y_mm": "0",
+          "radius_mm": "70",
+          "sketch_id": "jacket_outer_sketch",
+          "reference_plane": "TopPlane",
+          "entity_count": "1",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\"entity_id\":\"jacket_outer_circle\",\"entity_type\":\"circle\",\"parameters\":{\"center_x_mm\":\"0\",\"center_y_mm\":\"0\",\"radius_mm\":\"70\"},\"construction\":false,\"execution_order\":null,\"IsConstructionCenterLine\":false}]",
+          "constraints": "[]"
+        },
+        "depends_on": [],
+        "expected_result": "Sketch jacket_outer_sketch created on TopPlane."
+      },
+      {
+        "operation_id": "op-002",
+        "operation_type": "ExtrudeBoss",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "depth_mm": "180",
+          "direction": "blind",
+          "feature_id": "jacket_body_extrude",
+          "feature_type": "extrude_boss",
+          "sketch_id": "jacket_outer_sketch",
+          "referenced_sketches": "[\"jacket_outer_sketch\"]"
+        },
+        "depends_on": [
+          "op-001"
+        ],
+        "expected_result": "Feature jacket_body_extrude compiled from extrude_boss."
+      },
+      {
+        "operation_id": "op-003",
+        "operation_type": "CreateSketch",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "center_x_mm": "0",
+          "center_y_mm": "0",
+          "radius_mm": "60",
+          "sketch_id": "jacket_inner_sketch",
+          "reference_plane": "TopPlane",
+          "entity_count": "1",
+          "constraint_count": "0",
+          "dimensions": "{}",
+          "entities": "[{\"entity_id\":\"jacket_inner_circle\",\"entity_type\":\"circle\",\"parameters\":{\"center_x_mm\":\"0\",\"center_y_mm\":\"0\",\"radius_mm\":\"60\"},\"construction\":false,\"execution_order\":null,\"IsConstructionCenterLine\":false}]",
+          "constraints": "[]"
+        },
+        "depends_on": [
+          "op-002"
+        ],
+        "expected_result": "Sketch jacket_inner_sketch created on TopPlane."
+      },
+      {
+        "operation_id": "op-004",
+        "operation_type": "CutExtrude",
+        "sketch_plane": "TopPlane",
+        "parameters": {
+          "depth_mm": "360",
+          "direction": "blind",
+          "through_all": "false",
+          "feature_id": "jacket_inner_cut",
+          "feature_type": "extrude_cut",
+          "sketch_id": "jacket_inner_sketch",
+          "referenced_sketches": "[\"jacket_inner_sketch\"]"
+        },
+        "depends_on": [
+          "op-003",
+          "op-002"
+        ],
+        "expected_result": "Feature jacket_inner_cut compiled from extrude_cut."
+      },
+      {
+        "operation_id": "op-005",
+        "operation_type": "SavePart",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "engineering-jacket-task-53ef5967873c45cdb484c4b2d076ceef.SLDPRT"
+        },
+        "depends_on": [
+          "op-004"
+        ],
+        "expected_result": "SolidWorks part output saved."
+      },
+      {
+        "operation_id": "op-006",
+        "operation_type": "ExportStep",
+        "sketch_plane": "",
+        "parameters": {
+          "file_name": "engineering-jacket-task-53ef5967873c45cdb484c4b2d076ceef.STEP"
+        },
+        "depends_on": [
+          "op-005"
+        ],
+        "expected_result": "STEP output exported."
+      }
+    ],
+    "expected_artifacts": [
+      {
+        "artifact_id": "expected-part",
+        "artifact_type": "Part",
+        "file_path": "output/solidworks/artifacts/engineering-jacket-task-53ef5967873c45cdb484c4b2d076ceef.SLDPRT",
+        "expected_extension": ".SLDPRT",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled SolidWorks part output."
+      },
+      {
+        "artifact_id": "expected-step",
+        "artifact_type": "Step",
+        "file_path": "output/solidworks/artifacts/engineering-jacket-task-53ef5967873c45cdb484c4b2d076ceef.STEP",
+        "expected_extension": ".STEP",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled STEP output."
+      },
+      {
+        "artifact_id": "expected-build-report",
+        "artifact_type": "BuildReport",
+        "file_path": "output/solidworks/reports/build_report.json",
+        "expected_extension": ".json",
+        "exists": false,
+        "size_bytes": 0,
+        "description": "Compiled build report."
+      }
+    ],
+    "validation_rules": [
+      "feature dependencies must form a directed acyclic graph",
+      "execution_order must be positive, unique and dependency-consistent",
+      "sketch and feature references must resolve before Worker execution"
+    ],
+    "risk_notes": [
+      "Compilation is descriptive only and does not connect to SolidWorks."
+    ],
+    "material": "",
+    "features": {},
+    "output_requirements": [
+      "SLDPRT",
+      "STEP",
+      "feature_execution_report.json",
+      "build_report.json",
+      "e2e_execution_report.json",
+      "release_manifest.json",
+      "package_quality_report.json"
+    ],
+    "drawing_requirements": {},
+    "execution_options": {},
+    "dimensions": {
+      "outer_diameter_mm": "140",
+      "inner_diameter_mm": "120",
+      "length_mm": "180"
+    },
+    "execution_strategy": "feature_handler_graph",
+    "reference_geometry": {
+      "top_plane": "TopPlane",
+      "right_plane": "RightPlane",
+      "top_face": "TopFace"
+    }
+  }
+}

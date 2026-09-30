@@ -1,0 +1,110 @@
+{
+  "model_id": "engineering-jacket-task-e525f6483de14689ba04a0745780f517",
+  "model_type": "jacket_basic",
+  "unit": "mm",
+  "parameters": {
+    "outer_diameter_mm": "140",
+    "inner_diameter_mm": "120",
+    "length_mm": "180"
+  },
+  "reference_geometry": {
+    "top_plane": "TopPlane",
+    "right_plane": "RightPlane",
+    "top_face": "TopFace"
+  },
+  "sketches": [
+    {
+      "sketch_id": "jacket_outer_sketch",
+      "reference_plane": "TopPlane",
+      "entities": [
+        {
+          "entity_id": "jacket_outer_circle",
+          "entity_type": "circle",
+          "parameters": {
+            "center_x_mm": "0",
+            "center_y_mm": "0",
+            "radius_mm": "70"
+          },
+          "construction": false,
+          "execution_order": null,
+          "is_construction_center_line": false
+        }
+      ],
+      "constraints": [],
+      "dimensions": {},
+      "execution_order": 1
+    },
+    {
+      "sketch_id": "jacket_inner_sketch",
+      "reference_plane": "TopPlane",
+      "entities": [
+        {
+          "entity_id": "jacket_inner_circle",
+          "entity_type": "circle",
+          "parameters": {
+            "center_x_mm": "0",
+            "center_y_mm": "0",
+            "radius_mm": "60"
+          },
+          "construction": false,
+          "execution_order": null,
+          "is_construction_center_line": false
+        }
+      ],
+      "constraints": [],
+      "dimensions": {},
+      "execution_order": 2
+    }
+  ],
+  "features": [
+    {
+      "feature_id": "jacket_body_extrude",
+      "feature_type": "extrude_boss",
+      "parameters": {
+        "depth_mm": "180",
+        "direction": "blind"
+      },
+      "dependencies": [],
+      "referenced_sketches": [
+        "jacket_outer_sketch"
+      ],
+      "referenced_features": [],
+      "execution_order": 1,
+      "target_reference": null
+    },
+    {
+      "feature_id": "jacket_inner_cut",
+      "feature_type": "extrude_cut",
+      "parameters": {
+        "depth_mm": "360",
+        "direction": "blind",
+        "through_all": "false"
+      },
+      "dependencies": [
+        "jacket_body_extrude"
+      ],
+      "referenced_sketches": [
+        "jacket_inner_sketch"
+      ],
+      "referenced_features": [
+        "jacket_body_extrude"
+      ],
+      "execution_order": 2,
+      "target_reference": null
+    }
+  ],
+  "material": "",
+  "output_requirements": [
+    "SLDPRT",
+    "STEP",
+    "feature_execution_report.json",
+    "build_report.json",
+    "e2e_execution_report.json",
+    "release_manifest.json",
+    "package_quality_report.json"
+  ],
+  "drawing_requirements": {},
+  "execution_options": {},
+  "title": "jacket_basic",
+  "description": "\u5EFA\u6A21\u5706\u7B52\u5939\u5957\uFF0C\u5916\u5F84140 mm\uFF0C\u5185\u5F84120 mm\uFF0C\u8F74\u5411\u957F\u5EA6180 mm\u3002\u8F93\u51FASLDPRT\u548CSTEP\u3002"
+}

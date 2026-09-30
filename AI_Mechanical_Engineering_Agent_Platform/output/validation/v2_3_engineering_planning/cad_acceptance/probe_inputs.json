@@ -1,0 +1,16 @@
+[
+  {
+    "source": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_054001_065-585eca8296a34df58dbba6ee05a12e3a\\artifacts\\jacket_basic.SLDPRT",
+    "copy": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\cad_acceptance\\9fa475b8dcb1496bbedb3b12e745529e.SLDPRT",
+    "extension": ".SLDPRT",
+    "sha256": "5220C659D8ACF0D8EDE556E4FABD272EA0A7397E17AAEABB3E9FEDE64BCB2BFB",
+    "size_bytes": 77461
+  },
+  {
+    "source": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\solidworks\\engineering\\engineering-20260930_054001_065-585eca8296a34df58dbba6ee05a12e3a\\artifacts\\jacket_basic.STEP",
+    "copy": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\output\\validation\\v2_3_engineering_planning\\cad_acceptance\\2a6f0bdc667c48aba33987832ef7f99b.STEP",
+    "extension": ".STEP",
+    "sha256": "1EE7D03CF40432B407437845DD14E9EDB1D5D0622DFD3D0F738996DFA9A6EACB",
+    "size_bytes": 17191
+  }
+]

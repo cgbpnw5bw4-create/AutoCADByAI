@@ -1,0 +1,26 @@
+[
+  {
+    "path": "output/tests/v21_b/simple/reports/build_report.json",
+    "only_generated_at_changed": true,
+    "historical_generated_at": "2026-09-07T09:52:34.6852821+08:00",
+    "this_run_generated_at": "2026-09-30T13:38:52.1352144+08:00"
+  },
+  {
+    "path": "output/tests/v21_b/counterbore/reports/build_report.json",
+    "only_generated_at_changed": true,
+    "historical_generated_at": "2026-09-07T09:52:34.6875806+08:00",
+    "this_run_generated_at": "2026-09-30T13:38:52.1496243+08:00"
+  },
+  {
+    "path": "output/tests/v21_b/countersink/reports/build_report.json",
+    "only_generated_at_changed": true,
+    "historical_generated_at": "2026-09-07T09:52:34.6828277+08:00",
+    "this_run_generated_at": "2026-09-30T13:38:52.1194238+08:00"
+  },
+  {
+    "path": "output/tests/v21_b/tapped/reports/build_report.json",
+    "only_generated_at_changed": true,
+    "historical_generated_at": "2026-09-07T09:52:34.6774442+08:00",
+    "this_run_generated_at": "2026-09-30T13:38:52.1024598+08:00"
+  }
+]

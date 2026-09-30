@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "planned_fingerprint": "2c5f321316e238f35681e76950519faea5620a3230b3522910e72dfc8aea9863",
+  "executed_fingerprint": "2c5f321316e238f35681e76950519faea5620a3230b3522910e72dfc8aea9863",
+  "algorithm": "PartFamilyProductionEvidencePolicy.ComputePlanFingerprint",
+  "failure_stage": null
+}

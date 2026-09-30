@@ -4,7 +4,7 @@
 
 项目正式名称为 `AI Mechanical Engineer Platform`。平台面向机械设计、CAD 自动化、`SolidWorks`、`AutoCAD` 及后续工业软件适配，采用少量强 Agent 与多个确定性 Worker：强模型负责工程理解、规划和决策，平台负责工程约束、确定性执行、真实 CAD/API 能力和结果验收。
 
-保留 `AI_Mechanical_Engineering_Agent_Platform` 底层目录及解决方案文件名，继续兼容现有构建命令、程序集、命名空间、工具路径和来源绑定证据；正式名称调整不授权全局替换这些稳定标识。当前阶段见 [V2.2-D 轴类与夹套真实能力基线](docs/v2_2_d_shaft_jacket_real_baseline.md)，保留 V2.2-B 架构成果；阶段恢复、完整测试与全局自检分别报告。
+保留 `AI_Mechanical_Engineering_Agent_Platform` 底层目录及解决方案文件名，继续兼容现有构建命令、程序集、命名空间、工具路径和来源绑定证据；正式名称调整不授权全局替换这些稳定标识。当前阶段见 [V2.3 工程规划闭环](docs/v2_3_engineering_planning_loop.md)，复用 V2.2-B 模型运行时及 [V2.2-D 真实 CAD 能力基线](docs/v2_2_d_shaft_jacket_real_baseline.md)；模型实测、计划校验、完整测试、全局自检与真实 CAD 验收分别报告。
 
 ## 架构边界
 
@@ -19,6 +19,14 @@
 - `QualityGate` 验收工程结果，新增专项 Gate 必须有真实检查依据；未实现的 Gate 不能返回占位通过。
 - `Worker` 执行后必须进入 `Validator`、`Reviewer` 和 `QualityGate`。
 - 本地交互式主流程默认启用真实 CAD；`dry_run=true`、`SW_DISABLE_REAL_EXECUTION=true`、CI、单元测试或 `SW_FORCE_FAKE_WORKER=true` 时必须关闭真实执行。
+
+## V2.3 当前执行边界
+
+用户已授权直接建立首个工程规划闭环并完成真实 CAD 验收。显式 `engineering_planning=true` 使用既有 `ModelRuntime` / `IModelProvider` 生成 `EngineeringPlan`，通过严格结构、原需求绑定、工程规则和计划质量校验后，映射到既有 `CADModelSpec`、模板 `FeatureGraph` 和 `SolidWorksBuildPlan`，再进入原 Worker 及完整验收、发布链。
+
+本阶段只接纳已具备真实 evidence 的 `jacket_basic` 外径140 mm、内径120 mm、长度180 mm几何档案及 `SLDPRT` / `STEP` 输出。模型不能提交执行图、API 或 Worker 调用权限。缺参、风险、假设、未知字段、原文不匹配及无法校验的附加要求均拒绝，不能用审批绕过；未配置模型时必须失败关闭，不能退回默认零件。显式 `--response` 仅为响应夹具重放，不能作为真实模型稳定性证据。
+
+不新增产品运行时多 Agent、并行引擎或通用工作流语言，不修改来源绑定的 Handler、Adapter、旧 evidence 和受保护能力基线。材料、承载、压力及制造适用性不属于本几何验收。实际命令和产物由执行代理统一验收，文档代理只维护中文说明；未完成项必须保留验证边界。
 
 ## 三类 Agent
 

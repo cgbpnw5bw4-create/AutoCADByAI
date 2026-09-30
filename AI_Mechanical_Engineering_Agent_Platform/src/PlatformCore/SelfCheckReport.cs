@@ -723,6 +723,9 @@ public sealed record PlatformSelfCheckReport(
     [JsonPropertyName("frontier_architecture_checks")]
     public IReadOnlyDictionary<string, bool> FrontierArchitectureChecks { get; init; } = new Dictionary<string, bool>();
 
+    [JsonPropertyName("engineering_planning_checks")]
+    public IReadOnlyDictionary<string, bool> EngineeringPlanningChecks { get; init; } = new Dictionary<string, bool>();
+
     [JsonPropertyName("task_approval_roundtrip_supported")]
     public bool TaskApprovalRoundtripSupported { get; init; }
 

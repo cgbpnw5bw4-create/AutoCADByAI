@@ -14,6 +14,7 @@ public sealed class ChiefEngineerOrchestrator
     private readonly SolidWorksMainWorkflowRunner? _solidWorksMainWorkflowRunner;
     private readonly SolidWorksWorkflowRouter _solidWorksWorkflowRouter;
     private readonly IReadOnlyList<string> _internalRoute;
+    private readonly Func<ModelRuntime.ModelRuntime?> _engineeringRuntimeProvider;
     private readonly ConcurrentDictionary<string, AgentContext> _pendingContexts = new(StringComparer.Ordinal);
 
     public ChiefEngineerOrchestrator(
@@ -23,7 +24,8 @@ public sealed class ChiefEngineerOrchestrator
         IWorkflowEngine? workflowEngine = null,
         SolidWorksMainWorkflowRunner? solidWorksMainWorkflowRunner = null,
         SolidWorksWorkflowRouter? solidWorksWorkflowRouter = null,
-        InternalWorkflowRoute? internalWorkflowRoute = null)
+        InternalWorkflowRoute? internalWorkflowRoute = null,
+        Func<ModelRuntime.ModelRuntime?>? engineeringRuntimeProvider = null)
     {
         _router = router;
         _agentRegistry = agentRegistry;
@@ -42,6 +44,7 @@ public sealed class ChiefEngineerOrchestrator
         }
 
         _internalRoute = internalWorkflowRoute?.AgentIds.ToArray() ?? [];
+        _engineeringRuntimeProvider = engineeringRuntimeProvider ?? (() => null);
     }
 
     public async Task<AgentOutput> ExecuteAsync(AgentContext context, string rootAgentId, string rootAgentName)
@@ -57,7 +60,9 @@ public sealed class ChiefEngineerOrchestrator
         }
 
         var workflowId = $"internal-collaboration-{context.TaskId}";
-        WorkflowStep[] workflowSteps = _internalRoute.Count == 0
+        var planning = EngineeringPlanningStep.IsRequested(context)
+            ? new EngineeringPlanningStep(context, _engineeringRuntimeProvider(), _auditLog) : null;
+        WorkflowStep[] workflowSteps = planning is not null ? [planning.ToWorkflowStep()] : _internalRoute.Count == 0
             ? [new EngineeringPlanValidationStep(context, _solidWorksWorkflowRouter, _auditLog).ToWorkflowStep()]
             : _internalRoute
                 .Select(agentId => new InternalAgentWorkflowStep(agentId, context, _router, _agentRegistry, _auditLog).ToWorkflowStep())
@@ -70,7 +75,16 @@ public sealed class ChiefEngineerOrchestrator
                 ["conversation_id"] = context.Input.ConversationId
             }));
 
-        return await CompleteWorkflowAsync(context, rootAgentId, rootAgentName, workflowResult);
+        if (planning is not null && workflowResult.Status == WorkflowStatus.Passed)
+        {
+            if (planning.ValidatedSpec is null)
+                return new AgentOutput(AgentOutputStatus.Failed, "工程计划未校验，已阻断 CAD。", [],
+                    ["engineering_plan_not_validated"], [], null, ReviewReport: new ReviewReport(context.TaskId, "engineering-plan", false, 0,
+                        ["engineering_plan_not_validated"], false, true));
+            context = planning.ToCadContext();
+        }
+        var output = await CompleteWorkflowAsync(context, rootAgentId, rootAgentName, workflowResult);
+        return planning is null ? output : output with { Artifacts = output.Artifacts.Concat(planning.Artifacts).ToArray() };
     }
 
     public async Task<AgentApprovalResult> ResumeHumanApprovalAsync(string taskId, string rootAgentId, string rootAgentName,
@@ -125,7 +139,9 @@ public sealed class ChiefEngineerOrchestrator
             BuildOutputMessage(rootAgentName, workflowResult, solidWorksMainWorkflowResult),
             new[] { artifact }.Concat(report.Artifacts).ToArray(),
             report.Issues,
-            new[] { _internalRoute.Count == 0
+            new[] { EngineeringPlanningStep.IsRequested(context)
+                ? "总工程师通过 ModelRuntime、工程计划校验和 QualityGate 完成工程规划，随后进入既有 CAD 工作流。"
+                : _internalRoute.Count == 0
                 ? "总工程师通过 WorkflowEngine 与 QualityGate 完成确定性规划输入校验。"
                 : "Chief engineer orchestrated internal agents through WorkflowEngine and QualityGate." }
                 .Concat(solidWorksMainWorkflowResult?.Logs ?? Array.Empty<string>())
@@ -210,6 +226,7 @@ public sealed class ChiefEngineerOrchestrator
 
         var summary = workflowResult.Status switch
         {
+            WorkflowStatus.Passed when EngineeringPlanningStep.IsRequested(context) => "工程计划已通过结构、原文绑定和工程规则校验，CAD 结果由既有执行链与最终 QualityGate 独立裁决。",
             WorkflowStatus.Passed when _internalRoute.Count == 0 => "工程规划输入已通过规则校验；本步骤不生成工程计划，后续 CAD 仍须通过既有规划与执行链。",
             WorkflowStatus.Passed => "Internal agents completed the workflow-backed mechanical engineering planning route.",
             WorkflowStatus.WaitingForHumanApproval => $"Internal workflow is waiting for human approval at {workflowResult.HumanApprovalRequest?.StepId}.",
@@ -337,7 +354,9 @@ public sealed class ChiefEngineerOrchestrator
         WorkflowExecutionResult workflowResult,
         SolidWorksMainWorkflowResult? solidWorksResult)
     {
-        var message = workflowResult.Steps.Any(step => step.AgentOutput is not null)
+        var message = workflowResult.Steps.Any(step => step.StepId == EngineeringPlanningStep.Id)
+            ? $"{rootAgentName}完成工程计划生成与校验，状态为 {workflowResult.Status}。"
+            : workflowResult.Steps.Any(step => step.AgentOutput is not null)
             ? $"{rootAgentName} completed workflow-backed internal multi-agent routing with status {workflowResult.Status}."
             : $"{rootAgentName}完成工程规划输入校验，状态为 {workflowResult.Status}；此步骤未生成工程计划。";
         if (solidWorksResult is null)

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\FeatureExecutionEvidencePolicy.cs",
+    "sha256": "1E8057A7034C54FE1E340FB954AB71F51CAE9A3431BB28A7FC83CA3E3103A386"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Workers\\SolidWorks\\Features\\PartFamilyProductionEvidencePolicy.cs",
+    "sha256": "FD5BF3D2548C226CDBF36238B768097994F3E701F262FAEE68F2314B5E129CC6"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\docs\\self_check_capability_baseline.json",
+    "sha256": "9CD40A3373A8FEE3072803A1E231C27FA532AA1392656153DEC8F8F11ED4B0E3"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\PlatformCore\\EngineeringPlanValidator.cs",
+    "sha256": "AE53BC53144B09FE862D0BDC2D693E96838FC8EDF6A2CA7A80296268CF96108B"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\PlatformCore\\EngineeringPlanningStep.cs",
+    "sha256": "37AF7D5662229F4364958B8678BEAC91FB792EE64A2785741325C2AE657AD6E4"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\PlatformCore.dll",
+    "sha256": "622EEC25EE13CB8905EF1517594CC506EB46A75C8BF200A2E5A78A2640BEA483"
+  },
+  {
+    "path": "D:\\07_WorkSpace\\Codex\\AutoCADByAI\\AI_Mechanical_Engineering_Agent_Platform\\src\\Interfaces\\CliHost\\bin\\Debug\\net10.0\\SolidWorksWorker.dll",
+    "sha256": "7BC9C726E17FE79D6432E4FC399CA351A748B1005F993518BB2248050C2D0D07"
+  }
+]

@@ -1,6 +1,6 @@
 # 项目入口
 
-当前开发入口为 [V2.2-D 轴类与夹套真实能力基线](v2_2_d_shaft_jacket_real_baseline.md)。本轮限定真实轴类/夹套、两格式独立几何验收及证据复验，保留平台架构和历史记录。下述 V2.2-C 统计属于上一阶段。
+当前开发入口为 [V2.3 工程规划闭环](v2_3_engineering_planning_loop.md)。本轮复用 `ModelRuntime` / `IModelProvider`，以已受证的140/120/180 mm夹套验证自然语言、工程计划、现有 CAD 合同和真实质量链的交接；不扩展产品运行时多 Agent、并行或通用工作流语言。下述 V2.2-C 统计属于历史阶段，本轮实际验证单独登记。
 
 
 ## 项目定位
@@ -36,13 +36,19 @@
 
 ## 当前开发入口
 
+当前阶段的目标、合同、执行命令与验证记录见 [V2.3 阶段页](v2_3_engineering_planning_loop.md)。显式 `engineering_planning=true` 进入工程计划专用流程；模型仅生成待审查计划，平台严格校验原文、参数和证据范围，再用既有夹套模板生成 `CADModelSpec` / `FeatureGraph` / `SolidWorksBuildPlan`。原 Verified Worker、API evidence、几何验收、Reviewer、QualityGate 和发布门禁继续裁决真实结果。
+
+上一阶段 [V2.2-D 轴类与夹套真实能力基线](v2_2_d_shaft_jacket_real_baseline.md) 已登记783/783测试通过、全局 self-check `Passed` 及三种受限轴类/夹套实证。V2.3 只选择其中夹套档案，不把既有通过值当作本轮完整验证。实时模型配置缺失必须拒绝；响应夹具重放、dry-run、真实 CAD 和实时模型稳定性分开报告。
+
+## V2.2-C 历史开发记录
+
 上一阶段为 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)。2026-09-14 已完成既有 8 项 CAD 证据失败恢复、阵列引用与带符号方向修复、STEP 导出身份修复及重采；完整测试 684/684 通过，参数更新正式主流程为 `Passed` / `Deliverable`，发布件两格式独立复核通过。
 
 9 月 9 日候选的旧 STEP 语义失配和 9 月 14 日中间连续导出失败均保留原始记录，生产绑定只使用最终修复后新采集并独立验收的证据。9 月 14 日全局 self-check 仍为 `Failed`：夹套生产证据与真实执行未激活，轴类真实工作流自检亦未通过。2026-09-24 保留文件与源码指纹复核通过，重新构建 0 警告、0 错误，完整测试仍为 684/684 通过；本次 self-check 退出码 2，恢复相关门禁与中文检查通过，全局仍保留上述既有缺口。见 [本次验证汇总](../output/validation/v2_2_c_cad_baseline/verification_summary_20260924.json)，不以历史结果代替本次运行。
 
 默认工程流程仅做规划输入校验，具体 CAD 计划沿用原 Skill/Validator；该校验步骤不调用模型或生成计划。旧四角色确定性占位路线保留为显式兼容入口，不能把默认流程收敛描述为减少四次真实 LLM 推理。
 
-前轮 [V2.2-B 强模型架构成果](v2_2_b_frontier_model_architecture.md) 和 [V2.2-A 任务生命周期与审批合同](v2_2_a_task_approval_lifecycle.md) 保留，本轮不继续扩展平台架构。当前阶段允许受控真机诊断与主流程恢复；历史审查与旧 evidence 保留，未获本轮有效证据的能力继续失败关闭。本轮范围和实际验证记录以 V2.2-D 阶段页为准。
+前轮 [V2.2-B 强模型架构成果](v2_2_b_frontier_model_architecture.md) 和 [V2.2-A 任务生命周期与审批合同](v2_2_a_task_approval_lifecycle.md) 保留。V2.2-C/D 阶段允许受控真机诊断与主流程恢复；历史审查与旧 evidence 保留，未获有效证据的能力继续失败关闭。对应历史范围和实际验证记录以各阶段页为准。
 
 宿主合同已登记：首次消息返回任务信息和仅返回一次的 `task_access_token`，后续 `GET /tasks/{taskId}`、`POST /tasks/{taskId}/approvals` 使用 `X-Task-Access-Token`。首次消息同步执行；任务与审批仅保存在单进程内存，恢复继续原后处理与门禁，Microsoft advisory 不重复调用 LLM。字段、状态码和验证记录见阶段页；`2.2-a-task-approval` 的四个新行为字段不代表完整测试或全局自检通过。
 

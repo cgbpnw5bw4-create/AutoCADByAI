@@ -227,6 +227,7 @@ public static class PlatformSelfCheckRunner
         var structuredInputFailsClosed = await StructuredCadInputSelfCheck.RunAsync();
         var taskLifecycleChecks = await TaskLifecycleSelfCheck.RunAsync(root);
         var frontierArchitectureChecks = await FrontierArchitectureSelfCheck.RunAsync(root);
+        var engineeringPlanningChecks = await EngineeringPlanningSelfCheck.RunAsync(root, outputRoot);
         var approvalIdentityBound = await WorkflowReliabilitySelfCheck.RunApprovalIdentityAsync();
         var capabilityChecks = new Dictionary<string, bool>(v21BHoleChecks);
         capabilityChecks["structured_cad_input_fails_closed"] = structuredInputFailsClosed;
@@ -255,6 +256,7 @@ public static class PlatformSelfCheckRunner
 
         var checksPassed =
             frontierArchitectureChecks.Values.All(passed => passed) &&
+            engineeringPlanningChecks.Count > 0 && engineeringPlanningChecks.Values.All(passed => passed) &&
             solutionExists &&
             moduleStructureChecks.All(check => check.Passed) &&
             manifestLoadResult.Errors.Count == 0 &&
@@ -915,6 +917,7 @@ public static class PlatformSelfCheckRunner
             StructuredCadInputFailsClosed = structuredInputFailsClosed,
             TaskLifecycleTracked = taskLifecycleChecks["task_lifecycle_tracked"],
             FrontierArchitectureChecks = frontierArchitectureChecks,
+            EngineeringPlanningChecks = engineeringPlanningChecks,
             TaskApprovalRoundtripSupported = taskLifecycleChecks["task_approval_roundtrip_supported"],
             TaskAccessTokenRequired = taskLifecycleChecks["task_access_token_required"],
             WorkflowApprovalIdentityBound = approvalIdentityBound,

@@ -27,7 +27,15 @@
 
 执行任务前先确认当前阶段、涉及模块、允许修改目录、禁止修改目录、需要读取的说明文件和已有报告。涉及 `SolidWorks` API 时，必须先读取模块的 `api_evidence.md` 和最新诊断报告。
 
-### 当前 V2.2-C CAD 恢复与复核边界
+### 当前 V2.3 工程规划闭环边界
+
+当前执行 [V2.3 工程规划闭环](v2_3_engineering_planning_loop.md)。用户已授权直接实现并完成完整 build、test、self-check 和真实 CAD 验收。输入为自然语言需求、既有 `ModelRuntime` / `IModelProvider` 响应与已受证的140/120/180 mm夹套档案；输出为严格校验后的 `EngineeringPlan`、现有 `CADModelSpec` / 模板 `FeatureGraph` / `SolidWorksBuildPlan` 及原执行、验收和发布链的实际证据。
+
+先严格验证结构、原需求、缺参/假设/风险及工程规则，再进入现有 Worker。模型不调用 CAD API，不能提交执行图或执行选项；无效计划不能用审批绕过，缺模型配置不能回退默认零件。显式响应重放、dry-run、实时模型稳定性与真实 CAD 分开报告。保留旧 schema 和能力基线，只新增工程规划行为字典，不另建 CAD Schema，不扩展产品多 Agent、并行或通用工作流语言。
+
+执行代理统一运行完整验证和两格式独立重开，实际计数、失败原因与产物路径登记 V2.3 阶段页；文档代理只维护中文说明，不重复连接 CAD。禁止修改绑定 Handler、Adapter、历史 evidence 或只读 `reviewrep`、降低容差或基线、以候选成功或文件存在宣布可交付，或声称材料、压力、承载和制造性已验收。下述旧阶段不启动 CAD等规则保留为对应历史阶段的范围，不替代本轮明确授权。
+
+### V2.2-C 历史 CAD 恢复与复核边界
 
 当前执行 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)，范围为既有证据失配、阵列引用与方向、STEP 导出身份及两格式独立几何验收。2026-09-14 已完成受控重采、生产绑定与参数更新正式主流程，完整测试 684/684 通过；全局自检仍须保留夹套与轴类未通过项。2026-09-24 进行文档收尾、文件保留与源码指纹复核，以及新的完整构建、测试和自检，不重启 CAD、不扩大能力范围，也不重写旧报告。
 
@@ -57,7 +65,7 @@ dotnet run --project src/Interfaces/CliHost -- self-check
 
 如果涉及真实 CAD，self-check、CI 和单元测试仍不能启动 CAD；本地交互式 `run-cad-workflow` 主流程则按 V2.0 默认启用规则运行。
 
-本轮由执行代理统一运行上述验证，定向输出使用 `self-check --output output/validation/v2_2_c_cad_baseline/final_self_check_20260924`；再次运行须选择新的目录，不能覆盖旧报告。文档代理不重复编译或测试；实际计数和日志回填 [V2.2-C 阶段页](v2_2_c_cad_baseline_recovery.md)。既有任务 API 与阶段字段仍见 [V2.2-A 合同](v2_2_a_task_approval_lifecycle.md)。审批恢复须验证原业务收尾与统一质量门禁，不能仅凭审批消费成功、HTTP `200` 或核心工作流中间通过宣布任务完成。
+V2.3 由执行代理统一运行上述验证，定向输出使用 `self-check --output output/validation/v2_3_engineering_planning`；再次运行须选择新的目录，不能覆盖旧报告。文档代理不重复编译或测试；实际计数和日志回填 [V2.3 阶段页](v2_3_engineering_planning_loop.md)。V2.2-C 的 `final_self_check_20260924` 等目录继续保留为历史记录。既有任务 API 与阶段字段仍见 [V2.2-A 合同](v2_2_a_task_approval_lifecycle.md)。审批恢复须验证原业务收尾与统一质量门禁，不能仅凭审批消费成功、HTTP `200` 或核心工作流中间通过宣布任务完成。
 
 ### 自检输出定向
 
@@ -80,6 +88,8 @@ V2.1-B 可靠性补强将 `schema_version` 升为 `2.1-b-reliability`，新增 `
 V2.2-A 的当前 `schema_version` 为 `2.2-a-task-approval`，新增 `task_lifecycle_tracked`、`task_approval_roundtrip_supported`、`task_access_token_required`、`workflow_approval_identity_bound` 四个布尔行为检查字段。保留前轮孔字段的可空语义和迁移规则。四个新字段、完整测试统计及全局 `final_status` 必须分别列出，不能相互代替。
 
 V2.2-B 沿用该 schema，并增加 `frontier_architecture_checks` 字典，记录 `model_provider_contract_executed`、`default_planning_route_consolidated`、`quality_gate_extension_blocks_approval_bypass`、`workflow_contract_preserves_gate_blocking`。旧内部协作字段继续验证显式四角色兼容路线，新默认输入校验路径单独验证；任何字典项缺失或失败均不得宣称本轮行为通过，字典结果不能覆盖完整测试和全局失败。
+
+V2.3 继续保留该 schema 和旧字段，新增 `engineering_planning_checks` 字典，分别检查模型合同执行、现有 CAD 映射、公开路线 dry-run、非法输入阻断及缺少 Provider 拒绝。五项完整字段与实际记录见 [阶段页](v2_3_engineering_planning_loop.md)；模型替身或重放通过不能作为实时模型稳定性依据，字典不能覆盖完整测试、全局自检或真实 CAD 验收。
 
 ## 失败处理
 

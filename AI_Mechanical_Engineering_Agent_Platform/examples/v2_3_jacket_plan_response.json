@@ -1,0 +1,21 @@
+{
+  "schema_version": "2.3",
+  "requirement": "建模圆筒夹套，外径140 mm，内径120 mm，轴向长度180 mm。输出SLDPRT和STEP。\n",
+  "decision": "ready",
+  "rationale": "需求明确指定同轴直筒夹套的三个毫米尺寸与两种几何交付格式，可映射到已有受证 jacket_basic 零件族。",
+  "cad_model_spec": {
+    "model_id": "v2-3-jacket-basic",
+    "model_type": "jacket_basic",
+    "unit": "mm",
+    "parameters": {
+      "outer_diameter_mm": "140",
+      "inner_diameter_mm": "120",
+      "length_mm": "180"
+    },
+    "material": "",
+    "output_requirements": ["SLDPRT", "STEP"]
+  },
+  "assumptions": [],
+  "missing_parameters": [],
+  "risks": []
+}

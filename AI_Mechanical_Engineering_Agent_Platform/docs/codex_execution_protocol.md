@@ -4,7 +4,7 @@
 
 ## 当前阶段与授权范围
 
-当前执行 [V2.2-C CAD 基线恢复与阵列证据重采](v2_2_c_cad_baseline_recovery.md)，保留 V2.2-B 的 ModelRuntime / IModelProvider、IWorkflowEngine、QualityGate 及职责收敛成果，不继续扩展平台架构。9 月 14 日已完成既有证据恢复、阵列约束、STEP 导出修复和受控重采，9 月 24 日继续文档收尾及复核。保留 V2.2-A 已有审批身份、任务生命周期、宿主入口及恢复后的原业务收尾，未取证 CAD 能力继续失败关闭。
+当前执行 [V2.3 工程规划闭环](v2_3_engineering_planning_loop.md)。用户已授权直接实现、完整验证和真实 CAD 验收；保留 V2.2-B 的 `ModelRuntime` / `IModelProvider`、`IWorkflowEngine`、`QualityGate`，复用 V2.2-D 的受限夹套 evidence，不新建 CAD Schema、不扩展产品运行时多 Agent、并行或通用工作流语言。模型只输出待审查工程计划，平台在 Worker 前严格验证并映射到既有执行合同。
 
 正式名称统一为 `AI Mechanical Engineer Platform`，稳定底层目录、解决方案、程序集、命名空间与证据路径保留兼容。不要为改名进行连锁重构。业务只接收模型的工程理解、规划和决策输出；Worker 执行不得由模型直接触发。
 
@@ -41,6 +41,16 @@
 
 出现失败时先定位 `failure_stage`。如果涉及 API，必须查官方资料、本地参考资料和 evidence 报告，再提出候选策略。不能只记录 `Failed` 后停止。
 
+## V2.3 当前执行范围
+
+目标是建立 `自然语言 → EngineeringPlan → CADModelSpec / FeatureGraph / SolidWorksBuildPlan → Verified Worker → SolidWorks → QualityGate` 的首个可验证闭环。输入为自然语言、通过既有 `ModelRuntime` / `IModelProvider` 取得的响应和140/120/180 mm夹套受证档案；输出为原响应、工程计划、映射合同、计划门禁及原 CAD 主流程与发布验收记录。
+
+执行时复用 canonical `code_mapper`、`cad_worker`、`quality_gate` 和 `docs_writer` 职责，读取需求理解模块四份合同。先实现 `EngineeringPlan` 严格解析与工程规则，再以显式 `engineering_planning=true` 接入既有顺序工作流；只有计划门禁通过才交接已有 CAD 路由。模型不能提交图、API、执行选项或直接调用 Worker。图由已有夹套模板产生，校验和执行复用原 Validator、Reviewer、编译器、Handler、evidence、Adapter、ArtifactValidator、QualityGate 和发布门禁。
+
+验证由执行代理统一运行完整 build、test、定向 self-check、工程入口和两格式独立重开。自检增加 `engineering_planning_checks` 字典，保留旧 schema 和能力基线；字典字段、完整测试、全局状态、真实 CAD 交付与实时模型稳定性分别记录。缺参、风险、假设、原文不匹配、未知字段或附加要求均拒绝，不能借审批绕过。只有响应重放时明确标为重放；未配置实时模型必须失败关闭，不能写真实模型稳定性已验证。
+
+文档职责只修改中文 Markdown，实际计数和路径由执行代理回填。禁止改旧 evidence 或只读 `reviewrep`、改受证源码、降低容差或基线、用 `dry_run` / `CandidatePassed` / 文件存在代替真实交付，或宣称材料、压力、承载与制造性验收完成。失败报告须含阶段、直接原因、证据路径及下一步验证命令。
+
 ## V2.1-B 执行补充
 
 目标是四类通用孔增强，适用定义、验证、Adapter 与文档，不改变 Handler 架构。输入为当前图、协议、前置审查及 API evidence；输出为标准化请求、失败阶段、几何检查、回归和中文文档。
@@ -59,7 +69,7 @@
 
 禁止本轮顺带开放显式孔真实执行、修改绑定 evidence 或只读 `reviewrep`、降低能力基线、改写历史验证结论或进入 V2.1-C。任务生命周期与宿主审批、类型交接、阵列修复重采证据和逐孔 Reader 已列后续顺序，未纳入本轮实现的项目必须保留为待开发。
 
-## V2.2-C 当前执行范围
+## V2.2-C 历史执行范围
 
 输入为已保留的基线、旧失败、最终新证据与实际日志，输出为当前范围内的修复结论、文件保留检查和独立验证结果。2026-09-24 先复核历史文件与源码指纹，再由执行代理统一运行完整构建、测试和 `dotnet run --project src/Interfaces/CliHost -- self-check --output output/validation/v2_2_c_cad_baseline/final_self_check_20260924`，实际日志回填阶段页。文档代理只改必要中文入口与协议，不重复构建、测试或连接 CAD。
 
