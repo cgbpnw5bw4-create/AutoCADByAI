@@ -1,0 +1,29 @@
+<Project>
+  <!--
+    全部项目共用的构建设置。
+    SolidWorks 早期绑定类型库 (PIA) 取自本机 SolidWorks 安装目录; 换机器或版本时用
+    dotnet build -p:SolidWorksApiDir="D:\...\api\redist" 覆盖。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
+    <SolidWorksApiDir Condition="'$(SolidWorksApiDir)' == ''">C:\Program Files\SOLIDWORKS2023\SOLIDWORKS\api\redist</SolidWorksApiDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 不嵌入互操作类型: .NET 不支持跨程序集的 COM 类型等价, 内核、零件库与设计项目必须共用同一份 PIA 类型 -->
+    <Reference Include="SolidWorks.Interop.sldworks">
+      <HintPath>$(SolidWorksApiDir)\SolidWorks.Interop.sldworks.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="SolidWorks.Interop.swconst">
+      <HintPath>$(SolidWorksApiDir)\SolidWorks.Interop.swconst.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

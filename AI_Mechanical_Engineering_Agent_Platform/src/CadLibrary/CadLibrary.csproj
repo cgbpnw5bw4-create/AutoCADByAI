@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    可复用零件库 (持续沉淀): 参数化零件族与外购件样本。
+    收录规则见 docs/library.md —— 只收已在真实 SolidWorks 中验证过的零件族, 每项注明来源与回归样例。
+  -->
+  <PropertyGroup>
+    <RootNamespace>CadLibrary</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CadKernel\CadKernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="CadTests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- CAD 内核: SolidWorks 专用实例、建模、装配、紧固件、出图、校核、导出、运行目录。唯一调用 SolidWorks COM 的程序集。 -->
+  <PropertyGroup>
+    <RootNamespace>CadKernel</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="CadTests" />
+  </ItemGroup>
+</Project>

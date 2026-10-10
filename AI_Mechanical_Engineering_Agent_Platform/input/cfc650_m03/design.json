@@ -1,0 +1,6 @@
+{
+  // CFC-650 铜箔清洗机 M03 碱洗模块 (中型装配回归样例, 约 330 件含紧固件)
+  "project": "cfc650_module",
+  "title": "CFC-650 碱洗模块 M03",
+  "params": { "module": "M03" }
+}

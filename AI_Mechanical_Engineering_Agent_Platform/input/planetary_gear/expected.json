@@ -1,0 +1,101 @@
+{
+  "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
+  "source_run": "20261010_134355_planetary_gear",
+  "checks": [
+    "参数校验",
+    "模型完整性",
+    "干涉检查",
+    "物料清单",
+    "运动学",
+    "运动中干涉",
+    "工程图生成",
+    "工程图参考",
+    "STEP 身份与内容",
+    "图纸版面审核",
+    "图纸合订"
+  ],
+  "metrics": {
+    "STEP/实体数": {
+      "value": 4,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/件数": {
+      "value": 6,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/种数": {
+      "value": 4,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/质量kg": {
+      "value": 3.56,
+      "tol": 0,
+      "tol_pct": 0.5
+    },
+    "装配/PG-000_行星齿轮减速器/宽mm": {
+      "value": 112,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/PG-000_行星齿轮减速器/长mm": {
+      "value": 180,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/PG-000_行星齿轮减速器/零件数": {
+      "value": 6,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/PG-000_行星齿轮减速器/高mm": {
+      "value": 180,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "运动学/最大残差°": {
+      "value": 0,
+      "tol": 0.001,
+      "tol_pct": 0
+    }
+  },
+  "drawings": [
+    {
+      "file": "PG-001_太阳轮.SLDDRW",
+      "size": "A3",
+      "scale": "1:1",
+      "dims": 4,
+      "holes": 0
+    },
+    {
+      "file": "PG-002_行星轮.SLDDRW",
+      "size": "A3",
+      "scale": "2:1",
+      "dims": 2,
+      "holes": 0
+    },
+    {
+      "file": "PG-003_内齿圈.SLDDRW",
+      "size": "A3",
+      "scale": "1:1.5",
+      "dims": 2,
+      "holes": 12
+    },
+    {
+      "file": "PG-004_行星架.SLDDRW",
+      "size": "A3",
+      "scale": "1:1",
+      "dims": 2,
+      "holes": 1
+    },
+    {
+      "file": "装配图/PG-000_行星齿轮减速器.SLDDRW",
+      "size": "A2",
+      "scale": "1:1.5",
+      "dims": 2,
+      "balloons": 4
+    }
+  ]
+}

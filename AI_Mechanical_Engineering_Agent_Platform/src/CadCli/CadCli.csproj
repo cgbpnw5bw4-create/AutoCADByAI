@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 命令行入口: cad run / list / doctor / clean / diag -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>cad</AssemblyName>
+    <RootNamespace>CadCli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CadKernel\CadKernel.csproj" />
+    <ProjectReference Include="..\CadProjects\CadProjects.csproj" />
+  </ItemGroup>
+</Project>

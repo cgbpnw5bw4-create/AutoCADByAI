@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 设计项目: 每个子目录是一个可由 input/<任务>/design.json 驱动的设计 (行星齿轮减速器、CFC-650 铜箔清洗机 …) -->
+  <PropertyGroup>
+    <RootNamespace>CadProjects</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CadKernel\CadKernel.csproj" />
+    <ProjectReference Include="..\CadLibrary\CadLibrary.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="CadTests" />
+  </ItemGroup>
+</Project>

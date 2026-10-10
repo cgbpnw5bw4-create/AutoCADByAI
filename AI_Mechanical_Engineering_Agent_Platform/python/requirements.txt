@@ -1,0 +1,2 @@
+# 输出后处理 (不调用 SolidWorks COM)
+pymupdf>=1.24

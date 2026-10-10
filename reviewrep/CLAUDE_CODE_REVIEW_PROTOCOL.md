@@ -50,7 +50,7 @@ Codex 仍是主要开发 Agent，你与它并行工作。
 
 `BIGPROJECT/AI_Mechanical_Engineering_Agent_Platform`
 
-- **开发模式**：可读可写。修改前仍必须遵守第 4 节的必读文件要求，以及 `AGENTS.md` 与 `docs/codex_execution_protocol.md`。
+- **开发模式**：可读可写。修改前仍必须遵守第 4 节的必读文件要求，以及 `AGENTS.md` 与 `docs/architecture.md`、`docs/api_calibration.md` (2026-10-09 重构后的开发规则与 API 标定手册)。
 - **审查模式**：只读。可以读取、搜索、查看 diff，但不得修改、创建、删除、移动、重命名、格式化或 patch 其中任何文件。
 
 ### 2.2 审查报告目录

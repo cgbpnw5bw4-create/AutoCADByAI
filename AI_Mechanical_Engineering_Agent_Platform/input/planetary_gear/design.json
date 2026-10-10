@@ -1,0 +1,14 @@
+{
+  // 行星齿轮减速器 (回归样例): 参数缺省时与 2026-09-24 实测项目完全一致
+  "project": "planetary_gear",
+  "title": "行星齿轮减速器 i=5 (m=2, 18/27/72)",
+  "params": {
+    "module": 2,
+    "z_sun": 18,
+    "z_planet": 27,
+    "z_ring": 72,
+    "planets": 3,
+    "face_width": 20,
+    "backlash": 0.10
+  }
+}
