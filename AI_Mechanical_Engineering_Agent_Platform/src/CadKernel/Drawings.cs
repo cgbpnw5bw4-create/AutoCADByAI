@@ -1003,6 +1003,205 @@ namespace CadKernel
 
         // =====================================================================================
         static readonly double[] ASM_SCALES = { 1, 1.5, 2, 2.5, 3, 4, 5, 6, 10, 15, 20, 25, 30, 40, 50, 60, 100 };
+        // 装配图版面: 明细表宽, 技术要求区高, 图框右 / 左边距 (GB/T 14689)
+        const double BOMW = 0.195, NOTEH = 0.075, FR = 0.010, FL = 0.025;
+        /// <summary>视图组外框允许超出可用区的量: 一个注释外扩量 (见 AsmDrawing 版面校核)</summary>
+        const double FIT_TOL = 0.006;
+
+        /// <summary>装配图图幅与主+俯视图组可用区: [宽, 高, L, R, B, T] (图纸坐标, m)</summary>
+        static double[] AsmSheet(string size)
+        {
+            double W = size == "a0" ? 1.189 : 0.594, H = size == "a0" ? 0.841 : 0.42;
+            return new[] { W, H, FL + 0.004, W - FR - BOMW - 0.012, NOTEH + 0.005, H - FR - 0.004 };
+        }
+
+        /// <summary>
+        /// 装配图的主视图 (可用区左上) + 俯视图 (主视图下方, 第一角) + 外形尺寸 + 自动序号, 比例 1:scale。
+        /// AsmDrawing 逐级比例尝试与 cad probe-asm 共用。draft = 草稿品质消隐 (总装)。
+        /// </summary>
+        static void AsmViews(DrawingDoc dd, ModelDoc2 d, string path, double[] sh, double scale, double dx, double dy, double dz, bool draft, bool topBom,
+                             out View vf, out View vt, out int nd, out int nb)
+        {
+            double s1 = 1 / scale, L = sh[2], T = sh[5];
+            SheetScale(dd, scale);
+            double mx = L + 0.03 + dx * MM * s1 / 2, my = T - 0.03 - dy * MM * s1 / 2;
+            vf = dd.CreateDrawViewFromModelView3(path, "*前视", mx, my, 0);
+            if (vf == null) throw new Exception("主视图创建失败");
+            vf.ScaleDecimal = s1;
+            d.ClearSelection2(true);
+            d.Extension.SelectByID2(vf.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            double ty = my - dy * MM * s1 / 2 - 0.035 - dz * MM * s1 / 2;
+            vt = dd.CreateUnfoldedViewAt3(mx, ty, 0, false);
+            if (draft)
+                // 总装 2993 个零部件: 主/俯视图用草稿品质消隐 (精确消隐计算量过大)
+                foreach (View v in new[] { vf, vt }) try { v.SetDisplayMode3(false, (int)swDisplayMode_e.swHIDDEN, true, false); } catch { }
+            SheetScale(dd, scale);          // 插入首个视图时 SolidWorks 可能自动改图纸比例
+            d.ForceRebuild3(false);
+            if (Place(vf, mx, my) | Place(vt, null, ty)) d.ForceRebuild3(false);
+            nd = 0; nb = 0;
+            try { nd += Overall(d, vf, true, true); nd += Overall(d, vt, false, true); } catch { }
+            try { nb = Balloons(dd, d, vf, topBom); }
+            catch (Exception e) { Sw.Log("   序号 " + e.Message); }
+            d.ForceRebuild3(false);
+            try { FixBalloons(d, vf); }
+            catch (Exception e) { Sw.Log("   序号位置 " + e.Message); }
+        }
+
+        /// <summary>序号圆 [圆心 x, y, 半径] (图纸坐标, m); 读不出返回 null</summary>
+        static double[] Circle(Note n)
+        {
+            double[] bi = n.GetBalloonInfo() as double[];
+            return bi == null || bi.Length < 7 || bi[6] <= 0 ? null : new[] { bi[0], bi[1], bi[6] };
+        }
+
+        /// <summary>
+        /// 序号的存储位置 (文字框左上角) 在序号圆旁: 距圆心不超过 2 × 半径 + 5 mm。
+        /// 正常序号实测最多 4.6 mm (半径 3 mm, 随引线方向与字数而变); 不一致的序号偏出 100 mm 以上
+        /// </summary>
+        static bool Consistent(double[] p, double[] c)
+        {
+            return Math.Sqrt((p[0] - c[0]) * (p[0] - c[0]) + (p[1] - c[1]) * (p[1] - c[1])) <= 2 * c[2] + 0.005;
+        }
+
+        /// <summary>
+        /// 自动序号的存储位置与序号圆不一致时, 移回序号圆 (自动布局排定的位置)。实测 (2026-10-16/17, cad probe-asm): 自动序号偶尔
+        /// Annotation.GetPosition (存储的位置; 保存后重新打开即按它画, PDF 由此导出) 与 Note.GetBalloonInfo 的序号圆相距很远, 重建不改变两者。
+        /// 微波实验炉总装图删除重复序号后 8 次中 4 次: 一个序号存到了视图上方 146 mm 外 (引线斜穿主视图), 一个与别的序号叠在同一处 ——
+        /// 存储位置是被删掉的同项序号原来的空位, 序号圆在它自己的空位上。版面校核量的是存储位置, 这类序号使视图组外框虚大
+        /// (箱体模块装配图 2026-10-15 量成 192×406 mm、改用 1:15 属同类现象, 未复现, 见 api_calibration.md 第 2 节第 22、25 条)。
+        /// → 把位置设到序号圆心, 重建后按新圆心与目标之差再修一次; 仍不一致记日志 (版面校核对序号按存储位置与序号圆的并集计, 见 Ext)。返回移回的个数。
+        /// </summary>
+        static int FixBalloons(ModelDoc2 d, View v)
+        {
+            int moved = 0;
+            foreach (Note n in BomBalloons(v))
+            {
+                Annotation a = (Annotation)n.GetAnnotation();
+                double[] c0 = Circle(n), p0 = a.GetPosition() as double[];
+                if (c0 == null || p0 == null || Consistent(p0, c0)) continue;
+                double x = c0[0], y = c0[1];
+                double[] c = c0, p = p0;
+                for (int k = 0; k < 2; k++)
+                {
+                    a.SetPosition2(x, y, 0);
+                    d.ForceRebuild3(false);
+                    c = Circle(n); p = a.GetPosition() as double[];
+                    if (c == null || p == null) break;
+                    double ex = c0[0] - c[0], ey = c0[1] - c[1];
+                    if (Math.Abs(ex) < 0.001 && Math.Abs(ey) < 0.001) break;
+                    x = p[0] + ex; y = p[1] + ey;
+                }
+                bool ok = c != null && p != null && Consistent(p, c) && Math.Abs(c[0] - c0[0]) < 0.002 && Math.Abs(c[1] - c0[1]) < 0.002;
+                if (ok) moved++;
+                Sw.Log(string.Format("   {0} 序号 {1} \"{2}\" 存储位置 ({3:F1},{4:F1}) 不在序号圆 ({5:F1},{6:F1}) 旁{7}", ok ? "" : "!", a.GetName(), (n.GetText() ?? "").Trim(),
+                    p0[0] * 1000, p0[1] * 1000, c0[0] * 1000, c0[1] * 1000,
+                    ok ? ", 已移回" : string.Format(", 移动后仍不一致: 位置 ({0:F1},{1:F1}) 序号圆 ({2:F1},{3:F1})",
+                        p == null ? double.NaN : p[0] * 1000, p == null ? double.NaN : p[1] * 1000, c == null ? double.NaN : c[0] * 1000, c == null ? double.NaN : c[1] * 1000)));
+            }
+            return moved;
+        }
+
+        /// <summary>
+        /// 主视图自动序号, 每个明细表项一个。自动序号在插入明细表之前生成, 挂在叶零件上, IgnoreMultiple 只忽略同一零件的其余实例;
+        /// 顶层明细表 (子装配占一行) 插入后, 同一子装配里不同零件上的序号都显示该子装配的项号 —— 微波实验炉总装图 4 项 8 个序号
+        /// (项 1 四个、项 2 三个, 2026-10-10 起每次如此)。→ 按序号所指零部件归到明细表项 (顶层明细取其顶层零部件, 否则取零件本身;
+        /// 文件 + 配置), 每项只留自动序号返回顺序中的第一个, 其余删除。返回留下的序号数。
+        /// </summary>
+        static int Balloons(DrawingDoc dd, ModelDoc2 d, View vf, bool topBom)
+        {
+            d.ClearSelection2(true);
+            d.Extension.SelectByID2(vf.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            AutoBalloonOptions ab = (AutoBalloonOptions)dd.CreateAutoBalloonOptions();
+            ab.Layout = (int)swBalloonLayoutType_e.swDetailingBalloonLayout_Square;
+            ab.IgnoreMultiple = true;
+            object[] notes = dd.AutoBalloon5(ab) as object[];
+            if (notes == null) return 0;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dup = new List<Annotation>();
+            int unknown = 0;
+            foreach (object o in notes)
+            {
+                Annotation a = (Annotation)((Note)o).GetAnnotation();
+                string key = BomKey(a, topBom);
+                if (key == null) unknown++;
+                else if (!seen.Add(key)) dup.Add(a);
+            }
+            if (unknown > 0) Sw.Log(string.Format("   ! {0} 个序号读不出所指零部件, 保留 (明细表插入后按项号复核)", unknown));
+            if (dup.Count == 0) return notes.Length;
+            int kept = notes.Length - DeleteAnnotations(d, vf, dup);
+            Sw.Log(string.Format("   序号: 自动生成 {0} 个, 同一明细表项的 {1} 个已删除, 留 {2} 个", notes.Length, dup.Count, kept));
+            return kept;
+        }
+
+        /// <summary>明细表 (标题栏上方右对齐) 并复核序号每项一个; 返回复核后的序号数 nb</summary>
+        static int AsmBom(ModelDoc2 am, ModelDoc2 d, View vf, double W, double H, bool topBom, int nb)
+        {
+            string exe = Sw.App.GetExecutablePath();
+            string tpl = Path.Combine(exe, @"lang\chinese-simplified\gb-bom-material.sldbomtbt");
+            if (!File.Exists(tpl)) tpl = Path.Combine(Path.GetDirectoryName(exe), @"lang\chinese-simplified\gb-bom-material.sldbomtbt");
+            if (!File.Exists(tpl)) { Sw.Log("   ! 未找到 GB 明细表模板, 用默认模板"); tpl = ""; }
+            try
+            {
+                int bt = topBom ? (int)swBomType_e.swBomType_TopLevelOnly : (int)swBomType_e.swBomType_PartsOnly;
+                // 配置名须明确给出: 总装 (顶层明细) 传 "" 时 InsertBomTable4 静默返回 null
+                string cfgName = ((Configuration)am.GetActiveConfiguration()).Name;
+                BomTableAnnotation bom = vf.InsertBomTable4(false, W - FR, 0.066, (int)swBOMConfigurationAnchorType_e.swBOMConfigurationAnchor_BottomRight,
+                    bt, cfgName, tpl, false, (int)swNumberingType_e.swNumberingType_Flat, false);
+                if (bom != null) { FitBom(bom, H - FR - 0.004 - 0.066); nb = UniqueItems(d, vf, nb); }
+                else Sw.Log("   ! 明细表插入失败 (配置 " + cfgName + ")");
+            }
+            catch (Exception e) { Sw.Log("   明细表 " + e.Message); }
+            return nb;
+        }
+
+        /// <summary>序号所指零部件对应的明细表项 (文件|配置); 顶层明细取其顶层零部件。读不出返回 null</summary>
+        static string BomKey(Annotation a, bool topBom)
+        {
+            object[] ents = a.GetAttachedEntities3() as object[];
+            if (ents == null) return null;
+            foreach (object e in ents)
+            {
+                Component2 c = null;
+                try { c = (Component2)((Entity)e).GetComponent(); } catch { }
+                if (c == null) continue;
+                if (topBom) for (Component2 p = (Component2)c.GetParent(); p != null; p = (Component2)p.GetParent()) c = p;
+                return c.GetPathName() + "|" + c.ReferencedConfiguration;
+            }
+            return null;
+        }
+
+        /// <summary>视图中的明细表序号</summary>
+        static List<Note> BomBalloons(View v)
+        {
+            return ((object[])v.GetNotes() ?? new object[0]).Cast<Note>().Where(n => n.IsBomBalloon()).ToList();
+        }
+
+        /// <summary>删除视图 v 中的这些序号, 返回实际删除数 (按删除前后视图中的序号数); 与应删数不符时记日志</summary>
+        static int DeleteAnnotations(ModelDoc2 d, View v, List<Annotation> del)
+        {
+            int before = BomBalloons(v).Count;
+            d.ClearSelection2(true);
+            foreach (Annotation a in del) a.Select3(true, null);
+            d.Extension.DeleteSelection2(0);
+            d.ClearSelection2(true);
+            int n = before - BomBalloons(v).Count;
+            if (n != del.Count) Sw.Log(string.Format("   ! 应删除 {0} 个序号, 实际删除 {1} 个", del.Count, n));
+            return n;
+        }
+
+        /// <summary>
+        /// 明细表插入后按序号显示的项号复核每项只有一个序号 (Balloons 读不出所指零部件的序号在这里补删)。返回删除后的序号数。
+        /// </summary>
+        static int UniqueItems(ModelDoc2 d, View vf, int nb)
+        {
+            d.ForceRebuild3(false);
+            var seen = new HashSet<string>();
+            var dup = BomBalloons(vf).Where(n => { string t = (n.GetText() ?? "").Trim(); return t != "" && !seen.Add(t); })
+                                     .Select(n => (Annotation)n.GetAnnotation()).ToList();
+            if (dup.Count == 0) return nb;
+            Sw.Log(string.Format("   ! 明细表插入后仍有 {0} 个序号与其它序号同项号, 删除", dup.Count));
+            return nb - DeleteAnnotations(d, vf, dup);
+        }
 
         /// <summary>
         /// 装配图: 主视图 (左上) + 俯视图 (主视图下方, 第一角) + 轴测图 (取右侧或下方空白中比例较大者);
@@ -1033,10 +1232,9 @@ namespace CadKernel
 
             double[] b = (double[])((AssemblyDoc)am).GetBox(0);
             double dx = (b[3] - b[0]) / MM, dy = (b[4] - b[1]) / MM, dz = (b[5] - b[2]) / MM;
-            bool top = ForceA0.Contains(path);
+            bool top = ForceA0.Contains(path), topBom = top || TopLevelBom.Contains(path);
             // 图幅: A2 能以 1:20 或更大比例放下则用 A2, 否则 A0 (总装图固定 A0)。
             // 不用 GB A1 模板: 该模板新建的工程图导出 PDF 时视图全部丢失 (A0/A2/A3 正常, 已逐项排查文档属性与页面设置)
-            const double BOMW = 0.195, NOTEH = 0.075, FR = 0.010, FL = 0.025;   // 明细表宽, 技术要求区高, 图框边距 (GB/T 14689)
             string size = top ? "a0" : "a2";
             double W = 0, H = 0, scale = 0;
             ModelDoc2 d = null; DrawingDoc dd = null; View vf = null, vt = null;
@@ -1044,8 +1242,9 @@ namespace CadKernel
             int nd = 0, nb = 0;                              // 外形尺寸数, 序号数 (最终采用的比例下)
             for (int si = 0; ; si++)
             {
-                W = size == "a0" ? 1.189 : 0.594; H = size == "a0" ? 0.841 : 0.42;
-                double L = FL + 0.004, R = W - FR - BOMW - 0.012, T = H - FR - 0.004, B = NOTEH + 0.005;
+                double[] sh = AsmSheet(size);
+                W = sh[0]; H = sh[1];
+                double L = sh[2], R = sh[3], B = sh[4], T = sh[5];
                 // 起始比例: 视图本体放得下的最大比例; 之后逐级缩小直到连同尺寸、序号放进图框
                 var cand = ASM_SCALES.Where(sc => dx * MM / sc <= (R - L) * 0.85 && (dy + dz) * MM / sc + 0.03 <= (T - B) * 0.85).ToList();
                 if (si >= cand.Count || (size == "a2" && cand[si] > 20))
@@ -1054,42 +1253,12 @@ namespace CadKernel
                     throw new Exception("A0 图幅仍放不下");
                 }
                 scale = cand[si];
-                double s1 = 1 / scale;
                 dd = NewDrawing(size, out d);
-                SheetScale(dd, scale);
-                double mx = L + 0.03 + dx * MM * s1 / 2, my = T - 0.03 - dy * MM * s1 / 2;
-                vf = dd.CreateDrawViewFromModelView3(path, "*前视", mx, my, 0);
-                if (vf == null) throw new Exception("主视图创建失败");
-                vf.ScaleDecimal = s1;
-                d.ClearSelection2(true);
-                d.Extension.SelectByID2(vf.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-                double ty = my - dy * MM * s1 / 2 - 0.035 - dz * MM * s1 / 2;
-                vt = dd.CreateUnfoldedViewAt3(mx, ty, 0, false);
-                if (top)
-                    // 总装 2993 个零部件: 主/俯视图用草稿品质消隐 (精确消隐计算量过大)
-                    foreach (View v in new[] { vf, vt }) try { v.SetDisplayMode3(false, (int)swDisplayMode_e.swHIDDEN, true, false); } catch { }
-                SheetScale(dd, scale);          // 插入首个视图时 SolidWorks 可能自动改图纸比例
-                d.ForceRebuild3(false);
-                if (Place(vf, mx, my) | Place(vt, null, ty)) d.ForceRebuild3(false);
-                nd = 0; nb = 0;
-                try { nd += Overall(d, vf, true, true); nd += Overall(d, vt, false, true); } catch { }
-                try
-                {
-                    d.ClearSelection2(true);
-                    d.Extension.SelectByID2(vf.Name, "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-                    AutoBalloonOptions ab = (AutoBalloonOptions)dd.CreateAutoBalloonOptions();
-                    ab.Layout = (int)swBalloonLayoutType_e.swDetailingBalloonLayout_Square;
-                    ab.IgnoreMultiple = true;
-                    object[] balloons = dd.AutoBalloon5(ab) as object[];
-                    nb = balloons == null ? 0 : balloons.Length;
-                }
-                catch (Exception e) { Sw.Log("   序号 " + e.Message); }
-                d.ForceRebuild3(false);
+                AsmViews(dd, d, path, sh, scale, dx, dy, dz, top, topBom, out vf, out vt, out nd, out nb);
                 // ---- 版面校核: 视图 + 尺寸 + 序号整体须在 [L,R]×[B,T] 内; 放不下则换小一级比例重画 ----
                 // 注释按 ±6 mm 外扩估算, 而自动序号的位置每次相差几毫米: 行星齿轮装配图 1:1.5 实测 331 mm 对可用 326 mm,
                 // 6 次运行中 2 次改用 1:2 (一次超出 5 mm, 一次为图纸外的异常读数, 见 Ext), 比例随运行变化 (回归基准抓到)。允许超出不多于一个外扩量 FIT_TOL;
                 // 是否真正出框由 PDF 版面审核 (python/audit_drawings.py) 判定
-                const double FIT_TOL = 0.006;
                 g = Union(Ext(vf), Ext(vt));
                 if (g[2] - g[0] <= R - L + FIT_TOL && g[3] - g[1] <= T - B + FIT_TOL)
                 {
@@ -1118,21 +1287,7 @@ namespace CadKernel
 
             // ---- 明细表 ----
             var stage = System.Diagnostics.Stopwatch.StartNew();
-            string exe = Sw.App.GetExecutablePath();
-            string tpl = Path.Combine(exe, @"lang\chinese-simplified\gb-bom-material.sldbomtbt");
-            if (!File.Exists(tpl)) tpl = Path.Combine(Path.GetDirectoryName(exe), @"lang\chinese-simplified\gb-bom-material.sldbomtbt");
-            if (!File.Exists(tpl)) { Sw.Log("   ! 未找到 GB 明细表模板, 用默认模板"); tpl = ""; }
-            try
-            {
-                int bt = top || TopLevelBom.Contains(path) ? (int)swBomType_e.swBomType_TopLevelOnly : (int)swBomType_e.swBomType_PartsOnly;
-                // 配置名须明确给出: 总装 (顶层明细) 传 "" 时 InsertBomTable4 静默返回 null
-                string cfgName = ((Configuration)am.GetActiveConfiguration()).Name;
-                BomTableAnnotation bom = vf.InsertBomTable4(false, W - FR, 0.066, (int)swBOMConfigurationAnchorType_e.swBOMConfigurationAnchor_BottomRight,
-                    bt, cfgName, tpl, false, (int)swNumberingType_e.swNumberingType_Flat, false);
-                if (bom != null) FitBom(bom, H - FR - 0.004 - 0.066);
-                else Sw.Log("   ! 明细表插入失败 (配置 " + cfgName + ")");
-            }
-            catch (Exception e) { Sw.Log("   明细表 " + e.Message); }
+            nb = AsmBom(am, d, vf, W, H, topBom, nb);
             Sw.Log(string.Format("   明细表 {0:F0} s", stage.Elapsed.TotalSeconds)); stage.Restart();
 
             // ---- 轴测图: 候选 A = 视图组右侧, B = 视图组下方 (技术要求右侧); 取比例较大者, 放置后按实际外框校核 ----
@@ -1185,7 +1340,7 @@ namespace CadKernel
         }
 
         /// <summary>
-        /// 视图外框并上其全部注释 (尺寸、序号) 的位置 (图纸坐标, 每个注释按 ±6 mm 计)。
+        /// 视图外框并上其全部注释 (尺寸、序号) 的位置 (图纸坐标, 每个注释按 ±6 mm 计; 序号另并上其序号圆)。
         /// 实测 (2026-10-10, 行星齿轮装配图 4 次中 1 次): 外框连同注释读回 161×4706 mm —— 有一个读数远在图纸之外, 比例因此被无谓缩小一级。
         /// 落在任何图幅 (最大 A0 1189×841) 之外 0.5 m 以上的读数不可能是真实位置: 不计入版面并记日志 (最终版面仍由 PDF 版面审核把关)。
         /// </summary>
@@ -1208,8 +1363,139 @@ namespace CadKernel
                     }
                     const double r = 0.006;
                     x0 = Math.Min(x0, p[0] - r); y0 = Math.Min(y0, p[1] - r); x1 = Math.Max(x1, p[0] + r); y1 = Math.Max(y1, p[1] + r);
+                    // 序号再并上序号圆: 存储位置与序号圆不一致而未能移回时 (见 FixBalloons) 两处都算, 只会更严
+                    Note n = ((Annotation)a).GetType() == (int)swAnnotationType_e.swNote ? (Note)((Annotation)a).GetSpecificAnnotation() : null;
+                    double[] c = n != null && n.IsBomBalloon() ? Circle(n) : null;
+                    if (c != null && OnAnySheet(c[0], c[1]))
+                    {
+                        x0 = Math.Min(x0, c[0] - c[2]); y0 = Math.Min(y0, c[1] - c[2]); x1 = Math.Max(x1, c[0] + c[2]); y1 = Math.Max(y1, c[1] + c[2]);
+                    }
                 }
             return new[] { x0, y0, x1, y1 };
+        }
+
+        /// <summary>一个注释的各种位置读数 (图纸坐标, m): GetPosition; 序号的圆心与半径 (Bal)、文字框 (Box)、附着点 (Att)</summary>
+        class AnnRead { public string View, Name, Kind, Text = ""; public double X, Y; public double[] Bal, Box, Att; }
+
+        static List<AnnRead> Readings(View v)
+        {
+            var r = new List<AnnRead>();
+            foreach (object o in (object[])v.GetAnnotations() ?? new object[0])
+            {
+                Annotation a = (Annotation)o;
+                int t = a.GetType();
+                var q = new AnnRead { View = v.Name, Name = a.GetName(), Kind = ((swAnnotationType_e)t).ToString().Replace("sw", "") };
+                double[] p = a.GetPosition() as double[];
+                if (p != null) { q.X = p[0]; q.Y = p[1]; } else { q.X = q.Y = double.NaN; }
+                if (t == (int)swAnnotationType_e.swNote)
+                {
+                    Note n = (Note)a.GetSpecificAnnotation();
+                    q.Text = n.GetText() ?? "";
+                    if (n.IsBomBalloon())
+                    {
+                        q.Kind = "Balloon";
+                        double[] bi = n.GetBalloonInfo() as double[];
+                        if (bi != null && bi.Length >= 7) q.Bal = new[] { bi[0], bi[1], bi[6] };
+                    }
+                    double[] e = n.GetExtent() as double[];
+                    if (e != null && e.Length >= 6) q.Box = new[] { e[0], e[1], e[3], e[4] };
+                    double[] at = n.GetAttachPos() as double[];
+                    if (at != null && at.Length >= 2) q.Att = new[] { at[0], at[1] };
+                }
+                r.Add(q);
+            }
+            return r;
+        }
+
+        /// <summary>同一注释不同来源的读数互相矛盾之处 (位置读数应在序号圆内 / 文字框旁); 无则 ""</summary>
+        static string Conflict(AnnRead q)
+        {
+            var s = new List<string>();
+            if (double.IsNaN(q.X)) s.Add("无位置读数");
+            else
+            {
+                if (q.Bal != null && !Consistent(new[] { q.X, q.Y }, q.Bal)) s.Add("位置不在序号圆旁");
+                if (q.Box != null && (q.X < q.Box[0] - 0.003 || q.X > q.Box[2] + 0.003 || q.Y < q.Box[1] - 0.003 || q.Y > q.Box[3] + 0.003)) s.Add("位置不在文字框旁");
+            }
+            return string.Join(", ", s);
+        }
+
+        static string Fmt(AnnRead q)
+        {
+            Func<double, string> f = x => (x * 1000).ToString("F1");
+            return string.Format("{0,-10} {1,-16} {2,-18} pos=({3},{4}){5}{6}{7} \"{8}\"", q.View, q.Name, q.Kind, f(q.X), f(q.Y),
+                q.Bal == null ? "" : string.Format(" 圆=({0},{1}) r={2}", f(q.Bal[0]), f(q.Bal[1]), f(q.Bal[2])),
+                q.Box == null ? "" : string.Format(" 框=({0},{1})-({2},{3})", f(q.Box[0]), f(q.Box[1]), f(q.Box[2]), f(q.Box[3])),
+                q.Att == null ? "" : string.Format(" 附着=({0},{1})", f(q.Att[0]), f(q.Att[1])), q.Text.Replace("\n", " "));
+        }
+
+        /// <summary>
+        /// 调试 (cad probe-asm): 按装配图流程 (关闭文档 → 打开装配体 → 新建工程图 → 主/俯视图 + 外形尺寸 + 自动序号 → 明细表) 重复 n 次,
+        /// 逐个注释输出位置读数 (GetPosition、序号圆心与半径、文字框、附着点) 与视图组外框, 重建后再读一次比对;
+        /// 外框与第一次相差 10 mm 以上、重建前后不一致或各来源读数矛盾时标 "!!"。每张图另存到 outDir 并重新打开导出 PDF, 看实际画在哪。
+        /// 不写运行目录, 不保存装配体。preload 非空时每次先打开再关闭它, 按流水线的出图顺序 (先总装、后模块)。
+        /// 装配体须取自一次完整运行的目录: 复制到别处的 models/ 中, 装配体记的是原运行目录的绝对路径, 零部件会混用两处的同名文件
+        /// (2026-10-16 实测: 包围盒读成残缺的、俯视图压在主视图上, SolidWorks 两次在打开时崩溃)。
+        /// </summary>
+        public static void ProbeAsm(string path, string size, double scale, int n, string outDir, bool topBom, string preload = null)
+        {
+            double[] sh = AsmSheet(size);
+            double[] g1 = null;
+            var summary = new List<string>();
+            for (int it = 1; it <= n; it++)
+            {
+                Sw.CloseAll();
+                Sw.Recycle(5.0);
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                if (preload != null) { ModelDoc2 pm = Sw.Open(preload); Sw.Close(pm); }
+                ModelDoc2 am = Sw.Open(path);
+                try { ((AssemblyDoc)am).ResolveAllLightWeightComponents(false); } catch { }
+                double[] b = (double[])((AssemblyDoc)am).GetBox(0);
+                ModelDoc2 d; DrawingDoc dd = NewDrawing(size, out d);
+                View vf, vt; int nd, nb;
+                AsmViews(dd, d, path, sh, scale, (b[3] - b[0]) / MM, (b[4] - b[1]) / MM, (b[5] - b[2]) / MM, false, topBom, out vf, out vt, out nd, out nb);
+                var r1 = Readings(vf).Concat(Readings(vt)).ToList();
+                double[] g = Union(Ext(vf), Ext(vt));
+                d.ForceRebuild3(false);
+                var r2 = Readings(vf).Concat(Readings(vt)).ToList();
+                double[] g2 = Union(Ext(vf), Ext(vt));
+                if (g1 == null) g1 = g;
+                var bad = new List<string>();
+                Func<double[], double> w = q => q[2] - q[0], h = q => q[3] - q[1];
+                if (Math.Abs(w(g) - w(g1)) > 0.010 || Math.Abs(h(g) - h(g1)) > 0.010) bad.Add("外框与第 1 次相差 10 mm 以上");
+                if (g.Zip(g2, (x, y) => Math.Abs(x - y)).Max() > 0.002) bad.Add("重建后外框变化");
+                Sw.Log(string.Format("== 第 {0} 次: 外框 ({1:F1},{2:F1})-({3:F1},{4:F1}) = {5:F0}×{6:F0} mm; 重建后 {7:F0}×{8:F0}; 尺寸 {9} 序号 {10}",
+                    it, g[0] * 1000, g[1] * 1000, g[2] * 1000, g[3] * 1000, w(g) * 1000, h(g) * 1000, w(g2) * 1000, h(g2) * 1000, nd, nb));
+                foreach (View v in new[] { vf, vt })
+                {
+                    double[] o = (double[])v.GetOutline(), p = (double[])v.Position;
+                    Sw.Log(string.Format("   视图 {0} 位置 ({1:F1},{2:F1}) 外框 ({3:F1},{4:F1})-({5:F1},{6:F1})", v.Name, p[0] * 1000, p[1] * 1000, o[0] * 1000, o[1] * 1000, o[2] * 1000, o[3] * 1000));
+                }
+                foreach (var q in r1)
+                {
+                    var q2 = r2.FirstOrDefault(x => x.View == q.View && x.Name == q.Name);
+                    string c = Conflict(q);
+                    if (q2 == null) c += (c == "" ? "" : ", ") + "重建后消失";
+                    else if (Math.Abs(q2.X - q.X) > 0.002 || Math.Abs(q2.Y - q.Y) > 0.002) c += (c == "" ? "" : ", ") + string.Format("重建后位置变为 ({0:F1},{1:F1})", q2.X * 1000, q2.Y * 1000);
+                    if (q.X < 0 || q.X > sh[0] || q.Y < 0 || q.Y > sh[1]) c += (c == "" ? "" : ", ") + "图纸外";
+                    Sw.Log("   " + Fmt(q) + (c == "" ? "" : "   !! " + c));
+                    if (c != "") bad.Add(q.Name + ": " + c);
+                }
+                int nb2 = AsmBom(am, d, vf, sh[0], sh[1], topBom, nb);
+                var items = BomBalloons(vf).Select(x => (x.GetText() ?? "").Trim()).OrderBy(x => x.Length).ThenBy(x => x).ToList();
+                Sw.Log(string.Format("   明细表后序号 {0} 个 (视图中 {1} 个): {2}", nb2, items.Count, string.Join(" ", items)));
+                string line = string.Format("第 {0,2} 次 {1:F0}×{2:F0} mm  序号 {3}->{4}  {5:F0} s{6}", it, w(g) * 1000, h(g) * 1000, nb, nb2,
+                    watch.Elapsed.TotalSeconds, bad.Count == 0 ? "" : "  !! " + string.Join("; ", bad));
+                summary.Add(line);
+                // 每次都另存并重新打开导出 PDF: 保存后的图纸按存储位置画序号, PDF 就是最终交付的样子
+                string f = Path.Combine(outDir, string.Format("probe_{0:00}.SLDDRW", it));
+                Sw.Save(d, f);
+                Sw.App.CloseDoc(d.GetTitle());
+                Pdf(f);
+                Sw.Close(am);
+            }
+            Sw.Log("== 汇总 (" + Path.GetFileName(path) + " " + size.ToUpper() + " 1:" + scale + ")");
+            foreach (string s in summary) Sw.Log("   " + s);
         }
 
         /// <summary>

@@ -1,13 +1,13 @@
 {
   "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
-  "source_run": "20261016_113139_microwave_furnace",
+  "source_run": "20261016_165945_microwave_furnace",
   "checks": [
-    "参数校验",
     "模型完整性",
     "干涉检查",
     "物料清单",
     "零件几何与原 STEP 一致",
     "装配位置与原 STEP 一致",
+    "参数校验",
     "工程图生成",
     "工程图参考",
     "STEP 身份与内容",
@@ -190,7 +190,7 @@
       "size": "A2",
       "scale": "1:15",
       "dims": 2,
-      "balloons": 8
+      "balloons": 3
     }
   ]
 }

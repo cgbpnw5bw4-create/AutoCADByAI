@@ -328,6 +328,20 @@ namespace CadCli
                         Sw.Disconnect();
                         return 0;
                     }
+                    case "probe-asm":
+                    {
+                        // 调试: 按装配图流程重复出主/俯视图组 + 序号 + 明细表, 逐个注释输出位置读数, 读数异常的那张另存 (不写运行目录)
+                        if (args.Length < 2) return Usage();
+                        string outDir = Path.GetFullPath(Opt("--out") ?? Path.Combine(root, "output", "_probe_asm_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")));
+                        Sw.Connect();
+                        try
+                        {
+                            Drw.ProbeAsm(Path.GetFullPath(args[1]), Opt("--size") ?? "a2", double.Parse(Opt("--scale") ?? "10", System.Globalization.CultureInfo.InvariantCulture),
+                                int.Parse(Opt("--n") ?? "10"), outDir, args.Contains("--top-bom"), Opt("--preload") == null ? null : Path.GetFullPath(Opt("--preload")));
+                            return 0;
+                        }
+                        finally { Sw.CloseAll(); Sw.Disconnect(); }
+                    }
                     default: return Usage();
                 }
             }
@@ -345,7 +359,7 @@ namespace CadCli
             Console.WriteLine("  cad resume <output/运行目录> [--from 步骤]   (默认从 drawings 续跑)");
             Console.WriteLine("  cad baseline <output/运行目录>              (看图确认无误后, 把该次结果写成 input/<任务>/expected.json)");
             Console.WriteLine("  cad import <STEP 文件> [--task 任务名] [--force]   (STEP → input/<任务>/import.json + geometry/, 之后 cad run <任务>)");
-            Console.WriteLine("  cad list | doctor | clean | diag <文件> | dump <工程图> [视图序号] [记录数] | probe-prism <x_t> [all|fail] | probe-sheet <x_t> [all|fail] | try-sheet <任务> <零件Id> | try-rebuild <x_t> | probe-faces <x_t> [@x0,y0,z0,x1,y1,z1] | compare-geometry <任务> <零件Id> <零件文件>");
+            Console.WriteLine("  cad list | doctor | clean | diag <文件> | dump <工程图> [视图序号] [记录数] | probe-asm <装配体> [--scale 10] [--size a2] [--n 10] [--top-bom] [--preload 装配体] [--out 目录] | probe-prism <x_t> [all|fail] | probe-sheet <x_t> [all|fail] | try-sheet <任务> <零件Id> | try-rebuild <x_t> | probe-faces <x_t> [@x0,y0,z0,x1,y1,z1] | compare-geometry <任务> <零件Id> <零件文件>");
             return 2;
         }
 
