@@ -474,6 +474,57 @@ namespace CadTests
             Assert.Contains("校核缺失: 干涉检查", Baseline.Compare(e, m, Index));
         }
 
+        // 配电盘模块装配图 (2026-10-16 16:59): 竖直外形尺寸 480 量成 220, 尺寸数仍是 3 —— 只比个数抓不到
+        const string AsmFile = "装配图/RTWBL340A1000_配电盘模块.SLDDRW";
+        static string AsmIndex(string extents) =>
+            "[ { \"file\": \"" + AsmFile + "\", \"size\": \"A2\", \"scale\": \"1:4\", \"dims\": 3, \"holes\": null, \"balloons\": 12" +
+            (extents == null ? "" : ", \"extents\": " + extents) + " } ]";
+
+        [Fact]
+        public void BaselineRecordsAndComparesExtents()
+        {
+            var m = Manifest();
+            string idx = AsmIndex("[174.1, 480, 900]");
+            var e = Baseline.Parse(Baseline.Generate(m, idx, "run1"));
+            Assert.Equal(new[] { 174.1, 480, 900 }, e.Drawings[0].Extents);
+            Assert.Empty(Baseline.Compare(e, m, idx));
+            Assert.Empty(Baseline.Compare(e, m, AsmIndex("[900, 174.12, 479.96]")));   // 允差 ±0.05 内, 与顺序无关
+            var d = Baseline.Compare(e, m, AsmIndex("[174.1, 220, 900]"));
+            Assert.Equal(new[] { "图纸 " + AsmFile + ": 外形尺寸 174.1 / 220 / 900, 基准 174.1 / 480 / 900 (mm, 允差 ±0.05)" }, d);
+            Assert.Single(Baseline.Compare(e, m, AsmIndex("[174.1, 480.06, 900]")));    // 刚超出允差
+            Assert.Single(Baseline.Compare(e, m, AsmIndex("[480, 900]")));              // 少一个外形尺寸 (尺寸数另比)
+            Assert.Contains("外形尺寸 无", Baseline.Compare(e, m, AsmIndex(null)).Single());   // 旧代码出的图没有读数
+        }
+
+        [Fact]
+        public void BaselineWithoutExtentsSkipsThem()
+        {
+            // 旧格式 expected.json (无 extents): 不比数值, 也不因运行多出 extents 报偏离
+            string old = "{ \"checks\": [], \"metrics\": {}, \"drawings\": [ { \"file\": \"" + AsmFile + "\", \"size\": \"A2\", \"scale\": \"1:4\", \"dims\": 3, \"balloons\": 12 } ] }";
+            var e = Baseline.Parse(old);
+            Assert.Null(e.Drawings[0].Extents);
+            Assert.Empty(Baseline.Compare(e, Manifest(), AsmIndex("[174.1, 220, 900]")));
+            Assert.Empty(Baseline.Compare(e, Manifest(), AsmIndex(null)));
+            // 没有外形尺寸的图 (如只有剖视图的回转体) 记为空表, 照样比对
+            var e0 = Baseline.Parse(Baseline.Generate(Manifest(), AsmIndex("[]"), "run1"));
+            Assert.Empty(e0.Drawings[0].Extents);
+            Assert.Empty(Baseline.Compare(e0, Manifest(), AsmIndex("[]")));
+            Assert.Single(Baseline.Compare(e0, Manifest(), AsmIndex("[12.5]")));
+        }
+
+        [Fact]
+        public void ExtentsIndexColumn()
+        {
+            Assert.Equal("[174.1,480,900]", Drw.ExtentsCol(new[] { 900.0000000001, 479.99999999, 174.1 }));
+            Assert.Equal("[0.05,1234.57]", Drw.ExtentsCol(new[] { 1234.5678, 0.049 }));
+            Assert.Equal("[]", Drw.ExtentsCol(new double[0]));
+            Assert.Equal(new[] { 174.1, 480, 900 }, Drw.ParseExtents("[174.1,480,900]"));
+            Assert.Empty(Drw.ParseExtents("[]"));
+            Assert.Null(Drw.ParseExtents(""));                 // 旧 index.tsv 行没有这一列
+            Assert.Null(Drw.ParseExtents(null));
+            Assert.Null(Drw.ParseExtents("480;900"));          // 无法解析视同未记录
+        }
+
         // ---------------- 行星轮系运动学残差: 太阳轮整圈歧义 ----------------
         [Fact]
         public void KinematicResidualResolvesWholeSunTurnsButNotWrongStates()

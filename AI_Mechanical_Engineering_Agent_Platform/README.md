@@ -53,7 +53,7 @@ docs/                      architecture / api_calibration / library / migration
 
 模型完整性 (逐个重开: 加载警告、重建错误、浮动/缺失零部件)、干涉 (兼作孔位校核)、BOM、工程图生成 (含"每张图至少有尺寸") 与参考检查、STEP 身份与内容、图纸版面审核，以及设计专属校核 (如行星轮系多角度运动学)。结论写入 `run.json`，任何一项不通过则运行状态为 `failed`。
 
-这些校核只能说明"没有报错"。回归样例另有**回归基准** (`input/<任务>/expected.json`)：零件数、装配外形、总质量、STEP 实体数、图纸清单与每张图的图幅 / 比例 / 尺寸数等逐项与人工确认过的结果比对，偏离即不通过 (见 [docs/architecture.md](docs/architecture.md) 第 2 节)。
+这些校核只能说明"没有报错"。回归样例另有**回归基准** (`input/<任务>/expected.json`)：零件数、装配外形、总质量、STEP 实体数、图纸清单与每张图的图幅 / 比例 / 尺寸数 / 外形尺寸读数等逐项与人工确认过的结果比对，偏离即不通过 (见 [docs/architecture.md](docs/architecture.md) 第 2 节)。
 
 ## 文档
 

@@ -493,6 +493,9 @@ namespace CadCli
             }
             File.WriteAllText(target, Baseline.Generate(m, indexJson, Path.GetFileName(runDir)), new UTF8Encoding(false));
             Console.WriteLine("已写入 " + Path.GetRelativePath(root, target));
+            // 外形尺寸读数逐张列出: 与 PDF 上标的尺寸核对后再提交
+            foreach (var r in Baseline.ReadIndex(indexJson).Where(r => r.Extents != null))
+                Console.WriteLine("  外形尺寸 " + r.File + ": " + string.Join(" / ", r.Extents.Select(v => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))) + " mm");
             return 0;
         }
 

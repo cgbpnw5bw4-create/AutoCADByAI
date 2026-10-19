@@ -167,7 +167,8 @@ namespace CadKernel
             File.WriteAllText(report, sb.ToString(), new UTF8Encoding(false));
             foreach (string s in diffs) Console.WriteLine("  !! " + s);
             Run.Check(Baseline.CheckName, diffs.Count == 0,
-                diffs.Count == 0 ? string.Format("一致: 校核 {0} 项, 指标 {1} 项, 图纸 {2} 张", e.Checks.Count, e.Metrics.Count, e.Drawings.Count)
+                diffs.Count == 0 ? string.Format("一致: 校核 {0} 项, 指标 {1} 项, 图纸 {2} 张 (外形尺寸读数 {3} 个)", e.Checks.Count, e.Metrics.Count, e.Drawings.Count,
+                                                 e.Drawings.Sum(x => x.Extents?.Count ?? 0))
                                  : diffs.Count + " 处偏离: " + string.Join("; ", diffs.Take(3)) + (diffs.Count > 3 ? " …" : ""),
                 report);
         }

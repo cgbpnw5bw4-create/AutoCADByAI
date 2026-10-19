@@ -39,9 +39,9 @@ namespace CadKernel
         /// <summary>明细表只列顶层的装配体 (强制 A0 的总装也是顶层明细)</summary>
         public static readonly HashSet<string> TopLevelBom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>图纸目录行: 图号, 名称, 图幅, 比例, 文件, 备注, 尺寸数, 孔标注数, 序号数 (index.tsv 同序)</summary>
+        /// <summary>图纸目录行: 图号, 名称, 图幅, 比例, 文件, 备注, 尺寸数, 孔标注数, 序号数, 外形尺寸读数 (ExtentsCol) (index.tsv 同序)</summary>
         static readonly List<string[]> Index = new List<string[]>();
-        const int INDEX_COLS = 9;
+        const int INDEX_COLS = 10;
         public const string NeedsDims = "待补尺寸";
         static int nOk, nFail, nDxf;
         /// <summary>最近一次 All() 的失败张数</summary>
@@ -801,6 +801,7 @@ namespace CadKernel
 
             // ---- 尺寸 ----
             int nd = 0;
+            var extents = new List<double>();                // 外形尺寸读数 (mm), 记入图纸目录供回归基准比对
             // 断开段在主视图局部坐标 (模型尺度, 相对视图中心) 中的范围, 供回转体直径尺寸避让
             var cutLocal = new List<double[]>();
             foreach (var c in cuts)
@@ -810,7 +811,7 @@ namespace CadKernel
                 double u1 = (ToSheet(vMain, p1[0], p1[1], p1[2])[0] - ps0[0]) / vMain.ScaleDecimal, u2 = (ToSheet(vMain, p2[0], p2[1], p2[2])[0] - ps0[0]) / vMain.ScaleDecimal;
                 cutLocal.Add(new[] { Math.Min(u1, u2), Math.Max(u1, u2) });
             }
-            try { nd += type == "turn" ? TurnDims(d, vMain, fits, cutLocal, ParseDias(Sw.GetProp(m, "_DIAS"))) : Overall(d, vMain, true, true); } catch (Exception e) { Sw.Log("   尺寸(主) " + e.Message); }
+            try { nd += type == "turn" ? TurnDims(d, vMain, fits, cutLocal, ParseDias(Sw.GetProp(m, "_DIAS"))) : Overall(d, vMain, extents, true, true); } catch (Exception e) { Sw.Log("   尺寸(主) " + e.Message); }
             // A3 标题栏 (右下 180×56, 图框边距 5) 上方: 侧视图若低到其上方附近, 水平尺寸改标在视图上方
             try
             {
@@ -818,11 +819,11 @@ namespace CadKernel
                 {
                     double[] so = (double[])vSide.GetOutline();
                     bool low = so[2] > 0.420 - 0.005 - 0.180 && so[1] - 0.020 < 0.005 + 0.056 + 0.004;
-                    nd += Overall(d, vSide, true, false, low);
+                    nd += Overall(d, vSide, extents, true, false, low);
                 }
             }
             catch { }
-            try { if (vBelow != null) nd += Overall(d, vBelow, false, true); } catch { }
+            try { if (vBelow != null) nd += Overall(d, vBelow, extents, false, true); } catch { }
             int nh = 0;
             // 回转体的孔 (端部螺纹孔等) 已在剖视图直径/轴向尺寸中表达;
             // 其余零件: 整圆最多的视图出孔坐标表, 其他含孔视图 (如角座的另一翼) 各自标孔径与孔位
@@ -864,7 +865,7 @@ namespace CadKernel
             d.Extension.SaveAs(Path.ChangeExtension(f, ".pdf"), 0, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref e1, ref w1);
             Sw.App.CloseDoc(d.GetTitle());
             Index.Add(new[] { code, name, "A3", ScaleText(scale), Path.Combine(RelDir(path), Path.GetFileName(f)), nd + nh > 0 ? "" : NeedsDims,
-                              nd.ToString(), nh.ToString(), "" });
+                              nd.ToString(), nh.ToString(), "", ExtentsCol(extents) });
             Sw.Log(string.Format("{0,-16} {1,-22} A3 {2,-6} 尺寸 {3,3}  孔 {4,3}", code, name, ScaleText(scale), nd, nh));
             Sw.Close(m);
         }
@@ -884,8 +885,8 @@ namespace CadKernel
             return r;
         }
 
-        /// <summary>外形尺寸: 最左/最右竖直边 -> 水平尺寸; 最下/最上水平边 -> 竖直尺寸</summary>
-        static int Overall(ModelDoc2 d, View v, bool horiz, bool vert, bool hAbove = false)
+        /// <summary>外形尺寸: 最左/最右竖直边 -> 水平尺寸; 最下/最上水平边 -> 竖直尺寸。标注成功的读数 (mm) 追加到 extents</summary>
+        static int Overall(ModelDoc2 d, View v, List<double> extents, bool horiz, bool vert, bool hAbove = false)
         {
             List<Seg> soft;
             var g = Geo(v, out soft); var vm = new VMap(v);
@@ -897,10 +898,11 @@ namespace CadKernel
             if (vl.Count < 2) vl.AddRange(soft.Where(s => Math.Abs(s.X1 - s.X2) < 1e-7));
             if (hl.Count < 2) hl.AddRange(soft.Where(s => Math.Abs(s.Y1 - s.Y2) < 1e-7));
             var parts = (horiz && vl.Count >= 2) || (vert && hl.Count >= 2) ? ViewParts(v) : null;
+            double mm;
             if (horiz && vl.Count >= 2 && ExtentDim(d, v, vl, s => s.X1, s => Math.Abs(s.Y1 - s.Y2), false,
-                                                    (ol[0] + ol[2]) / 2, hAbove ? ol[3] + 0.010 : ol[1] - 0.012, parts) != null) n++;
+                                                    (ol[0] + ol[2]) / 2, hAbove ? ol[3] + 0.010 : ol[1] - 0.012, parts, out mm) != null) { n++; extents.Add(mm); }
             if (vert && hl.Count >= 2 && ExtentDim(d, v, hl, s => s.Y1, s => Math.Abs(s.X1 - s.X2), true,
-                                                   ol[0] - 0.012, (ol[1] + ol[3]) / 2, parts) != null) n++;
+                                                   ol[0] - 0.012, (ol[1] + ol[3]) / 2, parts, out mm) != null) { n++; extents.Add(mm); }
             // 圆形外轮廓 (盘、法兰、齿圈的端视图): 没有可标的外形直线时, 标最大整圆直径
             if (horiz && vert && n == 0)
             {
@@ -908,7 +910,8 @@ namespace CadKernel
                 if (c != null && Sel(d, v, c, false))
                 {
                     double ang = 0.785;
-                    if (d.AddDiameterDimension2(vm.X(c.Cx) + (c.R * vm.S + 0.010) * Math.Cos(ang), vm.Y(c.Cy) + (c.R * vm.S + 0.010) * Math.Sin(ang), 0) != null) n++;
+                    var dm = (DisplayDimension)d.AddDiameterDimension2(vm.X(c.Cx) + (c.R * vm.S + 0.010) * Math.Cos(ang), vm.Y(c.Cy) + (c.R * vm.S + 0.010) * Math.Sin(ang), 0);
+                    if (dm != null) { n++; extents.Add(DimMm(dm, 2 * c.R)); }
                 }
             }
             return n;
@@ -920,10 +923,12 @@ namespace CadKernel
         /// 每对边先按记录所在实例的边 (InstanceEnt) 标注, 标不出或量错再按原实体标; 标注后读回尺寸值与几何距离核对 (0.01 mm):
         /// 不符 (选到了别的实例, 第 26 条) 即删除并换下一种 / 下一对 (每组前 3 条); 读不出尺寸值时照旧采用。
         /// 都不符则不标并记日志 (尺寸数随之变少, 回归基准会报出), 不留量错的尺寸。
+        /// mm = 采用的尺寸读数 (读不出时为几何距离), 记入图纸目录由回归基准比对数值 (尺寸数对而数值错也能报出)。
         /// </summary>
         static DisplayDimension ExtentDim(ModelDoc2 d, View v, List<Seg> ls, Func<Seg, double> pos, Func<Seg, double> len, bool vertical,
-                                          double sx, double sy, List<(Component2 c, double[] xf)> parts)
+                                          double sx, double sy, List<(Component2 c, double[] xf)> parts, out double mm)
         {
+            mm = double.NaN;
             double lo = ls.Min(pos), hi = ls.Max(pos);
             if (hi - lo <= 1e-4) return null;
             var A = ls.Where(s => pos(s) - lo < 1e-6).OrderByDescending(len).Take(3).ToList();
@@ -955,7 +960,7 @@ namespace CadKernel
                         tried++;
                         double val = double.NaN, geo = pos(b) - pos(a);
                         try { val = ((Dimension)dm.GetDimension2(0)).SystemValue; } catch { }
-                        if (double.IsNaN(val) || Math.Abs(val - geo) <= 1e-5) return dm;
+                        if (double.IsNaN(val) || Math.Abs(val - geo) <= 1e-5) { mm = (double.IsNaN(val) ? geo : val) / MM; return dm; }
                         Sw.Log(string.Format("   ! 视图 {0} {1}外形尺寸量成 {2:F2} mm, 几何为 {3:F2} mm (选中的边不在记录所在的实例上; {4}, 实例: {5} / {6}), 删除后另选",
                             v.Name, what, val * 1000, geo * 1000, useInst ? "按实例选边" : "按原实体选边", miss[a] ?? "已定", miss[b] ?? "已定"));
                         d.ClearSelection2(true);
@@ -965,6 +970,28 @@ namespace CadKernel
             d.ClearSelection2(true);
             if (tried > 0) Sw.Log(string.Format("   !! 视图 {0} {1}外形尺寸: {2} 对边都量不出几何距离 {3:F2} mm, 未标注", v.Name, what, tried, (hi - lo) * 1000));
             return null;
+        }
+
+        /// <summary>尺寸读数 (mm): Dimension.SystemValue (模型单位, 与视图比例无关); 读不出时取几何值 geo (m)</summary>
+        static double DimMm(DisplayDimension dm, double geo)
+        {
+            double val = double.NaN;
+            try { val = ((Dimension)dm.GetDimension2(0)).SystemValue; } catch { }
+            return (double.IsNaN(val) ? geo : val) / MM;
+        }
+
+        /// <summary>外形尺寸读数 (mm) → 图纸目录列: 保留 2 位、升序的 JSON 数组文本, 如 "[174.1,480,900]"; 没有外形尺寸为 "[]"</summary>
+        internal static string ExtentsCol(IEnumerable<double> mm)
+        {
+            return "[" + string.Join(",", mm.Select(x => Math.Round(x, 2)).OrderBy(x => x)
+                                              .Select(x => x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))) + "]";
+        }
+
+        /// <summary>图纸目录列 → 外形尺寸读数; 空 (旧目录行, 未记录) 或无法解析为 null</summary>
+        internal static List<double> ParseExtents(string col)
+        {
+            if (string.IsNullOrWhiteSpace(col)) return null;
+            try { return System.Text.Json.JsonSerializer.Deserialize<List<double>>(col); } catch { return null; }
         }
 
         /// <summary>回转体 (轴线沿视图水平方向, 过 y=0): 各级直径 (φ + 配合) + 轴向台阶链式尺寸 + 总长</summary>
@@ -1216,7 +1243,7 @@ namespace CadKernel
         /// AsmDrawing 逐级比例尝试与 cad probe-asm 共用。draft = 草稿品质消隐 (总装)。
         /// </summary>
         static void AsmViews(DrawingDoc dd, ModelDoc2 d, string path, double[] sh, double scale, double dx, double dy, double dz, bool draft, bool topBom,
-                             out View vf, out View vt, out int nd, out int nb)
+                             out View vf, out View vt, out int nd, out int nb, out List<double> extents)
         {
             double s1 = 1 / scale, L = sh[2], T = sh[5];
             SheetScale(dd, scale);
@@ -1234,8 +1261,8 @@ namespace CadKernel
             SheetScale(dd, scale);          // 插入首个视图时 SolidWorks 可能自动改图纸比例
             d.ForceRebuild3(false);
             if (Place(vf, mx, my) | Place(vt, null, ty)) d.ForceRebuild3(false);
-            nd = 0; nb = 0;
-            try { nd += Overall(d, vf, true, true); nd += Overall(d, vt, false, true); } catch { }
+            nd = 0; nb = 0; extents = new List<double>();
+            try { nd += Overall(d, vf, extents, true, true); nd += Overall(d, vt, extents, false, true); } catch { }
             try { nb = Balloons(dd, d, vf, topBom); }
             catch (Exception e) { Sw.Log("   序号 " + e.Message); }
             d.ForceRebuild3(false);
@@ -1436,6 +1463,7 @@ namespace CadKernel
             ModelDoc2 d = null; DrawingDoc dd = null; View vf = null, vt = null;
             double[] g = null;                               // 主+俯视图组 (含尺寸、序号) 的实际外框
             int nd = 0, nb = 0;                              // 外形尺寸数, 序号数 (最终采用的比例下)
+            List<double> extents = null;                     // 外形尺寸读数 (mm, 同上)
             for (int si = 0; ; si++)
             {
                 double[] sh = AsmSheet(size);
@@ -1450,7 +1478,7 @@ namespace CadKernel
                 }
                 scale = cand[si];
                 dd = NewDrawing(size, out d);
-                AsmViews(dd, d, path, sh, scale, dx, dy, dz, top, topBom, out vf, out vt, out nd, out nb);
+                AsmViews(dd, d, path, sh, scale, dx, dy, dz, top, topBom, out vf, out vt, out nd, out nb, out extents);
                 // ---- 版面校核: 视图 + 尺寸 + 序号整体须在 [L,R]×[B,T] 内; 放不下则换小一级比例重画 ----
                 // 注释按 ±6 mm 外扩估算, 而自动序号的位置每次相差几毫米: 行星齿轮装配图 1:1.5 实测 331 mm 对可用 326 mm,
                 // 6 次运行中 2 次改用 1:2 (一次超出 5 mm, 一次为图纸外的异常读数, 见 Ext), 比例随运行变化 (回归基准抓到)。允许超出不多于一个外扩量 FIT_TOL;
@@ -1531,7 +1559,7 @@ namespace CadKernel
             Pdf(f);                          // 重新打开后导出: 大装配体视图后台生成, 新建后立即导出为空白
             Sw.Log(string.Format("   技术要求、保存与导出 PDF {0:F0} s", stage.Elapsed.TotalSeconds));
             Sw.Close(am);
-            Index.Add(new[] { no, nm, size.ToUpper(), "1:" + scale, "装配图\\" + Path.GetFileName(f), nd > 0 ? "" : NeedsDims, nd.ToString(), "", nb.ToString() });
+            Index.Add(new[] { no, nm, size.ToUpper(), "1:" + scale, "装配图\\" + Path.GetFileName(f), nd > 0 ? "" : NeedsDims, nd.ToString(), "", nb.ToString(), ExtentsCol(extents) });
             Sw.Log(string.Format("装配图 {0,-40} {1} 1:{2}  轴测 1:{3}  尺寸 {4}  序号 {5}", code, size.ToUpper(), scale, isoS > 0 ? (1 / isoS).ToString("0") : "-", nd, nb));
         }
 
@@ -1650,8 +1678,8 @@ namespace CadKernel
                 try { ((AssemblyDoc)am).ResolveAllLightWeightComponents(false); } catch { }
                 double[] b = (double[])((AssemblyDoc)am).GetBox(0);
                 ModelDoc2 d; DrawingDoc dd = NewDrawing(size, out d);
-                View vf, vt; int nd, nb;
-                AsmViews(dd, d, path, sh, scale, (b[3] - b[0]) / MM, (b[4] - b[1]) / MM, (b[5] - b[2]) / MM, false, topBom, out vf, out vt, out nd, out nb);
+                View vf, vt; int nd, nb; List<double> extents;
+                AsmViews(dd, d, path, sh, scale, (b[3] - b[0]) / MM, (b[4] - b[1]) / MM, (b[5] - b[2]) / MM, false, topBom, out vf, out vt, out nd, out nb, out extents);
                 var r1 = Readings(vf).Concat(Readings(vt)).ToList();
                 double[] g = Union(Ext(vf), Ext(vt));
                 d.ForceRebuild3(false);
@@ -1662,8 +1690,8 @@ namespace CadKernel
                 Func<double[], double> w = q => q[2] - q[0], h = q => q[3] - q[1];
                 if (Math.Abs(w(g) - w(g1)) > 0.010 || Math.Abs(h(g) - h(g1)) > 0.010) bad.Add("外框与第 1 次相差 10 mm 以上");
                 if (g.Zip(g2, (x, y) => Math.Abs(x - y)).Max() > 0.002) bad.Add("重建后外框变化");
-                Sw.Log(string.Format("== 第 {0} 次: 外框 ({1:F1},{2:F1})-({3:F1},{4:F1}) = {5:F0}×{6:F0} mm; 重建后 {7:F0}×{8:F0}; 尺寸 {9} 序号 {10}",
-                    it, g[0] * 1000, g[1] * 1000, g[2] * 1000, g[3] * 1000, w(g) * 1000, h(g) * 1000, w(g2) * 1000, h(g2) * 1000, nd, nb));
+                Sw.Log(string.Format("== 第 {0} 次: 外框 ({1:F1},{2:F1})-({3:F1},{4:F1}) = {5:F0}×{6:F0} mm; 重建后 {7:F0}×{8:F0}; 尺寸 {9} 序号 {10} 外形 {11}",
+                    it, g[0] * 1000, g[1] * 1000, g[2] * 1000, g[3] * 1000, w(g) * 1000, h(g) * 1000, w(g2) * 1000, h(g2) * 1000, nd, nb, ExtentsCol(extents)));
                 foreach (View v in new[] { vf, vt })
                 {
                     double[] o = (double[])v.GetOutline(), p = (double[])v.Position;
@@ -1924,13 +1952,14 @@ namespace CadKernel
             int i = 0;
             foreach (var r in Index2.OrderBy(q => q[0])) sb.AppendLine(string.Format("| {0} | {1} | {2} | {3} | {4} | {5} | {6} |", ++i, r[0], r[1], r[2], r[3], r[4].Replace('\\', '/'), r[5]));
             File.WriteAllText(Path.Combine(DrwRoot, "图纸目录.md"), sb.ToString(), new UTF8Encoding(false));
-            // 机读目录: 供 python/merge_drawings.py 合订 PDF、Baseline 比对 (dims/holes/balloons 为 null = 该类图纸不统计)
+            // 机读目录: 供 python/merge_drawings.py 合订 PDF、Baseline 比对 (dims/holes/balloons 为 null = 该类图纸不统计;
+            // extents = 外形尺寸读数 mm (升序, 2 位小数), null = 旧代码出的图, 未记录)
             Func<string, int?> num = s => { int v; return int.TryParse(s, out v) ? v : (int?)null; };
             var rows = Index2.OrderBy(q => q[0]).Select(r => new Dictionary<string, object> {
                 { "code", r[0] }, { "name", r[1] }, { "size", r[2] }, { "scale", r[3] },
                 { "file", r[4].Replace('\\', '/') }, { "pdf", Path.ChangeExtension(r[4], ".pdf").Replace('\\', '/') }, { "remark", r[5] },
                 { "kind", r[4].StartsWith("装配图") ? "assembly" : "part" },
-                { "dims", num(r[6]) }, { "holes", num(r[7]) }, { "balloons", num(r[8]) } }).ToList();
+                { "dims", num(r[6]) }, { "holes", num(r[7]) }, { "balloons", num(r[8]) }, { "extents", ParseExtents(r[9]) } }).ToList();
             File.WriteAllText(Path.Combine(DrwRoot, "index.json"),
                 System.Text.Json.JsonSerializer.Serialize(rows, new System.Text.Json.JsonSerializerOptions {
                     WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }),
