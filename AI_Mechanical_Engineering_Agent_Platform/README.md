@@ -45,7 +45,7 @@ docs/                      architecture / api_calibration / library / migration
 | `cad baseline <运行目录>` | 看图确认无误后，把该次结果写成回归基准 `input/<任务>/expected.json` |
 | `cad import <STEP> [--task 任务名]` | 把外来 STEP 转成平台的设计 (`input/<任务>/import.json` + 原几何)，之后 `cad run <任务>`；见 docs/architecture.md「由 STEP 导入的设计」 |
 | `cad list` | 设计项目、输入任务、最近运行 |
-| `cad doctor` | 环境检查 |
+| `cad doctor` | 环境检查 (含各输入任务的模型路径长度: 平台目录过深时出图会挂起, 用 `subst` 映射短盘符) |
 | `cad clean` | 关闭专用实例中 output/ 下的文档 |
 | `cad diag <文件>` | 特征树、包围盒、体积 |
 

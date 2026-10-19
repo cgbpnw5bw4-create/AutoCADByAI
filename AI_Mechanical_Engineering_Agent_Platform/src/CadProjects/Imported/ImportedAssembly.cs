@@ -89,7 +89,8 @@ namespace CadProjects.Imported
         // ================================================================== 装配 (由内向外, 同一子装配只建一次)
         public override List<AsmTarget> BuildAssemblies()
         {
-            asmFiles.Clear(); usedNames.Clear();
+            asmFiles.Clear();
+            asmNames = AsmFiles(model);
             var root = model.Asm(model.Root);
             bool modular = root.Children.Any(c => model.Asm(c.Ref) != null);
             // 由模块组成的总装: 明细表只列模块 (各模块的零件在模块装配图里), 否则行数过多放不下 (微波实验炉 58 种零件压出图框)
@@ -100,20 +101,40 @@ namespace CadProjects.Imported
         }
 
         /// <summary>
-        /// 装配体文件名 = 图号_名称 (装配图从文件名取代号与名称写入标题栏): 以本设备图号开头的拆成图号与其后文字,
-        /// 否则 = 编号_名称。名称过长会压出标题栏 (实测 "RTWBL340A1000微波炉磁控管电源模块" 整串写进名称栏)
+        /// 各装配体文件 (相对 models/): 根装配 = 名称, 其余在 装配/ 下, 文件名 = 图号_名称 (装配图从文件名取代号与名称写入标题栏):
+        /// 以本设备图号开头的拆成图号与其后文字, 否则 = 编号_名称; 与先命名的重名时退为 编号_名称。名称过长会压出标题栏
+        /// (实测 "RTWBL340A1000微波炉磁控管电源模块" 整串写进名称栏)。按建模顺序命名 (子装配先于父装配, 重名时先到先得);
+        /// 建模与运行前估算路径长度 (ModelFiles) 共用
         /// </summary>
-        string AsmFileName(ImportAsm a)
+        static Dictionary<string, string> AsmFiles(ImportModel m)
         {
-            if (prefix == null) prefix = ImportNames.ProjectPrefix(model.Parts.Select(p => p.OriginalName)) ?? "";
-            string kind, code, nm, spec, brand;
-            ImportNames.Classify(a.Name, prefix == "" ? null : prefix, out kind, out code, out nm, out spec, out brand);
-            string f = Run.Safe(kind == "自制件" ? (nm != code ? code + "_" + nm : code) : a.Id + "_" + a.Name);
-            return usedNames.Add(f) ? f : Run.Safe(a.Id + "_" + a.Name);
+            string prefix = null;
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var r = new Dictionary<string, string>();
+            void Name(string id)
+            {
+                if (r.ContainsKey(id)) return;
+                var a = m.Asm(id);
+                foreach (var c in a.Children) if (m.Part(c.Ref) == null) Name(c.Ref);
+                if (id == m.Root) { r[id] = Run.Safe(a.Name) + ".SLDASM"; return; }
+                if (prefix == null) prefix = ImportNames.ProjectPrefix(m.Parts.Select(p => p.OriginalName)) ?? "";
+                string kind, code, nm, spec, brand;
+                ImportNames.Classify(a.Name, prefix == "" ? null : prefix, out kind, out code, out nm, out spec, out brand);
+                string f = Run.Safe(kind == "自制件" ? (nm != code ? code + "_" + nm : code) : a.Id + "_" + a.Name);
+                r[id] = Path.Combine("装配", (used.Add(f) ? f : Run.Safe(a.Id + "_" + a.Name)) + ".SLDASM");
+            }
+            Name(m.Root);
+            return r;
         }
 
-        string prefix;
-        readonly HashSet<string> usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, string> asmNames;
+
+        /// <summary>零件与装配体文件 (相对 models/), 与建模时的命名相同</summary>
+        public override IEnumerable<string> ModelFiles()
+        {
+            var m = model ?? ImportModel.Load(Input.Dir);
+            return m.Parts.Select(p => Cat.RelFileOf(ToPart(p))).Concat(AsmFiles(m).Values).ToList();
+        }
 
         string BuildAsm(string id)
         {
@@ -121,8 +142,7 @@ namespace CadProjects.Imported
             if (asmFiles.TryGetValue(id, out done)) return done;
             var a = model.Asm(id);
             var paths = a.Children.Select(c => model.Part(c.Ref) != null ? Cat.P(c.Ref) : BuildAsm(c.Ref)).ToList();
-            string file = id == model.Root ? Path.Combine(Run.Models, Run.Safe(a.Name) + ".SLDASM")
-                                           : Path.Combine(Run.Models, "装配", AsmFileName(a) + ".SLDASM");
+            string file = Path.Combine(Run.Models, asmNames[id]);
             var b = new AsmBuild(file);
             for (int i = 0; i < a.Children.Count; i++) b.Add(paths[i], Xf.FromRow(a.Children[i].Xf));
             b.Build();

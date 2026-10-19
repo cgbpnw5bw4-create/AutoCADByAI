@@ -554,7 +554,11 @@ namespace CadCli
         static int Doctor(string root)
         {
             int bad = 0;
-            void Row(bool ok, string what, string detail) { if (!ok) bad++; Console.WriteLine(string.Format("  {0} {1,-26} {2}", ok ? "✓" : "✗", what, detail)); }
+            void Row(bool ok, string what, string detail, bool warn = false)
+            {
+                if (!ok) bad++;
+                Console.WriteLine(string.Format("  {0} {1,-26} {2}", !ok ? "✗" : warn ? "!" : "✓", what, detail));
+            }
             Console.WriteLine("平台根目录: " + root);
             Row(File.Exists(Env.SolidWorksExe), "SolidWorks 可执行文件", Env.SolidWorksExe);
             Row(File.Exists(Env.MaterialDb), "SolidWorks 材料库", Env.MaterialDb);
@@ -584,6 +588,29 @@ namespace CadCli
             }
             catch (Exception ex) { Row(false, "Python + PyMuPDF", ex.Message); }
             Row(true, "专用 SolidWorks 实例", Sw.InstanceStatus());
+            // 模型路径长度 (见 PathLimit): 按每个输入任务在本平台目录下新建一次运行估算; ≥ MAX_PATH 时出图会挂起
+            var paths = new List<KeyValuePair<string, PathLimit.Estimate>>();
+            foreach (string d in Directory.GetDirectories(Path.Combine(root, "input")).OrderBy(x => x))
+            {
+                if (!File.Exists(Path.Combine(d, "design.json"))) continue;
+                try
+                {
+                    var input = DesignInput.Load(d);
+                    var project = FindProject(input.Project);
+                    project.Bind(input);
+                    paths.Add(new KeyValuePair<string, PathLimit.Estimate>(input.Task, PathLimit.ForRun(project, input.Task)));
+                }
+                catch (Exception ex) { Row(true, "模型路径 " + Path.GetFileName(d), "无法估算: " + ex.Message, true); }
+            }
+            if (paths.Count > 0)
+            {
+                var worst = paths.OrderByDescending(x => x.Value.Bytes).First();
+                var level = worst.Value.Level;
+                Row(level != PathLimit.Level.Over, "模型路径长度 (MAX_PATH)", worst.Key + " " + PathLimit.Describe(worst.Value), level == PathLimit.Level.Unverified);
+                foreach (var x in paths.Where(x => x.Key != worst.Key && x.Value.Level != PathLimit.Level.Ok))
+                    Console.WriteLine(string.Format("      {0}: {1} 字节{2}", x.Key, x.Value.Bytes, x.Value.Level == PathLimit.Level.Over ? " (≥ MAX_PATH)" : ""));
+                foreach (string s in PathLimit.Advice(worst.Value, root, false)) Console.WriteLine("      " + s);
+            }
             Console.WriteLine(bad == 0 ? "环境就绪" : bad + " 项未就绪");
             return bad == 0 ? 0 : 1;
         }

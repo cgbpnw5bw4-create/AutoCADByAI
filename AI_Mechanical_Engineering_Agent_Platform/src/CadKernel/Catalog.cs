@@ -138,7 +138,13 @@ namespace CadKernel
 
         public static string FileOf(Part p)
         {
-            return Path.Combine(Run.Models, p.Dir ?? "", Safe(p.Code + "_" + p.Name) + ".SLDPRT");
+            return Path.Combine(Run.Models, RelFileOf(p));
+        }
+
+        /// <summary>零件文件相对 models/ 的路径 (运行前估算路径长度用, 见 PathLimit)</summary>
+        public static string RelFileOf(Part p)
+        {
+            return Path.Combine(p.Dir ?? "", Safe(p.Code + "_" + p.Name) + ".SLDPRT");
         }
 
         /// <summary>建零件 -> 校核(孤立草图/实体数/体积) -> 材质/颜色 -> 质量覆盖 -> 属性 -> 保存 -> 登记</summary>

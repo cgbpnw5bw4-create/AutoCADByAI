@@ -120,6 +120,12 @@ namespace CadKernel
         public virtual List<string> Validate() { return new List<string>(); }
 
         /// <summary>
+        /// 本次运行将在 models/ 下生成的零件与装配体 (相对 models/ 的路径), 供运行前估算路径长度 (PathLimit); 不连接 SolidWorks,
+        /// Bind 之后即可调用 (不依赖 Validate)。null = 文件名在建模代码中才确定 (此时按该任务上次运行的 models/ 估算)。
+        /// </summary>
+        public virtual IEnumerable<string> ModelFiles() { return null; }
+
+        /// <summary>
         /// 项目级设置: Cat.ProjectName / Version / Date (写入零件属性与标题栏)、Cat.Lazy 等。
         /// 新运行与续跑都在任何步骤之前调用 —— 不要放进 BuildParts (续跑跳过零件步骤时会丢失)。
         /// Cat.Date 默认为本次运行目录的创建日期。

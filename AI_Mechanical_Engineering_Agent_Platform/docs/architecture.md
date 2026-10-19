@@ -26,6 +26,7 @@ tests/CadTests    纯逻辑测试 (不连接 SolidWorks)
 ```
 input/<任务>/design.json
    │  参数校验 (不连接 SolidWorks; 不合格直接退出)
+   │  模型路径长度 (PathLimit: ≥ MAX_PATH 260 字节时要出图的运行不启动, 见 api_calibration.md 第 4 节第 10 条)
    ▼
 output/<时间>_<任务>/            ← 每次运行一个目录, run.json 记录每一步
    parts     零件            CadProject.BuildParts    (每个特征后体积校验; 孤立草图; 实体数)

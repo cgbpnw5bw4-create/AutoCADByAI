@@ -47,10 +47,25 @@ namespace CadKernel
                 foreach (string p in problems) Console.WriteLine("  - " + p);
                 return 2;
             }
+            // 模型路径超出 MAX_PATH 时出图会无限挂起 (见 PathLimit): 要出图的运行不启动, 其余情况提示后照常运行
+            var longest = PathLimit.ForRun(project, input.Task, resumeDir);
+            var pathNotes = PathLimit.Advice(longest, Run.PlatformRoot, resumeDir != null);
+            if (pathNotes.Count > 0) pathNotes.Insert(0, PathLimit.Describe(longest));
+            if (longest.Level == PathLimit.Level.Over)
+            {
+                if (steps.Contains("drawings"))
+                {
+                    Console.WriteLine("模型路径过长, 未启动 (未连接 SolidWorks):");
+                    foreach (string p in pathNotes) Console.WriteLine("  - " + p);
+                    return 2;
+                }
+                pathNotes.Add("本次步骤不含出图, 照常运行; 之后在这个运行目录上续跑出图同样会挂起");
+            }
 
             if (resumeDir != null) Run.Resume(resumeDir);
             else Run.Begin(input.Task, project.Id, project.Title, input.Dir);
             Console.WriteLine("运行目录: " + Run.Dir);
+            foreach (string p in pathNotes) Console.WriteLine("  !! " + p);
             Run.Check("参数校验", true, "通过 (" + project.Id + ")");
 
             List<AsmTarget> targets = null;

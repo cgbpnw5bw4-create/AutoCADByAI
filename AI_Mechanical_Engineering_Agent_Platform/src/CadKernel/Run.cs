@@ -51,12 +51,14 @@ namespace CadKernel
             PlatformRoot = platformRoot;
         }
 
-        /// <summary>新建运行目录并拷贝输入快照。名称 = yyyyMMdd_HHmmss_任务名</summary>
+        /// <summary>新运行目录的名称 = yyyyMMdd_HHmmss_任务名 (长度固定, 运行前估算路径长度也用它)</summary>
+        public static string NewDirName(string task) { return DateTime.Now.ToString("yyyyMMdd_HHmmss") + "_" + Safe(task); }
+
+        /// <summary>新建运行目录并拷贝输入快照</summary>
         public static string Begin(string task, string projectId, string title, string inputDir)
         {
-            string name = DateTime.Now.ToString("yyyyMMdd_HHmmss") + "_" + Safe(task);
             Directory.CreateDirectory(OutputRoot);
-            Dir = Path.Combine(OutputRoot, name);
+            Dir = Path.Combine(OutputRoot, NewDirName(task));
             if (Directory.Exists(Dir)) throw new IOException("运行目录已存在: " + Dir);
             foreach (string d in new[] { Dir, Models, Drawings, Exports, Bom, Checks, Images, InputSnapshot }) Directory.CreateDirectory(d);
             // 含子目录 (导入设计的 geometry/): 续跑读的是快照, 运行目录也须能整体拷走
