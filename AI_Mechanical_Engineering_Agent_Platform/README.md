@@ -23,11 +23,12 @@ dotnet test
 ## 目录
 
 ```
-input/<任务>/design.json   输入: 每个设计任务一个子目录 (见 input/README.md)
+input/<任务>/design.json   输入: 每个设计任务一个子目录 (见 input/README.md); 由 STEP 导入的另有 import.json
+inbox/                     外来资料暂存 (客户 STEP 等, 不入库)
 output/<时间>_<任务>/       输出: 每次运行一套完整产物与流程记录 (见 output/README.md, 不入库)
 src/CadKernel              内核: 会话 / 建模 / 装配 / 紧固件 / 出图 / BOM / 校核 / 导出 / 运行目录
 src/CadLibrary             零件库: 渐开线齿轮、外购件样本、细节造型 (持续沉淀)
-src/CadProjects            设计项目: 行星齿轮减速器 (两组参数)、CFC-650 碱洗模块 (回归样例)
+src/CadProjects            设计项目: 行星齿轮减速器 (两组参数)、CFC-650 碱洗模块、STEP 导入 (微波实验炉) —— 均为回归样例
 src/CadCli                 命令行 cad (根目录 cad.cmd 构建后调用)
 python/                    输出后处理: 图纸版面审核、全套图纸合订
 tests/CadTests             纯逻辑测试 (不连接 SolidWorks)
@@ -42,6 +43,7 @@ docs/                      architecture / api_calibration / library / migration
 | `cad run <任务> [--from 步骤] [--drawings 过滤]` | 新建一次运行：参数校验 → 零件 → 装配 → 校核 → 工程图 → 导出 → 后处理 |
 | `cad resume <运行目录> [--from 步骤]` | 在已有运行目录上续跑 (默认从工程图) |
 | `cad baseline <运行目录>` | 看图确认无误后，把该次结果写成回归基准 `input/<任务>/expected.json` |
+| `cad import <STEP> [--task 任务名]` | 把外来 STEP 转成平台的设计 (`input/<任务>/import.json` + 原几何)，之后 `cad run <任务>`；见 docs/architecture.md「由 STEP 导入的设计」 |
 | `cad list` | 设计项目、输入任务、最近运行 |
 | `cad doctor` | 环境检查 |
 | `cad clean` | 关闭专用实例中 output/ 下的文档 |

@@ -13,6 +13,11 @@ output/*
 # 机器级状态: 专用 SolidWorks 实例 PID、被临时修改的用户选项原值
 .cad/
 
+# 外来资料暂存 (客户/供应商 STEP 等, 体积大且非本仓库产出)
+inbox/
+# cad import 从 STEP 拆出的零件原几何 (可由源 STEP 重新导入; import.json 入库)
+input/*/geometry/
+
 # Python
 __pycache__/
 *.pyc

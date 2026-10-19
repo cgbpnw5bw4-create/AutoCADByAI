@@ -1,0 +1,196 @@
+{
+  "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
+  "source_run": "20261016_113139_microwave_furnace",
+  "checks": [
+    "参数校验",
+    "模型完整性",
+    "干涉检查",
+    "物料清单",
+    "零件几何与原 STEP 一致",
+    "装配位置与原 STEP 一致",
+    "工程图生成",
+    "工程图参考",
+    "STEP 身份与内容",
+    "图纸版面审核",
+    "图纸合订"
+  ],
+  "metrics": {
+    "STEP/实体数": {
+      "value": 202,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "导入/特征重建实体数": {
+      "value": 99,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "导入/零件实例数": {
+      "value": 229,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "导入/零件种数": {
+      "value": 58,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "干涉/已登记接受": {
+      "value": 674,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/件数": {
+      "value": 229,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/种数": {
+      "value": 58,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/质量kg": {
+      "value": 963.385,
+      "tol": 0,
+      "tol_pct": 0.5
+    },
+    "装配/RTWBL340A1000_微波炉磁控管电源模块/宽mm": {
+      "value": 589,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉磁控管电源模块/长mm": {
+      "value": 93.250103,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉磁控管电源模块/零件数": {
+      "value": 4,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉磁控管电源模块/高mm": {
+      "value": 241.489581,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉箱体模块/宽mm": {
+      "value": 1195.76415,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉箱体模块/长mm": {
+      "value": 1514.76415,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉箱体模块/零件数": {
+      "value": 156,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_微波炉箱体模块/高mm": {
+      "value": 1253.287244,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_配电盘模块/宽mm": {
+      "value": 174.100103,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_配电盘模块/长mm": {
+      "value": 900,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_配电盘模块/零件数": {
+      "value": 49,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1000_配电盘模块/高mm": {
+      "value": 480.000206,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1001B/宽mm": {
+      "value": 1300.011468,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1001B/长mm": {
+      "value": 1750.011467,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1001B/零件数": {
+      "value": 12,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/RTWBL340A1001B/高mm": {
+      "value": 1910,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/微波实验炉/宽mm": {
+      "value": 1300.011468,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/微波实验炉/长mm": {
+      "value": 1750.011467,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/微波实验炉/零件数": {
+      "value": 229,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/微波实验炉/高mm": {
+      "value": 1910,
+      "tol": 1,
+      "tol_pct": 0
+    }
+  },
+  "drawings": [
+    {
+      "file": "装配图/RTWBL340A1000_微波炉磁控管电源模块.SLDDRW",
+      "size": "A2",
+      "scale": "1:4",
+      "dims": 3,
+      "balloons": 1
+    },
+    {
+      "file": "装配图/RTWBL340A1000_微波炉箱体模块.SLDDRW",
+      "size": "A2",
+      "scale": "1:10",
+      "dims": 2,
+      "balloons": 25
+    },
+    {
+      "file": "装配图/RTWBL340A1000_配电盘模块.SLDDRW",
+      "size": "A2",
+      "scale": "1:4",
+      "dims": 3,
+      "balloons": 12
+    },
+    {
+      "file": "装配图/RTWBL340A1001B.SLDDRW",
+      "size": "A2",
+      "scale": "1:15",
+      "dims": 2,
+      "balloons": 4
+    },
+    {
+      "file": "装配图/微波实验炉.SLDDRW",
+      "size": "A2",
+      "scale": "1:15",
+      "dims": 2,
+      "balloons": 8
+    }
+  ]
+}

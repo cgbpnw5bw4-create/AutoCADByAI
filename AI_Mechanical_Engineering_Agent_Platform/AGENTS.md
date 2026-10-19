@@ -24,11 +24,13 @@
 
 `cad` 指平台根目录的 `cad.cmd` (先增量构建再运行)。
 
+已有 STEP 的设备: 先 `cad import <STEP> --task <任务>`，再 `cad run <任务>`；改布局、换零件、改直管参数都在 `input/<任务>/import.json` 里改。零件的 `model` 有 `geometry` (原几何)、`tube` (参数化直管)、`bodies` (自制件按实体重建：2.5D 实体为截面拉伸，可带斜口与横穿孔；钣金实体为基体法兰 + 边线法兰 + 回折边 + 孔与缺口；其余实体保留原几何)；新增一类识别时同样以 `零件几何与原 STEP 一致` (含逐实体差集) 为准，识别不了的保留原几何，不做似是而非的重建。
+
 ## 必须遵守
 
 - **不得绕过三道防线**：建模一律经 `Sk` 的 `Ext/Cut/CutThru/Rev` (体积校验) 和 `Cat.Make` (孤立草图、实体数)；新增特征类型时同样在特征后读回校验 (见 `Features.cs`)。SolidWorks 特征 API 失败时不抛异常。
 - **紧固件真实穿孔**：连接件用 `AsmBuild.BoltNut / BoltTap`，螺纹孔按公称直径建模，让干涉检查兼作孔位校核。
-- **校核结论必须如实**：检查本身失败不得记为通过 (如干涉检查异常不能当作 0 处)；不得为让运行通过而放宽判据。校核名称要和判据一致；没有绝对判据的量 (外形、质量、尺寸数) 用 `Run.Metric` 登记，交给回归基准比对，不要包装成"总是通过"的校核。
+- **校核结论必须如实**：检查本身失败不得记为通过 (如干涉检查异常不能当作 0 处)；不得为让运行通过而放宽判据。`AcceptInterference` 只用于有确凿来源的已知干涉 (导入设计原模型自带的)，不得用来让自己设计中的干涉"通过"。校核名称要和判据一致；没有绝对判据的量 (外形、质量、尺寸数) 用 `Run.Metric` 登记，交给回归基准比对，不要包装成"总是通过"的校核。
 - **回归基准**：改动内核或零件库后，回归样例的 `回归基准` 必须通过。结果有意改变时，先看图确认，再 `cad baseline <运行目录>` 重新生成，并在提交说明里写明哪些数值变了、为什么；不得为了通过而放宽允差或删条目。
 - **静态状态**：内核静态类的可变状态由流水线在每次运行开始时重置 (`Cat.Reset`、`Std.Reset`、`Drw.Reset`)；新增可变静态字段时一并加进对应的 `Reset()`。
 - 新标定的 API 行为写进 `docs/api_calibration.md` 对应小节，注明来源与日期。
@@ -43,7 +45,10 @@ dotnet test                           # 纯逻辑测试全部通过
 .\cad run planetary_gear              # 改动内核、零件库后: 回归样例 run.json 为 passed (含回归基准)
 .\cad run planetary_gear_m15          # 涉及零件库齿轮、参数化派生尺寸时
 .\cad run cfc650_m03                  # 涉及装配、紧固件、出图版面时
+.\cad run microwave_furnace           # 涉及 STEP 导入、特征重建 (截面拉伸、钣金)、Sw 会话与内存回收时 (约 50 分钟)
 ```
+
+`microwave_furnace` 的原几何 `geometry/` 与源 STEP 都不入库：缺 `geometry/` 时先 `cad import "inbox/Microwave experimental furnace/微波实验炉.STEP" --task microwave_furnace --force` 重新生成 (只换 `geometry/` 与 `import.json`，`expected.json` 保留)。
 
 需要真实 SolidWorks 的验证会启动专用实例；它不碰用户自己的 SolidWorks 窗口，但会临时修改并恢复少量用户级选项 (见 api_calibration.md 第 4 节)。
 

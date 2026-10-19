@@ -20,16 +20,64 @@ namespace CadKernel
         {
             public string Name, File;
             public int Parts, Interferences;
+            /// <summary>其中属于"已登记接受"的 (设计项目 AcceptInterference 认可的, 如导入设计原模型自带的干涉)</summary>
+            public int Accepted;
             public double L, H, W;
             public bool Failed;
             public string Error;
         }
 
         /// <summary>
+        /// 一处干涉: 两个零部件 (文件路径、文档名、实例名)、B 相对 A 的位置、干涉体积。
+        /// B 相对 A 的位置与所在装配层级无关 —— 同一处干涉在总装和模块里检查时相同, 用于识别已登记的干涉。
+        /// </summary>
+        public sealed class Interf
+        {
+            public string PathA, PathB, TitleA, TitleB, NameA, NameB;
+            public Xf Rel;
+            public double VolumeMm3;
+        }
+
+        /// <summary>由 SolidWorks 干涉对象取明细; 不是恰好两个零部件时 Rel 为 null (不会被认作已知干涉)</summary>
+        public static Interf Describe(Interference it)
+        {
+            var d = new Interf { VolumeMm3 = it.Volume / (Sw.MM * Sw.MM * Sw.MM) };
+            object[] cps = (object[])it.Components ?? new object[0];
+            if (cps.Length != 2) { d.NameA = string.Join(" / ", cps.Cast<Component2>().Select(c => c.Name2)); d.NameB = ""; return d; }
+            var a = (Component2)cps[0]; var b = (Component2)cps[1];
+            Func<Component2, Xf> world = c => Xf.FromArray((double[])((MathTransform)c.GetTotalTransform(false)).ArrayData);
+            var ma = a.GetModelDoc2() as ModelDoc2; var mb = b.GetModelDoc2() as ModelDoc2;
+            d.PathA = a.GetPathName(); d.PathB = b.GetPathName();
+            d.TitleA = ma == null ? null : ma.GetTitle(); d.TitleB = mb == null ? null : mb.GetTitle();
+            d.NameA = a.Name2; d.NameB = b.Name2;
+            d.Rel = Xf.Relative(world(b), world(a));
+            return d;
+        }
+
+        /// <summary>
+        /// 干涉检查 (重合面/相切接触不计; topLevel = 子装配视为整体)。运行校核与 cad import 登记原模型干涉共用, 判据一致。
+        /// 检查本身出错时抛异常 —— 调用方不得当作 0 处。
+        /// </summary>
+        public static List<Interf> Detect(AssemblyDoc a, bool topLevel)
+        {
+            InterferenceDetectionMgr idm = a.InterferenceDetectionManager;
+            idm.TreatCoincidenceAsInterference = false;
+            idm.TreatSubAssembliesAsComponents = topLevel;
+            idm.IncludeMultibodyPartInterferences = false;
+            idm.MakeInterferingPartsTransparent = false;
+            idm.UseTransform = false;
+            var list = new List<Interf>();
+            foreach (object o in (object[])idm.GetInterferences() ?? new object[0]) list.Add(Describe((Interference)o));
+            idm.Done();
+            return list;
+        }
+
+        /// <summary>
         /// 打开装配体: 外形 (GetBox)、零件数 (含紧固件)、干涉 (重合面不计)。
         /// topLevel = 子装配视为整体 (只查模块之间)。明细追加到 md。
+        /// accept 非空时, 它认可的干涉记为"已登记接受" (仍逐条列出), 只有其余的算新增。
         /// </summary>
-        public static AsmResult Assembly(string path, bool topLevel, StringBuilder md)
+        public static AsmResult Assembly(string path, bool topLevel, StringBuilder md, Func<Interf, bool> accept = null)
         {
             var r = new AsmResult { File = path, Name = Path.GetFileNameWithoutExtension(path) };
             Sw.CloseAll();
@@ -42,42 +90,42 @@ namespace CadKernel
             double[] b = (double[])a.GetBox(0);
             r.L = (b[3] - b[0]) / Sw.MM; r.H = (b[4] - b[1]) / Sw.MM; r.W = (b[5] - b[2]) / Sw.MM;
             Sw.Log(string.Format("{0,-36} 零件 {1,5}  {2:F0}×{3:F0}×{4:F0}", r.Name, r.Parts, r.L, r.H, r.W));
-            r.Interferences = Interference(a, topLevel, md, r.Name, out r.Failed, out r.Error);
+            r.Interferences = Interference(a, topLevel, md, r.Name, accept, out r.Accepted, out r.Failed, out r.Error);
             Sw.CloseAll();
             return r;
         }
 
-        static int Interference(AssemblyDoc a, bool topLevel, StringBuilder sb, string title, out bool failed, out string error)
+        static int Interference(AssemblyDoc a, bool topLevel, StringBuilder sb, string title, Func<Interf, bool> accept,
+                                out int accepted, out bool failed, out string error)
         {
-            failed = false; error = null;
+            failed = false; error = null; accepted = 0;
             try
             {
-                InterferenceDetectionMgr idm = a.InterferenceDetectionManager;
-                idm.TreatCoincidenceAsInterference = false;
-                idm.TreatSubAssembliesAsComponents = topLevel;
-                idm.IncludeMultibodyPartInterferences = false;
-                idm.MakeInterferingPartsTransparent = false;
-                idm.UseTransform = false;
-                object[] r = (object[])idm.GetInterferences();
-                int n = r == null ? 0 : r.Length;
-                sb.AppendLine("## " + title + (topLevel ? " (模块间)" : "") + " —— " + n + " 处");
+                var list = Detect(a, topLevel);
+                int n = list.Count;
+                var rows = new List<string>();
+                int logged = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    Interf d = list[i];
+                    bool ok = accept != null && d.Rel != null && accept(d);
+                    if (ok) accepted++;
+                    string c1 = d.NameA, c2 = d.NameB;
+                    double v = d.VolumeMm3;
+                    // 新增的全部列出; 已登记接受的最多列 60 条 (数量照实统计)
+                    if (!ok || rows.Count < 60) rows.Add(string.Format("| {0} | {1:F1} | {2} | {3} | {4} |", i + 1, v, c1, c2, ok ? "原模型已有, 已登记接受" : "**新增**"));
+                    if (!ok && logged++ < 60) Sw.Log(string.Format("   !! 干涉 {0:F1}mm³  {1}  <->  {2}", v, c1, c2));
+                }
+                sb.AppendLine("## " + title + (topLevel ? " (模块间)" : "") + " —— " + n + " 处" + (accept != null ? string.Format(" (已登记接受 {0}, 新增 {1})", accepted, n - accepted) : ""));
                 sb.AppendLine();
                 if (n > 0)
                 {
-                    sb.AppendLine("| 序号 | 干涉体积 (mm³) | 零部件 A | 零部件 B |");
-                    sb.AppendLine("|---:|---:|---|---|");
-                    for (int i = 0; i < n && i < 60; i++)
-                    {
-                        Interference it = (Interference)r[i];
-                        object[] cps = (object[])it.Components;
-                        string c1 = cps != null && cps.Length > 0 ? ((Component2)cps[0]).Name2 : "";
-                        string c2 = cps != null && cps.Length > 1 ? ((Component2)cps[1]).Name2 : "";
-                        sb.AppendLine(string.Format("| {0} | {1:F1} | {2} | {3} |", i + 1, it.Volume / (Sw.MM * Sw.MM * Sw.MM), c1, c2));
-                        Sw.Log(string.Format("   !! 干涉 {0:F1}mm³  {1}  <->  {2}", it.Volume / (Sw.MM * Sw.MM * Sw.MM), c1, c2));
-                    }
+                    sb.AppendLine("| 序号 | 干涉体积 (mm³) | 零部件 A | 零部件 B | 说明 |");
+                    sb.AppendLine("|---:|---:|---|---|---|");
+                    foreach (string s in rows) sb.AppendLine(s);
                     sb.AppendLine();
                 }
-                idm.Done();
+                if (accepted > 0) Sw.Log(string.Format("   {0}: 干涉 {1} 处, 其中原模型已有并已登记接受 {2} 处", title, n, accepted));
                 return n;
             }
             catch (Exception ex)
@@ -107,20 +155,25 @@ namespace CadKernel
             string fDims = Path.Combine(Run.Checks, "assemblies.md");
             File.WriteAllText(fDims, dims.ToString(), U8);
 
-            int total = results.Sum(r => r.Interferences);
+            int total = results.Sum(r => r.Interferences), acc = results.Sum(r => r.Accepted), fresh = total - acc;
             var head = new StringBuilder();
             head.AppendLine("# 干涉检查报告");
             head.AppendLine();
             head.AppendLine("> SolidWorks 干涉检查 (IInterferenceDetectionMgr), 重合面/相切接触不计为干涉。");
             head.AppendLine("> 装配体内全部零件两两检查, 含全部紧固件 —— 螺栓穿过的孔若缺失或错位即报干涉, 兼作孔位校核。");
+            if (acc > 0)
+                head.AppendLine("> \"已登记接受\" = 设计项目登记的已知干涉 (如导入设计原模型自带的, 同一对零件、同一相对位置、同样体积); 只有新增的判不通过。");
             head.AppendLine();
-            head.AppendLine("**检出干涉合计: " + total + " 处**");
+            head.AppendLine("**检出干涉合计: " + total + " 处" + (acc > 0 ? string.Format(", 其中已登记接受 {0} 处, 新增 {1} 处", acc, fresh) : "") + "**");
             head.AppendLine();
             string fItf = Path.Combine(Run.Checks, "interference.md");
             File.WriteAllText(fItf, head.ToString() + itf.ToString(), U8);
             var failed = results.Where(r => r.Failed).ToList();
-            Run.Check("干涉检查", total == 0 && failed.Count == 0,
-                failed.Count > 0 ? "检查失败: " + string.Join(", ", failed.Select(r => r.Name)) : string.Format("{0} 个装配体, 干涉 {1} 处", results.Count, total), fItf);
+            Run.Check("干涉检查", fresh == 0 && failed.Count == 0,
+                failed.Count > 0 ? "检查失败: " + string.Join(", ", failed.Select(r => r.Name))
+                : acc > 0 ? string.Format("{0} 个装配体, 干涉 {1} 处: 原模型已有并已登记接受 {2}, 新增 {3}", results.Count, total, acc, fresh)
+                : string.Format("{0} 个装配体, 干涉 {1} 处", results.Count, total), fItf);
+            if (acc > 0) Run.Metric("干涉/已登记接受", acc);
             foreach (var r in results)
             {
                 string k = "装配/" + r.Name + "/";

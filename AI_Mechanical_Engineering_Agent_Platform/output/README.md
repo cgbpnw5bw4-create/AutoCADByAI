@@ -8,7 +8,7 @@ output/20261009_153012_planetary_gear/
 ├── run.log         完整日志
 ├── registry.tsv    零件登记表 (标识 → 文件), 供续跑
 ├── assemblies.json 本次装配体清单, 供续跑
-├── input/          输入快照 (design.json 原样拷贝)
+├── input/          输入快照 (输入目录原样拷贝, 含导入设计的 geometry/; 续跑读的是它)
 ├── models/         零件 .SLDPRT 与装配体 .SLDASM (按设计的分组子目录)
 ├── drawings/       工程图 .SLDDRW + .PDF、图纸目录.md、index.json; _formats/ 为版面审核用的空白图框
 ├── exports/        STEP (AP214 含颜色)、全套图纸合订 PDF、dxf/ 激光下料 1:1 DXF

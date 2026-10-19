@@ -35,6 +35,8 @@ namespace CadKernel
         const string DefaultAsmNotes = "1. 装配前所有零件清洗干净, 去毛刺。\n2. 螺栓按标准拧紧力矩紧固。\n3. 未注明处按通用技术条件执行。";
         /// <summary>强制用 A0 出图的装配体 (如整机总装)</summary>
         public static readonly HashSet<string> ForceA0 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        /// <summary>明细表只列顶层的装配体 (强制 A0 的总装也是顶层明细)</summary>
+        public static readonly HashSet<string> TopLevelBom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>图纸目录行: 图号, 名称, 图幅, 比例, 文件, 备注, 尺寸数, 孔标注数, 序号数 (index.tsv 同序)</summary>
         static readonly List<string[]> Index = new List<string[]>();
@@ -48,7 +50,7 @@ namespace CadKernel
         public static void Reset()
         {
             Index.Clear(); nOk = nFail = nDxf = 0; Failed = 0;
-            ForceA0.Clear(); PartGeneralNote = null; AsmNotes = DefaultAsmNotes;
+            ForceA0.Clear(); TopLevelBom.Clear(); PartGeneralNote = null; AsmNotes = DefaultAsmNotes;
         }
 
         /// <summary>调试 (cad dump): 输出工程图各视图概况与第 viewIndex 个模型视图 (1 起) 的折线原始记录</summary>
@@ -98,30 +100,33 @@ namespace CadKernel
             object plo; object[] ents = (object[])v.GetPolylines7(1, out plo);
             double[] pl = (double[])plo;
             Sw.Log("视图 " + v.Name + " 实体 " + ents.Length + " 数据 " + pl.Length);
-            int k = 0, shown = 0;
-            for (int i = 0; i < ents.Length && k < pl.Length; i++)
+            int shown = 0;
+            var types = new Dictionary<string, int>();
+            string perr;
+            foreach (var rec in ParsePolylines(pl, ents.Length, out perr))
             {
-                int type = (int)pl[k], gs = (int)pl[k + 1];
-                int np = (int)pl[k + 2 + gs + 6];
-                if (shown < maxRecords && (type != 0 || np != 2))
+                string tk = "type=" + rec.Type + " gs=" + (int)pl[rec.GeomAt - 1] + (rec.GeomLen == (int)pl[rec.GeomAt - 1] ? "" : "(无几何数据)");
+                types[tk] = types.TryGetValue(tk, out int tc) ? tc + 1 : 1;
+                if (shown < maxRecords && (rec.Type != 0 || rec.Np != 2))
                 {
                     shown++;
                     double mnx = double.MaxValue, mxx = double.MinValue, mny = double.MaxValue, mxy = double.MinValue;
-                    for (int j = 0; j < np; j++)
+                    for (int j = 0; j < rec.Np; j++)
                     {
-                        double px = pl[k + 3 + gs + 6 + 3 * j], py = pl[k + 3 + gs + 6 + 3 * j + 1];
+                        double px = pl[rec.PtsAt + 3 * j], py = pl[rec.PtsAt + 3 * j + 1];
                         mnx = Math.Min(mnx, px); mxx = Math.Max(mxx, px); mny = Math.Min(mny, py); mxy = Math.Max(mxy, py);
                     }
-                    Sw.Log(string.Format("      实体={0} 点范围 x[{1:F5},{2:F5}] y[{3:F5},{4:F5}]", ents[i] == null ? "null" : (ents[i] is Edge ? "Edge" : ents[i].GetType().Name), mnx, mxx, mny, mxy));
+                    object e = ents[rec.Index];
+                    Sw.Log(string.Format("      实体={0} 点范围 x[{1:F5},{2:F5}] y[{3:F5},{4:F5}]", e == null ? "null" : (e is Edge ? "Edge" : e.GetType().Name), mnx, mxx, mny, mxy));
                     var sb = new StringBuilder();
-                    for (int j = 0; j < Math.Min(gs, 16); j++) sb.Append(pl[k + 2 + j].ToString("F4") + " ");
-                    Sw.Log(string.Format("  [{0}] type={1} gs={2} np={3} geom: {4}", i, type, gs, np, sb));
+                    for (int j = 0; j < Math.Min(rec.GeomLen, 16); j++) sb.Append(pl[rec.GeomAt + j].ToString("F4") + " ");
+                    Sw.Log(string.Format("  [{0}] {1} np={2} geom: {3}", rec.Index, tk, rec.Np, sb));
                     var pt = new StringBuilder();
-                    for (int j = 0; j < Math.Min(np, 4); j++) pt.Append(string.Format("({0:F4},{1:F4}) ", pl[k + 3 + gs + 6 + 3 * j], pl[k + 3 + gs + 6 + 3 * j + 1]));
+                    for (int j = 0; j < Math.Min(rec.Np, 4); j++) pt.Append(string.Format("({0:F4},{1:F4}) ", pl[rec.PtsAt + 3 * j], pl[rec.PtsAt + 3 * j + 1]));
                     Sw.Log("      pts: " + pt);
                 }
-                k += 2 + gs + 7 + 3 * np;
             }
+            Sw.Log("记录类型: " + string.Join(", ", types.Select(kv => kv.Key + "×" + kv.Value)) + (perr == null ? "" : "; !! " + perr));
             List<Seg> soft;
             var g = Geo(v, out soft);
             Sw.Log(string.Format("Geo: 直线 {0} 整圆 {1} 软直线 {2}; View.Position = ({3:F4},{4:F4}) 比例 {5}", g.Count(q => !q.Circle), g.Count(q => q.Circle), soft.Count,
@@ -200,8 +205,17 @@ namespace CadKernel
                     if (filter != null && filter.StartsWith("asm:") && !ap.Contains(filter.Substring(4))) continue;   // asm:M03
                     Sw.CloseAll();
                     Sw.Recycle(ForceA0.Contains(ap) ? 2.5 : 5.0);   // 大图前尽量从干净的实例开始
-                    try { AsmDrawing(ap); nOk++; WriteIndex(); }
-                    catch (Exception e) { nFail++; Sw.Log("!! 装配图失败 " + Path.GetFileName(ap) + ": " + e.Message); }
+                    // 大装配图保存偶发 err=1 (CFC 与微波实验炉实测, 同一张图下次即正常) → 关闭专用实例中的全部文档 (含未保存的这张图) 后整张重画一次
+                    for (int attempt = 1; attempt <= 2; attempt++)
+                    {
+                        try { AsmDrawing(ap); nOk++; WriteIndex(); break; }
+                        catch (Exception e)
+                        {
+                            Sw.Log("!! 装配图失败 " + Path.GetFileName(ap) + " (第 " + attempt + " 次): " + e.Message);
+                            try { Sw.App.CloseAllDocuments(true); } catch { }
+                            if (attempt == 2) nFail++;
+                        }
+                    }
                 }
             Sw.CloseAll();
             WriteIndex();
@@ -270,17 +284,13 @@ namespace CadKernel
             object[] ents = (object[])v.GetPolylines7(1, out plo);
             double[] pl = (double[])plo;
             if (ents == null || pl == null) return r;
-            int k = 0;
-            for (int i = 0; i < ents.Length && k < pl.Length; i++)
+            string perr;
+            foreach (var rec in ParsePolylines(pl, ents.Length, out perr))
             {
-                // 记录: [类型, gs, 几何(gs), 线属性(6), np, 点(3np)]
-                int type = (int)pl[k], gs = (int)pl[k + 1], g0 = k + 2;
-                int np = (int)pl[k + 2 + gs + 6];
-                int p0 = k + 3 + gs + 6;
+                int type = rec.Type, g0 = rec.GeomAt, np = rec.Np, p0 = rec.PtsAt, i = rec.Index;
                 var xs = new double[np]; var ys = new double[np];
                 for (int j = 0; j < np; j++) { xs[j] = pl[p0 + 3 * j]; ys[j] = pl[p0 + 3 * j + 1]; }
-                k = p0 + 3 * np;
-                if (type == 1 && gs >= 9)
+                if (type == 1 && rec.GeomLen >= 9)
                 {
                     // 圆弧: [圆心 xyz, 起点 xyz, 终点 xyz, 法向]; 起点 = 终点 即整圆
                     double cx = pl[g0], cy = pl[g0 + 1], sx = pl[g0 + 3], sy = pl[g0 + 4], ex = pl[g0 + 6], ey = pl[g0 + 7];
@@ -292,7 +302,62 @@ namespace CadKernel
                 else if (np == 2) r.Add(new Seg { X1 = xs[0], Y1 = ys[0], X2 = xs[1], Y2 = ys[1], Ent = ents[i] });
                 else if (np > 2) { var s = AxisLine(xs, ys, ents[i]); if (s != null) soft.Add(s); }
             }
+            if (perr != null) Sw.Log("   ! 视图 " + v.Name + " 折线数据: " + perr + " (之后的边未参与标注)");
             return r;
+        }
+
+        /// <summary>GetPolylines7 中的一条记录: 类型、几何数据 (起点, 个数)、折线点 (起点, 个数), Index = 对应实体序号</summary>
+        internal struct PolyRec { public int Index, Type, GeomAt, GeomLen, PtsAt, Np; }
+
+        /// <summary>
+        /// 解析 GetPolylines7 返回的数组。记录 = [类型, gs, 几何(gs 个), 线属性 6 个, 点数, 点 (3×点数)]。
+        /// 实测 (2026-10-10, 微波实验炉装配图): 由样条转成折线的边 (类型 0) 第二个数为 17, 后面却没有几何数据、直接是线属性 →
+        /// 按 gs 跳过会错位, 之后的记录全部读乱 (数组长度为负 → 异常 → 该视图外形尺寸整张漏标)。
+        /// 每条先按 gs 解析, 若下一条记录的起点不合理, 改按"无几何数据"解析; 两种都不合理即停止并返回出错位置 (不抛异常)。
+        /// </summary>
+        internal static List<PolyRec> ParsePolylines(double[] pl, int count, out string error)
+        {
+            var r = new List<PolyRec>(); error = null;
+            int k = 0;
+            for (int i = 0; i < count && k < pl.Length; i++)
+            {
+                PolyRec a, b;
+                bool okA = TryRec(pl, k, i, Gs(pl, k), out a), okB = TryRec(pl, k, i, 0, out b);
+                // 两种解释都能读出本条时, 以下一条记录的起点是否合理来定; 都不合理则仍取能读出的那种, 错误留给下一条报告
+                PolyRec rec;
+                if (okA && StartOk(pl, a.PtsAt + 3 * a.Np)) rec = a;
+                else if (okB && StartOk(pl, b.PtsAt + 3 * b.Np)) rec = b;
+                else if (okA) rec = a;
+                else if (okB) rec = b;
+                else { error = string.Format("第 {0} 条记录 (偏移 {1}) 无法解析", i, k); break; }
+                r.Add(rec);
+                k = rec.PtsAt + 3 * rec.Np;
+            }
+            return r;
+        }
+
+        static bool IsInt(double v) { return Math.Abs(v - Math.Round(v)) < 1e-9; }
+        static int Gs(double[] pl, int k) { return k + 1 < pl.Length && IsInt(pl[k + 1]) && pl[k + 1] >= 0 && pl[k + 1] < 1e5 ? (int)pl[k + 1] : -1; }
+
+        static bool TryRec(double[] pl, int k, int i, int geomLen, out PolyRec rec)
+        {
+            rec = default(PolyRec);
+            if (geomLen < 0 || k + 1 >= pl.Length || !IsInt(pl[k]) || pl[k] < 0 || !IsInt(pl[k + 1])) return false;
+            long npAt = (long)k + 2 + geomLen + 6;
+            if (npAt >= pl.Length || !IsInt(pl[npAt]) || pl[npAt] < 0) return false;
+            long np = (long)pl[npAt];
+            if (npAt + 1 + 3 * np > pl.Length) return false;
+            rec = new PolyRec { Index = i, Type = (int)pl[k], GeomAt = k + 2, GeomLen = geomLen, PtsAt = (int)npAt + 1, Np = (int)np };
+            return true;
+        }
+
+        /// <summary>下一条记录能否从 j 开始: 恰到数组末尾, 或类型与 gs 为合理的非负整数且至少一种解释下点数位置合理</summary>
+        static bool StartOk(double[] pl, int j)
+        {
+            if (j == pl.Length) return true;
+            if (j > pl.Length - 9 || !IsInt(pl[j]) || pl[j] < 0 || pl[j] > 64) return false;
+            PolyRec t;
+            return TryRec(pl, j, 0, Gs(pl, j), out t) || TryRec(pl, j, 0, 0, out t);
         }
 
         /// <summary>折线点共线且平行于坐标轴时, 返回其外包直线段; 否则 null</summary>
@@ -948,8 +1013,8 @@ namespace CadKernel
             ModelDoc2 am = Sw.Open(path);
             // 零部件 > 500 (M05、总装) 按大型装配体模式轻化打开: 零件未载入 → 质量统计为 0、总装明细表无行。先全部还原
             try { ((AssemblyDoc)am).ResolveAllLightWeightComponents(false); } catch { }
-            string code = Path.GetFileNameWithoutExtension(path);
-            string no = code.Split('_')[0], nm = code.Contains("_") ? code.Substring(code.IndexOf('_') + 1) : code;
+            string code = Path.GetFileNameWithoutExtension(path), no, nm;
+            AsmBuild.CodeName(path, out no, out nm);
             // 标题栏属性写入装配体 (标题栏引用 $PRPSHEET, 取自视图模型)
             // 设备质量 = 各零件 "质量" 属性之和, 不含工艺物料 (铜箔卷、走带)
             double kg = 0;
@@ -1052,13 +1117,14 @@ namespace CadKernel
             }
 
             // ---- 明细表 ----
+            var stage = System.Diagnostics.Stopwatch.StartNew();
             string exe = Sw.App.GetExecutablePath();
             string tpl = Path.Combine(exe, @"lang\chinese-simplified\gb-bom-material.sldbomtbt");
             if (!File.Exists(tpl)) tpl = Path.Combine(Path.GetDirectoryName(exe), @"lang\chinese-simplified\gb-bom-material.sldbomtbt");
             if (!File.Exists(tpl)) { Sw.Log("   ! 未找到 GB 明细表模板, 用默认模板"); tpl = ""; }
             try
             {
-                int bt = top ? (int)swBomType_e.swBomType_TopLevelOnly : (int)swBomType_e.swBomType_PartsOnly;
+                int bt = top || TopLevelBom.Contains(path) ? (int)swBomType_e.swBomType_TopLevelOnly : (int)swBomType_e.swBomType_PartsOnly;
                 // 配置名须明确给出: 总装 (顶层明细) 传 "" 时 InsertBomTable4 静默返回 null
                 string cfgName = ((Configuration)am.GetActiveConfiguration()).Name;
                 BomTableAnnotation bom = vf.InsertBomTable4(false, W - FR, 0.066, (int)swBOMConfigurationAnchorType_e.swBOMConfigurationAnchor_BottomRight,
@@ -1067,6 +1133,7 @@ namespace CadKernel
                 else Sw.Log("   ! 明细表插入失败 (配置 " + cfgName + ")");
             }
             catch (Exception e) { Sw.Log("   明细表 " + e.Message); }
+            Sw.Log(string.Format("   明细表 {0:F0} s", stage.Elapsed.TotalSeconds)); stage.Restart();
 
             // ---- 轴测图: 候选 A = 视图组右侧, B = 视图组下方 (技术要求右侧); 取比例较大者, 放置后按实际外框校核 ----
             double iw = (dx + dz) * 0.707 * MM, ih = (dy * 0.816 + (dx + dz) * 0.408) * MM;
@@ -1099,6 +1166,7 @@ namespace CadKernel
                     }
                 }
             }
+            Sw.Log(string.Format("   轴测图 {0:F0} s", stage.Elapsed.TotalSeconds)); stage.Restart();
             // 技术要求为图纸注释 (先激活图纸, 否则会挂到当前视图上随视图移动)
             dd.ActivateView(((View)dd.GetFirstView()).Name);
             d.ClearSelection2(true);
@@ -1110,6 +1178,7 @@ namespace CadKernel
             Sw.Save(d, f);
             Sw.App.CloseDoc(d.GetTitle());
             Pdf(f);                          // 重新打开后导出: 大装配体视图后台生成, 新建后立即导出为空白
+            Sw.Log(string.Format("   技术要求、保存与导出 PDF {0:F0} s", stage.Elapsed.TotalSeconds));
             Sw.Close(am);
             Index.Add(new[] { no, nm, size.ToUpper(), "1:" + scale, "装配图\\" + Path.GetFileName(f), nd > 0 ? "" : NeedsDims, nd.ToString(), "", nb.ToString() });
             Sw.Log(string.Format("装配图 {0,-40} {1} 1:{2}  轴测 1:{3}  尺寸 {4}  序号 {5}", code, size.ToUpper(), scale, isoS > 0 ? (1 / isoS).ToString("0") : "-", nd, nb));

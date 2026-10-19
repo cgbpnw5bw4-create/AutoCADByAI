@@ -147,6 +147,7 @@ namespace CadKernel
             }
             if (App == null) throw new Exception("无法连接专用 SolidWorks 实例 PID " + pid);
             App.Visible = true;
+            if (File.Exists(ImportPrefFile)) { RestoreImportPrefs(); Log("上次导入中途退出: 已恢复导入相关用户选项"); }
             // "输入尺寸值" 会在程序标注尺寸时弹出修改框, 运行期间关闭; 这是用户级选项 (用户自己的 SolidWorks 也读它),
             // 原值记录在 .cad\sw_pref_orig.txt, 程序结束时 (Disconnect) 恢复并删除记录; 上次异常退出未恢复时沿用旧记录。
             if (!File.Exists(PrefFile)) File.WriteAllText(PrefFile, App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate).ToString());
@@ -166,6 +167,18 @@ namespace CadKernel
         /// 批量出图时专用实例内存持续增长 (11 张模块装配图后达 13 GB, 总装图因内存换页停滞数小时) →
         /// 每张图之前检查, 超过 gb 即正常退出并重启专用实例。
         /// </summary>
+        /// <summary>
+        /// 退出专用实例 (恢复用户选项、关闭文档后正常退出, 不退出则结束进程)。实测 (2026-10-16): SolidWorks 对载入过的 x_t
+        /// 所在目录持有句柄, 不只是当前目录 —— ReleaseDir 之后目录仍删不掉、换不掉, 只有实例退出才释放。导入替换几何目录前调用。
+        /// </summary>
+        public static void Shutdown()
+        {
+            var proc = swProc ?? Owned();
+            Disconnect();
+            if (proc != null) Retire(proc, 60000);
+            swProc = null;
+        }
+
         public static void Recycle(double gb)
         {
             var proc = swProc;
@@ -177,9 +190,19 @@ namespace CadKernel
             Connect();
         }
 
-        /// <summary>恢复运行期间修改的用户选项, 恢复成功后删除原值记录 (下次运行重新记录当时的值)</summary>
+        /// <summary>
+        /// 把专用实例的当前工作目录移到系统临时目录。实测 (2026-10-11): SolidWorks 载入或另存文件后把该文件所在目录设为进程当前目录,
+        /// 之后这个目录不能删除或改名 ("另一进程正在使用")。删、换目录之前先调用。
+        /// </summary>
+        public static void ReleaseDir()
+        {
+            if (App != null) App.SetCurrentWorkingDirectory(Path.GetTempPath());
+        }
+
+        /// <summary>恢复运行期间修改的用户选项, 恢复成功后删除原值记录 (下次运行重新记录当时的值); 释放工作目录</summary>
         public static void Disconnect()
         {
+            try { ReleaseDir(); } catch { }
             try
             {
                 bool v;
@@ -300,8 +323,12 @@ namespace CadKernel
                     Log("   经临时文件保存: " + Path.GetFileName(fullPath));
                     return fullPath;
                 }
+                // 实测 (2026-10-10, 微波实验炉配电盘装配图): 重试与临时名都报 err=1, 但两个文件都已写出且被这份未关闭的文档占用,
+                // 之后的参考检查报 SharingViolation、图纸张数多出一张 → 关闭文档、删掉写了一半的文件, 由调用方决定是否重画
+                try { App.CloseDoc(m.GetTitle()); } catch { }
+                foreach (string f in new[] { tmp, fullPath }) try { if (File.Exists(f)) File.Delete(f); } catch { }
             }
-            throw new Exception("保存失败 err=" + err + " -> " + fullPath + " (文件被占用? 先运行 clean)");
+            throw new Exception("保存失败 err=" + err + " warn=" + warn + " -> " + fullPath);
         }
 
         /// <summary>关闭文档: 标题带/不带扩展名各试一次, 并以路径复核 (否则文档滞留, 批量建模时内存持续增长至崩溃)</summary>
@@ -334,6 +361,53 @@ namespace CadKernel
             ModelDoc2 d = (ModelDoc2)App.OpenDoc6(path, type, opt, "", ref e, ref w);
             if (d == null) throw new Exception("打开失败(err=" + e + "): " + path);
             return d;
+        }
+
+        // ---------------- 外来几何 ----------------
+        static readonly swUserPreferenceToggle_e[] ImportPrefs =
+            { swUserPreferenceToggle_e.swMultiCAD_Enable3DInterconnect, swUserPreferenceToggle_e.swImportAutoRunImportDiagnostics };
+        static string ImportPrefFile { get { return Path.Combine(Run.StateDir, "sw_import_prefs_orig.txt"); } }
+
+        /// <summary>
+        /// 导入外来几何时临时关闭的用户级选项 (2026-10-10 实测): 3D Interconnect 开着时导入件是锁定的引用, 不能编辑;
+        /// 自动导入诊断会弹模态框阻塞 API。原值先写入 .cad/, 结束恢复并删除; 进程中途退出时下次连接自动恢复。
+        /// </summary>
+        public static T WithImportPrefs<T>(Func<T> body)
+        {
+            var orig = new bool[ImportPrefs.Length];
+            for (int i = 0; i < ImportPrefs.Length; i++) orig[i] = App.GetUserPreferenceToggle((int)ImportPrefs[i]);
+            if (!File.Exists(ImportPrefFile)) File.WriteAllText(ImportPrefFile, string.Join(",", orig));
+            try
+            {
+                foreach (var k in ImportPrefs) App.SetUserPreferenceToggle((int)k, false);
+                return body();
+            }
+            finally { RestoreImportPrefs(); }
+        }
+
+        static void RestoreImportPrefs()
+        {
+            if (!File.Exists(ImportPrefFile)) return;
+            string[] v = File.ReadAllText(ImportPrefFile).Trim().Split(',');
+            bool b;
+            for (int i = 0; i < ImportPrefs.Length && i < v.Length; i++)
+                if (bool.TryParse(v[i], out b)) App.SetUserPreferenceToggle((int)ImportPrefs[i], b);
+            File.Delete(ImportPrefFile);
+        }
+
+        /// <summary>载入外来几何文件 (Parasolid x_t 等) 为零件文档, 长度单位设为 mm</summary>
+        public static ModelDoc2 LoadGeometry(string file)
+        {
+            if (!File.Exists(file)) throw new FileNotFoundException("几何文件不存在: " + file);
+            return WithImportPrefs(() =>
+            {
+                int err = 0;
+                ModelDoc2 m = (ModelDoc2)App.LoadFile4(file, "r", null, ref err);
+                if (m == null) throw new Exception("载入几何失败 err=" + err + ": " + file);
+                if (m.GetType() != (int)swDocumentTypes_e.swDocPART) { App.CloseDoc(m.GetTitle()); throw new Exception("几何文件不是单个零件: " + file); }
+                m.SetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swUnitsLinear, (int)swLengthUnit_e.swMM);
+                return m;
+            });
         }
 
         public static void Activate(ModelDoc2 m)
@@ -410,9 +484,29 @@ namespace CadKernel
                 if (f.GetTypeName2() == "ProfileFeature")
                 {
                     object[] ch = (object[])f.GetChildren();
-                    if (ch == null || ch.Length == 0) r.Add(f.Name);
+                    // 已压缩的不算: 只有钣金多边边线法兰会有意压缩它没用上的轮廓草图 (见 SheetMetal.EdgeFlanges)
+                    bool suppressed = ((bool[])f.IsSuppressed2((int)swInConfigurationOpts_e.swThisConfiguration, null))[0];
+                    if ((ch == null || ch.Length == 0) && !suppressed) r.Add(f.Name);
                 }
                 f = (Feature)f.GetNextFeature();
+            }
+            return r;
+        }
+
+        /// <summary>
+        /// 钣金零件保持折叠状态: 把未压缩的平板型式 (= 零件此时是展平的) 压缩回去, 返回原先未压缩的名称; 压缩不了抛错。
+        /// 实测 (2026-10-16): 微波炉机架封板 2 (1856 孔) 曾以展平状态保存, 装入装配体后与机架新增 16 处干涉。
+        /// </summary>
+        public static List<string> Fold(ModelDoc2 m)
+        {
+            var r = new List<string>();
+            int cfg = (int)swInConfigurationOpts_e.swThisConfiguration;
+            for (Feature f = (Feature)m.FirstFeature(); f != null; f = (Feature)f.GetNextFeature())
+            {
+                if (f.GetTypeName2() != "FlatPattern" || ((bool[])f.IsSuppressed2(cfg, null))[0]) continue;
+                r.Add(f.Name);
+                if (!f.SetSuppression2((int)swFeatureSuppressionAction_e.swSuppressFeature, cfg, null) || !((bool[])f.IsSuppressed2(cfg, null))[0])
+                    throw new Exception("钣金零件处于展平状态, 平板型式 " + f.Name + " 压缩不了");
             }
             return r;
         }
@@ -500,6 +594,25 @@ namespace CadKernel
             p.Select2(false, 0);
             sm.InsertSketch(true);
             sm.AddToDB = true;   // 绕过推理/捕捉, 且逐段折线端点自动合并
+        }
+
+        Sk(ModelDoc2 m, int plane, Feature sketch)
+        {
+            M = m; pl = plane; sm = m.SketchManager;
+            m.ClearSelection2(true);
+            if (!sketch.Select2(false, 0)) throw new Exception("选不中草图 " + sketch.Name);
+            m.EditSketch();
+            sm.AddToDB = true;
+        }
+
+        /// <summary>在已有草图 (当初由 XY/XZ/YZ 建出, plane 为 0/1/2) 中继续画, 坐标换算相同; 画完 Close() 退出 (随之重建)</summary>
+        public static Sk Edit(ModelDoc2 m, Feature sketch, int plane) { return new Sk(m, plane, sketch); }
+
+        public void Close()
+        {
+            sm.AddToDB = false;
+            sm.InsertSketch(true);
+            M.ClearSelection2(true);
         }
 
         public static Sk XY(ModelDoc2 m, double z = 0) { return new Sk(m, 0, z); }
@@ -595,11 +708,13 @@ namespace CadKernel
         void End()
         {
             sm.AddToDB = false;
+            // 退出前先取当前草图: 钣金零件的特征树末尾总是"平板型式", 新草图不是最后一个特征 (实测 2026-10-14)
+            var active = sm.ActiveSketch as Feature;
             sm.InsertSketch(true);
             M.ClearSelection2(true);
-            Feature last = Sw.LastFeature(M);
-            if (last == null || last.GetTypeName2() != "ProfileFeature") throw new Exception("草图未创建");
-            last.Select2(false, 0);
+            Feature sk = active ?? Sw.LastFeature(M);
+            if (sk == null || sk.GetTypeName2() != "ProfileFeature") throw new Exception("草图未创建");
+            sk.Select2(false, 0);
         }
 
         Feature Check(Feature f, double v0, bool add, string what)
@@ -622,30 +737,58 @@ namespace CadKernel
             return Check(f, v0, true, "拉伸 " + d);
         }
 
-        /// <summary>切除: dir=+1 沿法向, -1 反向, 0 两侧对称(总深 d)</summary>
-        public Feature Cut(double d, int dir = 1)
+        /// <summary>
+        /// 钣金基体法兰: 闭合草图加厚 t (mm), 折弯内半径 r; reverse = 向草图面法向的反方向加厚。
+        /// 用特征数据对象 (CreateDefinition + CreateFeature), 覆盖零件默认钣金参数。
+        /// </summary>
+        public Feature BaseFlange(double t, double r, bool reverse)
         {
             End(); double v0 = Sw.Volume(M);
+            var d = (BaseFlangeFeatureData)M.FeatureManager.CreateDefinition((int)swFeatureNameID_e.swFmBaseFlange);
+            d.OverrideDefaultSheetMetalParameters = true;
+            d.Thickness = t * K;
+            d.BendRadius = r * K;
+            d.ReverseThickness = reverse;
+            Feature f = M.FeatureManager.CreateFeature(d) as Feature;
+            return Check(f, v0, true, "基体法兰 t=" + t);
+        }
+
+        /// <summary>切除: dir=+1 沿法向, -1 反向, 0 两侧对称(总深 d)。scope 非空时只切这个实体 (多实体零件中不碰其它实体)</summary>
+        public Feature Cut(double d, int dir = 1, Body2 scope = null)
+        {
+            End(); Scope(scope); double v0 = Sw.Volume(M);
             int ec = dir == 0 ? (int)swEndConditions_e.swEndCondMidPlane : (int)swEndConditions_e.swEndCondBlind;
             Feature f = M.FeatureManager.FeatureCut4(true, false, dir > 0, ec, 0, d * K, 0,
                 false, false, false, false, 0, 0, false, false, false, false,
-                false, true, true, false, false, false,
+                false, true, scope == null, false, false, false,
                 (int)swStartConditions_e.swStartSketchPlane, 0, false, false);
             return Check(f, v0, false, "切除 " + d);
         }
 
-        /// <summary>完全贯穿切除: dir=0 两侧, +1/-1 单侧。
+        /// <summary>完全贯穿切除: dir=0 两侧, +1/-1 单侧; scope 同 Cut。
         /// 双侧贯穿必须用"双端"(Sd=false)+两个方向各自 ThroughAll —— Sd=true 配 ThroughAllBoth 会静默失败。</summary>
-        public Feature CutThru(int dir = 0)
+        public Feature CutThru(int dir = 0, Body2 scope = null)
         {
-            End(); double v0 = Sw.Volume(M);
+            End(); Scope(scope); double v0 = Sw.Volume(M);
             int ta = (int)swEndConditions_e.swEndCondThroughAll;
             Feature f = M.FeatureManager.FeatureCut4(dir != 0, false, dir > 0,
                 ta, dir == 0 ? ta : 0, 0, 0, false, false, false, false, 0, 0,
                 false, false, false, false,
-                false, true, true, false, false, false,
+                false, true, scope == null, false, false, false,
                 (int)swStartConditions_e.swStartSketchPlane, 0, false, false);
             return Check(f, v0, false, "贯穿切除");
+        }
+
+        /// <summary>
+        /// 特征范围: 草图 (Mark 0) 之外再选中要切的实体, 切除时 UseFeatScope = true、UseAutoSelect = false。
+        /// 实测 (2026-10-13): 实体须以 Mark 8 选中; Mark 1/2/4 时 FeatureCut4 返回 null。
+        /// </summary>
+        void Scope(Body2 body)
+        {
+            if (body == null) return;
+            var sd = (SelectData)((SelectionMgr)M.SelectionManager).CreateSelectData();
+            sd.Mark = 8;
+            if (!body.Select2(true, sd)) throw new Exception("选不中切除范围实体 " + body.Name);
         }
 
         /// <summary>绕草图中唯一中心线旋转 360°</summary>

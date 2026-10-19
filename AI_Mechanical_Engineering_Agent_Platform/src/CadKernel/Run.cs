@@ -59,8 +59,14 @@ namespace CadKernel
             Dir = Path.Combine(OutputRoot, name);
             if (Directory.Exists(Dir)) throw new IOException("运行目录已存在: " + Dir);
             foreach (string d in new[] { Dir, Models, Drawings, Exports, Bom, Checks, Images, InputSnapshot }) Directory.CreateDirectory(d);
+            // 含子目录 (导入设计的 geometry/): 续跑读的是快照, 运行目录也须能整体拷走
             if (inputDir != null && Directory.Exists(inputDir))
-                foreach (string f in Directory.GetFiles(inputDir)) File.Copy(f, Path.Combine(InputSnapshot, Path.GetFileName(f)));
+                foreach (string f in Directory.GetFiles(inputDir, "*", SearchOption.AllDirectories))
+                {
+                    string to = Path.Combine(InputSnapshot, Path.GetRelativePath(inputDir, f));
+                    Directory.CreateDirectory(Path.GetDirectoryName(to));
+                    File.Copy(f, to);
+                }
             Manifest = new RunManifest
             {
                 Task = task, Project = projectId, Title = title, RunDir = Dir, Input = inputDir,

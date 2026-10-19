@@ -34,6 +34,17 @@ namespace CadKernel
         // 齿轮/轴类 (SOLIDWORKS 材料库名称已在本机核对)
         public static readonly Mat S4340 = new Mat("40CrNiMoA (AISI 4340, 正火)", "AISI 4340 钢，正火", 7850);
         public static readonly Mat ALLOY = new Mat("42CrMo (调质)", "合金钢", 7700);
+        // 导入件 (STEP 不含材料): 按名称推断不出时用它, 质量按钢 7850 估算 (BOM 备注栏注明)
+        public static readonly Mat PVC = new Mat("PVC", "PP 共聚物", 1400);
+        public static readonly Mat UNKNOWN = new Mat("未定", "普通碳钢", 7850);
+
+        /// <summary>按字段名取材料 (import.json 中的 "material": "S304" 等)</summary>
+        public static Mat ByKey(string key)
+        {
+            var f = typeof(Mat).GetField(key ?? "", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (f == null || f.FieldType != typeof(Mat)) throw new Exception("未知材料: " + key);
+            return (Mat)f.GetValue(null);
+        }
     }
 
     /// <summary>零件定义 (元数据 + 出图提示)</summary>
@@ -182,6 +193,33 @@ namespace CadKernel
             return path;
         }
 
+        /// <summary>
+        /// 导入几何零件 (cad import 从 STEP 拆出的 Parasolid x_t): 载入 → 实体数 → 材质/颜色/质量/属性 → 保存 → 登记。
+        /// 与 Make 共用后半段; 导入件没有特征历史, 没有特征级体积校核, 几何是否与原件一致由设计项目另行核对。
+        /// </summary>
+        public static string Import(Part p, string geometryFile, Action<ModelDoc2> extra = null)
+        {
+            if (Reg.ContainsKey(p.Id) && Parts.ContainsKey(p.Id)) return Reg[p.Id];
+            ModelDoc2 m = Sw.LoadGeometry(geometryFile);
+            if (extra != null)
+            {
+                // 在原几何之上再建特征实体 (按实体重建的零件: 未重建的实体来自 geometryFile)
+                try
+                {
+                    extra(m);
+                    m.ForceRebuild3(false);
+                    var orphan = Sw.OrphanSketches(m);
+                    if (orphan.Count > 0) throw new Exception("存在未消费草图(特征静默失败): " + string.Join(",", orphan.ToArray()));
+                }
+                catch (Exception e)
+                {
+                    try { Sw.App.CloseDoc(m.GetTitle()); } catch { }
+                    throw new Exception(p.Code + " " + p.Name + " -> " + e.Message, e);
+                }
+            }
+            return Finish(p, m);
+        }
+
         static string Build(Part p, Action<ModelDoc2> build)
         {
             ModelDoc2 m = Sw.NewPart();
@@ -191,6 +229,22 @@ namespace CadKernel
                 m.ForceRebuild3(false);
                 var orphan = Sw.OrphanSketches(m);
                 if (orphan.Count > 0) throw new Exception("存在未消费草图(特征静默失败): " + string.Join(",", orphan.ToArray()));
+            }
+            catch (Exception e)
+            {
+                try { Sw.App.CloseDoc(m.GetTitle()); } catch { }
+                throw new Exception(p.Code + " " + p.Name + " -> " + e.Message, e);
+            }
+            return Finish(p, m);
+        }
+
+        static string Finish(Part p, ModelDoc2 m)
+        {
+            try
+            {
+                // 钣金零件按折叠状态计质量、保存 (装配、干涉、出图都用折叠后的几何)
+                var flat = Sw.Fold(m);
+                if (flat.Count > 0) Sw.Log("    零件处于展平状态 (平板型式未压缩), 已压缩回折叠: " + string.Join(",", flat));
                 int nb = Sw.BodyCount(m);
                 if (nb != p.Bodies) throw new Exception("实体数 " + nb + " ≠ " + p.Bodies + " (存在悬空/未连接的几何)");
                 Sw.SetMaterial(m, p.Mat.SwName);

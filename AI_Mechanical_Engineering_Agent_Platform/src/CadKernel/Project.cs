@@ -90,6 +90,8 @@ namespace CadKernel
         /// <summary>主装配体: 出 BOM、截图、STEP</summary>
         public bool Main;
         public bool ForceA0;
+        /// <summary>装配图明细表只列顶层 (子装配作为一行)。由模块组成的总装用它, 否则明细表行数过多放不下</summary>
+        public bool TopLevelBom;
     }
 
     /// <summary>
@@ -135,6 +137,12 @@ namespace CadKernel
 
         /// <summary>项目专属校核 (如机构运动学), 用 Run.Check 登记结论</summary>
         public virtual void ExtraChecks(List<AsmTarget> targets) { }
+
+        /// <summary>
+        /// 已登记接受的干涉 (null = 全部干涉都判不通过)。只给有确凿来源的已知干涉用, 如导入设计原模型自带的;
+        /// 认可的干涉仍逐条列入报告, 只有其余的 (新增) 判不通过。不得用来让自己设计中的干涉"通过"。
+        /// </summary>
+        public virtual Func<Checks.Interf, bool> AcceptInterference { get { return null; } }
 
         /// <summary>BOM 中未建模但须采购的物料</summary>
         public virtual IEnumerable<Checks.BomItem> BomExtras { get { return null; } }

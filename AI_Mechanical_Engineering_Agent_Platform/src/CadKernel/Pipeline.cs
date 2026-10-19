@@ -167,7 +167,8 @@ namespace CadKernel
 
         static void SaveTargets(List<AsmTarget> t)
         {
-            var rows = t.Select(a => new Dictionary<string, object> { { "path", a.Path }, { "top_level", a.TopLevel }, { "drawing", a.Drawing }, { "main", a.Main }, { "force_a0", a.ForceA0 } });
+            var rows = t.Select(a => new Dictionary<string, object> { { "path", a.Path }, { "top_level", a.TopLevel }, { "drawing", a.Drawing }, { "main", a.Main },
+                                                                    { "force_a0", a.ForceA0 }, { "top_level_bom", a.TopLevelBom } });
             File.WriteAllText(TargetsFile, JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), new UTF8Encoding(false));
         }
 
@@ -179,6 +180,7 @@ namespace CadKernel
             {
                 Path = e.GetProperty("path").GetString(), TopLevel = e.GetProperty("top_level").GetBoolean(),
                 Drawing = e.GetProperty("drawing").GetBoolean(), Main = e.GetProperty("main").GetBoolean(), ForceA0 = e.GetProperty("force_a0").GetBoolean(),
+                TopLevelBom = e.TryGetProperty("top_level_bom", out var tb) && tb.GetBoolean(),
             }).ToList();
         }
 
@@ -189,7 +191,7 @@ namespace CadKernel
             Run.Check("模型完整性", issues == 0, issues == 0 ? "全部零件/装配体打开无错误、无重建警告" : issues + " 条问题", Path.Combine(Run.Checks, "integrity.md"));
             // 2. 装配体外形 + 干涉
             var itf = new StringBuilder();
-            var res = targets.Select(t => Checks.Assembly(t.Path, t.TopLevel, itf)).ToList();
+            var res = targets.Select(t => Checks.Assembly(t.Path, t.TopLevel, itf, project.AcceptInterference)).ToList();
             Checks.Report(res, itf);
             // 3. BOM + 截图 (主装配体)
             var main = targets.Single(t => t.Main);
@@ -222,8 +224,9 @@ namespace CadKernel
         static void DoDrawings(CadProject project, List<AsmTarget> targets, string filter)
         {
             project.ConfigureDrawings();
-            Drw.ForceA0.Clear();
+            Drw.ForceA0.Clear(); Drw.TopLevelBom.Clear();
             foreach (var t in targets.Where(t => t.ForceA0)) Drw.ForceA0.Add(t.Path);
+            foreach (var t in targets.Where(t => t.TopLevelBom)) Drw.TopLevelBom.Add(t.Path);
             Drw.All(filter, targets.Where(t => t.Drawing).Select(t => t.Path));
             Drw.FormatSheets();
             int n = Directory.Exists(Run.Drawings) ? Directory.GetFiles(Run.Drawings, "*.SLDDRW", SearchOption.AllDirectories).Length : 0;

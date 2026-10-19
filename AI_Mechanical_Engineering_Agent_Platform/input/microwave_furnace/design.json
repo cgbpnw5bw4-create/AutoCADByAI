@@ -1,0 +1,6 @@
+{
+  // 由 cad import 生成: 零件、装配与位置见 import.json, 原几何在 geometry/ (不入库, 可由源 STEP 重新导入)
+  "project": "imported",
+  "title": "微波实验炉",
+  "params": {}
+}
