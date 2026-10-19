@@ -556,6 +556,29 @@ namespace CadTests
             Assert.Equal(new double[] { 1, 0, 0 }, d.Z);
         }
 
+        // ---------------- 装配图选边: 按实例变换把零件坐标的边投到图纸上 (api_calibration.md 第 2 节第 26 条) ----------------
+        [Fact]
+        public void XfPointFollowsArrayDataConvention()
+        {
+            var a = new double[16];
+            Xf.RotZ(90, 10, 20, 30).Fill(a, 0);                           // 零部件变换: 局部 X -> 全局 +Y, 平移 (10, 20, 30) mm
+            var p = Drw.XfPoint(a, new[] { 0.001, 0, 0 });
+            Assert.Equal(0.010, p[0], 12); Assert.Equal(0.021, p[1], 12); Assert.Equal(0.030, p[2], 12);
+            // 视图变换 (ModelToViewTransform) 带比例: 比例只乘旋转部分, 平移是图纸上的位置
+            var v = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.2, 0, 0.25, 0, 0, 0 };
+            var q = Drw.XfPoint(v, new[] { 0.4, -0.2, 0 });
+            Assert.Equal(0.2, q[0], 12); Assert.Equal(0.15, q[1], 12);
+        }
+
+        [Fact]
+        public void SegDistClampsToSegmentEnds()
+        {
+            Assert.Equal(0, Drw.SegDist(0.5, 0, 0, 0, 1, 0), 12);         // 线段上
+            Assert.Equal(0.3, Drw.SegDist(0.5, 0.3, 0, 0, 1, 0), 12);     // 线段旁
+            Assert.Equal(1.0, Drw.SegDist(2, 0, 0, 0, 1, 0), 12);         // 延长线上: 按端点算, 可见部分只是边的一段时仍落在边上
+            Assert.Equal(0.5, Drw.SegDist(0, 0.5, 0, 0, 0, 0), 12);       // 退化为点
+        }
+
         // ---------------- 枚举陷阱 (docs/api_calibration.md 1-20) ----------------
         [Fact]
         public void AddMateNoErrorIsOneNotZero()

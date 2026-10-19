@@ -13,7 +13,8 @@ namespace CadKernel
     ///   零件图: 视图 + 外形尺寸 + 回转体直径/轴向尺寸(含配合) + 孔坐标表(孔标记) + 孔径标注(含螺纹孔) + 技术要求 + 标题栏属性
     ///   装配图: 主/俯/轴测视图 + 明细表 + 零件序号
     ///   输出: SLDDRW + PDF; 激光下料件另出 DXF (1:1 展开面)
-    /// 选边方式: View.GetPolylines7 取视图几何(视图坐标, 模型尺度) -> View.SelectEntity 精确选中, 不依赖屏幕拾取。
+    /// 选边方式: View.GetPolylines7 取视图几何(视图坐标, 模型尺度) -> View.SelectEntity 精确选中, 不依赖屏幕拾取;
+    /// 装配图中先按记录位置换成所在实例上的边 (InstanceEnt), 外形尺寸标注后读回核对 (ExtentDim)。
     /// </summary>
     public static class Drw
     {
@@ -95,6 +96,10 @@ namespace CadKernel
                 Sw.Log(string.Format("  视图 {0} 模型={1} 位置=({2:F3},{3:F3}) 外框=({4:F3},{5:F3})-({6:F3},{7:F3}) 比例={8} 可见={9} 边数={10} 注释={11}",
                     q.Name, Path.GetFileName(q.GetReferencedModelName()), ps[0], ps[1], ol[0], ol[1], ol[2], ol[3], q.ScaleDecimal,
                     q.GetVisible(), eq == null ? 0 : eq.Length, q.GetNoteCount()));
+                // 装配图视图: 有几何显示的零部件数 (零部件可见却没画出时比别的运行少, 见 api_calibration.md 第 2 节第 27 条)、视图中隐藏的零部件
+                var hid = ((object[])q.GetHiddenComponents() ?? new object[0]).OfType<Component2>().Select(c => c.Name2).ToList();
+                Sw.Log(string.Format("      轻化={0} 显示的零部件 {1} 个, 视图中隐藏 {2} 个{3}", q.IsLightweight(), q.GetVisibleComponentCount(),
+                    hid.Count, hid.Count == 0 ? "" : ": " + string.Join(", ", hid)));
             }
             for (int vi = 0; vi < viewIndex; vi++) v = (View)v.GetNextView();
             object plo; object[] ents = (object[])v.GetPolylines7(1, out plo);
@@ -135,8 +140,65 @@ namespace CadKernel
                 Sw.Log(string.Format("   {0} ({1:F5},{2:F5})-({3:F5},{4:F5})", soft.Contains(s) ? "软" : "线", s.X1, s.Y1, s.X2, s.Y2));
             double[] o = ToSheet(v, 0, 0, 0);
             Sw.Log(string.Format("模型原点 -> 图纸 ({0:F4},{1:F4})", o[0], o[1]));
+            DimProbe(d, v, pl, ents);
             Sw.App.CloseDoc(d.GetTitle());
         }
+
+        /// <summary>
+        /// 调试 (cad dump): 照外形尺寸 (Overall) 的选法列出最下 / 最上的水平线候选 (y 全精度、所在实例), 逐个与最下一条配对标竖直尺寸,
+        /// 按实例选边 (InstanceEnt) 与按原实体选边各标一次, 输出尺寸读数 (标完即删, 文档不保存)。
+        /// </summary>
+        static void DimProbe(ModelDoc2 d, View v, double[] pl, object[] ents)
+        {
+            string perr;
+            var hl = new List<(Seg s, int i)>();
+            foreach (var rec in ParsePolylines(pl, ents.Length, out perr))
+            {
+                if (rec.Np != 2 || (rec.Type == 1 && rec.GeomLen >= 9)) continue;
+                var s = new Seg { X1 = pl[rec.PtsAt], Y1 = pl[rec.PtsAt + 1], X2 = pl[rec.PtsAt + 3], Y2 = pl[rec.PtsAt + 4], Ent = ents[rec.Index] };
+                if (Math.Abs(s.Y1 - s.Y2) < 1e-7 && Math.Abs(s.X1 - s.X2) > 1e-4) hl.Add((s, rec.Index));
+            }
+            if (hl.Count == 0) return;
+            var bot = hl.OrderBy(h => h.s.Y1).ThenByDescending(h => Math.Abs(h.s.X1 - h.s.X2)).Take(4).ToList();
+            var top = hl.OrderByDescending(h => h.s.Y1).ThenByDescending(h => Math.Abs(h.s.X1 - h.s.X2)).Take(8).ToList();
+            var parts = ViewParts(v);
+            var inst = new Dictionary<int, Seg>();
+            Sw.Log(string.Format("尺寸探针: 零件实例 {0} 个; 最下 / 最上水平线候选", parts.Count));
+            foreach (var h in bot.Concat(top))
+            {
+                string geo = "", miss;
+                try
+                {
+                    var cp = ((Edge)h.s.Ent).GetCurveParams3();
+                    double[] a = (double[])cp.StartPoint, b = (double[])cp.EndPoint;
+                    geo = string.Format(" 边 (零件坐标 mm) ({0:F2},{1:F2},{2:F2})-({3:F2},{4:F2},{5:F2})", a[0] * 1000, a[1] * 1000, a[2] * 1000, b[0] * 1000, b[1] * 1000, b[2] * 1000);
+                }
+                catch { geo = " 边几何读不出"; }
+                Component2 ic;
+                inst[h.i] = new Seg { X1 = h.s.X1, Y1 = h.s.Y1, X2 = h.s.X2, Y2 = h.s.Y2, Ent = InstanceEnt(v, h.s, parts, out miss, out ic) };
+                string cn = ic != null ? ic.Name2 : miss ?? "原实体已带零部件";
+                Sw.Log(string.Format("   [{0}] y={1:F9} m 长 {2:F1} mm x[{3:F1},{4:F1}] 实例 {5}{6}", h.i, h.s.Y1, Math.Abs(h.s.X1 - h.s.X2) * 1000,
+                    Math.Min(h.s.X1, h.s.X2) * 1000, Math.Max(h.s.X1, h.s.X2) * 1000, cn, geo));
+            }
+            double[] ol = (double[])v.GetOutline();
+            Func<Seg, Seg, string> dim = (p, q) =>
+            {
+                if (!Sel(d, v, p, false) || !Sel(d, v, q, true)) return "选不中";
+                var dm = (DisplayDimension)d.AddVerticalDimension2(ol[0] - 0.012, (ol[1] + ol[3]) / 2, 0);
+                if (dm == null) return "标不出";
+                string val;
+                try { val = (((Dimension)dm.GetDimension2(0)).SystemValue * 1000).ToString("F3"); } catch (Exception x) { val = "读数失败 " + x.Message; }
+                d.ClearSelection2(true);
+                ((Annotation)dm.GetAnnotation()).Select3(false, null);
+                d.Extension.DeleteSelection2(0);
+                return val;
+            };
+            foreach (var t in top)
+                Sw.Log(string.Format("   [{0}]-[{1}] 几何 {2:F3} mm, 按实例选边 {3}, 按原实体选边 {4}", bot[0].i, t.i, (t.s.Y1 - bot[0].s.Y1) * 1000,
+                    dim(inst[bot[0].i], inst[t.i]), dim(bot[0].s, t.s)));
+            d.ClearSelection2(true);
+        }
+
         /// <summary>
         /// 各图幅空白图纸 (只有 GB 图框与标题栏) 导出到 drawings/_formats/format_A3.pdf 等,
         /// 供 python/audit_drawings.py 区分"图纸格式"与"内容" (同图幅只有一张图时, 统计法无法识别格式元素)。
@@ -425,6 +487,94 @@ namespace CadKernel
         {
             if (!append) d.ClearSelection2(true);
             return s.Ent != null && v.SelectEntity(s.Ent, append);
+        }
+
+        /// <summary>
+        /// 视图所示装配体的零件实例 (各层展开到零件, 不含压缩与隐藏的) 及其变换 (Transform2.ArrayData, 相对顶层装配体); 零件图视图返回空表。
+        /// 不用 View.GetVisibleComponents: 实测 (2026-10-17) 新建的装配图视图与重新打开的工程图中它都返回空
+        /// </summary>
+        static List<(Component2 c, double[] xf)> ViewParts(View v)
+        {
+            var r = new List<(Component2, double[])>();
+            AssemblyDoc am = v.ReferencedDocument as AssemblyDoc;
+            if (am == null) return r;
+            foreach (Component2 c in ((object[])am.GetComponents(false) ?? new object[0]).OfType<Component2>())
+            {
+                try
+                {
+                    if (c.IsSuppressed() || c.Visible != (int)swComponentVisibilityState_e.swComponentVisible) continue;
+                    object[] ch = (object[])c.GetChildren();
+                    if (ch != null && ch.Length > 0) continue;
+                    r.Add((c, (double[])c.Transform2.ArrayData));
+                }
+                catch { }
+            }
+            return r;
+        }
+
+        /// <summary>点 p (m) 经 MathTransform.ArrayData 变换: 行向量, [0..8] 旋转 (第 i 行 = 局部第 i 轴的像), [9..11] 平移, [12] 比例</summary>
+        internal static double[] XfPoint(double[] t, double[] p)
+        {
+            double s = t[12];
+            return new[] { s * (p[0] * t[0] + p[1] * t[3] + p[2] * t[6]) + t[9],
+                           s * (p[0] * t[1] + p[1] * t[4] + p[2] * t[7]) + t[10],
+                           s * (p[0] * t[2] + p[1] * t[5] + p[2] * t[8]) + t[11] };
+        }
+
+        /// <summary>点 (px, py) 到线段 (ax, ay)-(bx, by) 的距离</summary>
+        internal static double SegDist(double px, double py, double ax, double ay, double bx, double by)
+        {
+            double dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
+            double t = l2 < 1e-18 ? 0 : Math.Max(0, Math.Min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
+            double ex = ax + t * dx - px, ey = ay + t * dy - py;
+            return Math.Sqrt(ex * ex + ey * ey);
+        }
+
+        /// <summary>
+        /// 装配图视图中, 折线记录 s 所在实例上的那条边。实测 (2026-10-17, cad dump / probe-asm, 微波实验炉配电盘模块装配图):
+        /// 装配体视图的 GetPolylines7 给出的边不带零部件 (Entity.GetComponent() 为 null, 几何在零件坐标系), 同一零件的各实例共用;
+        /// View.SelectEntity 收到这样的边时自行挑一个实例, 每次打开、每次出图挑的都可能不同, 不一定是记录所在的那个 —— 外形尺寸因此选到另一根同型线槽、
+        /// 另一根镜像放置的竖线槽上, 总高 480 量成 220 / 440 / 180 等 (api_calibration.md 第 2 节第 26 条)。
+        /// → 在视图所示装配体的零件实例中 (ViewParts), 把边的两端点经实例变换与视图变换投到图纸上, 记录的两点都落在投影线段上 (0.01 mm 内)
+        /// 的实例即是, 返回该实例中的对应边 (Component2.GetCorrespondingEntity)。对应边的 GetComponent() 同样为 null, 选中后
+        /// SelectionMgr.GetSelectedObjectsComponent4 也读不出实例, 是否选对只能由尺寸读数判断 (ExtentDim 读回核对)。
+        /// 只处理直线边; 原实体已带零部件时原样返回 (miss = null, comp = null); 零件图视图、非直线边、找不到实例时返回原实体, miss 为原因。
+        /// </summary>
+        static object InstanceEnt(View v, Seg s, List<(Component2 c, double[] xf)> parts, out string miss, out Component2 comp)
+        {
+            miss = null; comp = null;
+            Edge e = s.Ent as Edge;
+            if (e == null) { miss = "非边"; return s.Ent; }
+            if (parts == null || parts.Count == 0) { miss = "无零件实例"; return s.Ent; }
+            double[] p1, p2;
+            try
+            {
+                if (((Entity)e).GetComponent() != null) return s.Ent;
+                Curve cv = e.GetCurve() as Curve;
+                if (cv == null || !cv.IsLine()) { miss = "非直线边"; return s.Ent; }
+                var cp = e.GetCurveParams3();
+                p1 = (double[])cp.StartPoint; p2 = (double[])cp.EndPoint;
+            }
+            catch (Exception x) { miss = x.Message; return s.Ent; }
+            var vm = new VMap(v);
+            double[] vt = (double[])v.ModelToViewTransform.ArrayData;
+            double r1x = vm.X(s.X1), r1y = vm.Y(s.Y1), r2x = vm.X(s.X2), r2y = vm.Y(s.Y2);
+            const double TOL = 1e-5;                          // 图纸上 0.01 mm
+            double best = double.MaxValue;
+            int hits = 0;
+            foreach (var (c, xf) in parts)
+            {
+                double[] a = XfPoint(vt, XfPoint(xf, p1)), b = XfPoint(vt, XfPoint(xf, p2));
+                double dev = Math.Max(SegDist(r1x, r1y, a[0], a[1], b[0], b[1]), SegDist(r2x, r2y, a[0], a[1], b[0], b[1]));
+                best = Math.Min(best, dev);
+                if (dev > TOL) continue;
+                hits++;
+                object ce = null;
+                try { ce = c.GetCorrespondingEntity(e); } catch { }
+                if (ce != null) { comp = c; return ce; }
+            }
+            miss = hits > 0 ? hits + " 个几何吻合的实例取不到对应边" : string.Format("无几何吻合的实例 (最近 {0:F3} mm)", best * 1000);
+            return s.Ent;
         }
 
         static DisplayDimension DimH(ModelDoc2 d, View v, Seg a, Seg b, double sx, double sy)
@@ -746,18 +896,11 @@ namespace CadKernel
             // 回转体侧视: 端面是侧看的圆边 (软直线); 直线不足两条时用它们标轴向外形 (圆边尺寸取圆心, 圆心在该直线上)
             if (vl.Count < 2) vl.AddRange(soft.Where(s => Math.Abs(s.X1 - s.X2) < 1e-7));
             if (hl.Count < 2) hl.AddRange(soft.Where(s => Math.Abs(s.Y1 - s.Y2) < 1e-7));
-            if (horiz && vl.Count >= 2)
-            {
-                var a = vl.OrderBy(s => s.X1).ThenByDescending(s => Math.Abs(s.Y1 - s.Y2)).First();
-                var b = vl.OrderByDescending(s => s.X1).ThenByDescending(s => Math.Abs(s.Y1 - s.Y2)).First();
-                if (b.X1 - a.X1 > 1e-4 && DimH(d, v, a, b, (ol[0] + ol[2]) / 2, hAbove ? ol[3] + 0.010 : ol[1] - 0.012) != null) n++;
-            }
-            if (vert && hl.Count >= 2)
-            {
-                var a = hl.OrderBy(s => s.Y1).ThenByDescending(s => Math.Abs(s.X1 - s.X2)).First();
-                var b = hl.OrderByDescending(s => s.Y1).ThenByDescending(s => Math.Abs(s.X1 - s.X2)).First();
-                if (b.Y1 - a.Y1 > 1e-4 && DimV(d, v, a, b, ol[0] - 0.012, (ol[1] + ol[3]) / 2) != null) n++;
-            }
+            var parts = (horiz && vl.Count >= 2) || (vert && hl.Count >= 2) ? ViewParts(v) : null;
+            if (horiz && vl.Count >= 2 && ExtentDim(d, v, vl, s => s.X1, s => Math.Abs(s.Y1 - s.Y2), false,
+                                                    (ol[0] + ol[2]) / 2, hAbove ? ol[3] + 0.010 : ol[1] - 0.012, parts) != null) n++;
+            if (vert && hl.Count >= 2 && ExtentDim(d, v, hl, s => s.Y1, s => Math.Abs(s.X1 - s.X2), true,
+                                                   ol[0] - 0.012, (ol[1] + ol[3]) / 2, parts) != null) n++;
             // 圆形外轮廓 (盘、法兰、齿圈的端视图): 没有可标的外形直线时, 标最大整圆直径
             if (horiz && vert && n == 0)
             {
@@ -769,6 +912,59 @@ namespace CadKernel
                 }
             }
             return n;
+        }
+
+        /// <summary>
+        /// 一个外形尺寸: ls 中坐标 pos 最小与最大的两组边之间 (vertical = 竖直尺寸)。
+        /// 每组取与极值相差 0.001 mm 以内的边、长边优先 —— 外轮廓处常有多条重合的边 (面板边、线槽边、端头), 原先只按坐标排序, 选中哪条取决于 1e-12 级的舍入。
+        /// 每对边先按记录所在实例的边 (InstanceEnt) 标注, 标不出或量错再按原实体标; 标注后读回尺寸值与几何距离核对 (0.01 mm):
+        /// 不符 (选到了别的实例, 第 26 条) 即删除并换下一种 / 下一对 (每组前 3 条); 读不出尺寸值时照旧采用。
+        /// 都不符则不标并记日志 (尺寸数随之变少, 回归基准会报出), 不留量错的尺寸。
+        /// </summary>
+        static DisplayDimension ExtentDim(ModelDoc2 d, View v, List<Seg> ls, Func<Seg, double> pos, Func<Seg, double> len, bool vertical,
+                                          double sx, double sy, List<(Component2 c, double[] xf)> parts)
+        {
+            double lo = ls.Min(pos), hi = ls.Max(pos);
+            if (hi - lo <= 1e-4) return null;
+            var A = ls.Where(s => pos(s) - lo < 1e-6).OrderByDescending(len).Take(3).ToList();
+            var B = ls.Where(s => hi - pos(s) < 1e-6).OrderByDescending(len).Take(3).ToList();
+            string what = vertical ? "竖直" : "水平";
+            var inst = new Dictionary<Seg, Seg>();
+            var miss = new Dictionary<Seg, string>();
+            Func<Seg, Seg> at = s =>
+            {
+                if (!inst.TryGetValue(s, out Seg r))
+                {
+                    string m;
+                    Component2 c;
+                    inst[s] = r = new Seg { X1 = s.X1, Y1 = s.Y1, X2 = s.X2, Y2 = s.Y2, Ent = InstanceEnt(v, s, parts, out m, out c) };
+                    miss[s] = m;
+                }
+                return r;
+            };
+            int tried = 0;
+            foreach (var a in A)
+                foreach (var b in B)
+                    foreach (bool useInst in new[] { true, false })
+                    {
+                        Seg sa = useInst ? at(a) : a, sb = useInst ? at(b) : b;
+                        if (useInst && ReferenceEquals(sa.Ent, a.Ent) && ReferenceEquals(sb.Ent, b.Ent)) continue;     // 两边都没换成实例上的边
+                        if (!Sel(d, v, sa, false) || !Sel(d, v, sb, true)) continue;
+                        var dm = (DisplayDimension)(vertical ? d.AddVerticalDimension2(sx, sy, 0) : d.AddHorizontalDimension2(sx, sy, 0));
+                        if (dm == null) continue;
+                        tried++;
+                        double val = double.NaN, geo = pos(b) - pos(a);
+                        try { val = ((Dimension)dm.GetDimension2(0)).SystemValue; } catch { }
+                        if (double.IsNaN(val) || Math.Abs(val - geo) <= 1e-5) return dm;
+                        Sw.Log(string.Format("   ! 视图 {0} {1}外形尺寸量成 {2:F2} mm, 几何为 {3:F2} mm (选中的边不在记录所在的实例上; {4}, 实例: {5} / {6}), 删除后另选",
+                            v.Name, what, val * 1000, geo * 1000, useInst ? "按实例选边" : "按原实体选边", miss[a] ?? "已定", miss[b] ?? "已定"));
+                        d.ClearSelection2(true);
+                        ((Annotation)dm.GetAnnotation()).Select3(false, null);
+                        d.Extension.DeleteSelection2(0);
+                    }
+            d.ClearSelection2(true);
+            if (tried > 0) Sw.Log(string.Format("   !! 视图 {0} {1}外形尺寸: {2} 对边都量不出几何距离 {3:F2} mm, 未标注", v.Name, what, tried, (hi - lo) * 1000));
+            return null;
         }
 
         /// <summary>回转体 (轴线沿视图水平方向, 过 y=0): 各级直径 (φ + 配合) + 轴向台阶链式尺寸 + 总长</summary>
@@ -1402,6 +1598,8 @@ namespace CadKernel
                     double[] at = n.GetAttachPos() as double[];
                     if (at != null && at.Length >= 2) q.Att = new[] { at[0], at[1] };
                 }
+                else if (t == (int)swAnnotationType_e.swDisplayDimension)
+                    try { q.Text = (((Dimension)((DisplayDimension)a.GetSpecificAnnotation()).GetDimension2(0)).SystemValue * 1000).ToString("0.###") + " mm"; } catch { }
                 r.Add(q);
             }
             return r;
