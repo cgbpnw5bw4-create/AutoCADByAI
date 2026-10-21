@@ -1,6 +1,6 @@
 {
   "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
-  "source_run": "20261010_134355_planetary_gear",
+  "source_run": "20261020_101645_planetary_gear",
   "checks": [
     "参数校验",
     "模型完整性",
@@ -12,6 +12,7 @@
     "工程图参考",
     "STEP 身份与内容",
     "图纸版面审核",
+    "外形尺寸读数与几何一致",
     "图纸合订"
   ],
   "metrics": {
@@ -67,35 +68,49 @@
       "size": "A3",
       "scale": "1:1",
       "dims": 4,
-      "holes": 0
+      "holes": 0,
+      "extents": []
     },
     {
       "file": "PG-002_行星轮.SLDDRW",
       "size": "A3",
       "scale": "2:1",
       "dims": 2,
-      "holes": 0
+      "holes": 0,
+      "extents": []
     },
     {
       "file": "PG-003_内齿圈.SLDDRW",
       "size": "A3",
       "scale": "1:1.5",
       "dims": 2,
-      "holes": 12
+      "holes": 12,
+      "extents": [
+        20,
+        180
+      ]
     },
     {
       "file": "PG-004_行星架.SLDDRW",
       "size": "A3",
       "scale": "1:1",
       "dims": 2,
-      "holes": 1
+      "holes": 1,
+      "extents": [
+        72,
+        116
+      ]
     },
     {
       "file": "装配图/PG-000_行星齿轮减速器.SLDDRW",
       "size": "A2",
       "scale": "1:1.5",
       "dims": 2,
-      "balloons": 4
+      "balloons": 4,
+      "extents": [
+        112,
+        180
+      ]
     }
   ]
 }

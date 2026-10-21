@@ -283,11 +283,23 @@ namespace CadKernel
             int rc = Python(Path.Combine(py, "audit_drawings.py"), Q(Run.Drawings) + " --json " + Q(auditJson));
             if (rc == 0 && File.Exists(auditJson))
             {
-                using var doc = JsonDocument.Parse(File.ReadAllText(auditJson));
-                int total = doc.RootElement.GetProperty("total").GetInt32(), probs = doc.RootElement.GetProperty("problem_count").GetInt32();
-                Run.Check("图纸版面审核", probs == 0, string.Format("{0} 张, 问题 {1} 张", total, probs), auditJson);
+                using (var doc = JsonDocument.Parse(File.ReadAllText(auditJson)))
+                {
+                    int total = doc.RootElement.GetProperty("total").GetInt32(), probs = doc.RootElement.GetProperty("problem_count").GetInt32();
+                    Run.Check("图纸版面审核", probs == 0, string.Format("{0} 张, 问题 {1} 张", total, probs), auditJson);
+                }
+                // 外形尺寸: 同一脚本按图纸目录记录的位置从 PDF 读出标注值, 写入图纸目录 (回归基准比对) 并与视图几何核对
+                int unread; List<string> wrong;
+                int ne = Drw.ApplyExtentReadings(auditJson, out unread, out wrong);
+                Run.Check("外形尺寸读数与几何一致", unread == 0 && wrong.Count == 0,
+                    string.Format("{0} 个外形尺寸 (从 PDF 读出), 读不出 {1}, 与视图几何不符 {2}{3}", ne, unread, wrong.Count,
+                        wrong.Count > 0 ? ": " + string.Join("; ", wrong.Take(3)) : ""), auditJson);
             }
-            else Run.Check("图纸版面审核", false, "审核脚本失败 (退出码 " + rc + ")");
+            else
+            {
+                Run.Check("图纸版面审核", false, "审核脚本失败 (退出码 " + rc + ")");
+                Run.Check("外形尺寸读数与几何一致", false, "审核脚本失败, 未从 PDF 读出外形尺寸 (退出码 " + rc + ")");
+            }
             // 全套图纸合订 PDF (目录 + 书签)
             rc = Python(Path.Combine(py, "merge_drawings.py"), Q(Run.Dir));
             Run.Check("图纸合订", rc == 0, rc == 0 ? "exports/ 下全套图纸 PDF" : "合订脚本失败 (退出码 " + rc + ")");

@@ -525,6 +525,22 @@ namespace CadTests
             Assert.Null(Drw.ParseExtents("480;900"));          // 无法解析视同未记录
         }
 
+        [Fact]
+        public void ExtentMarksIndexColumn()
+        {
+            // 外形尺寸文字位置与应有值 (mm): 出图时写入, audit_drawings.py 据此在 PDF 上读值; 位置读不出记 null
+            string col = Drw.MarksJson(new[] { new[] { 215.1234, 98.0, 479.99999 }, new[] { double.NaN, double.NaN, 174.1 } });
+            Assert.Equal("[[215.123,98,480],[null,null,174.1]]", col);
+            var back = Drw.ParseMarks(col);
+            Assert.Equal(2, back.Count);
+            Assert.Equal(new double?[] { 215.123, 98, 480 }, back[0]);
+            Assert.Equal(new double?[] { null, null, 174.1 }, back[1]);
+            Assert.Equal("[]", Drw.MarksJson(new double[0][]));
+            Assert.Empty(Drw.ParseMarks("[]"));
+            Assert.Null(Drw.ParseMarks(""));                   // 旧 index.tsv 行没有这一列
+            Assert.Null(Drw.ParseMarks("x"));
+        }
+
         // ---------------- 行星轮系运动学残差: 太阳轮整圈歧义 ----------------
         [Fact]
         public void KinematicResidualResolvesWholeSunTurnsButNotWrongStates()

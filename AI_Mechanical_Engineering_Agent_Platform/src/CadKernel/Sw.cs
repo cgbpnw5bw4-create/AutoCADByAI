@@ -7,6 +7,13 @@ using SolidWorks.Interop.swconst;
 
 namespace CadKernel
 {
+    /// <summary>SolidWorks 调用超时未返回, 专用实例已被看守结束 (见 Sw.Guard)</summary>
+    public sealed class SwHungException : Exception
+    {
+        public SwHungException(string what, int seconds, Exception inner)
+            : base(what + " 超过 " + seconds + " s 未返回, 已结束专用实例", inner) { }
+    }
+
     /// <summary>SolidWorks API 通用封装 —— 内部单位米(m), 对外接口一律毫米(mm)</summary>
     public static class Sw
     {
@@ -177,6 +184,48 @@ namespace CadKernel
             Disconnect();
             if (proc != null) Retire(proc, 60000);
             swProc = null;
+        }
+
+        // ---------------- 调用超时看守 ----------------
+        /// <summary>
+        /// call 在 seconds 秒内没有返回就结束专用实例 (身份核对后结束进程): 阻塞中的 COM 调用随之以 RPC 错误返回, 抛出 SwHungException;
+        /// 调用方 (出图循环) 用 Reconnect 启动新实例后重做。实测 (2026-10-17 ~ 10-20): 出图中 View.GetPolylines7 偶发不返回,
+        /// SolidWorks 空闲、CPU 为 0、无对话框, 改动前的代码同样会遇到 (api_calibration.md 第 4 节第 10 条)。
+        /// </summary>
+        public static T Guard<T>(string what, int seconds, Func<T> call)
+        {
+            var proc = swProc;
+            int fired = 0;
+            using (new System.Threading.Timer(_ =>
+            {
+                if (System.Threading.Interlocked.Exchange(ref fired, 1) != 0) return;
+                try
+                {
+                    if (proc != null && IsOwned(proc))
+                    {
+                        Log(string.Format("!! {0} 超过 {1} s 未返回 (专用实例 PID {2} 挂起), 结束专用实例", what, seconds, proc.Id));
+                        proc.Kill();
+                    }
+                }
+                catch { }
+            }, null, seconds * 1000, System.Threading.Timeout.Infinite))
+            {
+                try { return call(); }
+                catch (Exception e) when (System.Threading.Volatile.Read(ref fired) == 1) { throw new SwHungException(what, seconds, e); }
+            }
+        }
+
+        /// <summary>专用实例已不在 (被看守结束或崩溃)</summary>
+        public static bool Lost
+        {
+            get { var p = swProc; try { return p == null || p.HasExited; } catch { return true; } }
+        }
+
+        /// <summary>专用实例意外结束后重新连接 (启动新实例)。用户选项原值记录仍在 .cad/, 新实例照常设置, 结束时恢复</summary>
+        public static void Reconnect()
+        {
+            App = null; swProc = null;
+            Connect();
         }
 
         public static void Recycle(double gb)

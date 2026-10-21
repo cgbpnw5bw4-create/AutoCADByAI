@@ -1,6 +1,6 @@
 {
   "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
-  "source_run": "20261010_141019_cfc650_m03",
+  "source_run": "20261020_102535_cfc650_m03",
   "checks": [
     "参数校验",
     "模型完整性",
@@ -10,6 +10,7 @@
     "工程图参考",
     "STEP 身份与内容",
     "图纸版面审核",
+    "外形尺寸读数与几何一致",
     "图纸合订"
   ],
   "metrics": {
@@ -60,112 +61,178 @@
       "size": "A3",
       "scale": "1:2",
       "dims": 17,
-      "holes": 0
+      "holes": 0,
+      "extents": []
     },
     {
       "file": "00_通用自制件/CFC650-GY-002_主动导辊_φ80×750.SLDDRW",
       "size": "A3",
       "scale": "1:2.5",
       "dims": 21,
-      "holes": 0
+      "holes": 0,
+      "extents": []
     },
     {
       "file": "00_通用自制件/CFC650-GY-003_浸没辊_φ60×750.SLDDRW",
       "size": "A3",
       "scale": "1:1.5",
       "dims": 9,
-      "holes": 0
+      "holes": 0,
+      "extents": []
     },
     {
       "file": "00_通用自制件/CFC650-GY-004_浸没辊轴承座.SLDDRW",
       "size": "A3",
       "scale": "2:1",
       "dims": 2,
-      "holes": 3
+      "holes": 3,
+      "extents": [
+        22,
+        44.5
+      ]
     },
     {
       "file": "00_通用自制件/CFC650-GY-005_浸没辊压盖.SLDDRW",
       "size": "A3",
       "scale": "2.5:1",
       "dims": 3,
-      "holes": 4
+      "holes": 4,
+      "extents": [
+        6,
+        22,
+        80
+      ]
     },
     {
       "file": "00_通用自制件/CFC650-GY-007_墙板角座.SLDDRW",
       "size": "A3",
       "scale": "1:1.5",
       "dims": 4,
-      "holes": 8
+      "holes": 8,
+      "extents": [
+        100,
+        100,
+        100,
+        159
+      ]
     },
     {
       "file": "00_通用自制件/CFC650-GY-008_电机支柱_φ20×140.SLDDRW",
       "size": "A3",
       "scale": "1:1",
       "dims": 6,
-      "holes": 0
+      "holes": 0,
+      "extents": []
     },
     {
       "file": "00_通用自制件/CFC650-GY-009_伺服电机安装板.SLDDRW",
       "size": "A3",
       "scale": "1:1",
       "dims": 3,
-      "holes": 18
+      "holes": 18,
+      "extents": [
+        12,
+        140,
+        170
+      ]
     },
     {
       "file": "00_通用自制件/CFC650-GY-010_喷淋管_DN25.SLDDRW",
       "size": "A3",
       "scale": "1:4",
       "dims": 1,
-      "holes": 14
+      "holes": 14,
+      "extents": [
+        1155
+      ]
     },
     {
       "file": "00_通用自制件/CFC650-GY-011_喷淋管托架.SLDDRW",
       "size": "A3",
       "scale": "1:1",
       "dims": 4,
-      "holes": 4
+      "holes": 4,
+      "extents": [
+        45,
+        45,
+        50,
+        60
+      ]
     },
     {
       "file": "M03_碱洗模块/CFC650-M03-001_碱洗槽.SLDDRW",
       "size": "A3",
       "scale": "1:15",
       "dims": 4,
-      "holes": 20
+      "holes": 20,
+      "extents": [
+        450,
+        450,
+        916,
+        1090
+      ]
     },
     {
       "file": "M03_碱洗模块/CFC650-M03-002_碱洗墙板(操作侧).SLDDRW",
       "size": "A3",
       "scale": "1:6",
       "dims": 3,
-      "holes": 56
+      "holes": 56,
+      "extents": [
+        12,
+        950,
+        1050
+      ]
     },
     {
       "file": "M03_碱洗模块/CFC650-M03-003_碱洗墙板(传动侧).SLDDRW",
       "size": "A3",
       "scale": "1:6",
       "dims": 3,
-      "holes": 56
+      "holes": 56,
+      "extents": [
+        12,
+        950,
+        1050
+      ]
     },
     {
       "file": "M03_碱洗模块/CFC650-M03-004_碱洗排风罩.SLDDRW",
       "size": "A3",
       "scale": "1:15",
       "dims": 4,
-      "holes": 3
+      "holes": 3,
+      "extents": [
+        340,
+        340,
+        930,
+        990
+      ]
     },
     {
       "file": "M03_碱洗模块/CFC650-M03-005_排风罩托条.SLDDRW",
       "size": "A3",
       "scale": "1:1.5",
       "dims": 4,
-      "holes": 5
+      "holes": 5,
+      "extents": [
+        30,
+        30,
+        30,
+        990
+      ]
     },
     {
       "file": "装配图/CFC650-M03-000_碱洗模块装配.SLDDRW",
       "size": "A2",
       "scale": "1:15",
       "dims": 3,
-      "balloons": 20
+      "balloons": 20,
+      "extents": [
+        1065,
+        1115,
+        1463
+      ]
     }
   ]
 }

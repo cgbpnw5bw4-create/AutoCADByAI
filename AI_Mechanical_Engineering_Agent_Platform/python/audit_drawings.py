@@ -1,4 +1,4 @@
-"""工程图 PDF 版面审核: 内容超出图框 / 图线压标题栏 / 文字互相重叠 / 图线压技术要求。
+"""工程图 PDF 版面审核: 内容超出图框 / 图线压标题栏 / 文字互相重叠 / 图线压技术要求; 并读出外形尺寸的标注值。
 
 用法: python python/audit_drawings.py <drawings 目录> [--json <输出.json>]
 来源: CFC-650 铜箔清洗机 scripts/audit_pdf.py (106 张图 0 项), 改为按运行目录调用并输出 JSON。
@@ -7,12 +7,17 @@
   1. drawings/_formats/format_<图幅>.pdf (内核导出的空白图纸) 中出现的元素;
   2. 同图幅 PDF 不少于 2 份时, 出现于 ≥80% 份数中的元素。
 其余为内容。
+
+外形尺寸 (JSON 的 extents): 图纸目录 index.json 的 extent_marks 记有每个外形尺寸文字在图纸上的位置与应有值
+(内核出图时记录; 出图中不向 SolidWorks 读回尺寸值, 读的是 PDF 上实际印出的数)。
+在 PDF 上取离该位置最近 (8 mm 内) 的数字文字作为标注值; tol = 显示精度的一半 + 0.02 mm, 由内核 Drw.ApplyExtentReadings 核对。
 """
 import argparse
 import collections
 import glob
 import json
 import os
+import re
 import sys
 
 import pymupdf
@@ -128,7 +133,51 @@ def audit(drw_dir):
     probs = [r for r in rows if r["out_of_frame"] or r["over_title_block"] or r["text_overlap_count"] or r["lines_over_notes"]]
     return {"total": len(rows), "problem_count": len(probs), "by_size": {k: len(v) for k, v in by.items()},
             "format_reference": sorted(os.path.basename(p) for p in glob.glob(os.path.join(drw_dir, "_formats", "*.pdf"))),
-            "problems": probs, "drawings": rows}
+            "problems": probs, "drawings": rows, "extents": read_extents(drw_dir, data)}
+
+
+NUM = re.compile(r"\d+(?:\.\d+)?")
+NEAR = 8.0   # mm: 标注文字中心离记录位置的最大距离
+
+
+def read_extents(drw_dir, data):
+    """按 index.json 的 extent_marks ([[x, y, 应有值], …], mm, 图纸坐标原点左下) 在各 PDF 上读出外形尺寸标注值。"""
+    idx = os.path.join(drw_dir, "index.json")
+    if not os.path.exists(idx):
+        return []
+    with open(idx, encoding="utf-8") as f:
+        rows = json.load(f)
+    pages = {os.path.normcase(os.path.abspath(k)): v for k, v in data.items()}
+    out = []
+    for r in rows:
+        marks = r.get("extent_marks")
+        if not marks:
+            continue
+        page = pages.get(os.path.normcase(os.path.abspath(os.path.join(drw_dir, r["pdf"]))))
+        res = []
+        for m in marks:
+            x, y, geo = (list(m) + [None, None, None])[:3]
+            hit = None
+            if page is not None and x is not None and y is not None:
+                H = page[2]
+                mx, my = x, H - y                                   # PDF 坐标 y 向下
+                for it in page[3]:
+                    if it[0] != "t":
+                        continue
+                    num = NUM.search(it[5])
+                    if not num:
+                        continue
+                    d = ((it[1] + it[3]) / 2 - mx) ** 2 + ((it[2] + it[4]) / 2 - my) ** 2
+                    if d <= NEAR ** 2 and (hit is None or d < hit[0]):
+                        hit = (d, num.group(0), it[5])
+            if hit is None:
+                res.append({"geo": geo, "read": None, "text": None, "dist": None, "tol": None})
+            else:
+                dec = len(hit[1].split(".")[1]) if "." in hit[1] else 0
+                res.append({"geo": geo, "read": float(hit[1]), "text": hit[2], "dist": round(hit[0] ** 0.5, 2),
+                            "tol": round(0.5 * 10 ** -dec + 0.02, 4)})
+        out.append({"file": r["pdf"], "marks": res})
+    return out
 
 
 def main():
@@ -142,6 +191,12 @@ def main():
         print("  %s [%s] 出框 %d %s | 压标题栏 %d | 文字重叠 %d %s | 压技术要求 %d" % (
             p["file"], p["size"], p["out_of_frame"], p["out_of_frame_text"], p["over_title_block"],
             p["text_overlap_count"], p["text_overlaps"], p["lines_over_notes"]))
+    ms = [m for e in r["extents"] for m in e["marks"]]
+    print("外形尺寸 %d 个, 读不出 %d 个" % (len(ms), sum(1 for m in ms if m["read"] is None)))
+    for e in r["extents"]:
+        for m in e["marks"]:
+            if m["read"] is None or abs(m["read"] - m["geo"]) > m["tol"]:
+                print("  %s 外形尺寸 应为 %s, 读出 %s" % (e["file"], m["geo"], m["text"]))
     if a.json:
         with open(a.json, "w", encoding="utf-8") as f:
             json.dump(r, f, ensure_ascii=False, indent=2)
