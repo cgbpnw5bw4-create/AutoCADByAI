@@ -1,17 +1,18 @@
 {
   "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
-  "source_run": "20261016_165945_microwave_furnace",
+  "source_run": "20261026_103852_microwave_furnace",
   "checks": [
+    "参数校验",
     "模型完整性",
     "干涉检查",
     "物料清单",
     "零件几何与原 STEP 一致",
     "装配位置与原 STEP 一致",
-    "参数校验",
     "工程图生成",
     "工程图参考",
     "STEP 身份与内容",
     "图纸版面审核",
+    "外形尺寸读数与几何一致",
     "图纸合订"
   ],
   "metrics": {
@@ -162,35 +163,60 @@
       "size": "A2",
       "scale": "1:4",
       "dims": 3,
-      "balloons": 1
+      "balloons": 1,
+      "extents": [
+        93.25,
+        214.67,
+        589
+      ]
     },
     {
       "file": "装配图/RTWBL340A1000_微波炉箱体模块.SLDDRW",
       "size": "A2",
       "scale": "1:10",
-      "dims": 2,
-      "balloons": 25
+      "dims": 3,
+      "balloons": 25,
+      "extents": [
+        1152.97,
+        1233,
+        1479.89
+      ]
     },
     {
       "file": "装配图/RTWBL340A1000_配电盘模块.SLDDRW",
       "size": "A2",
       "scale": "1:4",
       "dims": 3,
-      "balloons": 12
+      "balloons": 12,
+      "extents": [
+        174.1,
+        480,
+        900
+      ]
     },
     {
       "file": "装配图/RTWBL340A1001B.SLDDRW",
       "size": "A2",
       "scale": "1:15",
-      "dims": 2,
-      "balloons": 4
+      "dims": 3,
+      "balloons": 4,
+      "extents": [
+        1300,
+        1750,
+        1910
+      ]
     },
     {
       "file": "装配图/微波实验炉.SLDDRW",
       "size": "A2",
       "scale": "1:15",
-      "dims": 2,
-      "balloons": 3
+      "dims": 3,
+      "balloons": 3,
+      "extents": [
+        1300,
+        1750,
+        1910
+      ]
     }
   ]
 }

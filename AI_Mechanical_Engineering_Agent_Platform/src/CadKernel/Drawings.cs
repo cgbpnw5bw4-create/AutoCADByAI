@@ -15,7 +15,8 @@ namespace CadKernel
     ///   装配图: 主/俯/轴测视图 + 明细表 + 零件序号
     ///   输出: SLDDRW + PDF; 激光下料件另出 DXF (1:1 展开面)
     /// 选边方式: View.GetPolylines7 取视图几何(视图坐标, 模型尺度) -> View.SelectEntity 精确选中, 不依赖屏幕拾取;
-    /// 装配图中先按记录位置换成所在实例上的边 (InstanceEnt); 外形尺寸是否量对由后处理从 PDF 读出标注值核对 (ExtentDim、MarksCol)。
+    /// 装配图视图的外形尺寸改取各零部件的可见边 (AsmGeo, 不经 GetPolylines7, 边带零部件即是该实例);
+    /// 外形尺寸是否量对由后处理从 PDF 读出标注值核对 (ExtentDim、MarksCol)。
     /// </summary>
     public static class Drw
     {
@@ -508,6 +509,60 @@ namespace CadKernel
             public double Y(double ly) { return Oy + S * ly; }
         }
 
+        /// <summary>
+        /// 装配图视图的几何 (视图局部坐标, 米, 模型尺度, 与 Geo 相同), 取自各零部件的可见边 (View.GetVisibleEntities2), 不用 GetPolylines7。
+        /// 实测 (2026-10-22/26, 本机装有天锐透明加密 LdMFilter): GetPolylines7 在微波实验炉箱体模块装配图中解析各记录对应的实体时挂起
+        /// (SolidWorks 自行逐实例射线选取, CPU 0, 改动前的代码同样); 只取几何的 GetPolylines5 与按零部件取可见边都正常。
+        /// 可见边带零部件, 选中即是该实例, 不再有"选到别的实例"的问题 (api_calibration.md 第 2 节第 26 条)。
+        /// 每条边只调一次 Edge.GetCurveParams2 (起点 xyz、终点 xyz、参数、[8] 的高 32 位 = 曲线类型); 整圆再取 Curve.CircleParams。
+        /// 取: 直线 → 线段; 整圆所在平面平行于视图 → 整圆, 垂直于视图 → 侧看的圆 (软直线, 与坐标轴平行时)。
+        /// 不取轮廓线 (SilhouetteEdge): 按零部件取轮廓线在行星齿轮装配图侧视图中挂起; 外形尺寸因此只量到真实边。
+        /// 与 GetPolylines5 的几何范围核对一致 (行星齿轮装配图主视图 ±90 mm、侧视图 x ±90 / y ±56 mm)。
+        /// </summary>
+        static List<Seg> AsmGeo(View v, List<(Component2 c, double[] xf)> parts, out List<Seg> soft)
+        {
+            const int LINE = (int)swCurveTypes_e.LINE_TYPE, CIRCLE = (int)swCurveTypes_e.CIRCLE_TYPE;
+            var r = new List<Seg>();
+            soft = new List<Seg>();
+            var vm = new VMap(v);
+            double[] vt = (double[])v.ModelToViewTransform.ArrayData;
+            foreach (var (c, xf) in parts)
+            {
+                Func<double[], double[]> at = p => { var q = XfPoint(vt, XfPoint(xf, p)); return new[] { (q[0] - vm.Ox) / vm.S, (q[1] - vm.Oy) / vm.S }; };
+                object[] es = Sw.Guard("视图 " + v.Name + " 取可见边", GEO_TIMEOUT_S, () => (object[])v.GetVisibleEntities2(c, (int)swViewEntityType_e.swViewEntityType_Edge));
+                foreach (object o in es ?? new object[0])
+                {
+                    if (!(o is Edge e)) continue;
+                    try
+                    {
+                        double[] p = (double[])e.GetCurveParams2();
+                        int type = (int)(BitConverter.DoubleToInt64Bits(p[8]) >> 32);
+                        double[] s0 = { p[0], p[1], p[2] }, s1 = { p[3], p[4], p[5] };
+                        if (type == LINE)
+                        {
+                            double[] a = at(s0), b = at(s1);
+                            if (Math.Abs(a[0] - b[0]) + Math.Abs(a[1] - b[1]) > 1e-9) r.Add(new Seg { X1 = a[0], Y1 = a[1], X2 = b[0], Y2 = b[1], Ent = e });
+                        }
+                        else if (type == CIRCLE && Math.Abs(s0[0] - s1[0]) + Math.Abs(s0[1] - s1[1]) + Math.Abs(s0[2] - s1[2]) < 1e-9)   // 只取整圆 (与 Geo 相同)
+                        {
+                            double[] cp = (double[])((Curve)e.GetCurve()).CircleParams;     // 圆心 xyz, 轴向 xyz, 半径
+                            double rr = cp[6];
+                            double[] o0 = at(new[] { cp[0], cp[1], cp[2] }), o1 = at(new[] { cp[0] + cp[3], cp[1] + cp[4], cp[2] + cp[5] });
+                            double ax = o1[0] - o0[0], ay = o1[1] - o0[1], al = Math.Sqrt(ax * ax + ay * ay);   // 轴向在图面上的投影 (模型尺度)
+                            if (al < 1e-6) r.Add(new Seg { Circle = true, Cx = o0[0], Cy = o0[1], R = rr, Ent = e });            // 正对的圆
+                            else if (Math.Abs(ax) < 1e-6 * al || Math.Abs(ay) < 1e-6 * al)                                       // 侧看的圆: 与坐标轴平行的线段
+                            {
+                                double px = -ay / al, py = ax / al;
+                                soft.Add(new Seg { X1 = o0[0] - px * rr, Y1 = o0[1] - py * rr, X2 = o0[0] + px * rr, Y2 = o0[1] + py * rr, Ent = e });
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            return r;
+        }
+
         static bool Sel(ModelDoc2 d, View v, Seg s, bool append)
         {
             if (!append) d.ClearSelection2(true);
@@ -913,12 +968,15 @@ namespace CadKernel
 
         /// <summary>
         /// 外形尺寸: 最左/最右竖直边 -> 水平尺寸; 最下/最上水平边 -> 竖直尺寸。标注成功的尺寸连同其应有值追加到 marks (存盘前取位置, 见 MarksCol)。
-        /// parts = 装配图视图所示装配体的零件实例 (AsmParts, 用于按实例选边); 零件图为 null
+        /// parts = 装配图视图所示装配体的零件实例 (AsmParts): 非空时几何取自其可见边 (AsmGeo); 零件图为 null, 用 Geo (GetPolylines7)
         /// </summary>
         static int Overall(ModelDoc2 d, View v, List<ExtentMark> marks, bool horiz, bool vert, bool hAbove = false, List<(Component2 c, double[] xf)> parts = null)
         {
             List<Seg> soft;
-            var g = Geo(v, out soft); var vm = new VMap(v);
+            // 装配图视图: 几何取自各零部件的可见边 (AsmGeo, 不经 GetPolylines7); 边已带零部件, 不必再按实例换边
+            bool asm = parts != null && parts.Count > 0;
+            var g = asm ? AsmGeo(v, parts, out soft) : Geo(v, out soft); var vm = new VMap(v);
+            if (asm) parts = null;
             double[] ol = (double[])v.GetOutline();
             int n = 0;
             var vl = g.Where(s => !s.Circle && Math.Abs(s.X1 - s.X2) < 1e-7 && Math.Abs(s.Y1 - s.Y2) > 1e-4).ToList();
