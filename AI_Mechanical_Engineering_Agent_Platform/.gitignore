@@ -10,6 +10,9 @@ TestResults/
 output/*
 !output/README.md
 
+# 回归与独立复验产物 (含只读历史归档)
+qa/
+
 # 机器级状态: 专用 SolidWorks 实例 PID、被临时修改的用户选项原值
 .cad/
 

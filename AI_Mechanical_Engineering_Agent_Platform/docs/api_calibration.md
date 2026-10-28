@@ -6,6 +6,27 @@
 
 **本平台未回归**：来源项目实测有效，但平台现有回归样例 (行星齿轮 6 件、M03 约 330 件、微波实验炉 229 件) 走不到这条路径 —— 大型装配体 (> 500 零部件)、整机总装 A0 图、出图途中的内存回收等只在清洗机整机上出现过。重构时对这些代码只做了移植，没有在平台上重新验证；第一个用到它们的设计跑通后去掉标记。
 
+**REASW 新增参考与本机验证（2026-10-26）**：精选来源在 `references/reasw/index.json`, 仅含 R06/R07/R08 单配置/R12 的冻结源码片段、静态契约与帮助摘录。源版本为 SolidWorks 2023 SP05 / API31.5, PIA 31.5.0.52。REASW 的 20/21 历史案例及20工件/789检查不自动认证新内核实现; 静态声明、源码存在且场景通过、方法事件已观察、独立工件读回分开记录。本批能力另以本平台新建几何和独立副本完成验证。
+
+| 本批能力 | 历史参考的限定范围 | 本平台实现与验证要求 |
+|---|---|---|
+| 完全约束与具名尺寸 | 固定圆心 + 直径驱动尺寸; 保存的单圆柱几何与尺寸读回 | `Parameters.ConstrainedCylinder / Block / ReadMm / SetMm`; 明确单位、草图状态、每次重新定位尺寸, 修改后读回尺寸/实体/解析体积 |
+| 配置隔离 | 块体原配置80/Wide_Only100 的宽度与体积, 两配置保存重开 | `RenameSingleConfiguration / AddConfiguration / InConfiguration`; 实际配置核对, finally 恢复原配置; 不覆盖任意多配置模型 |
+| 方程式 | `Add2` 单配置全局变量90→120mm并驱动Width; 多配置Add3更新仍失败 | `DriveSingleConfiguration`; 拒绝多配置路线, 不把表达式改变当作几何已经改变 |
+| 线性阵列 | 直线边+圆形贯穿切除, 总数3、间距15mm | `PatternFeatures.LinearCut`; 方向边mark1、种子特征mark4, 选择及解析体积逐项核对 |
+| 圆周阵列 | 原点Z轴圆柱面+圆形贯穿切除, 总数4、整周 | `PatternFeatures.CircularCut`; 圆柱面mark1、种子特征mark4; 历史是FeatureCircularPattern4, 不外推其它版本/范围 |
+| 镜像 | 基准面镜像一个切除特征 | `PatternFeatures.MirrorCut`; 种子mark1、基准面mark2; 不覆盖实体或装配镜像 |
+
+单配置 Add2 的通过不会关闭多配置 Add3 失败; HoleWizard5 仍无历史通过证据, 圆形放样35.5ppm差异未解释, REASW 工程图只读重开 `Dimension.FullName` 的 `RPC_E_SERVERFAULT` 与 Add-in 无回调问题也未解决。原生候选入口关联只供研究引用, 不调用私有地址。新增 `reasw_parametric_patterns --regression` 与 `cad verify` 的本轮结果应分别从新 qa/ 运行清单和复验报告读取。
+
+本轮样例运行 `qa/20261026_171635_reg_reasw_parametric_patterns` 通过完整六阶段流水线和 7 张图纸审核; 独立复验 `qa/20261026_211807_verify_reasw_parametric_patterns/checks/verification.json` 为 PASSED: 6 个原生零件/7 个配置 + 1 份 STEP, 共 8 次观察, 哈希前后一致、正常退出、强制清理 0。本平台圆阵孔环半径为20 mm, 历史参考是15 mm; 独立复验只覆盖配置、具名尺寸、实体数和体积, 不把体积一致当作孔位也已独立验证。保留首轮种子识别拒绝、STEP 配置名误判及复验配置切换错误的失败目录。样例生成时一次 GetPolylines7 超时、M03 三次超时均由原有有限重画恢复; 根因未解决。
+
+本轮兼容修正: Instant3D 的 GetTypeName2 返回 ICE 时, 按 [2023 官方文档](https://help.solidworks.com/2023/english/api/sldworksapi/solidworks.interop.sldworks~solidworks.interop.sldworks.ifeature~gettypename.html) 用 GetTypeName 取底层类型, 仍严格只接受 Cut; STEP 产品名可附精确的被引用配置名, 多配置须逐个出现, 不做前缀模糊匹配; 只读复验已激活配置时跳过 ShowConfiguration2, 其它切换仍检查返回值与活动身份。
+
+本轮微波实验炉回归中, 99个重建实体最大差集0、229个实例位置一致、674个已登记干涉且新增0、STEP 202实体及原基准通过。日志中回折边7654 s是墙钟耗时, 系统事件确认期间有合盖待机/休眠（约18:34至20:41）, 不能作为同等时长活动CAD计算的证据。
+
+验证用途使用新专用实例, 正常退出、重连/重试与强制清理分别记入 `runtime_events.jsonl`。普通建模仍写 output/, 回归和独立复验写 qa/; qa/archive/ 只读、禁止 resume。装配图使用 `AsmGeo` 是对 `GetPolylines7` 的已记录绕行, 零件图仍可能经过该 API; 超时看守与重画不证明根因已修复, 详见第4节第10条。
+
 ## 1. 建模与装配
 
 | # | 行为 | 结论 | 来源 | 内核位置 |
@@ -113,7 +134,7 @@
 | 6 | 静态类 `Run` | 类内若有名为 `Run` 的成员会遮蔽 `CadKernel.Run` → 内核中避免把方法命名为 Run | 本轮 |
 | 7 | Python 解释器 | `%LOCALAPPDATA%\Microsoft\WindowsApps\python.exe` (应用执行别名) 可能排在 PATH 前面，在某些进程环境中直接以退出码 49 / 9009 返回、无任何输出 → `config/cad.json` 的 `python` 写解释器完整路径 | 2026-10-10 |
 | 8 | 启动专用实例的句柄继承 | `Process.Start(exe)` 在 .NET 中默认 `UseShellExecute=false`，子进程继承调用方的标准输出句柄；SolidWorks 比 `cad` 活得久，一直占着调用方重定向输出的管道，以管道读输出的调用方 (PowerShell `*>`、自动化工具) 永远等不到结束 → 用 `UseShellExecute=true` 启动 | 2026-10-10 |
-| 9 | **SolidWorks 占住目录** | 载入或另存文件后，SolidWorks 把该文件所在目录设为进程当前目录，这个目录随后不能删除或改名 ("另一进程正在使用"，重试无效，SolidWorks 空闲时也一样) → 删、换目录之前 `Sw.ReleaseDir` (`SetCurrentWorkingDirectory` 到系统临时目录)，`Sw.Disconnect` 时也释放；改后同一目录随即可删。但不只是当前目录：2026-10-16 实测载入过 x_t 的暂存目录在 `ReleaseDir` 之后仍删不掉，结束专用实例后立即可删 (SolidWorks 对该目录另持有句柄) → 导入在删暂存目录、替换 `geometry/` 之前先退出专用实例 (`Sw.Shutdown`)；整目录改名仍失败时退为逐个文件替换 | 2026-10-11 / 2026-10-16 |
+| 9 | **SolidWorks 占住目录** | 载入或另存文件后，SolidWorks 把该文件所在目录设为进程当前目录，这个目录随后不能删除或改名 ("另一进程正在使用"，重试无效，SolidWorks 空闲时也一样) → 删、换目录之前 `Sw.ReleaseDir` (`SetCurrentWorkingDirectory` 到系统临时目录)，`Sw.Disconnect` 时也释放；改后同一目录随即可删。但不只是当前目录：2026-10-16 实测载入过 x_t 的暂存目录在 `ReleaseDir` 之后仍删不掉，结束专用实例后立即可删 (SolidWorks 对该目录另持有句柄) → 导入在删暂存目录、替换 `geometry/` 之前先退出专用实例 (`Sw.Shutdown`)；旧版曾在整目录改名失败时退为逐文件替换, 该方案会在中途失败时丢失原数据, 现已移除; 现行导入先校验暂存数据, 再将 geometry/ 与 import.json 成对提交, 失败回滚, 回滚不完整则保留备份并报告位置 | 2026-10-11 / 2026-10-16 |
 | 10 | **出图时 `GetPolylines7` 偶发挂起** | 平台放在 git worktree (`…\.claude\worktrees\<名>\AI_Mechanical_Engineering_Agent_Platform`，比主目录深 41 个字符) 运行微波实验炉，箱体模块装配图在主视图 `View.GetPolylines7` 处不返回：SolidWorks 空闲、CPU 为 0，对其它 COM 客户端照常响应，界面上该视图未画出，向窗口发 Esc / 重绘无效 (`dotnet-stack` 取栈确认停在 `Drw.Geo`)。4 次运行 4 次如此，其中 1 次是改动前的代码；同一份代码与模型经 `subst W: <平台目录>` 映射到短路径后一次通过。差别只在路径长度：箱体模块里的 A14 热电偶子装配完整路径 232 个字符，按 GBK 计 263 字节，超过 MAX_PATH 260 (主目录下 222 字节) → 推断 SolidWorks 视图生成的某处按 ANSI 路径处理 (未证实)。平台根目录要浅；必须在深目录运行时用 `subst` 映射短盘符，续跑须用同一盘符 (运行目录记录的是绝对路径)。**前置检查** (`PathLimit`，不连接 SolidWorks)：`cad doctor` 按各输入任务、`cad run` / `resume` 按本次运行估算 models/ 下最长的模型路径 (导入设计取 import.json 中的名称，与建模同一套命名；代码中命名的设计取该任务上次运行的 models/；续跑另算运行目录里已有的)，按系统 ANSI 代码页 (`GetACP`，本机 936 = GBK) 计字节：≥ 260 (超出 MAX_PATH，即实测挂起的情形) 时要出图的运行不启动 (退出码 2)、doctor 报 ✗；222 < 字节 < 260 (超过实测可用的最长值、未经运行验证) 提示后照常运行；都给出 subst 建议与映射后的长度。只算模型文件，工程图、导出文件与 SolidWorks 自建的临时文件不在内。**路径不是唯一原因：** 2026-10-19/20 在主目录 (最长模型路径 169 字节) 同样频繁挂起，症状相同 (主目录 M03 回归出图 7 次运行中 5 次挂起，零件图 1 次、其余在装配图主/俯视图取几何时；行星齿轮装配图 1 次)。曾以为是新加的"标注后读回 `Dimension.SystemValue`"所致 (读回前的代码 29ff828 两次通过、关掉读回一次通过)，但 `cad probe-asm` 在同一会话里反复出行星齿轮装配图：现行代码第 6 次挂起，关掉按实例选边第 12 次挂起，**只含序号修复的 9ee9182 第 1 次就挂起** —— 挂起之前执行的代码与改动前相同 → 与读回、实例选边无关，那几次通过属偶然；同期专用实例多次启动即崩溃于 `ucrtbase.dll` (0xc0000409，该文件 2026-10-14 随 Windows 安全更新替换，10-17 首次重启)，原因未查明。**对策**：`Sw.Guard` 给 `GetPolylines7` 设 300 s 超时 (正常最大视图几秒)，超时即结束专用实例 (阻塞的调用随之以 RPC 错误返回)，出图循环重启实例后整张重画 (每张至多 2 次，日志记 "!! … 未返回")；挂起时只结束、不点任何窗口。**2026-10-20/21 续查**：微波实验炉箱体模块装配图 (156 个零部件, 1:10) 主视图取几何在新启动的实例里几乎每次挂起 (整机运行与 `probe-asm` 连续 6 次)，看门狗重画 2 次也画不出；合并前的代码 29ff828 (10-16 用它五次整机都画出了这张图) 现在同样停在 `Drw.Geo` → 与代码无关。逐项排除：只开笔记本屏 / 窗口在外接屏或挪到主屏、关闭 SOLIDWORKS CAM 插件、不遍历零部件，均照样挂起；远程控制软件 (向日葵、GameViewer) 无会话。SolidWorks 日志 (`swxJRNL.swj`) 中挂起前有数百次 `SelectByRay` (选边时 SolidWorks 自行逐实例试探)。原因未查明，候选：10-17 起的系统 / SolidWorks 状态 (此后多次启动即崩溃于 ucrtbase)。**2026-10-22/26 续查与对策**：重启、更新 NVIDIA 驱动 (32.0.16.1742)、修复 SolidWorks、软件 OpenGL、关"高分辨率显示器增强选择"、用 10-16 旧模型、取几何前激活视图、不标尺寸、`GetPolylines7` 选项 0，均照样挂起；本机装有企业透明加密 / DLP (天锐 `LdMFilter.sys` 文件过滤驱动，签名 Xiamen Tipray，向所有进程注入 `LDHOOK64.dll`，策略由服务器下发)，最可疑但无法卸载、IT 不能调整。分离测试：同一视图上只取几何的 `GetPolylines5` 瞬间返回、按零部件取可见边 `GetVisibleEntities2(零部件, Edge)` 正常 (163 个零部件 2~3 s)，按零部件取轮廓线 (`SilhouetteEdge`) 挂起 → 挂起在 `GetPolylines7` 为每条记录解析实体对象时 (swxJRNL 中是 SolidWorks 自己的逐实例 `SelectByRay`)。对策：装配图视图的外形尺寸改用 `Drw.AsmGeo` 取几何 (各零部件可见边经零部件变换与视图变换投到图面，每条边一次 `Edge.GetCurveParams2`，与 `GetPolylines5` 的范围核对一致)，不再调用 `GetPolylines7`；零件图仍用 `GetPolylines7` (孔、回转体尺寸依赖它，挂起少见)，保留超时看守与重画。查证手段：`dotnet-stack report -p <cad 进程>` 看停在哪个调用；挂起时 SolidWorks 仍响应其它 COM 客户端，可经 ROT 名称 `SolidWorks_PID_<pid>` 晚绑定只读查看图纸各视图的尺寸数 | 2026-10-17 / 2026-10-20 |
 
 ## 5. 防假成功的三道防线 (CFC)

@@ -275,6 +275,7 @@ namespace CadKernel
                     }
                     catch (Exception e)
                     {
+                        RuntimeEvents.Record("PartDrawing", "failed", path, e, attempt, Sw.Lost && attempt <= LOST_RETRIES ? "restart_and_redraw" : null);
                         // 专用实例被超时看守结束 (或崩溃): 重启后整张重画
                         if (Sw.Lost && attempt <= LOST_RETRIES) { Sw.Log("!! " + Path.GetFileName(path) + ": " + e.Message + " → 重启专用实例后重画 (第 " + attempt + " 次)"); continue; }
                         nFail++; Sw.Log("!! 出图失败 " + Path.GetFileName(path) + ": " + e.Message);
@@ -297,6 +298,7 @@ namespace CadKernel
                         try { AsmDrawing(ap); nOk++; WriteIndex(); break; }
                         catch (Exception e)
                         {
+                            RuntimeEvents.Record("AsmDrawing", "failed", ap, e, attempt, Sw.Lost && lost < LOST_RETRIES ? "restart_and_redraw" : attempt < 2 ? "redraw" : null);
                             Sw.Log("!! 装配图失败 " + Path.GetFileName(ap) + " (第 " + attempt + " 次): " + e.Message);
                             if (Sw.Lost && lost++ < LOST_RETRIES) { Sw.Log("   重启专用实例后重画"); attempt--; continue; }
                             try { Sw.App.CloseAllDocuments(true); } catch { }

@@ -15,11 +15,11 @@ namespace CadLibrary
     {
         const string D = @"外购件";
         public const string UCF205 = "B_UCF205", CHUCK = "B_CHUCK", AIRSHAFT = "B_AIRSHAFT",
-            BRAKE = "B_BRAKE", CPL_BIG = "B_CPL100", CPL_BIG35 = "B_CPL100_35", CPL_SMALL = "B_CPL40", SERVO = "B_SERVO", GEARMOTOR = "B_GM15",
+            CPL_BIG = "B_CPL100", CPL_BIG35 = "B_CPL100_35", CPL_SMALL = "B_CPL40", SERVO = "B_SERVO",
             LOADCELL = "B_LOADCELL", RAIL = "B_RAIL", BLOCK = "B_BLOCK", EPC_ACT = "B_EPCACT", EPC_SNS = "B_EPCSNS",
-            CYL = "B_CYL", KNIFE = "B_KNIFE", BLOWER = "B_BLOWER", OVENFAN = "B_OVENFAN", HEATBOX = "B_HEATBOX",
-            TIHEATER = "B_TIHEATER", USTRANS = "B_USTRANS", USGEN = "B_USGEN", CABINET = "B_CABINET", PUMP = "B_PUMP",
-            BAGFILTER = "B_BAGFILTER", VALVE40 = "B_VALVE40", FOOT = "B_FOOT", NOZZLE = "B_NOZZLE", PBRG = "B_PBRG6004",
+            CYL = "B_CYL", KNIFE = "B_KNIFE", HEATBOX = "B_HEATBOX",
+            TIHEATER = "B_TIHEATER", USTRANS = "B_USTRANS",
+            VALVE40 = "B_VALVE40", FOOT = "B_FOOT", NOZZLE = "B_NOZZLE", PBRG = "B_PBRG6004",
             BRG6205 = "B_6205", BUSH30 = "B_BUSH30", ELBOW25 = "B_ELB25", ELBOW40 = "B_ELB40", TEE25 = "B_TEE25";
 
         static Part B(string id, string code, string name, string spec, string brand, double kg, double[] color)

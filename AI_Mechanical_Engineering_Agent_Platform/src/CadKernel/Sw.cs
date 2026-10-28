@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
@@ -23,6 +24,10 @@ namespace CadKernel
         public static string MatDb { get { return Env.MaterialDb; } }
         /// <summary>已连接实例的版本号 (RevisionNumber, 如 31.5.0)</summary>
         public static string Version { get; private set; }
+        public static int? ProcessId { get { try { return swProc?.Id; } catch { return null; } } }
+        public static long? ProcessStartUtcTicks { get { try { return swProc?.StartTime.ToUniversalTime().Ticks; } catch { return null; } } }
+        public static int ForcedCleanupCount { get; private set; }
+        public static bool LastShutdownNormal { get; private set; }
 
         // ---------------- 连接 ----------------
         // 自动化只使用本程序启动的专用 SolidWorks 实例, 通过 ROT 中 "SolidWorks_PID_<pid>" 条目精确连接 ——
@@ -77,7 +82,13 @@ namespace CadKernel
         /// <summary>进程仍是记录中的专用实例 (每次退出/结束之前都要再核对)</summary>
         static bool IsOwned(System.Diagnostics.Process p)
         {
-            try { return File.Exists(PidFile) && !p.HasExited && Matches(File.ReadAllText(PidFile), p.Id, p.StartTime.ToUniversalTime()); }
+            try
+            {
+                if (p.HasExited) return false;
+                DateTime start = p.StartTime.ToUniversalTime();
+                return (createdPid == p.Id && createdStartTicks == start.Ticks)
+                    || (File.Exists(PidFile) && Matches(File.ReadAllText(PidFile), p.Id, start));
+            }
             catch { return false; }
         }
 
@@ -112,24 +123,65 @@ namespace CadKernel
         /// <summary>正常退出专用实例, 超时才结束进程; 动手前与结束前都核对身份, 不是专用实例绝不动它</summary>
         static void Retire(System.Diagnostics.Process proc, int waitMs)
         {
+            LastShutdownNormal = false;
             if (!IsOwned(proc)) { Log("!! PID " + proc.Id + " 已不是专用实例, 不退出、不结束"); App = null; return; }
+            bool requestedExit = false;
+            SldWorks retiring = null;
             try
             {
-                SldWorks app = App ?? FromPid(proc.Id);
-                if (app != null) { app.CloseAllDocuments(true); app.ExitApp(); }    // 专用实例中的文档均已由程序保存
+                retiring = App ?? FromPid(proc.Id);
+                if (retiring != null) { retiring.CloseAllDocuments(true); retiring.ExitApp(); requestedExit = true; }
             }
             catch { }
-            if (!proc.WaitForExit(waitMs) && IsOwned(proc)) proc.Kill();
+            finally
+            {
+                App = null;
+                if (retiring != null && Marshal.IsComObject(retiring))
+                    try { Marshal.FinalReleaseComObject(retiring); } catch { }
+            }
+            if (!proc.WaitForExit(waitMs) && IsOwned(proc))
+            {
+                proc.Kill();
+                ForcedCleanupCount++;
+                proc.WaitForExit(10000);
+                CleanupEvent("ExitApp", "forced_cleanup", true);
+            }
+            else
+            {
+                LastShutdownNormal = requestedExit && proc.HasExited;
+                CleanupEvent("ExitApp", LastShutdownNormal ? "exited" : "exit_unconfirmed");
+            }
             App = null;
-            File.Delete(PidFile);
+            if (File.Exists(PidFile) && Matches(File.ReadAllText(PidFile), proc.Id, proc.StartTime.ToUniversalTime())) File.Delete(PidFile);
+            if (createdPid == proc.Id) { createdPid = 0; createdStartTicks = 0; }
+        }
+
+        // 日志写失败不能阻止结束已核对身份的挂起进程。
+        static void CleanupEvent(string api, string status, bool forced = false, string message = null)
+        {
+            try { RuntimeEvents.Record(api, status, forcedCleanup: forced, message: message); }
+            catch (Exception e) { Console.Error.WriteLine("运行事件写入失败: " + e.Message); }
         }
 
         static System.Diagnostics.Process swProc;
+        static bool freshScope;
+        // 启动即记录内存身份；即使写 .cad 记录失败，也只清理本次真正新建的进程。
+        static int createdPid;
+        static long createdStartTicks;
 
-        public static void Connect()
+        public static void Connect(bool fresh = false)
         {
             Directory.CreateDirectory(Run.StateDir);
-            var proc = Owned();
+            if (fresh && App != null) throw new InvalidOperationException("新鲜实例连接前已有连接，拒绝复用或操作已有会话");
+            if (fresh) { freshScope = true; swProc = null; createdPid = 0; createdStartTicks = 0; }
+            var previousPids = fresh ? System.Diagnostics.Process.GetProcessesByName("SLDWORKS").Select(p => p.Id).ToHashSet() : null;
+            var proc = fresh ? null : Owned();
+            if (fresh)
+            {
+                ForcedCleanupCount = 0;
+                LastShutdownNormal = false;
+                RuntimeEvents.Record("Connect", "fresh_requested", message: "保留已有 SolidWorks PID: " + string.Join(",", previousPids));
+            }
             if (proc != null && proc.WorkingSet64 > 3.5e9)
             {
                 Log(string.Format("专用 SolidWorks (PID {0}) 内存 {1:F1} GB, 重启", proc.Id, proc.WorkingSet64 / 1e9));
@@ -142,6 +194,9 @@ namespace CadKernel
                 // 重定向输出的管道, 以管道读取输出的调用方 (PowerShell *>、自动化工具) 永远等不到结束 (2026-10-10 实测)
                 proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SW_EXE) { UseShellExecute = true });
                 if (proc == null) throw new Exception("无法启动 SolidWorks: " + SW_EXE);
+                if (fresh && previousPids.Contains(proc.Id)) throw new InvalidOperationException("启动结果指向已有 SolidWorks PID，拒绝连接");
+                swProc = proc;
+                createdPid = proc.Id; createdStartTicks = proc.StartTime.ToUniversalTime().Ticks;
                 File.WriteAllText(PidFile, Stamp(proc.Id, proc.StartTime.ToUniversalTime()));
                 Log("启动专用 SolidWorks 实例 PID " + proc.Id);
             }
@@ -153,18 +208,28 @@ namespace CadKernel
                 if (App == null) System.Threading.Thread.Sleep(2000);
             }
             if (App == null) throw new Exception("无法连接专用 SolidWorks 实例 PID " + pid);
+            if (App.GetProcessID() != pid || !IsOwned(proc))
+            {
+                App = null;
+                throw new InvalidOperationException("COM 实例身份与新建进程记录不符");
+            }
+            if (!string.Equals(Path.GetFullPath(proc.MainModule.FileName), Path.GetFullPath(SW_EXE), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("专用实例可执行文件身份不符");
             App.Visible = true;
             if (File.Exists(ImportPrefFile)) { RestoreImportPrefs(); Log("上次导入中途退出: 已恢复导入相关用户选项"); }
+            RestoreExportPrefs();
             // "输入尺寸值" 会在程序标注尺寸时弹出修改框, 运行期间关闭; 这是用户级选项 (用户自己的 SolidWorks 也读它),
             // 原值记录在 .cad\sw_pref_orig.txt, 程序结束时 (Disconnect) 恢复并删除记录; 上次异常退出未恢复时沿用旧记录。
             if (!File.Exists(PrefFile)) File.WriteAllText(PrefFile, App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate).ToString());
             App.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate, false);
+            if (App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate)) throw new IOException("关闭输入尺寸提示失败");
             PartTpl = App.GetUserPreferenceStringValue((int)swUserPreferenceStringValue_e.swDefaultTemplatePart);
             AsmTpl = App.GetUserPreferenceStringValue((int)swUserPreferenceStringValue_e.swDefaultTemplateAssembly);
             TplDir = Path.GetDirectoryName(PartTpl);
             Version = App.RevisionNumber();
             if (Run.Dir != null) { Run.Manifest.SolidWorks = Version; Run.Save(); }
             Log("已连接 SolidWorks " + Version + " (专用实例 PID " + pid + ")");
+            RuntimeEvents.Record("Connect", "connected", message: Version);
             StartWatchdog(pid);
         }
 
@@ -180,10 +245,13 @@ namespace CadKernel
         /// </summary>
         public static void Shutdown()
         {
-            var proc = swProc ?? Owned();
-            Disconnect();
-            if (proc != null) Retire(proc, 60000);
-            swProc = null;
+            var proc = swProc ?? (freshScope ? null : Owned());
+            try { Disconnect(); }
+            finally
+            {
+                try { if (proc != null) Retire(proc, 60000); }
+                finally { swProc = null; watchdog?.Dispose(); watchdog = null; swPid = 0; freshScope = false; }
+            }
         }
 
         // ---------------- 调用超时看守 ----------------
@@ -205,13 +273,25 @@ namespace CadKernel
                     {
                         Log(string.Format("!! {0} 超过 {1} s 未返回 (专用实例 PID {2} 挂起), 结束专用实例", what, seconds, proc.Id));
                         proc.Kill();
+                        ForcedCleanupCount++;
+                        CleanupEvent(what, "timeout", true, seconds + "s; terminate_owned_process");
                     }
                 }
                 catch { }
             }, null, seconds * 1000, System.Threading.Timeout.Infinite))
             {
-                try { return call(); }
-                catch (Exception e) when (System.Threading.Volatile.Read(ref fired) == 1) { throw new SwHungException(what, seconds, e); }
+                try
+                {
+                    T result = call();
+                    if (System.Threading.Volatile.Read(ref fired) == 1) throw new SwHungException(what, seconds, null);
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    RuntimeEvents.Record(what, "failed", error: e);
+                    if (System.Threading.Volatile.Read(ref fired) == 1 && e is not SwHungException) throw new SwHungException(what, seconds, e);
+                    throw;
+                }
             }
         }
 
@@ -224,8 +304,10 @@ namespace CadKernel
         /// <summary>专用实例意外结束后重新连接 (启动新实例)。用户选项原值记录仍在 .cad/, 新实例照常设置, 结束时恢复</summary>
         public static void Reconnect()
         {
+            RuntimeEvents.Record("Reconnect", "recovering", recovery: "new_owned_process");
             App = null; swProc = null;
             Connect();
+            RuntimeEvents.Record("Reconnect", "recovered");
         }
 
         public static void Recycle(double gb)
@@ -234,6 +316,7 @@ namespace CadKernel
             if (proc == null) return;
             try { proc.Refresh(); if (proc.HasExited || proc.WorkingSet64 < gb * 1e9) return; } catch { return; }
             Log(string.Format("专用 SolidWorks 内存 {0:F1} GB > {1} GB, 重启", proc.WorkingSet64 / 1e9, gb));
+            RuntimeEvents.Record("Recycle", "recovering", recovery: "memory_recycle", message: proc.WorkingSet64 + " bytes");
             Disconnect();
             Retire(proc, 90000);
             Connect();
@@ -252,16 +335,35 @@ namespace CadKernel
         public static void Disconnect()
         {
             try { ReleaseDir(); } catch { }
-            try
+            var errors = new List<Exception>();
+            foreach (Action restore in new Action[] { RestoreDimensionPref, RestoreImportPrefs, RestoreExportPrefs })
             {
-                bool v;
-                if (App != null && File.Exists(PrefFile) && bool.TryParse(File.ReadAllText(PrefFile).Trim(), out v))
-                {
-                    App.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate, v);
-                    File.Delete(PrefFile);
-                }
+                try { restore(); }
+                catch (Exception e) { errors.Add(e); RuntimeEvents.Record("RestorePreferences", "failed", error: e); }
             }
-            catch { }
+            if (errors.Count > 0) throw new AggregateException("用户设置恢复未确认，保留 .cad 原值记录", errors);
+            RuntimeEvents.Record("RestorePreferences", "restored");
+        }
+
+        static void RestoreDimensionPref()
+        {
+            if (!File.Exists(PrefFile)) return;
+            if (App == null) throw new IOException("无法恢复尺寸提示原值: 实例不可用");
+            RestoreToggles(PrefFile, new[] { (int)swUserPreferenceToggle_e.swInputDimValOnCreate },
+                (key, value) => App.SetUserPreferenceToggle(key, value), key => App.GetUserPreferenceToggle(key));
+        }
+
+        /// <summary>先校验完整原值，再恢复并独立读回；任何失败都保留原值文件供下次恢复。</summary>
+        internal static void RestoreToggles(string file, int[] keys, Action<int, bool> set, Func<int, bool> get)
+        {
+            if (!File.Exists(file)) return;
+            string[] raw = File.ReadAllText(file).Trim().Split(',');
+            if (raw.Length != keys.Length || raw.Any(v => !bool.TryParse(v, out _))) throw new IOException("用户选项原值记录无效: " + file);
+            bool[] values = raw.Select(bool.Parse).ToArray();
+            for (int i = 0; i < keys.Length; i++) set(keys[i], values[i]);
+            for (int i = 0; i < keys.Length; i++)
+                if (get(keys[i]) != values[i]) throw new IOException("用户选项恢复读回不符: " + keys[i]);
+            File.Delete(file);
         }
 
         // ---------------- 模态对话框看门狗 ----------------
@@ -288,6 +390,7 @@ namespace CadKernel
             {
                 try
                 {
+                    if (swProc == null || swProc.Id != swPid || !IsOwned(swProc)) return;
                     EnumWindows((h, l) =>
                     {
                         uint p; GetWindowThreadProcessId(h, out p);
@@ -407,9 +510,14 @@ namespace CadKernel
                      : ext == ".slddrw" ? (int)swDocumentTypes_e.swDocDRAWING : (int)swDocumentTypes_e.swDocPART;
             // 强制完全还原打开 (不走轻化): 大型装配体模式下轻化加载会触发 SOLIDWORKS CAM 插件的模态错误框, 阻塞 API
             int opt = (int)swOpenDocOptions_e.swOpenDocOptions_Silent | (int)swOpenDocOptions_e.swOpenDocOptions_OverrideDefaultLoadLightweight;
-            ModelDoc2 d = (ModelDoc2)App.OpenDoc6(path, type, opt, "", ref e, ref w);
-            if (d == null) throw new Exception("打开失败(err=" + e + "): " + path);
-            return d;
+            try
+            {
+                ModelDoc2 d = (ModelDoc2)App.OpenDoc6(path, type, opt, "", ref e, ref w);
+                if (d == null) throw new Exception("打开失败(err=" + e + "): " + path);
+                RuntimeEvents.Record("OpenDoc6", "opened", path, message: "error=" + e + ", warning=" + w);
+                return d;
+            }
+            catch (Exception error) { RuntimeEvents.Record("OpenDoc6", "failed", path, error); throw; }
         }
 
         // ---------------- 外来几何 ----------------
@@ -428,7 +536,11 @@ namespace CadKernel
             if (!File.Exists(ImportPrefFile)) File.WriteAllText(ImportPrefFile, string.Join(",", orig));
             try
             {
-                foreach (var k in ImportPrefs) App.SetUserPreferenceToggle((int)k, false);
+                foreach (var k in ImportPrefs)
+                {
+                    App.SetUserPreferenceToggle((int)k, false);
+                    if (App.GetUserPreferenceToggle((int)k)) throw new IOException("导入选项设置读回不符: " + k);
+                }
                 return body();
             }
             finally { RestoreImportPrefs(); }
@@ -437,11 +549,35 @@ namespace CadKernel
         static void RestoreImportPrefs()
         {
             if (!File.Exists(ImportPrefFile)) return;
-            string[] v = File.ReadAllText(ImportPrefFile).Trim().Split(',');
-            bool b;
-            for (int i = 0; i < ImportPrefs.Length && i < v.Length; i++)
-                if (bool.TryParse(v[i], out b)) App.SetUserPreferenceToggle((int)ImportPrefs[i], b);
-            File.Delete(ImportPrefFile);
+            if (App == null) throw new IOException("无法恢复导入选项: 实例不可用");
+            RestoreToggles(ImportPrefFile, ImportPrefs.Select(k => (int)k).ToArray(),
+                (key, value) => App.SetUserPreferenceToggle(key, value), key => App.GetUserPreferenceToggle(key));
+        }
+
+        static string ExportPrefFile { get { return Path.Combine(Run.StateDir, "sw_export_prefs_orig.json"); } }
+
+        internal static void CaptureExportPrefs()
+        {
+            if (File.Exists(ExportPrefFile)) RestoreExportPrefs();
+            File.WriteAllText(ExportPrefFile, System.Text.Json.JsonSerializer.Serialize(new int[] {
+                App.GetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swStepAP),
+                App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportFaceEdgeProps) ? 1 : 0,
+                App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportAppearances) ? 1 : 0 }));
+        }
+
+        internal static void RestoreExportPrefs()
+        {
+            if (!File.Exists(ExportPrefFile)) return;
+            int[] v = System.Text.Json.JsonSerializer.Deserialize<int[]>(File.ReadAllText(ExportPrefFile));
+            if (App == null || v == null || v.Length != 3 || v[1] is < 0 or > 1 || v[2] is < 0 or > 1) throw new IOException("STEP 选项恢复记录无效或实例不可用");
+            App.SetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swStepAP, v[0]);
+            App.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportFaceEdgeProps, v[1] != 0);
+            App.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportAppearances, v[2] != 0);
+            if (App.GetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swStepAP) != v[0]
+                || App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportFaceEdgeProps) != (v[1] != 0)
+                || App.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportAppearances) != (v[2] != 0)) throw new IOException("STEP 选项恢复读回不符");
+            File.Delete(ExportPrefFile);
+            RuntimeEvents.Record("RestoreStepPreferences", "restored");
         }
 
         /// <summary>载入外来几何文件 (Parasolid x_t 等) 为零件文档, 长度单位设为 mm</summary>
@@ -461,8 +597,24 @@ namespace CadKernel
 
         public static void Activate(ModelDoc2 m)
         {
-            int e = 0;
-            App.ActivateDoc3(m.GetTitle(), true, (int)swRebuildOnActivation_e.swDontRebuildActiveDoc, ref e);
+            if (m == null) throw new ArgumentNullException(nameof(m));
+            string path = m.GetPathName();
+            try
+            {
+                int e = 0;
+                var active = App.ActivateDoc3(m.GetTitle(), true, (int)swRebuildOnActivation_e.swDontRebuildActiveDoc, ref e) as ModelDoc2;
+                var actual = App.ActiveDoc as ModelDoc2;
+                if (e != 0 || active == null || actual == null || !SameDocument(path, m.GetTitle(), actual.GetPathName(), actual.GetTitle())
+                    || !SameDocument(path, m.GetTitle(), active.GetPathName(), active.GetTitle()))
+                    throw new InvalidOperationException("文档激活身份核对失败 err=" + e + ": " + m.GetTitle());
+            }
+            catch (Exception error) { RuntimeEvents.Record("ActivateDoc3", "failed", path, error); throw; }
+        }
+
+        internal static bool SameDocument(string expectedPath, string expectedTitle, string actualPath, string actualTitle)
+        {
+            if (string.IsNullOrEmpty(expectedPath)) return string.IsNullOrEmpty(actualPath) && string.Equals(expectedTitle, actualTitle, StringComparison.Ordinal);
+            return !string.IsNullOrEmpty(actualPath) && string.Equals(Path.GetFullPath(expectedPath), Path.GetFullPath(actualPath), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>只关闭平台 output 目录下的文档 (历次运行的产物), 不影响用户自己打开的文件</summary>
@@ -473,7 +625,7 @@ namespace CadKernel
             while (d != null)
             {
                 string p = d.GetPathName();
-                if (!string.IsNullOrEmpty(p) && p.StartsWith(Run.OutputRoot, StringComparison.OrdinalIgnoreCase)) titles.Add(d.GetTitle());
+                if (!string.IsNullOrEmpty(p) && Run.IsOwnedOutputPath(p)) titles.Add(d.GetTitle());
                 d = (ModelDoc2)d.GetNext();
             }
             foreach (string t in titles)

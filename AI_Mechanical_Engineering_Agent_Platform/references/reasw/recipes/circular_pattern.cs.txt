@@ -1,0 +1,5 @@
+        static void TestCircularPattern()
+        {
+            IFeature b;IModelDoc2 m=CylinderBase(.03,.02,out b);IFeature cut=CutCircle(m,.015,0,.002);m.ClearSelection2(true);IFace2 cylinder=null;foreach(object x in (Array)Body(m).GetFaces()){IFace2 f=(IFace2)x;if(((ISurface)f.GetSurface()).IsCylinder()){double[] p=(double[])((ISurface)f.GetSurface()).CylinderParams;if(Math.Abs(p[6]-.03)<1e-6)cylinder=f;}}Require(cylinder!=null,"Outer cylindrical face");Select(m,cylinder,false,1);cut.Select2(true,4);
+            IFeature pattern=m.FeatureManager.FeatureCircularPattern4(4,2*Math.PI,false,"",false,true,false);FeatureOK(m,pattern,"circular_pattern");Finish(m,"circular_pattern",Math.PI*.03*.03*.02-4*Math.PI*.002*.002*.02);
+        }

@@ -1,0 +1,2 @@
+        static void TestMirror()
+        {IFeature b;IModelDoc2 m=Box(out b);IFeature cut=CutCircle(m,.015,.005,.002);m.ClearSelection2(true);cut.Select2(false,1);Plane(m,2).Select2(true,2);IFeature f=m.FeatureManager.InsertMirrorFeature2(false,false,true,false,0);FeatureOK(m,f,"mirror");Finish(m,"mirror",.00008-2*Math.PI*.002*.002*.02);}

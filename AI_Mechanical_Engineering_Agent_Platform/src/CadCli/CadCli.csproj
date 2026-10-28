@@ -6,6 +6,7 @@
     <RootNamespace>CadCli</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="CadTests" />
     <ProjectReference Include="..\CadKernel\CadKernel.csproj" />
     <ProjectReference Include="..\CadProjects\CadProjects.csproj" />
   </ItemGroup>

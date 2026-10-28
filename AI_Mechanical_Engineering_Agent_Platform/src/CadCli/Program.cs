@@ -32,6 +32,8 @@ namespace CadCli
                 Env.Load(root);
                 Run.Init(root);
                 string cmd = args.Length > 0 ? args[0].ToLowerInvariant() : "help";
+                // 整条命令持有互斥, 包括实例回收/重连的间隙; 只读查询不占用它。
+                using var commandLock = cmd == "list" || cmd == "doctor" || cmd == "help" ? null : CadCommandLock.Acquire();
                 string Opt(string name) { int i = Array.IndexOf(args, name); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
                 switch (cmd)
                 {
@@ -40,18 +42,22 @@ namespace CadCli
                         if (args.Length < 2) return Usage();
                         string dir = ResolveInput(root, args[1]);
                         var input = DesignInput.Load(dir);
-                        return Pipeline.Execute(FindProject(input.Project), input, null, Opt("--from"), Opt("--drawings"));
+                        return Pipeline.Execute(FindProject(input.Project), input, null, Opt("--from"), Opt("--drawings"), regression: args.Contains("--regression"));
                     }
                     case "resume":
                     {
                         if (args.Length < 2) return Usage();
                         string runDir = RunDir(root, args[1]);
+                        Run.EnsureResumable(runDir);
                         var input = DesignInput.Load(Path.Combine(runDir, "input"));
                         input.Task = ReadTask(runDir) ?? input.Task;
                         return Pipeline.Execute(FindProject(input.Project), input, runDir, Opt("--from") ?? "drawings", Opt("--drawings"));
                     }
                     case "list": return List(root);
                     case "doctor": return Doctor(root);
+                    case "verify":
+                        if (args.Length < 2) return Usage();
+                        return Verification.Execute(RunDir(root, args[1]));
                     case "baseline":
                         if (args.Length < 2) return Usage();
                         return MakeBaseline(root, RunDir(root, args[1]));
@@ -355,20 +361,22 @@ namespace CadCli
         static int Usage()
         {
             Console.WriteLine("用法:");
-            Console.WriteLine("  cad run <input/任务目录> [--from parts|assembly|checks|drawings|export|post] [--drawings 路径片段|asm]");
-            Console.WriteLine("  cad resume <output/运行目录> [--from 步骤]   (默认从 drawings 续跑)");
-            Console.WriteLine("  cad baseline <output/运行目录>              (看图确认无误后, 把该次结果写成 input/<任务>/expected.json)");
+            Console.WriteLine("  cad run <input/任务目录> [--regression] [--from parts|assembly|checks|drawings|export|post] [--drawings 路径片段|asm]");
+            Console.WriteLine("    普通运行写 output/; --regression 写 qa/<时间>_reg_<任务>");
+            Console.WriteLine("  cad resume <output或活动qa运行目录> [--from 步骤]   (默认从 drawings 续跑; qa/archive 只读)");
+            Console.WriteLine("  cad verify <运行目录>                       (独立复验, 新报告写 qa/<时间>_verify_<任务>)");
+            Console.WriteLine("  cad baseline <运行目录>                     (看图确认无误后, 把该次结果写成 input/<任务>/expected.json)");
             Console.WriteLine("  cad import <STEP 文件> [--task 任务名] [--force]   (STEP → input/<任务>/import.json + geometry/, 之后 cad run <任务>)");
             Console.WriteLine("  cad list | doctor | clean | diag <文件> | dump <工程图> [视图序号] [记录数] | probe-asm <装配体> [--scale 10] [--size a2] [--n 10] [--top-bom] [--preload 装配体] [--out 目录] | probe-prism <x_t> [all|fail] | probe-sheet <x_t> [all|fail] | try-sheet <任务> <零件Id> | try-rebuild <x_t> | probe-faces <x_t> [@x0,y0,z0,x1,y1,z1] | compare-geometry <任务> <零件Id> <零件文件>");
             return 2;
         }
 
-        /// <summary>运行目录: 绝对路径, 或 output/ 下的目录名; 也接受平台根相对路径 (output/xxx)</summary>
-        static string RunDir(string root, string a)
+        /// <summary>运行目录: 绝对/平台相对路径, 或 output/、活动 qa/、qa/archive/ 下的目录名。</summary>
+        internal static string RunDir(string root, string a)
         {
             if (Path.IsPathRooted(a)) return Path.GetFullPath(a);
-            string p = Path.Combine(root, a);
-            return Path.GetFullPath(Directory.Exists(p) && File.Exists(Path.Combine(p, "run.json")) ? p : Path.Combine(root, "output", a));
+            var candidates = new[] { Path.Combine(root, a), Path.Combine(root, "output", a), Path.Combine(root, "qa", a), Path.Combine(root, "qa", "archive", a) };
+            return Path.GetFullPath(candidates.FirstOrDefault(p => File.Exists(Path.Combine(p, "run.json"))) ?? Path.Combine(root, "output", a));
         }
 
         /// <summary>
@@ -403,9 +411,13 @@ namespace CadCli
                 try { model = StepImport.FromStep(step, stage); }
                 catch { try { Sw.Shutdown(); Directory.Delete(stage, true); } catch { } throw; }
                 Sw.Shutdown();            // 换 geometry/ 之前退出实例, 释放它对新旧几何目录的句柄
-                SwapDir(stage, geo);
-                var problems = model.Validate(dir).Concat(model.Warnings).ToList();
-                File.WriteAllText(Path.Combine(dir, ImportModel.FileName), model.ToJson(), new UTF8Encoding(false));
+                var problems = ValidateAndCommitImport(dir, stage, model);
+                if (problems.Count > 0)
+                {
+                    Console.WriteLine("导入完整性未通过, 未替换正式输入; 暂存几何保留在 " + stage);
+                    foreach (string p in problems) Console.WriteLine("  !! " + p);
+                    return 1;
+                }
                 string dj = Path.Combine(dir, "design.json");
                 if (!File.Exists(dj))
                     File.WriteAllText(dj, "{\n  // 由 cad import 生成: 零件、装配与位置见 import.json, 原几何在 geometry/ (不入库, 可由源 STEP 重新导入)\n" +
@@ -423,14 +435,35 @@ namespace CadCli
             finally { Sw.Disconnect(); }
         }
 
-        /// <summary>
-        /// 用 fresh 目录替换 target: 先把旧目录改名备份, 再换入新目录, 最后删备份; 换入失败则把备份放回。
-        /// 刚写出的文件可能正被杀毒软件扫描, 每步重试 10 次、间隔 1 秒 (SolidWorks 停在目录里造成的占用重试无效, 调用前须 Sw.ReleaseDir)。
-        /// </summary>
-        static void SwapDir(string fresh, string target)
+        /// <summary>先校验暂存数据, 只有完整性通过才替换正式输入; 不连接 SolidWorks。</summary>
+        internal static List<string> ValidateAndCommitImport(string taskDir, string stage, ImportModel model)
         {
-            string backup = target + ".old";
-            Action<Action> retry = act =>
+            var problems = model.Validate(taskDir, stage);
+            if (problems.Count == 0) CommitImport(taskDir, stage, model.ToJson());
+            return problems;
+        }
+
+        /// <summary>
+        /// 一起提交 geometry/ 与 import.json: 新 JSON 先完整写入暂存文件, 旧几何只改名备份 (改名失败绝不删旧文件)。
+        /// 提交失败时恢复旧数据; 回滚失败则保留唯一备份并报告位置。成功后的备份清理失败不再触发回滚。
+        /// 委托只供纯文件系统故障测试; 默认目录移动与文件替换重试 10 次、间隔 1 秒。
+        /// </summary>
+        internal static void CommitImport(string taskDir, string fresh, string json,
+            Action<string, string> moveDirectory = null, Action<string, string> writeText = null,
+            Action<string, string, string> replaceFile = null, Action<string> deleteDirectory = null)
+        {
+            taskDir = Path.GetFullPath(taskDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            fresh = Path.GetFullPath(fresh).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string target = Path.Combine(taskDir, "geometry"), import = Path.Combine(taskDir, ImportModel.FileName);
+            if (!string.Equals(fresh, Path.Combine(taskDir, ".geometry_importing"), StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("几何暂存目录必须是指定任务目录下的 .geometry_importing", nameof(fresh));
+            if (!Directory.Exists(taskDir) || !Directory.Exists(fresh)) throw new DirectoryNotFoundException("缺少任务目录或暂存几何目录");
+            string stamp = Guid.NewGuid().ToString("N");
+            string backup = Path.Combine(taskDir, ".geometry_backup_" + stamp);
+            string stagedJson = Path.Combine(taskDir, ".import_importing_" + stamp + ".json");
+            string backupJson = Path.Combine(taskDir, ".import_backup_" + stamp + ".json");
+            bool hadGeometry = Directory.Exists(target), hadImport = File.Exists(import);
+            void Retry(Action act)
             {
                 for (int i = 1; ; i++)
                 {
@@ -438,29 +471,66 @@ namespace CadCli
                     catch (IOException) when (i < 10) { System.Threading.Thread.Sleep(1000); }
                     catch (UnauthorizedAccessException) when (i < 10) { System.Threading.Thread.Sleep(1000); }
                 }
-            };
-            if (Directory.Exists(backup)) retry(() => Directory.Delete(backup, true));
-            if (Directory.Exists(target))
-            {
-                try { retry(() => Directory.Move(target, backup)); }
-                catch (IOException)
-                {
-                    // 目录本身被占用 (实测 2026-10-16: 中途被结束的运行没来得及断开, 专用实例的当前目录停在这里) —— 锁的只是目录,
-                    // 里面的文件可以换: 退为逐个文件替换 (新几何已在 fresh 中完整写好)
-                    Console.WriteLine("  (" + target + " 被占用, 改为逐个文件替换)");
-                    foreach (string f in Directory.GetFiles(target)) File.Delete(f);
-                    foreach (string f in Directory.GetFiles(fresh)) File.Move(f, Path.Combine(target, Path.GetFileName(f)));
-                    Directory.Delete(fresh, true);
-                    return;
-                }
             }
-            try { retry(() => Directory.Move(fresh, target)); }
-            catch
+            moveDirectory ??= (a, b) => Retry(() => Directory.Move(a, b));
+            writeText ??= (p, text) => File.WriteAllText(p, text, new UTF8Encoding(false));
+            replaceFile ??= (a, b, old) => Retry(() => File.Replace(a, b, old));
+            deleteDirectory ??= p => Retry(() => Directory.Delete(p, true));
+            // 所有目录操作都限定在调用方明确给出的任务目录内, 包括清理与回滚。
+            void Move(string a, string b)
             {
-                if (Directory.Exists(backup) && !Directory.Exists(target)) Directory.Move(backup, target);
+                CheckChild(a); CheckChild(b); moveDirectory(a, b);
+            }
+            void CheckChild(string p)
+            {
+                if (!string.Equals(Path.GetDirectoryName(Path.GetFullPath(p)), taskDir, StringComparison.OrdinalIgnoreCase))
+                    throw new IOException("拒绝操作任务目录以外的路径: " + p);
+            }
+            try
+            {
+                writeText(stagedJson, json);       // 写失败时旧 geometry/ 与 import.json 均未动
+                if (hadGeometry) Move(target, backup);
+                Move(fresh, target);
+                if (hadImport) replaceFile(stagedJson, import, backupJson);
+                else File.Move(stagedJson, import);
+            }
+            catch (Exception commitError)
+            {
+                var errors = new List<Exception> { commitError };
+                // 也处理文件替换已经完成、随后报告失败的情况; 新 JSON 写入失败不会碰旧 JSON。
+                if (File.Exists(backupJson))
+                {
+                    try
+                    {
+                        if (File.Exists(import)) Retry(() => File.Replace(backupJson, import, null));
+                        else File.Move(backupJson, import);
+                    }
+                    catch (Exception e) { errors.Add(e); }
+                }
+                else if (!hadImport && !File.Exists(stagedJson) && File.Exists(import))
+                    try { File.Delete(import); } catch (Exception e) { errors.Add(e); }
+                try
+                {
+                    if (Directory.Exists(backup))
+                    {
+                        if (Directory.Exists(target)) Move(target, fresh);  // 保留新几何, 不逐文件删除
+                        Move(backup, target);
+                    }
+                    else if (!hadGeometry && Directory.Exists(target) && !Directory.Exists(fresh)) Move(target, fresh);
+                }
+                catch (Exception e) { errors.Add(e); }
+                if (errors.Count > 1)
+                    throw new AggregateException("导入提交失败且回滚未完成; 保留的数据位于: " + backup + "; " + backupJson + "; " + fresh + "; " + stagedJson, errors);
                 throw;
             }
-            if (Directory.Exists(backup)) try { retry(() => Directory.Delete(backup, true)); } catch { Console.WriteLine("  (旧几何备份未能删除: " + backup + ")"); }
+            // 新数据已经提交成功。清理失败只报告路径, 不回滚已提交的数据。
+            if (Directory.Exists(backup))
+            {
+                try { CheckChild(backup); deleteDirectory(backup); }
+                catch { Console.WriteLine("  (旧几何备份未能删除: " + backup + ")"); }
+            }
+            if (File.Exists(backupJson))
+                try { File.Delete(backupJson); } catch { Console.WriteLine("  (旧导入数据备份未能删除: " + backupJson + ")"); }
         }
 
         /// <summary>
@@ -527,29 +597,34 @@ namespace CadCli
             return p;
         }
 
-        static int List(string root)
+        internal static int List(string root)
         {
             Console.WriteLine("设计项目 (src/CadProjects):");
             foreach (var p in Projects()) Console.WriteLine(string.Format("  {0,-18} {1}", p.Id, p.Description));
             Console.WriteLine();
             Console.WriteLine("输入任务 (input/):");
-            foreach (string d in Directory.GetDirectories(Path.Combine(root, "input")).OrderBy(x => x))
+            foreach (string d in (Directory.Exists(Path.Combine(root, "input")) ? Directory.GetDirectories(Path.Combine(root, "input")) : Array.Empty<string>()).OrderBy(x => x))
                 if (File.Exists(Path.Combine(d, "design.json")))
                 {
                     var i = DesignInput.Load(d);
                     Console.WriteLine(string.Format("  {0,-22} project={1}  {2}", Path.GetFileName(d), i.Project, i.Title));
                 }
-            Console.WriteLine();
-            Console.WriteLine("最近运行 (output/):");
-            foreach (string d in Directory.GetDirectories(Path.Combine(root, "output")).OrderByDescending(x => x).Take(10))
+            void Runs(string label, string dir)
             {
-                string f = Path.Combine(d, "run.json");
-                if (!File.Exists(f)) continue;
-                using var doc = JsonDocument.Parse(File.ReadAllText(f));
-                var r = doc.RootElement;
-                Console.WriteLine(string.Format("  {0,-40} {1,-8} {2}", Path.GetFileName(d), r.GetProperty("status").GetString(),
-                    r.TryGetProperty("title", out var t) ? t.GetString() : ""));
+                Console.WriteLine();
+                Console.WriteLine(label);
+                if (!Directory.Exists(dir)) return;
+                foreach (string d in Directory.GetDirectories(dir).Where(d => File.Exists(Path.Combine(d, "run.json"))).OrderByDescending(x => x).Take(10))
+                {
+                    using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(d, "run.json")));
+                    var r = doc.RootElement;
+                    Console.WriteLine(string.Format("  {0,-40} {1,-8} {2}", Path.GetFileName(d), r.GetProperty("status").GetString(),
+                        r.TryGetProperty("title", out var t) ? t.GetString() : ""));
+                }
             }
+            Runs("交付运行 (output/):", Path.Combine(root, "output"));
+            Runs("活动验证 (qa/):", Path.Combine(root, "qa"));
+            Runs("历史验证 (qa/archive/, 只读):", Path.Combine(root, "qa", "archive"));
             return 0;
         }
 

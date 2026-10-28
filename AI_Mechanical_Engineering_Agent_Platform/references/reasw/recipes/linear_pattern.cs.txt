@@ -1,0 +1,5 @@
+        static void TestLinearPattern()
+        {
+            IFeature b;IModelDoc2 m=Box(out b);IFeature cut=CutCircle(m,-.025,0,.002);m.ClearSelection2(true);IEdge edge=StraightEdge(m,0);double[] a=(double[])((IVertex)edge.GetStartVertex()).GetPoint(),z=(double[])((IVertex)edge.GetEndVertex()).GetPoint();bool reverse=z[0]<a[0];Select(m,edge,false,1);cut.Select2(true,4);
+            IFeature f=m.FeatureManager.FeatureLinearPattern5(3,.015,1,.01,reverse,false,"","",false,false,false,false,false,false,false,false,false,false,0,0,false,false);FeatureOK(m,f,"linear_pattern");Finish(m,"linear_pattern",.00008-3*Math.PI*.002*.002*.02);
+        }

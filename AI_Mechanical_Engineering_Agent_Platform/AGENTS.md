@@ -8,6 +8,8 @@
 - 零件库 `src/CadLibrary` 不依赖任何设计项目；设计项目 `src/CadProjects/<设计>` 只调用内核和零件库。
 - Python (`python/`) 只做输出后处理，不调用 COM。
 - 输出只写当次运行目录 `Run.Dir` 下的 `models/ drawings/ exports/ bom/ checks/ images/`；不写平台其它位置。
+- 普通 `cad run` 写 `output/`; 验证用 `cad run <任务> --regression` 写 `qa/<时间>_reg_<任务>/`, `cad verify <运行目录>` 写新的 `qa/<时间>_verify_<任务>/`。`qa/archive/` 为只读历史区, 不得 resume 或原地改写。
+- `references/reasw/` 只存精选非编译 `.cs.txt` 片段、静态契约/帮助与来源 JSON; REASW 原目录只读, 不导入其执行器、DLL、私有原生地址或全工具链。历史成功不是本平台执行权限或本次验证结果。
 
 ## 新设计的做法
 
@@ -34,18 +36,21 @@
 - **回归基准**：改动内核或零件库后，回归样例的 `回归基准` 必须通过。结果有意改变时，先看图确认，再 `cad baseline <运行目录>` 重新生成，并在提交说明里写明哪些数值变了、为什么；不得为了通过而放宽允差或删条目。
 - **静态状态**：内核静态类的可变状态由流水线在每次运行开始时重置 (`Cat.Reset`、`Std.Reset`、`Drw.Reset`)；新增可变静态字段时一并加进对应的 `Reset()`。
 - 新标定的 API 行为写进 `docs/api_calibration.md` 对应小节，注明来源与日期。
-- 运行目录 `output/` 与 `.cad/` 不入库。
-- 不在单元测试中启动 SolidWorks；真实运行用 `cad run`。
+- 新增 `Parameters` / `PatternFeatures` 能力先以解析尺寸、体积、配置和独立读回验证; 不以引用 REASW 通过、方法非空或编译通过替代本平台实测。多配置 Add3、HoleWizard5 等失败范围不得随单配置 Add2 的成功被清除。
+- 运行目录 `output/`、`qa/` 与 `.cad/` 不入库。新 QA 运行与独立复验都使用新建且身份核对的专用实例; 正常退出、重试与强制清理分开记录。
+- 不在单元测试中启动 SolidWorks；测试只用临时文件/纯逻辑。真实回归用 `cad run <任务> --regression`, 独立复验用 `cad verify <运行目录>`。
 
 ## 验证
 
 ```powershell
 dotnet build AutoCADByAI.sln          # 0 错误 0 警告
 dotnet test                           # 纯逻辑测试全部通过
-.\cad run planetary_gear              # 改动内核、零件库后: 回归样例 run.json 为 passed (含回归基准)
-.\cad run planetary_gear_m15          # 涉及零件库齿轮、参数化派生尺寸时
-.\cad run cfc650_m03                  # 涉及装配、紧固件、出图版面时
-.\cad run microwave_furnace           # 涉及 STEP 导入、特征重建 (截面拉伸、钣金)、Sw 会话与内存回收时 (约 50 分钟)
+.\cad run planetary_gear --regression              # 改动内核、零件库后: 含回归基准
+.\cad run planetary_gear_m15 --regression          # 涉及零件库齿轮、参数化派生尺寸时
+.\cad run cfc650_m03 --regression                  # 涉及装配、紧固件、出图版面时
+.\cad run microwave_furnace --regression           # 涉及 STEP 导入/特征重建/会话与内存回收时 (约50分钟)
+.\cad run reasw_parametric_patterns --regression   # 六案例已通过本机实测/独立复验, 尚无人工基准
+.\cad verify qa/<回归运行目录>                     # 有 verify_expectations.json 才做独立读回
 ```
 
 `microwave_furnace` 的原几何 `geometry/` 与源 STEP 都不入库：缺 `geometry/` 时先 `cad import "inbox/Microwave experimental furnace/微波实验炉.STEP" --task microwave_furnace --force` 重新生成 (只换 `geometry/` 与 `import.json`，`expected.json` 保留)。
@@ -54,4 +59,4 @@ dotnet test                           # 纯逻辑测试全部通过
 
 ## 文档
 
-说明文字用中文；代码标识符、路径、命令、API 名称保留英文。文档只有 README、AGENTS 与 docs/ 下 4 份，不按阶段新增文档；设计说明写在设计项目的类注释里。
+说明文字用中文；代码标识符、路径、命令、API 名称保留英文。文档只有 README、AGENTS 与 docs/ 下 4 份，不按阶段新增文档；设计说明写在设计项目的类注释里。`references/reasw/` 的 JSON 与片段是精选来源材料, 不新增阶段 README。

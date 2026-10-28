@@ -28,7 +28,7 @@ namespace CadKernel
         public List<ImportAsm> Assemblies { get; set; } = new List<ImportAsm>();
         /// <summary>原 STEP 中每个零件实例的世界变换 (零件 id → 列表)。改动装配后用 cad import 重新生成或同步修改, 否则位置核对不通过</summary>
         public Dictionary<string, List<double[]>> World { get; set; } = new Dictionary<string, List<double[]>>();
-        /// <summary>导入时发现的问题 (如实例数与 SolidWorks 不符); 非空时 cad import 返回非 0</summary>
+        /// <summary>未解决的导入完整性问题 (如实例数不符、跳过零部件、干涉无法登记); 非空时禁止发布导入结果与运行设计</summary>
         public List<string> Warnings { get; set; } = new List<string>();
         /// <summary>
         /// 原模型自带的干涉 (cad import 时对原装配做干涉检查得到, 同一对零件、同一相对位置、同样体积的只记一条)。
@@ -84,10 +84,12 @@ namespace CadKernel
         public ImportPart Part(string id) { return Parts.FirstOrDefault(p => p.Id == id); }
         public ImportAsm Asm(string id) { return Assemblies.FirstOrDefault(a => a.Id == id); }
 
-        /// <summary>纯数据校验 (不连接 SolidWorks): 编号唯一、引用存在、无循环、变换为刚体、材料与几何参数有效、几何文件存在 (dir 非空时)</summary>
-        public List<string> Validate(string dir)
+        /// <summary>纯数据校验 (不连接 SolidWorks): 导入完整性、编号唯一、引用存在、无循环、变换为刚体、材料与几何参数有效、几何文件存在。geometryDir 可覆盖几何所在目录, 用于发布暂存结果前核对</summary>
+        public List<string> Validate(string dir, string geometryDir = null)
         {
             var r = new List<string>();
+            foreach (string warning in Warnings ?? new List<string>())
+                r.Add("导入完整性问题: " + (string.IsNullOrWhiteSpace(warning) ? "缺少问题详情" : warning));
             foreach (var g in Parts.GroupBy(p => p.Id).Where(g => g.Count() > 1)) r.Add("零件编号重复: " + g.Key);
             foreach (var g in Assemblies.GroupBy(a => a.Id).Where(g => g.Count() > 1)) r.Add("装配编号重复: " + g.Key);
             if (Asm(Root) == null) r.Add("根装配不存在: " + Root);
@@ -106,7 +108,8 @@ namespace CadKernel
                 else if (m.Type == "geometry" || m.Type == "bodies")
                 {
                     if (string.IsNullOrEmpty(m.File)) r.Add(p.Id + ": 缺少几何文件");
-                    else if (dir != null && !File.Exists(Path.Combine(dir, m.File))) r.Add(p.Id + ": 几何文件不存在 " + m.File);
+                    else if ((dir != null || geometryDir != null) && !File.Exists(geometryDir == null ? Path.Combine(dir, m.File) : Path.Combine(geometryDir, Path.GetFileName(m.File))))
+                        r.Add(p.Id + ": 几何文件不存在 " + m.File);
                     if (m.Type == "bodies")
                     {
                         if (m.Rebuilt().Count == 0) r.Add(p.Id + ": bodies 缺少 prisms / sheets");
@@ -465,6 +468,7 @@ namespace CadKernel
                     root.Children.Add(new ImportChild { Ref = p.Id, Xf = Xf.T(0, 0, 0).ToRow() });
                     model.World[p.Id] = new List<double[]> { Xf.T(0, 0, 0).ToRow() };
                 }
+                if (skipped > 0) model.Warnings.Add("跳过零部件 " + skipped + " 个 (压缩或未还原), 导入完整性未确认; 详情见导入日志");
                 // 编号按名称排序, 与 SolidWorks 的遍历顺序无关 (实测两次导入遍历顺序不同, 编号随之改变)
                 Renumber(model, parts, asms, root);
                 foreach (var kv in parts) Export(docOf[kv.Key], kv.Value, geoDir);
