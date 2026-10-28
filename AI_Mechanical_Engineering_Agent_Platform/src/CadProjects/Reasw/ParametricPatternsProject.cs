@@ -59,7 +59,10 @@ namespace CadProjects.Reasw
             {
                 int sample = i;
                 Cat.Make(new Part { Id = "RS" + (i + 1), Code = "RS-00" + (i + 1), Name = Names[i], Mat = Mat.S304,
-                    DrwType = "plate", Notes = "尺寸单位 mm。" }, model => BuildSample(model, sample));
+                    DrwType = "plate",
+                    Notes = sample == 4 ? FormattableString.Invariant($"尺寸单位 mm。|{Plan.CircularCount} 孔沿 Φ{2 * Plan.BoltCircleRadius:0.###} 节圆均布，等分角 {360.0 / Plan.CircularCount:0.###}°。") : "尺寸单位 mm。",
+                    Table = sample == 1 ? FormattableString.Invariant($"图示配置|Base;Base 宽度|{Plan.Width:0.###} mm;Wide 宽度|{Plan.WideWidth:0.###} mm") : ""
+                }, model => BuildSample(model, sample));
             }
         }
 
