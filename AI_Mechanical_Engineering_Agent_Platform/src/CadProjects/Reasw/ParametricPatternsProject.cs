@@ -11,7 +11,8 @@ namespace CadProjects.Reasw
     /// 首批 REASW 公开 API 配方的本平台六案例: 完全约束圆、配置隔离、单配置 Add2、三孔线阵、四孔圆阵与切除镜像。
     /// 参考 20261019_expanded_attempt02/R06/R07、attempt04/R08、attempt01/R12 的冻结 runner_snapshot。
     /// 从本平台新建全部几何, 不打开 REASW 工件、不运行其工具。解析期望只来自输入和公式, 不取本次测量值。
-    /// 此项目是回归候选; 首次真机运行及人工看图前不生成 expected.json、不宣称已受证。
+    /// 2026-11-01 用户确认恢复补图版本并建立回归基准; 范围限于本样例, 不代替孔位独立读回。
+    /// CAD-07 另以输入解析孔集合与保存副本的实体几何匹配, 覆盖当前七配置的九个 Z 向直圆柱孔。
     /// </summary>
     public sealed class ParametricPatternsProject : CadProject
     {
@@ -161,7 +162,7 @@ namespace CadProjects.Reasw
             VerifyConfiguration Configuration(string name, double volumeMm3, string oracle, params VerifyDimension[] dimensions)
             {
                 return new VerifyConfiguration { Name = name, BodyCount = 1, VolumeM3 = volumeMm3 * 1e-9, VolumeToleranceM3 = 1e-12,
-                    Oracle = oracle, Dimensions = dimensions.ToList() };
+                    Oracle = oracle, Dimensions = dimensions.ToList(), Holes = new List<VerifyHole>(), HoleToleranceM = 1e-7 };
             }
             VerifyConfiguration Block(string name, double width, double volume, string oracle)
             {
@@ -171,14 +172,30 @@ namespace CadProjects.Reasw
             {
                 result.Parts.Add(new VerifyPart { File = "models/" + PartName(index), Configurations = configurations.ToList() });
             }
-            Part(0, Configuration("Base", Plan.NamedVolume, "π × updated_diameter_mm² / 4 × depth_mm (mm³)",
+            VerifyHole Hole(double x, double y)
+            {
+                return new VerifyHole { StartM = new[] { x * Sw.MM, y * Sw.MM, 0.0 },
+                    EndM = new[] { x * Sw.MM, y * Sw.MM, Plan.Depth * Sw.MM }, RadiusM = Plan.HoleRadius * Sw.MM };
+            }
+            Part(0, Configuration("Base", Plan.NamedVolume, "π × updated_diameter_mm² / 4 × depth_mm (mm³); 单圆柱无孔",
                 Dimension("Diameter", Plan.UpdatedDiameter), Dimension("Depth", Plan.Depth, Parameters.Boss)));
-            Part(1, Block("Base", Plan.Width, Plan.BlockVolume, "block_width_mm × block_height_mm × depth_mm (mm³)"),
-                Block("Wide", Plan.WideWidth, Plan.WideVolume, "wide_width_mm × block_height_mm × depth_mm (mm³)"));
-            Part(2, Block("Base", Plan.EquationFinalWidth, Plan.EquationVolume, "equation_final_width_mm × block_height_mm × depth_mm (mm³)"));
-            Part(3, Block("Base", Plan.Width, Plan.LinearVolume, "block_volume - linear_count × π × hole_radius_mm² × depth_mm (mm³)"));
-            Part(4, Configuration("Base", Plan.CircularVolume, "π × disk_radius_mm² × depth_mm - circular_count × π × hole_radius_mm² × depth_mm (mm³)"));
-            Part(5, Block("Base", Plan.Width, Plan.MirrorVolume, "block_volume - 2 × π × hole_radius_mm² × depth_mm (mm³)"));
+            Part(1, Block("Base", Plan.Width, Plan.BlockVolume, "block_width_mm × block_height_mm × depth_mm (mm³); 方块无孔"),
+                Block("Wide", Plan.WideWidth, Plan.WideVolume, "wide_width_mm × block_height_mm × depth_mm (mm³); 方块无孔"));
+            Part(2, Block("Base", Plan.EquationFinalWidth, Plan.EquationVolume, "equation_final_width_mm × block_height_mm × depth_mm (mm³); 方块无孔"));
+            var linear = Block("Base", Plan.Width, Plan.LinearVolume,
+                "block_volume - linear_count × π × hole_radius_mm² × depth_mm (mm³); 孔心(-25+i×linear_pitch_mm,0), i=0..linear_count-1; Z=0..depth_mm, r=hole_radius_mm");
+            linear.Holes = Enumerable.Range(0, Plan.LinearCount).Select(i => Hole(-25 + i * Plan.LinearPitch, 0)).ToList();
+            Part(3, linear);
+            var circular = Configuration("Base", Plan.CircularVolume,
+                "π × disk_radius_mm² × depth_mm - circular_count × π × hole_radius_mm² × depth_mm (mm³); 孔心R×(cos(2πi/n),sin(2πi/n)), R=bolt_circle_radius_mm, n=circular_count; Z=0..depth_mm, r=hole_radius_mm");
+            circular.Holes = Enumerable.Range(0, Plan.CircularCount).Select(i => Hole(
+                Plan.BoltCircleRadius * Math.Cos(2 * Math.PI * i / Plan.CircularCount),
+                Plan.BoltCircleRadius * Math.Sin(2 * Math.PI * i / Plan.CircularCount))).ToList();
+            Part(4, circular);
+            var mirror = Block("Base", Plan.Width, Plan.MirrorVolume,
+                "block_volume - 2 × π × hole_radius_mm² × depth_mm (mm³); 种子孔心(15,5)沿X=0镜像为(-15,5); Z=0..depth_mm, r=hole_radius_mm");
+            mirror.Holes.Add(Hole(15, 5)); mirror.Holes.Add(Hole(-15, 5));
+            Part(5, mirror);
             result.Steps.Add(new VerifyStep { File = "exports/" + Path.ChangeExtension(AssemblyName, ".step"), BodyCount = 6,
                 VolumeM3 = Plan.AssemblyVolume * 1e-9, VolumeToleranceM3 = 1e-12,
                 Oracle = "各零件保存的 Base 配置解析体积相加; 6 个互不重叠单实体, 不使用本次测量值" });
