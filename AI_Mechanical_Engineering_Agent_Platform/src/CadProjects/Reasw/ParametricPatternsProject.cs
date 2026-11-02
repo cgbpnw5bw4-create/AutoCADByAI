@@ -11,7 +11,7 @@ namespace CadProjects.Reasw
     /// 首批 REASW 公开 API 配方的本平台六案例: 完全约束圆、配置隔离、单配置 Add2、三孔线阵、四孔圆阵与切除镜像。
     /// 参考 20261019_expanded_attempt02/R06/R07、attempt04/R08、attempt01/R12 的冻结 runner_snapshot。
     /// 从本平台新建全部几何, 不打开 REASW 工件、不运行其工具。解析期望只来自输入和公式, 不取本次测量值。
-    /// 此项目是回归候选; 首次真机运行及人工看图前不生成 expected.json、不宣称已受证。
+    /// 2026-11-01 用户确认恢复补图版本并建立回归基准; 范围限于本样例, 不代替孔位独立读回。
     /// </summary>
     public sealed class ParametricPatternsProject : CadProject
     {

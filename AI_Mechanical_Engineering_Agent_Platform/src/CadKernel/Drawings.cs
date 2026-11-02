@@ -315,6 +315,20 @@ namespace CadKernel
         // =====================================================================================
         static string Tpl(string size) { return Path.Combine(Sw.TplDir, "gb_" + size + ".drwdot"); }
 
+        /// <summary>创建视图必须使用模型实际返回的标准视图名称; 保留中文环境原名。</summary>
+        internal static string StandardViewName(string[] names, string requested)
+        {
+            if (names.Contains(requested)) return requested;
+            string english = requested switch
+            {
+                "*前视" => "*Front", "*后视" => "*Back", "*左视" => "*Left", "*右视" => "*Right",
+                "*上视" => "*Top", "*下视" => "*Bottom", "*等轴测" => "*Isometric",
+                _ => throw new ArgumentException("不支持的标准视图: " + requested)
+            };
+            if (names.Contains(english)) return english;
+            throw new InvalidOperationException("模型缺少标准视图: " + requested + " / " + english);
+        }
+
         /// <summary>图纸比例 1:n (保持模板图幅与第一视角; Sheet.SetScale 实测不生效)</summary>
         static void SheetScale(DrawingDoc dd, double n)
         {
@@ -842,7 +856,7 @@ namespace CadKernel
             {
                 // 端视图(圆) 放右侧, 由其生成轴向全剖视图 A-A 作为主视图
                 double ex = gLeft + wM + GX + mh * MM * s1 / 2, ey = gTop - mh * MM * s1 / 2;
-                View ve = dd.CreateDrawViewFromModelView3(path, "*前视", ex, ey, 0);
+                View ve = dd.CreateDrawViewFromModelView3(path, StandardViewName((string[])m.GetModelViewNames(), "*前视"), ex, ey, 0);
                 ve.ScaleDecimal = s1;
                 dd.ActivateView(ve.Name);
                 double L = Math.Max(dx, dy) * 0.8 * MM;
@@ -860,7 +874,7 @@ namespace CadKernel
             else
             {
                 double mx = gLeft + wM / 2, my = gTop - mh * MM * s1 / 2;
-                vMain = dd.CreateDrawViewFromModelView3(path, mainView, mx, my, 0);
+                vMain = dd.CreateDrawViewFromModelView3(path, StandardViewName((string[])m.GetModelViewNames(), mainView), mx, my, 0);
                 if (vMain == null) throw new Exception("主视图创建失败");
                 vMain.ScaleDecimal = s1;
                 d.ClearSelection2(true);
@@ -1374,7 +1388,7 @@ namespace CadKernel
             double s1 = 1 / scale, L = sh[2], T = sh[5];
             SheetScale(dd, scale);
             double mx = L + 0.03 + dx * MM * s1 / 2, my = T - 0.03 - dy * MM * s1 / 2;
-            vf = dd.CreateDrawViewFromModelView3(path, "*前视", mx, my, 0);
+            vf = dd.CreateDrawViewFromModelView3(path, StandardViewName((string[])am.GetModelViewNames(), "*前视"), mx, my, 0);
             if (vf == null) throw new Exception("主视图创建失败");
             vf.ScaleDecimal = s1;
             d.ClearSelection2(true);
@@ -1657,7 +1671,7 @@ namespace CadKernel
             }
             if (ir != null)
             {
-                View vi = dd.CreateDrawViewFromModelView3(path, "*等轴测", (ir[0] + ir[2]) / 2, (ir[1] + ir[3]) / 2, 0);
+                View vi = dd.CreateDrawViewFromModelView3(path, StandardViewName((string[])am.GetModelViewNames(), "*等轴测"), (ir[0] + ir[2]) / 2, (ir[1] + ir[3]) / 2, 0);
                 try { vi.SetDisplayMode3(false, (int)swDisplayMode_e.swSHADED_EDGES, false, true); } catch { }
                 foreach (double sc in ASM_SCALES.Where(q => 1 / q <= isoS))
                 {

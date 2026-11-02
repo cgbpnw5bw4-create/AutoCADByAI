@@ -49,7 +49,7 @@ dotnet test                           # 纯逻辑测试全部通过
 .\cad run planetary_gear_m15 --regression          # 涉及零件库齿轮、参数化派生尺寸时
 .\cad run cfc650_m03 --regression                  # 涉及装配、紧固件、出图版面时
 .\cad run microwave_furnace --regression           # 涉及 STEP 导入/特征重建/会话与内存回收时 (约50分钟)
-.\cad run reasw_parametric_patterns --regression   # 六案例已通过本机实测/独立复验, 尚无人工基准
+.\cad run reasw_parametric_patterns --regression   # 六案例人工基准 (2026-11-01 确认恢复补图版本)
 .\cad verify qa/<回归运行目录>                     # 有 verify_expectations.json 才做独立读回
 ```
 

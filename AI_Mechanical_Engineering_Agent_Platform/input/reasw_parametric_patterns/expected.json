@@ -1,0 +1,143 @@
+{
+  "note": "回归基准, 由 cad baseline 从人工确认无误的运行生成; 结果有意改变时重新生成并在提交说明里写明原因",
+  "source_run": "20261028_020818_reg_reasw_parametric_patterns",
+  "checks": [
+    "参数校验",
+    "模型完整性",
+    "干涉检查",
+    "物料清单",
+    "参数化与阵列解析校核",
+    "工程图生成",
+    "工程图参考",
+    "STEP 身份与内容",
+    "图纸版面审核",
+    "外形尺寸读数与几何一致",
+    "图纸合订"
+  ],
+  "metrics": {
+    "STEP/实体数": {
+      "value": 6,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/件数": {
+      "value": 6,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/种数": {
+      "value": 6,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "物料/质量kg": {
+      "value": 3.396,
+      "tol": 0,
+      "tol_pct": 0.5
+    },
+    "装配/RS-000_参数化阵列样例/宽mm": {
+      "value": 20,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RS-000_参数化阵列样例/长mm": {
+      "value": 460,
+      "tol": 1,
+      "tol_pct": 0
+    },
+    "装配/RS-000_参数化阵列样例/零件数": {
+      "value": 6,
+      "tol": 0,
+      "tol_pct": 0
+    },
+    "装配/RS-000_参数化阵列样例/高mm": {
+      "value": 175,
+      "tol": 1,
+      "tol_pct": 0
+    }
+  },
+  "drawings": [
+    {
+      "file": "RS-001_完全约束圆.SLDDRW",
+      "size": "A3",
+      "scale": "5:1",
+      "dims": 2,
+      "holes": 0,
+      "extents": [
+        20,
+        30
+      ]
+    },
+    {
+      "file": "RS-002_配置隔离块.SLDDRW",
+      "size": "A3",
+      "scale": "2.5:1",
+      "dims": 3,
+      "holes": 0,
+      "extents": [
+        20,
+        50,
+        80
+      ]
+    },
+    {
+      "file": "RS-003_单配置方程块.SLDDRW",
+      "size": "A3",
+      "scale": "2:1",
+      "dims": 3,
+      "holes": 0,
+      "extents": [
+        20,
+        50,
+        120
+      ]
+    },
+    {
+      "file": "RS-004_线性孔阵列.SLDDRW",
+      "size": "A3",
+      "scale": "2.5:1",
+      "dims": 3,
+      "holes": 5,
+      "extents": [
+        20,
+        50,
+        80
+      ]
+    },
+    {
+      "file": "RS-005_圆周孔阵列.SLDDRW",
+      "size": "A3",
+      "scale": "2.5:1",
+      "dims": 2,
+      "holes": 1,
+      "extents": [
+        20,
+        60
+      ]
+    },
+    {
+      "file": "RS-006_镜像切除.SLDDRW",
+      "size": "A3",
+      "scale": "2.5:1",
+      "dims": 3,
+      "holes": 4,
+      "extents": [
+        20,
+        50,
+        80
+      ]
+    },
+    {
+      "file": "装配图/RS-000_参数化阵列样例.SLDDRW",
+      "size": "A2",
+      "scale": "1:2",
+      "dims": 3,
+      "balloons": 6,
+      "extents": [
+        20,
+        170,
+        460
+      ]
+    }
+  ]
+}

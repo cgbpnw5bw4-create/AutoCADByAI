@@ -514,6 +514,32 @@ namespace CadTests
         }
 
         [Fact]
+        public void StandardViewKeepsRequestedChineseNameBeforeEnglishAlternative()
+        {
+            Assert.Equal("*前视", Drw.StandardViewName(new[] { "*Front", "*前视" }, "*前视"));
+        }
+
+        [Theory]
+        [InlineData("*前视", "*Front")]
+        [InlineData("*后视", "*Back")]
+        [InlineData("*左视", "*Left")]
+        [InlineData("*右视", "*Right")]
+        [InlineData("*上视", "*Top")]
+        [InlineData("*下视", "*Bottom")]
+        [InlineData("*等轴测", "*Isometric")]
+        public void StandardViewSelectsTheMatchingEnglishOrientation(string requested, string expected)
+        {
+            var actualNames = new[] { "*Front", "*Back", "*Left", "*Right", "*Top", "*Bottom", "*Isometric" };
+            Assert.Equal(expected, Drw.StandardViewName(actualNames, requested));
+        }
+
+        [Fact]
+        public void StandardViewRejectsAnOrientationMissingFromTheModel()
+        {
+            Assert.Throws<InvalidOperationException>(() => Drw.StandardViewName(new[] { "*Back", "*Isometric" }, "*前视"));
+        }
+
+        [Fact]
         public void ExtentsIndexColumn()
         {
             Assert.Equal("[174.1,480,900]", Drw.ExtentsCol(new[] { 900.0000000001, 479.99999999, 174.1 }));
