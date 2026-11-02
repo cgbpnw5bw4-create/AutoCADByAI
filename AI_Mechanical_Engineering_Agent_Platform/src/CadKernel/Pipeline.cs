@@ -24,7 +24,7 @@ namespace CadKernel
         };
 
         /// <summary>执行一次运行。resumeDir 非空时在已有运行目录上续跑 fromStep 及之后的步骤</summary>
-        public static int Execute(CadProject project, DesignInput input, string resumeDir = null, string fromStep = null, string drawingFilter = null)
+        public static int Execute(CadProject project, DesignInput input, string resumeDir = null, string fromStep = null, string drawingFilter = null, bool regression = false)
         {
             // 内核静态状态 (登记表、紧固件组缓存、出图目录) 不得带到本次运行
             Cat.Reset(); Std.Reset(); Drw.Reset();
@@ -34,13 +34,14 @@ namespace CadKernel
             catch (Exception ex) { problems = new List<string> { ex.Message }; }     // 参数类型错误等
             var unknown = input.Unknown(project.KnownParams);
             if (unknown.Count > 0) problems.Add("未知参数 (拼写错误?): " + string.Join(", ", unknown));
-            var steps = input.Steps.Count > 0 ? input.Steps : AllSteps.ToList();
+            var steps = input.Steps.Count > 0 ? input.Steps.ToList() : AllSteps.ToList();
             foreach (string s in steps) if (!AllSteps.Contains(s)) problems.Add("未知步骤: " + s);
             if (fromStep != null)
             {
                 if (!AllSteps.Contains(fromStep)) problems.Add("未知步骤: " + fromStep);
                 else steps = steps.Where(s => Array.IndexOf(AllSteps, s) >= Array.IndexOf(AllSteps, fromStep)).ToList();
             }
+            if (steps.Count == 0) problems.Add("筛选后没有可执行步骤");
             if (problems.Count > 0)
             {
                 Console.WriteLine("参数校验未通过 (未连接 SolidWorks):");
@@ -48,7 +49,7 @@ namespace CadKernel
                 return 2;
             }
             // 模型路径超出 MAX_PATH 时出图会无限挂起 (见 PathLimit): 要出图的运行不启动, 其余情况提示后照常运行
-            var longest = PathLimit.ForRun(project, input.Task, resumeDir);
+            var longest = PathLimit.ForRun(project, input.Task, resumeDir, regression);
             var pathNotes = PathLimit.Advice(longest, Run.PlatformRoot, resumeDir != null);
             if (pathNotes.Count > 0) pathNotes.Insert(0, PathLimit.Describe(longest));
             if (longest.Level == PathLimit.Level.Over)
@@ -63,7 +64,7 @@ namespace CadKernel
             }
 
             if (resumeDir != null) Run.Resume(resumeDir);
-            else Run.Begin(input.Task, project.Id, project.Title, input.Dir);
+            else Run.Begin(input.Task, project.Id, project.Title, input.Dir, regression ? RunPurpose.Regression : RunPurpose.Modeling);
             Console.WriteLine("运行目录: " + Run.Dir);
             foreach (string p in pathNotes) Console.WriteLine("  !! " + p);
             Run.Check("参数校验", true, "通过 (" + project.Id + ")");
@@ -81,7 +82,8 @@ namespace CadKernel
                     Console.WriteLine("按需建模: 从装配续跑, 先重新登记零件定义");
                     steps.Insert(0, "parts");
                 }
-                Sw.Connect();
+                PrepareSteps(steps, resumeDir != null);
+                Sw.Connect(fresh: regression || Run.Manifest.Purpose == "regression");
                 if (resumeDir != null)
                 {
                     // 从零件步骤续跑 = 重新建模, 不载入旧登记表 (零件步骤失败过的目录也没有登记表)
@@ -106,7 +108,7 @@ namespace CadKernel
                             Run.Step(cn, () => DoDrawings(project, Need(targets), drawingFilter));
                             break;
                         case "export":
-                            Run.Step(cn, () => DoExport(Need(targets)));
+                            Run.Step(cn, () => { DoExport(Need(targets)); project.WriteVerificationExpectations(); });
                             break;
                         case "post":
                             Run.Step(cn, () => DoPost(project));
@@ -119,6 +121,7 @@ namespace CadKernel
             catch (Exception ex)
             {
                 error = ex.Message;
+                RuntimeEvents.Record("Pipeline.Execute", "failed", error: ex);
                 Console.WriteLine();
                 Console.WriteLine("[ERR] " + ex.Message);
                 for (Exception ie = ex.InnerException; ie != null; ie = ie.InnerException) Console.WriteLine("  <- " + ie.Message);
@@ -127,7 +130,17 @@ namespace CadKernel
             finally
             {
                 try { if (Sw.App != null) Sw.CloseAll(); } catch { }
-                Sw.Disconnect();
+                try
+                {
+                    if (regression || Run.Manifest.Purpose == "regression") Sw.Shutdown();
+                    else Sw.Disconnect();
+                }
+                catch (Exception cleanupError)
+                {
+                    error = (error == null ? "" : error + "; ") + "清理失败: " + cleanupError.Message;
+                    ok = false;
+                    RuntimeEvents.Record("Pipeline.Cleanup", "failed", error: cleanupError);
+                }
                 Run.Finish(ok, error);
             }
             Console.WriteLine();
@@ -135,6 +148,43 @@ namespace CadKernel
             foreach (var c in Run.Manifest.Checks) Console.WriteLine(string.Format("   {0} {1}: {2}", c.Passed ? "✓" : "✗", c.Name, c.Summary));
             Run.CloseLog();
             return Run.Manifest.Status == "passed" ? 0 : 1;
+        }
+
+        /// <summary>重跑前失效本步及下游结果; 保留待执行记录, 防止省略下游后借旧结果通过。</summary>
+        internal static void PrepareSteps(IList<string> steps, bool resume)
+        {
+            int first = steps.Min(s => Array.IndexOf(AllSteps, s));
+            var m = Run.Manifest;
+            if (resume)
+            {
+                foreach (var r in m.Steps.Where(r => Array.IndexOf(AllSteps, StepId(r.Name)) >= first))
+                {
+                    r.Status = "pending";
+                    r.StartedAt = null; r.Seconds = 0;
+                    r.Message = "本步或上游重跑, 原结果已失效";
+                }
+                m.Checks.RemoveAll(c => c.Name == Baseline.CheckName || CheckStage(c.Name) >= first);
+                foreach (string key in m.Metrics.Keys.Where(k => (k == "STEP/实体数" ? 4 : 2) >= first).ToList())
+                    m.Metrics.Remove(key);
+            }
+            foreach (string s in steps)
+                if (!m.Steps.Any(r => r.Name == StepCn[s])) m.Steps.Add(new StepRecord { Name = StepCn[s], Status = "pending" });
+            Run.Save();
+        }
+
+        static string StepId(string name) { return StepCn.FirstOrDefault(kv => kv.Value == name).Key; }
+
+        // 项目专属校核由 ExtraChecks 在 checks 中登记; 其余为流水线固定校核。
+        static int CheckStage(string name)
+        {
+            switch (name)
+            {
+                case "参数校验": return -1;
+                case "工程图生成": case "工程图参考": return 3;
+                case "STEP 身份与内容": return 4;
+                case "图纸版面审核": case "外形尺寸读数与几何一致": case "图纸合订": return 5;
+                default: return 2;
+            }
         }
 
         /// <summary>

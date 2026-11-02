@@ -65,9 +65,7 @@ namespace CadKernel
                         mine.Add(string.Format("零部件: 缺失 {0}, 未还原 {1}, 浮动 {2}, 压缩 {3}, 隐藏 {4}  ({5})", missing, unresolved, floating, suppressed, hidden, string.Join("; ", ex)));
                 }
                 m.ForceRebuild3(false);
-                int nw = 0;
-                try { nw = m.Extension.GetWhatsWrongCount(); } catch { }
-                if (nw > 0)
+                CheckRebuild(() => m.Extension.GetWhatsWrongCount(), () =>
                 {
                     object fo = null, eo = null, wo = null;
                     m.Extension.GetWhatsWrong(out fo, out eo, out wo);
@@ -76,8 +74,8 @@ namespace CadKernel
                     var det = new List<string>();
                     for (int i = 0; i < fs.Count && i < 5; i++)
                         det.Add(string.Format("{0}[{1}]{2}", fs[i].Name, i < es.Length ? es[i] : 0, i < ws.Length && ws[i] ? "(警告)" : ""));
-                    mine.Add("重建错误/警告 " + nw + ": " + string.Join(", ", det));
-                }
+                    return string.Join(", ", det);
+                }, mine);
                 if (mine.Count == 0) nOk++;
                 else foreach (string s in mine) { issues.Add("| " + Rel(p) + " | " + s + " |"); Sw.Log("  " + Path.GetFileName(p) + ": " + s); }
                 Sw.App.CloseDoc(m.GetTitle());
@@ -94,6 +92,21 @@ namespace CadKernel
             Sw.Log(string.Format("检查完成: {0} 个文件, 无问题 {1}, 问题 {2} 条 -> checks\\integrity.md", files.Count, nOk, issues.Count));
             return issues.Count;
         }
+
+        /// <summary>读取重建检查结果; 计数或详情读取失败也登记为问题, 不能把未完成的检查当作零错误。</summary>
+        internal static void CheckRebuild(Func<int> readCount, Func<string> describe, ICollection<string> issues)
+        {
+            try
+            {
+                int count = readCount();
+                if (count > 0) issues.Add("重建错误/警告 " + count + ": " + describe());
+            }
+            catch (Exception ex)
+            {
+                issues.Add("重建检查失败: " + ex.Message);
+            }
+        }
+
         /// <summary>工程图检查: 打开时的参考警告 (ID 不匹配、缺参考、需重建), 用于装配体/零件重存后的复核</summary>
         /// <summary>返回有警告的工程图张数</summary>
         public static int Drawings(string filter)

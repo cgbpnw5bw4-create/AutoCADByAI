@@ -1,0 +1,20 @@
+        static IModelDoc2 CopyBlock(string suffix)
+        {
+            string source=Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(OutDir)),"06_runtime_experiments","20261015_parametric_v2","block_80x50x20.sldprt");
+            // OutDir is already a direct child of 06_runtime_experiments.
+            source=Path.Combine(Directory.GetParent(OutDir).FullName,"20261015_parametric_v2","block_80x50x20.sldprt");
+            string copy=Path.Combine(CaseDir,suffix+"_source.sldprt");File.Copy(source,copy,false);int e=0,w=0;IModelDoc2 m=(IModelDoc2)App.OpenDoc6(copy,1,1,"",ref e,ref w);Require(m!=null&&e==0,"Copy open");OwnedDocuments.Add(m);ActivateOwned(m);return m;
+        }
+        static void ActivateOwned(IModelDoc2 m)
+        {int e=0;IModelDoc2 active=(IModelDoc2)Call("ISldWorks.ActivateDoc3",delegate{return App.ActivateDoc3(m.GetTitle(),false,0,ref e);},D("title",m.GetTitle()));Check("document_activated",active!=null&&e==0&&active.GetPathName()==m.GetPathName(),D("error",e,"path",active==null?null:active.GetPathName()));}
+        static void EnsureConfiguration(IModelDoc2 m,string name)
+        {string before=m.ConfigurationManager.ActiveConfiguration.Name;if(before!=name)Require(Call("IModelDoc2.ShowConfiguration2",delegate{return m.ShowConfiguration2(name);},D("before",before,"requested",name)),"Configuration activation failed: "+name);Check("configuration_active_"+name,m.ConfigurationManager.ActiveConfiguration.Name==name,D("before",before,"after",m.ConfigurationManager.ActiveConfiguration.Name));}
+        static void TestConfigurations()
+        {
+            IModelDoc2 m=CopyBlock("config");string original=m.ConfigurationManager.ActiveConfiguration.Name;
+            IConfiguration wide=m.ConfigurationManager.AddConfiguration2("Wide_Only","Validation","",0,"","",true);Require(wide!=null,"Add config");
+            Event("configuration","AddConfiguration2",null,D("created_name",wide.Name,"names",m.GetConfigurationNames()));EnsureConfiguration(m,wide.Name);IDimension d=(IDimension)m.Parameter("Width@Sketch_Block_Profile");Require(d!=null,"Width lookup");int ret=d.SetSystemValue3(.1,(int)swSetValueInConfiguration_e.swSetValue_InThisConfiguration,null);Check("wide_dimension_set",ret==0,D("return",ret));m.EditRebuild3();Check("wide_volume",Math.Abs(V(m)-.0001)<1e-10,V(m));
+            EnsureConfiguration(m,original);m.EditRebuild3();Check("baseline_isolated",Math.Abs(Value((IDimension)m.Parameter("Width@Sketch_Block_Profile"))-.08)<1e-9&&Math.Abs(V(m)-.00008)<1e-10,D("width_m",Value((IDimension)m.Parameter("Width@Sketch_Block_Profile")),"volume",V(m)));
+            string path=Path.Combine(CaseDir,"configurations.sldprt");SaveAs(m,path);CloseOwned(m);int e=0,w=0;m=(IModelDoc2)App.OpenDoc6(path,1,3,"",ref e,ref w);Require(m!=null&&e==0,"Config reopen");OwnedDocuments.Add(m);ActivateOwned(m);
+            foreach(string cfg in new string[]{original,"Wide_Only"}){EnsureConfiguration(m,cfg);m.EditRebuild3();double expected=cfg==original?.00008:.0001;Check("reopen_config_"+cfg,Math.Abs(V(m)-expected)<1e-10,D("actual",V(m),"expected",expected));}
+        }

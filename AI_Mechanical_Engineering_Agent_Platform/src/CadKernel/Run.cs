@@ -10,6 +10,8 @@ using System.Text.Json.Serialization;
 
 namespace CadKernel
 {
+    public enum RunPurpose { Modeling, Regression, Verification }
+
     /// <summary>
     /// 一次运行 = output/&lt;时间&gt;_&lt;任务&gt;/ 下的一套完整产物:
     /// <code>
@@ -33,6 +35,7 @@ namespace CadKernel
         public static string Images { get { return Path.Combine(Dir, "images"); } }
         public static string InputSnapshot { get { return Path.Combine(Dir, "input"); } }
         public static string OutputRoot { get { return Path.Combine(PlatformRoot, "output"); } }
+        public static string QaRoot { get { return Path.Combine(PlatformRoot, "qa"); } }
         /// <summary>机器级状态 (专用 SolidWorks 实例 PID、被临时修改的用户选项原值), 不属于任何一次运行</summary>
         public static string StateDir { get { return Path.Combine(PlatformRoot, ".cad"); } }
 
@@ -51,14 +54,37 @@ namespace CadKernel
             PlatformRoot = platformRoot;
         }
 
-        /// <summary>新运行目录的名称 = yyyyMMdd_HHmmss_任务名 (长度固定, 运行前估算路径长度也用它)</summary>
-        public static string NewDirName(string task) { return DateTime.Now.ToString("yyyyMMdd_HHmmss") + "_" + Safe(task); }
+        public static string RootForPurpose(RunPurpose purpose = RunPurpose.Modeling)
+        {
+            switch (purpose)
+            {
+                case RunPurpose.Modeling: return OutputRoot;
+                case RunPurpose.Regression: case RunPurpose.Verification: return QaRoot;
+                default: throw new ArgumentOutOfRangeException(nameof(purpose));
+            }
+        }
+
+        /// <summary>普通运行沿用原名; 回归与独立复验分别加 reg / verify, 路径估算与实际创建共用。</summary>
+        public static string NewDirName(string task, RunPurpose purpose = RunPurpose.Modeling)
+        {
+            string prefix;
+            switch (purpose)
+            {
+                case RunPurpose.Modeling: prefix = ""; break;
+                case RunPurpose.Regression: prefix = "reg_"; break;
+                case RunPurpose.Verification: prefix = "verify_"; break;
+                default: throw new ArgumentOutOfRangeException(nameof(purpose));
+            }
+            return DateTime.Now.ToString("yyyyMMdd_HHmmss") + "_" + prefix + Safe(task);
+        }
 
         /// <summary>新建运行目录并拷贝输入快照</summary>
-        public static string Begin(string task, string projectId, string title, string inputDir)
+        public static string Begin(string task, string projectId, string title, string inputDir,
+            RunPurpose purpose = RunPurpose.Modeling, string sourceRun = null)
         {
-            Directory.CreateDirectory(OutputRoot);
-            Dir = Path.Combine(OutputRoot, NewDirName(task));
+            string root = RootForPurpose(purpose);
+            Directory.CreateDirectory(root);
+            Dir = Path.Combine(root, NewDirName(task, purpose));
             if (Directory.Exists(Dir)) throw new IOException("运行目录已存在: " + Dir);
             foreach (string d in new[] { Dir, Models, Drawings, Exports, Bom, Checks, Images, InputSnapshot }) Directory.CreateDirectory(d);
             // 含子目录 (导入设计的 geometry/): 续跑读的是快照, 运行目录也须能整体拷走
@@ -72,6 +98,7 @@ namespace CadKernel
             Manifest = new RunManifest
             {
                 Task = task, Project = projectId, Title = title, RunDir = Dir, Input = inputDir,
+                Purpose = purpose.ToString().ToLowerInvariant(), SourceRun = sourceRun == null ? null : Path.GetFullPath(sourceRun),
                 StartedAt = Now(), Status = "running", Machine = Environment.MachineName,
             };
             StartLog();
@@ -82,6 +109,7 @@ namespace CadKernel
         /// <summary>续跑已有运行目录 (如零件和装配已完成, 只补出图)</summary>
         public static void Resume(string runDir)
         {
+            EnsureResumable(runDir);
             Dir = Path.GetFullPath(runDir);
             string mf = Path.Combine(Dir, "run.json");
             if (!File.Exists(mf)) throw new FileNotFoundException("不是运行目录 (缺 run.json): " + Dir);
@@ -90,6 +118,30 @@ namespace CadKernel
             Manifest.FinishedAt = null;
             StartLog();
             Save();
+        }
+
+        /// <summary>qa/archive 为只读历史区; 即使指定绝对路径也不得原地续跑。</summary>
+        public static void EnsureResumable(string runDir)
+        {
+            if (IsArchivedRun(runDir)) throw new IOException("归档运行只读, 不能续跑: " + Path.GetFullPath(runDir));
+        }
+
+        public static bool IsArchivedRun(string runDir)
+        {
+            if (string.IsNullOrWhiteSpace(runDir)) return false;
+            for (var d = new DirectoryInfo(Path.GetFullPath(runDir)); d != null; d = d.Parent)
+                if (string.Equals(d.Name, "archive", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(d.Parent?.Name, "qa", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        /// <summary>仅 output/ 与活动 qa/ 下的路径属于可操作产物; 排除同名前缀目录和只读归档。</summary>
+        public static bool IsOwnedOutputPath(string path)
+        {
+            if (PlatformRoot == null || string.IsNullOrWhiteSpace(path) || IsArchivedRun(path)) return false;
+            string full = Path.GetFullPath(path);
+            bool Under(string root) { return full.StartsWith(Path.GetFullPath(root).TrimEnd('\\', '/') + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase); }
+            return Under(OutputRoot) || Under(QaRoot);
         }
 
         static TextWriter consoleOut;
@@ -129,6 +181,8 @@ namespace CadKernel
             }
             catch (Exception e)
             {
+                try { RuntimeEvents.Record("Run.Step", "failed", error: e); }
+                catch (Exception loggingError) { Console.Error.WriteLine("运行事件写入失败: " + loggingError.Message); }
                 rec.Status = "failed";
                 rec.Message = e.Message;
                 throw;
@@ -165,7 +219,11 @@ namespace CadKernel
             Manifest.Error = error;
             Manifest.Artifacts = CountArtifacts();
             bool checksOk = Manifest.Checks.All(c => c.Passed);
-            Manifest.Status = ok && checksOk ? "passed" : "failed";
+            var incomplete = Manifest.Steps.Where(s => s.Status != "passed").Select(s => s.Name).ToList();
+            bool stepsOk = Manifest.Steps.Count > 0 && incomplete.Count == 0;
+            if (ok && error == null && !stepsOk)
+                Manifest.Error = "步骤未完成: " + (incomplete.Count > 0 ? string.Join(", ", incomplete) : "没有执行步骤");
+            Manifest.Status = ok && checksOk && stepsOk && Manifest.Error == null ? "passed" : "failed";
             Save();
         }
 
@@ -225,6 +283,8 @@ namespace CadKernel
         public string Title { get; set; }
         public string RunDir { get; set; }
         public string Input { get; set; }
+        public string Purpose { get; set; }
+        public string SourceRun { get; set; }
         public string StartedAt { get; set; }
         public string FinishedAt { get; set; }
         public string Status { get; set; }

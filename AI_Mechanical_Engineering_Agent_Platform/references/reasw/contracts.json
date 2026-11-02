@@ -1,0 +1,1685 @@
+{
+  "source": {
+    "path": "03_analysis/contracts/core_api_primary.jsonl",
+    "sha256": "c1f95fc351715deab152134b553b430a930d68def72f80ffecee7e3244662f58"
+  },
+  "solidworks": "2023 SP05 / API31.5",
+  "assembly_version": "31.5.0.52",
+  "boundary": "仅静态声明, 不单独证明调用或几何成功",
+  "members": [
+    {
+      "member": "IDimension.SetSystemValue3",
+      "evidence_id": "META-56785778d3d46021:0x02000019:0x06000E6F",
+      "type_guid": "83A33D3A-27C5-11CE-BFD4-00400513BB57",
+      "type_token": "0x02000019",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "SetSystemValue3",
+        "token": "0x06000E6F",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "2003080D081C",
+        "returnType": "System.Int32",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.Int32",
+          "token": "0x08001ED6",
+          "attributes": "None",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Double",
+          "System.Int32",
+          "System.Object"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "NewValue",
+            "type": "System.Double",
+            "token": "0x08001ED7",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "WhichConfigurations",
+            "type": "System.Int32",
+            "token": "0x08001ED8",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "Config_names",
+            "type": "System.Object",
+            "token": "0x08001ED9",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "1B",
+            "marshalNativeType": "Struct",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 3,
+        "dispId": 44,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C002957",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "01002C0000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 44
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IDimension.GetSystemValue3",
+      "evidence_id": "META-56785778d3d46021:0x02000019:0x06000E71",
+      "type_guid": "83A33D3A-27C5-11CE-BFD4-00400513BB57",
+      "type_token": "0x02000019",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "GetSystemValue3",
+        "token": "0x06000E71",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "20021C081C",
+        "returnType": "System.Object",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.Object",
+          "token": "0x08001EDF",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1B",
+          "marshalNativeType": "Struct",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Int32",
+          "System.Object"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "WhichConfigurations",
+            "type": "System.Int32",
+            "token": "0x08001EE0",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Config_names",
+            "type": "System.Object",
+            "token": "0x08001EE1",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "1B",
+            "marshalNativeType": "Struct",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 2,
+        "dispId": 46,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C00295B",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "01002E0000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 46
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IModelDoc2.SketchAddConstraints",
+      "evidence_id": "META-56785778d3d46021:0x02000193:0x06003B28",
+      "type_guid": "B90793FB-EF3D-4B80-A5C4-99959CDB6CEB",
+      "type_token": "0x02000193",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "SketchAddConstraints",
+        "token": "0x06003B28",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "2001010E",
+        "returnType": "System.Void",
+        "parameterTypes": [
+          "System.String"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "IdStr",
+            "type": "System.String",
+            "token": "0x0800729F",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 1,
+        "dispId": 65576,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C00613A",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100280001000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 65576
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IModelDoc2.ShowConfiguration2",
+      "evidence_id": "META-56785778d3d46021:0x02000193:0x06003D2A",
+      "type_guid": "B90793FB-EF3D-4B80-A5C4-99959CDB6CEB",
+      "type_token": "0x02000193",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "ShowConfiguration2",
+        "token": "0x06003D2A",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "2001020E",
+        "returnType": "System.Boolean",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.Boolean",
+          "token": "0x080077F0",
+          "attributes": "None",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.String"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "ConfigurationName",
+            "type": "System.String",
+            "token": "0x080077F1",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 1,
+        "dispId": 66084,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C006343",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100240201000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 66084
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IModelDoc2.AddDiameterDimension2",
+      "evidence_id": "META-56785778d3d46021:0x02000193:0x06003DAE",
+      "type_guid": "B90793FB-EF3D-4B80-A5C4-99959CDB6CEB",
+      "type_token": "0x02000193",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "AddDiameterDimension2",
+        "token": "0x06003DAE",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "20031C0D0D0D",
+        "returnType": "System.Object",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.Object",
+          "token": "0x080079AC",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1A",
+          "marshalNativeType": "IDispatch",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Double",
+          "System.Double",
+          "System.Double"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "X",
+            "type": "System.Double",
+            "token": "0x080079AD",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Y",
+            "type": "System.Double",
+            "token": "0x080079AE",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "Z",
+            "type": "System.Double",
+            "token": "0x080079AF",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 3,
+        "dispId": 66216,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C0063C7",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100A80201000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 66216
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IEquationMgr.get_Equation",
+      "evidence_id": "META-56785778d3d46021:0x0200020E:0x06004D17",
+      "type_guid": "02272CE8-FE52-4B94-B120-6D1826FDBE32",
+      "type_token": "0x0200020E",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "get_Equation",
+        "token": "0x06004D17",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract, SpecialName",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "20010E08",
+        "returnType": "System.String",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.String",
+          "token": "0x08009765",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "13",
+          "marshalNativeType": "BStr",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Int32"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "Index",
+            "type": "System.Int32",
+            "token": "0x08009766",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 1,
+        "dispId": 8,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007312",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100080000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 8
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IEquationMgr.set_Equation",
+      "evidence_id": "META-56785778d3d46021:0x0200020E:0x06004D18",
+      "type_guid": "02272CE8-FE52-4B94-B120-6D1826FDBE32",
+      "type_token": "0x0200020E",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "set_Equation",
+        "token": "0x06004D18",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract, SpecialName",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "200201080E",
+        "returnType": "System.Void",
+        "parameterTypes": [
+          "System.Int32",
+          "System.String"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "Index",
+            "type": "System.Int32",
+            "token": "0x08009767",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Equation",
+            "type": "System.String",
+            "token": "0x08009768",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 2,
+        "dispId": 8,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007313",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100080000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 8
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IEquationMgr.Add2",
+      "evidence_id": "META-56785778d3d46021:0x0200020E:0x06004D1C",
+      "type_guid": "02272CE8-FE52-4B94-B120-6D1826FDBE32",
+      "type_token": "0x0200020E",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "Add2",
+        "token": "0x06004D1C",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "200308080E02",
+        "returnType": "System.Int32",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.Int32",
+          "token": "0x0800976C",
+          "attributes": "None",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Int32",
+          "System.String",
+          "System.Boolean"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "Index",
+            "type": "System.Int32",
+            "token": "0x0800976D",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Equation",
+            "type": "System.String",
+            "token": "0x0800976E",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "Solve",
+            "type": "System.Boolean",
+            "token": "0x0800976F",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 3,
+        "dispId": 11,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007317",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "01000B0000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 11
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IEquationMgr.EvaluateAll",
+      "evidence_id": "META-56785778d3d46021:0x0200020E:0x06004D1D",
+      "type_guid": "02272CE8-FE52-4B94-B120-6D1826FDBE32",
+      "type_token": "0x0200020E",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "EvaluateAll",
+        "token": "0x06004D1D",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "200008",
+        "returnType": "System.Int32",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "System.Int32",
+          "token": "0x08009770",
+          "attributes": "None",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "",
+          "customAttributes": []
+        },
+        "parameterTypes": [],
+        "parameters": [],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 0,
+        "dispId": 12,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007318",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "01000C0000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 12
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IFeatureManager.InsertMirrorFeature2",
+      "evidence_id": "META-56785778d3d46021:0x02000256:0x060051FE",
+      "type_guid": "6B39655E-381B-4BD0-89F5-640D48593F15",
+      "type_token": "0x02000256",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "InsertMirrorFeature2",
+        "token": "0x060051FE",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "2005125C0202020208",
+        "returnType": "SolidWorks.Interop.sldworks.Feature",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "SolidWorks.Interop.sldworks.Feature",
+          "token": "0x0800A15B",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1C",
+          "marshalNativeType": "Interface",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Int32"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "BMirrorBody",
+            "type": "System.Boolean",
+            "token": "0x0800A15C",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "BGeometryPattern",
+            "type": "System.Boolean",
+            "token": "0x0800A15D",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "BMerge",
+            "type": "System.Boolean",
+            "token": "0x0800A15E",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 4,
+            "name": "BKnit",
+            "type": "System.Boolean",
+            "token": "0x0800A15F",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 5,
+            "name": "ScopeOptions",
+            "type": "System.Int32",
+            "token": "0x0800A160",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 5,
+        "dispId": 145,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C0077E1",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100910000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 145
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IFeatureManager.FeatureCircularPattern4",
+      "evidence_id": "META-56785778d3d46021:0x02000256:0x06005245",
+      "type_guid": "6B39655E-381B-4BD0-89F5-640D48593F15",
+      "type_token": "0x02000256",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "FeatureCircularPattern4",
+        "token": "0x06005245",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "2007125C080D020E020202",
+        "returnType": "SolidWorks.Interop.sldworks.Feature",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "SolidWorks.Interop.sldworks.Feature",
+          "token": "0x0800A3B0",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1C",
+          "marshalNativeType": "Interface",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Int32",
+          "System.Double",
+          "System.Boolean",
+          "System.String",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "Number",
+            "type": "System.Int32",
+            "token": "0x0800A3B1",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Spacing",
+            "type": "System.Double",
+            "token": "0x0800A3B2",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "FlipDirection",
+            "type": "System.Boolean",
+            "token": "0x0800A3B3",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 4,
+            "name": "DName",
+            "type": "System.String",
+            "token": "0x0800A3B4",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 5,
+            "name": "GeometryPattern",
+            "type": "System.Boolean",
+            "token": "0x0800A3B5",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 6,
+            "name": "EqualSpacing",
+            "type": "System.Boolean",
+            "token": "0x0800A3B6",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 7,
+            "name": "VaryInstance",
+            "type": "System.Boolean",
+            "token": "0x0800A3B7",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 7,
+        "dispId": 211,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007828",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100D30000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 211
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IFeatureManager.FeatureLinearPattern5",
+      "evidence_id": "META-56785778d3d46021:0x02000256:0x06005276",
+      "type_guid": "6B39655E-381B-4BD0-89F5-640D48593F15",
+      "type_token": "0x02000256",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "FeatureLinearPattern5",
+        "token": "0x06005276",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "2016125C080D080D02020E0E020202020202020202020D0D0202",
+        "returnType": "SolidWorks.Interop.sldworks.Feature",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "SolidWorks.Interop.sldworks.Feature",
+          "token": "0x0800A588",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1C",
+          "marshalNativeType": "Interface",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Int32",
+          "System.Double",
+          "System.Int32",
+          "System.Double",
+          "System.Boolean",
+          "System.Boolean",
+          "System.String",
+          "System.String",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Boolean",
+          "System.Double",
+          "System.Double",
+          "System.Boolean",
+          "System.Boolean"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "Num1",
+            "type": "System.Int32",
+            "token": "0x0800A589",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Spacing1",
+            "type": "System.Double",
+            "token": "0x0800A58A",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "Num2",
+            "type": "System.Int32",
+            "token": "0x0800A58B",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 4,
+            "name": "Spacing2",
+            "type": "System.Double",
+            "token": "0x0800A58C",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 5,
+            "name": "FlipDir1",
+            "type": "System.Boolean",
+            "token": "0x0800A58D",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 6,
+            "name": "FlipDir2",
+            "type": "System.Boolean",
+            "token": "0x0800A58E",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 7,
+            "name": "DName1",
+            "type": "System.String",
+            "token": "0x0800A58F",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 8,
+            "name": "DName2",
+            "type": "System.String",
+            "token": "0x0800A590",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 9,
+            "name": "GeometryPattern",
+            "type": "System.Boolean",
+            "token": "0x0800A591",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 10,
+            "name": "VaryInstance",
+            "type": "System.Boolean",
+            "token": "0x0800A592",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 11,
+            "name": "HasOffset1",
+            "type": "System.Boolean",
+            "token": "0x0800A593",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 12,
+            "name": "HasOffset2",
+            "type": "System.Boolean",
+            "token": "0x0800A594",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 13,
+            "name": "CtrlByNum1",
+            "type": "System.Boolean",
+            "token": "0x0800A595",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 14,
+            "name": "CtrlByNum2",
+            "type": "System.Boolean",
+            "token": "0x0800A596",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 15,
+            "name": "FromCentroid1",
+            "type": "System.Boolean",
+            "token": "0x0800A597",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 16,
+            "name": "FromCentroid2",
+            "type": "System.Boolean",
+            "token": "0x0800A598",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 17,
+            "name": "RevOffset1",
+            "type": "System.Boolean",
+            "token": "0x0800A599",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 18,
+            "name": "RevOffset2",
+            "type": "System.Boolean",
+            "token": "0x0800A59A",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 19,
+            "name": "Offset1",
+            "type": "System.Double",
+            "token": "0x0800A59B",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 20,
+            "name": "Offset2",
+            "type": "System.Double",
+            "token": "0x0800A59C",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 21,
+            "name": "D2PatternSeedOnly",
+            "type": "System.Boolean",
+            "token": "0x0800A59D",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 22,
+            "name": "SyncSubAssemblies",
+            "type": "System.Boolean",
+            "token": "0x0800A59E",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 22,
+        "dispId": 260,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007859",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100040100000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 260
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "IConfigurationManager.AddConfiguration2",
+      "evidence_id": "META-56785778d3d46021:0x0200025F:0x060056F8",
+      "type_guid": "8DB64337-F36E-47CC-BBBC-B4B979D31505",
+      "type_token": "0x0200025F",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "AddConfiguration2",
+        "token": "0x060056F8",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "20071282880E0E0E080E0E02",
+        "returnType": "SolidWorks.Interop.sldworks.Configuration",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "SolidWorks.Interop.sldworks.Configuration",
+          "token": "0x0800B885",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1C",
+          "marshalNativeType": "Interface",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.String",
+          "System.String",
+          "System.String",
+          "System.Int32",
+          "System.String",
+          "System.String",
+          "System.Boolean"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "Name",
+            "type": "System.String",
+            "token": "0x0800B886",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "Comment",
+            "type": "System.String",
+            "token": "0x0800B887",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "AlternateName",
+            "type": "System.String",
+            "token": "0x0800B888",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 4,
+            "name": "Options",
+            "type": "System.Int32",
+            "token": "0x0800B889",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 5,
+            "name": "ParentConfigName",
+            "type": "System.String",
+            "token": "0x0800B88A",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 6,
+            "name": "Description",
+            "type": "System.String",
+            "token": "0x0800B88B",
+            "attributes": "In, HasFieldMarshal",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "13",
+            "marshalNativeType": "BStr",
+            "customAttributes": []
+          },
+          {
+            "sequence": 7,
+            "name": "Rebuild",
+            "type": "System.Boolean",
+            "token": "0x0800B88C",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 7,
+        "dispId": 20,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C007CD8",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "0100140000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 20
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    },
+    {
+      "member": "ISketchManager.CreateCircleByRadius",
+      "evidence_id": "META-56785778d3d46021:0x0200030C:0x06005FB4",
+      "type_guid": "9CE9DACE-E595-4D8F-B893-5AE4899517DE",
+      "type_token": "0x0200030C",
+      "source_pia_sha256": "56785778d3d46021c4c71a88431b8109285964c3d2c807db919c0141b7d7fb62",
+      "mvid": "8ea1f7fb-fcc5-42b3-b1d0-2522abe1413d",
+      "method": {
+        "name": "CreateCircleByRadius",
+        "token": "0x06005FB4",
+        "attributes": "Public, Virtual, HideBySig, VtableLayoutMask, Abstract",
+        "implementationAttributes": "4099",
+        "implementationAttributeValue": 4099,
+        "implementationCodeType": "CodeTypeMask",
+        "implementationManagedType": "IL",
+        "implementationInternalCall": true,
+        "rva": 0,
+        "hasBody": false,
+        "signatureBlob": "20041283740D0D0D0D",
+        "returnType": "SolidWorks.Interop.sldworks.SketchSegment",
+        "returnParameter": {
+          "sequence": 0,
+          "name": "",
+          "type": "SolidWorks.Interop.sldworks.SketchSegment",
+          "token": "0x0800C6DB",
+          "attributes": "HasFieldMarshal",
+          "isIn": false,
+          "isOut": false,
+          "isOptional": false,
+          "hasDefault": false,
+          "marshalBlob": "1C",
+          "marshalNativeType": "Interface",
+          "customAttributes": []
+        },
+        "parameterTypes": [
+          "System.Double",
+          "System.Double",
+          "System.Double",
+          "System.Double"
+        ],
+        "parameters": [
+          {
+            "sequence": 1,
+            "name": "XC",
+            "type": "System.Double",
+            "token": "0x0800C6DC",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 2,
+            "name": "YC",
+            "type": "System.Double",
+            "token": "0x0800C6DD",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 3,
+            "name": "Zc",
+            "type": "System.Double",
+            "token": "0x0800C6DE",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          },
+          {
+            "sequence": 4,
+            "name": "Radius",
+            "type": "System.Double",
+            "token": "0x0800C6DF",
+            "attributes": "In",
+            "isIn": true,
+            "isOut": false,
+            "isOptional": false,
+            "hasDefault": false,
+            "marshalBlob": "",
+            "customAttributes": []
+          }
+        ],
+        "callingConvention": "Default",
+        "genericParameterCount": 0,
+        "requiredParameterCount": 4,
+        "dispId": 30,
+        "customAttributes": [
+          {
+            "type": "System.Runtime.InteropServices.DispIdAttribute",
+            "token": "0x0C00854B",
+            "constructorToken": "0x0A00000A",
+            "rawBlob": "01001E0000000000",
+            "fixedArgs": [
+              {
+                "type": "System.Int32",
+                "value": 30
+              }
+            ],
+            "namedArgs": []
+          }
+        ]
+      },
+      "status": "STATIC_METADATA_CONTRACT_ONLY"
+    }
+  ]
+}

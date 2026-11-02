@@ -224,13 +224,9 @@ namespace CadProjects.Imported
                 var w = Xf.FromArray((double[])((MathTransform)c.GetTotalTransform(false)).ArrayData);
                 List<Xf> list;
                 if (!remain.TryGetValue(id, out list) || list.Count == 0) { miss.Add(id + " 多出实例 " + c.Name2); continue; }
-                int best = -1; double bt = double.MaxValue, br = 0;
-                for (int i = 0; i < list.Count; i++)
-                {
-                    double dt, dr; Xf.Diff(w, list[i], out dt, out dr);
-                    if (dt < bt) { bt = dt; br = dr; best = i; }
-                }
-                if (bt <= 0.01 && br <= 1e-6) { list.RemoveAt(best); ok++; worstT = Math.Max(worstT, bt); worstR = Math.Max(worstR, br); }
+                double bt, br;
+                int best = MatchInstance(w, list, out bt, out br);
+                if (best >= 0) { list.RemoveAt(best); ok++; worstT = Math.Max(worstT, bt); worstR = Math.Max(worstR, br); }
                 else miss.Add(string.Format("{0} {1}: 最近的原位置相差 {2:F3} mm / 方向 {3:G3}", id, c.Name2, bt, br));
             }
             Sw.CloseAll();
@@ -246,6 +242,28 @@ namespace CadProjects.Imported
                     miss.Count > 0 ? "; 不符 " + miss.Count + ": " + string.Join("; ", miss.Take(3)) : ""), f);
             Run.Metric("导入/零件种数", model.Parts.Count);
             Run.Metric("导入/零件实例数", ok);
+        }
+
+        /// <summary>
+        /// 在尚未消费的原实例中匹配完整位姿; 同原点不同方向的实例不能只按平移择优。
+        /// 返回满足位置与方向允差的索引 (不修改列表); 无匹配时返回 -1, 差值保留最近候选用于诊断。
+        /// </summary>
+        internal static int MatchInstance(Xf actual, IList<Xf> expected, out double translation, out double rotation)
+        {
+            int best = -1;
+            double bestT = double.MaxValue, bestR = double.MaxValue;
+            translation = rotation = double.MaxValue;
+            for (int i = 0; i < expected.Count; i++)
+            {
+                double dt, dr; Xf.Diff(actual, expected[i], out dt, out dr);
+                if (dt < translation || (dt == translation && dr < rotation)) { translation = dt; rotation = dr; }
+                if (dt <= 0.01 && dr <= 1e-6 && (best < 0 || dt < bestT || (dt == bestT && dr < bestR)))
+                {
+                    best = i; bestT = dt; bestR = dr;
+                }
+            }
+            if (best >= 0) { translation = bestT; rotation = bestR; }
+            return best;
         }
 
         /// <summary>

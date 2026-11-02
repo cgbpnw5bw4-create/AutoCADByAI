@@ -3,10 +3,8 @@
 用法: python python/audit_drawings.py <drawings 目录> [--json <输出.json>]
 来源: CFC-650 铜箔清洗机 scripts/audit_pdf.py (106 张图 0 项), 改为按运行目录调用并输出 JSON。
 
-格式元素 (图框、标题栏) 的识别:
-  1. drawings/_formats/format_<图幅>.pdf (内核导出的空白图纸) 中出现的元素;
-  2. 同图幅 PDF 不少于 2 份时, 出现于 ≥80% 份数中的元素。
-其余为内容。
+格式元素 (图框、标题栏) 只取自 drawings/_formats/format_<图幅>.pdf (内核导出的空白图纸)。
+其余为内容, 不因多张图纸出现相同元素而豁免; 缺少对应图幅的空白模板时, 该张审核记为有问题。
 
 外形尺寸 (JSON 的 extents): 图纸目录 index.json 的 extent_marks 记有每个外形尺寸文字在图纸上的位置与应有值
 (内核出图时记录; 出图中不向 SolidWorks 读回尺寸值, 读的是 PDF 上实际印出的数)。
@@ -72,24 +70,23 @@ def audit(drw_dir):
                   if os.sep + "_formats" + os.sep not in f)
     data = {}
     for f in pdfs:
-        p = pymupdf.open(f)[0]
-        data[f] = (size_of(p.rect.width, p.rect.height), p.rect.width * PT, p.rect.height * PT, items(p))
+        with pymupdf.open(f) as doc:
+            p = doc[0]
+            data[f] = (size_of(p.rect.width, p.rect.height), p.rect.width * PT, p.rect.height * PT, items(p))
 
     by = collections.defaultdict(list)
     for f, (sz, W, H, its) in data.items():
         by[sz].append(f)
     fmt = {}
-    for sz, fs in by.items():
+    missing_formats = set()
+    for sz in by:
         keys = set()
         ref = os.path.join(drw_dir, "_formats", "format_%s.pdf" % sz)
         if os.path.exists(ref):
-            keys |= set(key(i) for i in items(pymupdf.open(ref)[0]))
-        if len(fs) >= 2:
-            cnt = collections.Counter()
-            for f in fs:
-                cnt.update(set(key(i) for i in data[f][3]))
-            need = max(2, int(0.8 * len(fs)))
-            keys |= {k for k, c in cnt.items() if c >= need}
+            with pymupdf.open(ref) as doc:
+                keys = {key(i) for i in items(doc[0])}
+        else:
+            missing_formats.add(sz)
         fmt[sz] = keys
 
     rows = []
@@ -126,11 +123,12 @@ def audit(drw_dir):
             nb = [i for i in content if i[0] == "g" and i[3] > bx0 and i[1] < bx1 and i[4] > by0 and i[2] < by1]
         rows.append({
             "file": os.path.relpath(f, drw_dir).replace("\\", "/"), "size": sz,
+            "format_missing": sz in missing_formats,
             "out_of_frame": len(out), "out_of_frame_text": [i[5] for i in out if i[0] == "t"][:6],
             "over_title_block": len(tbx), "text_overlaps": ov[:6], "text_overlap_count": len(ov),
             "lines_over_notes": len(nb),
         })
-    probs = [r for r in rows if r["out_of_frame"] or r["over_title_block"] or r["text_overlap_count"] or r["lines_over_notes"]]
+    probs = [r for r in rows if r["format_missing"] or r["out_of_frame"] or r["over_title_block"] or r["text_overlap_count"] or r["lines_over_notes"]]
     return {"total": len(rows), "problem_count": len(probs), "by_size": {k: len(v) for k, v in by.items()},
             "format_reference": sorted(os.path.basename(p) for p in glob.glob(os.path.join(drw_dir, "_formats", "*.pdf"))),
             "problems": probs, "drawings": rows, "extents": read_extents(drw_dir, data)}
@@ -188,6 +186,8 @@ def main():
     r = audit(a.drawings)
     print("PDF %d 张 %s, 有问题 %d 张" % (r["total"], r["by_size"], r["problem_count"]))
     for p in r["problems"]:
+        if p["format_missing"]:
+            print("  %s: 缺少空白模板 _formats/format_%s.pdf, 版面审核不通过" % (p["file"], p["size"]))
         print("  %s [%s] 出框 %d %s | 压标题栏 %d | 文字重叠 %d %s | 压技术要求 %d" % (
             p["file"], p["size"], p["out_of_frame"], p["out_of_frame_text"], p["over_title_block"],
             p["text_overlap_count"], p["text_overlaps"], p["lines_over_notes"]))

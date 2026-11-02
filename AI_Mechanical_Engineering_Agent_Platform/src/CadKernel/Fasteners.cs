@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using SolidWorks.Interop.sldworks;
 
@@ -112,6 +113,52 @@ namespace CadKernel
         /// <summary>清空紧固件组缓存 (缓存的是上一个运行目录里的子装配路径)</summary>
         public static void Reset() { Sets.Clear(); }
 
+        /// <summary>选长与组标识的纯定义, 生产建模和缓存共用; 不连接 SolidWorks。</summary>
+        internal sealed class SetDefinition
+        {
+            public int Length;
+            public string Key, FileName;
+        }
+
+        static SetDefinition DefineSet(bool tap, int d, int length, double grip, bool carbon)
+        {
+            // 整数夹厚保留原文件名的 .0; 其余保留 double 的完整精度, 不再把不同夹厚舍入到同一组。
+            string g = grip.ToString(grip == Math.Truncate(grip) ? "F1" : "R", CultureInfo.InvariantCulture);
+            return new SetDefinition
+            {
+                Length = length,
+                Key = string.Format(CultureInfo.InvariantCulture, "{0}_M{1}{2}_G{3}{4}", tap ? "FT" : "FS", d,
+                    tap ? "x" + length.ToString(CultureInfo.InvariantCulture) : "", g, carbon ? "_C" : ""),
+                FileName = string.Format(CultureInfo.InvariantCulture, "{0}_M{1}x{2}_夹厚{3}{4}.SLDASM",
+                    tap ? "螺钉组" : "螺栓组", d, length, g, carbon ? "_8.8" : ""),
+            };
+        }
+
+        internal static SetDefinition DefineBoltNut(int d, double grip, bool carbon = false)
+        {
+            double[] t = T[d];
+            return DefineSet(false, d, StdLen(t[5] + grip + t[5] + t[6] + t[2] + 2 * t[7]), grip, carbon);
+        }
+
+        internal static SetDefinition DefineBoltTap(int d, double grip, double tapDepth, bool carbon = false)
+        {
+            double[] t = T[d];
+            double b0 = t[6] + t[5] + grip, emin = Math.Min(d, tapDepth - 0.5), emax = tapDepth - 0.5;
+            foreach (int l in LEN)
+                if (l >= b0 + emin - 0.01 && l <= b0 + emax + 0.01) return DefineSet(true, d, l, grip, carbon);
+            throw new Exception(string.Format("M{0} 夹厚 {1} 孔深 {2}: 无合适标准长度", d, grip, tapDepth));
+        }
+
+        internal static string BuildSet(SetDefinition definition, Action<string> build)
+        {
+            string cached;
+            if (Sets.TryGetValue(definition.Key, out cached)) return cached;
+            string file = Path.Combine(Run.Models, D, "紧固件组", definition.FileName);
+            if (!File.Exists(file) || !Cat.Reg.ContainsKey(definition.Key)) build(file);
+            Cat.Reg[definition.Key] = file; Sets[definition.Key] = file;
+            return file;
+        }
+
         /// <summary>
         /// 螺栓-螺母组: 螺栓 + 平垫 | 夹紧厚度 grip | 平垫 + 弹垫 + 螺母。返回子装配路径。
         /// 局部: z=0 为螺栓头侧被夹紧面, 被夹紧件占 z∈[0, grip]。
@@ -119,16 +166,10 @@ namespace CadKernel
         public static string BoltNut(int d, double grip, bool carbon = false)
         {
             double[] t = T[d];
-            double need = t[5] + grip + t[5] + t[6] + t[2] + 2 * t[7];
-            int L = StdLen(need);
-            string key = "FS_M" + d + "_G" + grip.ToString("F1") + (carbon ? "_C" : "");
-            string cached;
-            if (Sets.TryGetValue(key, out cached)) return cached;
-            string file = Path.Combine(Run.Models, D, "紧固件组",
-                string.Format("螺栓组_M{0}x{1}_夹厚{2:F1}{3}.SLDASM", d, L, grip, carbon ? "_8.8" : ""));
-            if (!File.Exists(file) || !Cat.Reg.ContainsKey(key))
+            var definition = DefineBoltNut(d, grip, carbon);
+            return BuildSet(definition, file =>
             {
-                string pb = Bolt(d, L, carbon), pn = Nut(d, carbon), pw = Washer(d, carbon), ps = Spring(d, carbon);
+                string pb = Bolt(d, definition.Length, carbon), pn = Nut(d, carbon), pw = Washer(d, carbon), ps = Spring(d, carbon);
                 var a = new AsmBuild(file);
                 a.Add(pw, Xf.T(0, 0, -t[5]));
                 a.Add(pb, Xf.T(0, 0, -t[5]));
@@ -136,9 +177,7 @@ namespace CadKernel
                 a.Add(ps, Xf.T(0, 0, grip + t[5]));
                 a.Add(pn, Xf.T(0, 0, grip + t[5] + t[6]));
                 a.Build(false);
-            }
-            Cat.Reg[key] = file; Sets[key] = file;
-            return file;
+            });
         }
 
         /// <summary>
@@ -148,26 +187,16 @@ namespace CadKernel
         public static string BoltTap(int d, double grip, double tapDepth, bool carbon = false)
         {
             double[] t = T[d];
-            double b0 = t[6] + t[5] + grip, emin = Math.Min(d, tapDepth - 0.5), emax = tapDepth - 0.5;
-            int L = 0;
-            foreach (int l in LEN) if (l >= b0 + emin - 0.01 && l <= b0 + emax + 0.01) { L = l; break; }
-            if (L == 0) throw new Exception(string.Format("M{0} 夹厚 {1} 孔深 {2}: 无合适标准长度", d, grip, tapDepth));
-            string key = "FT_M" + d + "x" + L + "_G" + grip.ToString("F1") + (carbon ? "_C" : "");
-            string cached;
-            if (Sets.TryGetValue(key, out cached)) return cached;
-            string file = Path.Combine(Run.Models, D, "紧固件组",
-                string.Format("螺钉组_M{0}x{1}_夹厚{2:F1}{3}.SLDASM", d, L, grip, carbon ? "_8.8" : ""));
-            if (!File.Exists(file) || !Cat.Reg.ContainsKey(key))
+            var definition = DefineBoltTap(d, grip, tapDepth, carbon);
+            return BuildSet(definition, file =>
             {
-                string pb = Bolt(d, L, carbon), pw = Washer(d, carbon), ps = Spring(d, carbon);
+                string pb = Bolt(d, definition.Length, carbon), pw = Washer(d, carbon), ps = Spring(d, carbon);
                 var a = new AsmBuild(file);
                 a.Add(pw, Xf.T(0, 0, -t[5]));
                 a.Add(ps, Xf.T(0, 0, -t[5] - t[6]));
                 a.Add(pb, Xf.T(0, 0, -t[5] - t[6]));
                 a.Build(false);
-            }
-            Cat.Reg[key] = file; Sets[key] = file;
-            return file;
+            });
         }
 
         public static double HeadK(int d) { return T[d][1]; }

@@ -72,9 +72,10 @@ namespace CadKernel
         /// 文件名: 设计项目声明的 (CadProject.ModelFiles, 导入设计取自 import.json) + 续跑时运行目录 models/ 下已有的;
         /// 两者都没有时用该任务最近一次运行的 models/ (设计在建模代码中命名, 运行前不知道文件名)。
         /// </summary>
-        public static Estimate ForRun(CadProject project, string task, string resumeDir = null)
+        public static Estimate ForRun(CadProject project, string task, string resumeDir = null, bool regression = false)
         {
-            string runDir = resumeDir != null ? Path.GetFullPath(resumeDir) : Path.Combine(Run.OutputRoot, Run.NewDirName(task));
+            var purpose = regression ? RunPurpose.Regression : RunPurpose.Modeling;
+            string runDir = resumeDir != null ? Path.GetFullPath(resumeDir) : Path.Combine(Run.RootForPurpose(purpose), Run.NewDirName(task, purpose));
             var files = new List<string>();
             var source = new List<string>();
             var planned = project.ModelFiles();         // 读不出照常抛出: 吞掉会把超长当作"不知道文件名"放过去
@@ -86,7 +87,7 @@ namespace CadKernel
             }
             if (source.Count == 0)
             {
-                string last = LastRun(task);
+                string last = LastRun(task, regression);
                 if (last != null)
                 {
                     files.AddRange(ModelsIn(last).Select(f => Path.GetRelativePath(Path.Combine(last, "models"), f)));
@@ -106,13 +107,19 @@ namespace CadKernel
                 .ToList();
         }
 
-        /// <summary>output/ 下该任务最近一次有 models/ 的运行目录</summary>
-        static string LastRun(string task)
+        /// <summary>对应路由下该任务最近一次有 models/ 的运行目录; 不读 qa/archive 或 verify 运行。</summary>
+        static string LastRun(string task, bool regression)
         {
-            if (!Directory.Exists(Run.OutputRoot)) return null;
-            var re = new Regex(@"^\d{8}_\d{6}_" + Regex.Escape(Run.Safe(task)) + "$");
-            return Directory.GetDirectories(Run.OutputRoot).Where(d => re.IsMatch(Path.GetFileName(d)) && ModelsIn(d).Count > 0)
-                            .OrderByDescending(d => Path.GetFileName(d), StringComparer.Ordinal).FirstOrDefault();
+            string Find(bool qa)
+            {
+                string root = qa ? Run.QaRoot : Run.OutputRoot;
+                if (!Directory.Exists(root)) return null;
+                var re = new Regex(@"^\d{8}_\d{6}_" + (qa ? "reg_" : "") + Regex.Escape(Run.Safe(task)) + "$");
+                return Directory.GetDirectories(root).Where(d => re.IsMatch(Path.GetFileName(d)) && ModelsIn(d).Count > 0)
+                                .OrderByDescending(d => Path.GetFileName(d), StringComparer.Ordinal).FirstOrDefault();
+            }
+            // 首次回归也可借已有交付运行的文件名估算; 拼接的目标目录仍是本次实际路由。
+            return Find(regression) ?? Find(!regression);
         }
 
         /// <summary>一行概要: 字节数、字符数、最长的文件 (相对运行目录)</summary>

@@ -38,9 +38,7 @@ namespace CadKernel
             }
 
             var app = Sw.App;
-            int ap0 = app.GetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swStepAP);
-            bool fe0 = app.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportFaceEdgeProps);
-            bool ap0b = app.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportAppearances);
+            Sw.CaptureExportPrefs();
             string outp = Path.Combine(Run.Exports, Path.GetFileNameWithoutExtension(src) + ".step");
             try
             {
@@ -56,10 +54,7 @@ namespace CadKernel
             }
             finally
             {
-                app.SetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swStepAP, ap0);
-                app.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportFaceEdgeProps, fe0);
-                app.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swStepExportAppearances, ap0b);
-                Sw.Log(string.Format("已恢复导出选项: AP{0}, 面/边属性 {1}, 外观 {2}", ap0, fe0, ap0b));
+                Sw.RestoreExportPrefs();
             }
             Sw.App.CloseDoc(m.GetTitle());   // 不保存 (仅可见性改动)
             return outp;

@@ -1,0 +1,20 @@
+{
+  "project": "reasw_parametric_patterns",
+  "title": "具名参数与阵列六案例",
+  "params": {
+    "diameter_mm": 20,
+    "updated_diameter_mm": 30,
+    "block_width_mm": 80,
+    "block_height_mm": 50,
+    "depth_mm": 20,
+    "wide_width_mm": 100,
+    "equation_initial_width_mm": 90,
+    "equation_final_width_mm": 120,
+    "hole_radius_mm": 2,
+    "linear_count": 3,
+    "linear_pitch_mm": 15,
+    "disk_radius_mm": 30,
+    "bolt_circle_radius_mm": 20,
+    "circular_count": 4
+  }
+}

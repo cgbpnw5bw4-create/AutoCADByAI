@@ -1,0 +1,13 @@
+        static void TestConstraints()
+        {
+            IModelDoc2 m=NewPart(Template);IFeature sk=StartSketch(m,Plane(m,0),"ConstrainedCircle");
+            ISketchSegment seg=(ISketchSegment)m.SketchManager.CreateCircleByRadius(.005,.005,0,.01);ISketch s=m.SketchManager.ActiveSketch;
+            int before=s.GetConstrainedStatus();Check("circle_initially_underdefined",before==(int)swConstrainedStatus_e.swUnderConstrained,D("status",before));
+            ISketchPoint center=(ISketchPoint)((ISketchArc)seg).GetCenterPoint2();m.ClearSelection2(true);Require(center.Select4(false,null),"Circle center selection");m.SketchAddConstraints("sgFIXED");
+            m.ClearSelection2(true);seg.Select4(false,null);IDisplayDimension dd=(IDisplayDimension)m.AddDiameterDimension2(.03,.03,0);Require(dd!=null,"Diameter dimension");IDimension dim=(IDimension)dd.GetDimension2(0);SetDimension(dim,"Diameter",.02);
+            int after=s.GetConstrainedStatus();Check("fully_defined_circle",after==(int)swConstrainedStatus_e.swFullyConstrained,D("status",after,"center_fixed",true,"driving_dimension",dim.FullName));
+            m.ClearSelection2(true);EndSketch(m);Check("constraint_sketch_exited",m.SketchManager.ActiveSketch==null,null);
+            Check("constraint_circle_profile",!seg.ConstructionGeometry&&Math.Abs(((ISketchArc)seg).GetRadius()-.01)<1e-9,D("construction",seg.ConstructionGeometry,"radius_m",((ISketchArc)seg).GetRadius()));
+            Check("constraint_profile_rebuild",m.EditRebuild3(),null);sk=LastType(m,"ProfileFeature");ISketch finished=(ISketch)sk.GetSpecificFeature2();Array contours=(Array)finished.GetSketchContours();var closed=new List<bool>();if(contours!=null)foreach(object contour in contours)closed.Add(((ISketchContour)contour).IsClosed());Event("diagnostic","constraint_profile",null,D("sketch_name",sk.Name,"contours_closed",closed,"active_doc",((IModelDoc2)App.ActiveDoc).GetTitle()));
+            SaveAs(m,Path.Combine(CaseDir,"constrained_profile_before_extrusion.sldprt"));Boss(m,sk,.02);Finish(m,"fully_defined_circle",Math.PI*.01*.01*.02);
+        }

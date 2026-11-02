@@ -1,0 +1,662 @@
+{
+  "description": "REASW精选学习材料; 只保存非编译源码片段、静态契约与帮助摘录, 不含运行入口/EXE/DLL/native地址/工具链",
+  "imported_on": "2026-10-26",
+  "external_source_root": "D:\\07_WorkSpace\\Codex\\REASW",
+  "solidworks": "2023 SP05 / Revision31.5.0",
+  "assembly_version": "31.5.0.52",
+  "runtime_dependency": false,
+  "runtime_authorization": false,
+  "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+  "boundaries": [
+    "源码片段依赖原验证器上下文, 不能独立编译或执行",
+    "历史验证不替代AutoCADByAI本轮真实回归与独立复验",
+    "方法源码存在/案例通过与方法事件已观察分开保留",
+    "选择mark、配置范围、几何和API版本不得从窄场景外推",
+    "只核对引用文件来源, 不建立平台全文件哈希能力门",
+    "REASW只读, 不执行归档验证器或调用私有原生地址"
+  ],
+  "historical_summary": {
+    "independent_checks": 789,
+    "modeling_status": "20_PASS_1_FAIL",
+    "meaning": "2026-10-19历史结果, 不是本次运行结果",
+    "independent_files": 20,
+    "source": {
+      "path": "06_runtime_experiments/20261019_campaign/final_outcomes.json",
+      "sha256": "1fe491cf8d558866c420caff16f0d5461f1c288ffd47981d258a2edd4c57f436"
+    }
+  },
+  "known_failures": [
+    "HoleWizard5尚无通过实机证据",
+    "多配置Add3修改后几何仍90mm的问题未解决",
+    "圆形放样35.5ppm体积差未解释; 方形放样通过不覆盖它",
+    "工程图重开Dimension.FullName RPC_E_SERVERFAULT仍失败",
+    "Add-in没有真实Connect/回调, 继续失败",
+    "Document Manager继续暂缓"
+  ],
+  "lessons_source": {
+    "path": "04_learning/runtime_lessons_20261019.md",
+    "sha256": "002382ce9a1b735a362536a1874c78f2722451db65ea64ff0873767efa82777e"
+  },
+  "runtime_interface_index": {
+    "path": "06_runtime_experiments/20261019_campaign/interface_evidence_index.json",
+    "sha256": "64f0dbc286a255a00295e026a53c1be3c9a37bc58ac15604dff0acaef40b7c0b"
+  },
+  "artifacts": [
+    {
+      "path": "contracts.json",
+      "sha256": "be4dfe5eb8f131d4c4dda6b423285342098108706e41a6d305ed07e0a50f602a"
+    },
+    {
+      "path": "help_extracts.json",
+      "sha256": "6bafca876d56ff883d532fe2814b518870f60639f71a87603f06f7d4002ff439"
+    }
+  ],
+  "recipes": [
+    {
+      "case_id": "R06_constraints",
+      "source": {
+        "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/ExpandedProbe.cs",
+        "sha256": "322d2158ac87f211df2a9e218adb653b64685a8a6dff174d1777c5dba648c397"
+      },
+      "source_line_start": 95,
+      "source_line_end": 107,
+      "fragment": {
+        "executable": false,
+        "path": "recipes/constraints.cs.txt",
+        "sha256": "757f2a6cf0e1c48198fc2980c12cd59284394dc11c35ec8ded0d0ac9791670d4",
+        "encoding": "UTF-8 without BOM; LF line endings"
+      },
+      "historical_case_status": "PASS",
+      "historical_scope": "固定圆心 + 直径驱动尺寸, 单圆草图完全定义; D20、高20mm圆柱, 单实体体积π×0.01²×0.02m³",
+      "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+      "known_limits": [
+        "不覆盖任意草图的自动完全约束",
+        "历史场景通过不等于每个成员都有方法事件记录"
+      ],
+      "method_observations": [
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/manifest.json",
+            "sha256": "3b5cbd78f91e8e7a8c49c8361d3b52f3174c960814caadb92dc5a8a327d494ec"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/calls.jsonl",
+            "sha256": "64b2895fc2a0d46c802f75d21ce56f0592ec59f2beb529b81115513a18f0ed39",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt02:R06_constraints:0x06005FB4",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/validation.json",
+            "sha256": "de613e074e2eafdf1980b14045e569da23413e564016648b28faa4982692a101"
+          },
+          "member": "ISketchManager.CreateCircleByRadius",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        },
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/manifest.json",
+            "sha256": "3b5cbd78f91e8e7a8c49c8361d3b52f3174c960814caadb92dc5a8a327d494ec"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/calls.jsonl",
+            "sha256": "64b2895fc2a0d46c802f75d21ce56f0592ec59f2beb529b81115513a18f0ed39",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt02:R06_constraints:0x06003B28",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/validation.json",
+            "sha256": "de613e074e2eafdf1980b14045e569da23413e564016648b28faa4982692a101"
+          },
+          "member": "IModelDoc2.SketchAddConstraints",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        },
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/manifest.json",
+            "sha256": "3b5cbd78f91e8e7a8c49c8361d3b52f3174c960814caadb92dc5a8a327d494ec"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/calls.jsonl",
+            "sha256": "64b2895fc2a0d46c802f75d21ce56f0592ec59f2beb529b81115513a18f0ed39",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt02:R06_constraints:0x06003DAE",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/validation.json",
+            "sha256": "de613e074e2eafdf1980b14045e569da23413e564016648b28faa4982692a101"
+          },
+          "member": "IModelDoc2.AddDiameterDimension2",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        }
+      ],
+      "platform_scope": "本平台固定圆心(5,5)、直径20到30mm、深20mm；创建时完全约束，保存后独立读回尺寸与体积。",
+      "local_validation_ref": "local_validation"
+    },
+    {
+      "case_id": "R07_configurations",
+      "source": {
+        "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/ExpandedProbe.cs",
+        "sha256": "322d2158ac87f211df2a9e218adb653b64685a8a6dff174d1777c5dba648c397"
+      },
+      "source_line_start": 108,
+      "source_line_end": 127,
+      "fragment": {
+        "executable": false,
+        "path": "recipes/configurations.cs.txt",
+        "sha256": "54773fac6b7806c89aade0b957476be8fd8aa01d1082076713c6d2d4fac2819f",
+        "encoding": "UTF-8 without BOM; LF line endings"
+      },
+      "historical_case_status": "PASS",
+      "historical_scope": "块体基准Width80与Wide_Only的Width100隔离; 两配置体积0.00008/0.0001m³; 保存重开",
+      "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+      "known_limits": [
+        "片段CopyBlock依赖REASW历史块体, 仅用于阅读, 不作为平台运行输入",
+        "不覆盖多配置方程式Add3更新"
+      ],
+      "method_observations": [
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/manifest.json",
+            "sha256": "3b5cbd78f91e8e7a8c49c8361d3b52f3174c960814caadb92dc5a8a327d494ec"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/calls.jsonl",
+            "sha256": "64b2895fc2a0d46c802f75d21ce56f0592ec59f2beb529b81115513a18f0ed39",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt02:R07_configurations:0x060056F8",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/validation.json",
+            "sha256": "de613e074e2eafdf1980b14045e569da23413e564016648b28faa4982692a101"
+          },
+          "member": "IConfigurationManager.AddConfiguration2",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        },
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/manifest.json",
+            "sha256": "3b5cbd78f91e8e7a8c49c8361d3b52f3174c960814caadb92dc5a8a327d494ec"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/calls.jsonl",
+            "sha256": "64b2895fc2a0d46c802f75d21ce56f0592ec59f2beb529b81115513a18f0ed39",
+            "matching_events": [
+              {
+                "line": 65,
+                "event": {
+                  "utc": "2026-10-19T05:35:18.1078302Z",
+                  "kind": "begin",
+                  "method": "IModelDoc2.ShowConfiguration2",
+                  "input": {
+                    "before": "Wide_Only",
+                    "requested": "默认"
+                  },
+                  "result": null
+                }
+              },
+              {
+                "line": 66,
+                "event": {
+                  "utc": "2026-10-19T05:35:18.2933681Z",
+                  "kind": "return",
+                  "method": "IModelDoc2.ShowConfiguration2",
+                  "input": {
+                    "before": "Wide_Only",
+                    "requested": "默认"
+                  },
+                  "result": true
+                }
+              },
+              {
+                "line": 83,
+                "event": {
+                  "utc": "2026-10-19T05:35:20.2657835Z",
+                  "kind": "begin",
+                  "method": "IModelDoc2.ShowConfiguration2",
+                  "input": {
+                    "before": "默认",
+                    "requested": "Wide_Only"
+                  },
+                  "result": null
+                }
+              },
+              {
+                "line": 84,
+                "event": {
+                  "utc": "2026-10-19T05:35:20.649957Z",
+                  "kind": "return",
+                  "method": "IModelDoc2.ShowConfiguration2",
+                  "input": {
+                    "before": "默认",
+                    "requested": "Wide_Only"
+                  },
+                  "result": true
+                }
+              }
+            ]
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt02:R07_configurations:0x06003D2A",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/validation.json",
+            "sha256": "de613e074e2eafdf1980b14045e569da23413e564016648b28faa4982692a101"
+          },
+          "member": "IModelDoc2.ShowConfiguration2",
+          "method_observation": "METHOD_EVENTS_OBSERVED"
+        },
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/manifest.json",
+            "sha256": "3b5cbd78f91e8e7a8c49c8361d3b52f3174c960814caadb92dc5a8a327d494ec"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/calls.jsonl",
+            "sha256": "64b2895fc2a0d46c802f75d21ce56f0592ec59f2beb529b81115513a18f0ed39",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt02:R07_configurations:0x06000E6F",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt02/validation.json",
+            "sha256": "de613e074e2eafdf1980b14045e569da23413e564016648b28faa4982692a101"
+          },
+          "member": "IDimension.SetSystemValue3",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        }
+      ],
+      "platform_scope": "本平台Base宽80/Wide宽100mm，高50/深20mm；保存后两配置尺寸、实体数与解析体积分别独立读回。",
+      "local_validation_ref": "local_validation"
+    },
+    {
+      "case_id": "R08_equations",
+      "source": {
+        "path": "06_runtime_experiments/20261019_expanded_attempt04/runner_snapshot/ExpandedProbe.cs",
+        "sha256": "e2c516846f415544c793da235fea3cc4c9586e1bcf900372b803a16e0aeaf2b1"
+      },
+      "source_line_start": 135,
+      "source_line_end": 142,
+      "fragment": {
+        "executable": false,
+        "path": "recipes/equations_single_config.cs.txt",
+        "sha256": "4c648086ff5ea4107c16747537ed7582c5fceb33a56c98c784272c3a95ed5f6a",
+        "encoding": "UTF-8 without BOM; LF line endings"
+      },
+      "historical_case_status": "PASS",
+      "historical_scope": "仅一个配置, Add2建立全局变量与Width绑定, 90→120mm; 最终体积0.00012m³",
+      "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+      "known_limits": [
+        "多配置Add3文本变为120但几何仍90的历史失败未解决",
+        "不能从Add2通过推导Add3通过"
+      ],
+      "method_observations": [
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/runner_snapshot/manifest.json",
+            "sha256": "2783c4ae50a59de10914361153c6f7f79bcbd37b5903c391de9e779c670e949c"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/calls.jsonl",
+            "sha256": "08646fc9a79581ede82a49c111359a87564a60fb10e37651c08bd5f53d186aad",
+            "matching_events": [
+              {
+                "line": 6,
+                "event": {
+                  "utc": "2026-10-19T05:52:05.2127717Z",
+                  "kind": "begin",
+                  "method": "EquationMgr.Add2.variable",
+                  "input": null,
+                  "result": null
+                }
+              },
+              {
+                "line": 7,
+                "event": {
+                  "utc": "2026-10-19T05:52:05.2230219Z",
+                  "kind": "return",
+                  "method": "EquationMgr.Add2.variable",
+                  "input": null,
+                  "result": 0
+                }
+              },
+              {
+                "line": 8,
+                "event": {
+                  "utc": "2026-10-19T05:52:05.2230219Z",
+                  "kind": "begin",
+                  "method": "EquationMgr.Add2.dimension",
+                  "input": null,
+                  "result": null
+                }
+              },
+              {
+                "line": 9,
+                "event": {
+                  "utc": "2026-10-19T05:52:05.2280296Z",
+                  "kind": "return",
+                  "method": "EquationMgr.Add2.dimension",
+                  "input": null,
+                  "result": 1
+                }
+              }
+            ]
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt04:R08_equations:0x06004D1C",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/validation.json",
+            "sha256": "4619d034a4cec11c0a6e9dd69462fddd90399e67f867857046a3d9c6deeed0cb"
+          },
+          "member": "IEquationMgr.Add2",
+          "method_observation": "METHOD_EVENTS_OBSERVED"
+        },
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/runner_snapshot/manifest.json",
+            "sha256": "2783c4ae50a59de10914361153c6f7f79bcbd37b5903c391de9e779c670e949c"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/calls.jsonl",
+            "sha256": "08646fc9a79581ede82a49c111359a87564a60fb10e37651c08bd5f53d186aad",
+            "matching_events": [
+              {
+                "line": 13,
+                "event": {
+                  "utc": "2026-10-19T05:52:05.4060549Z",
+                  "kind": "begin",
+                  "method": "EquationMgr.set_Equation",
+                  "input": null,
+                  "result": null
+                }
+              },
+              {
+                "line": 14,
+                "event": {
+                  "utc": "2026-10-19T05:52:05.4730898Z",
+                  "kind": "return",
+                  "method": "EquationMgr.set_Equation",
+                  "input": null,
+                  "result": true
+                }
+              }
+            ]
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt04:R08_equations:0x06004D18",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/validation.json",
+            "sha256": "4619d034a4cec11c0a6e9dd69462fddd90399e67f867857046a3d9c6deeed0cb"
+          },
+          "member": "IEquationMgr.set_Equation",
+          "method_observation": "METHOD_EVENTS_OBSERVED"
+        },
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/runner_snapshot/manifest.json",
+            "sha256": "2783c4ae50a59de10914361153c6f7f79bcbd37b5903c391de9e779c670e949c"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/calls.jsonl",
+            "sha256": "08646fc9a79581ede82a49c111359a87564a60fb10e37651c08bd5f53d186aad",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt04:R08_equations:0x06004D1D",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt04/validation.json",
+            "sha256": "4619d034a4cec11c0a6e9dd69462fddd90399e67f867857046a3d9c6deeed0cb"
+          },
+          "member": "IEquationMgr.EvaluateAll",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        }
+      ],
+      "platform_scope": "本平台仅单配置Add2变量90到120mm并驱动宽度；保存后最终尺寸与体积独立读回，不覆盖多配置Add3。",
+      "local_validation_ref": "local_validation"
+    },
+    {
+      "case_id": "R12_linear_pattern",
+      "source": {
+        "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/ExpandedProbe.cs",
+        "sha256": "1fab820b973ebbc8282c106b2b0d8e83971c57405063211743eb8d4801abc63a"
+      },
+      "source_line_start": 153,
+      "source_line_end": 157,
+      "fragment": {
+        "executable": false,
+        "path": "recipes/linear_pattern.cs.txt",
+        "sha256": "cd9515e8da4a0e06c4eaf7a576734e8b7214ebb90fcaefafacaafa9ecbc3d915",
+        "encoding": "UTF-8 without BOM; LF line endings"
+      },
+      "historical_case_status": "PASS",
+      "historical_scope": "80×50×20mm块, 沿直线边阵列圆形贯穿切除; 总数3、间距15mm",
+      "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+      "known_limits": [
+        "仅该直线边/切除种子组合",
+        "历史索引为源码存在且场景通过, 不是逐方法事件已观察"
+      ],
+      "method_observations": [
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/manifest.json",
+            "sha256": "92c2d9b535530ec471aa0a18d83c433f34b37a6b9e797c4e759708e0b1d35ba7"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/calls.jsonl",
+            "sha256": "f096f4a9039d69a2b144a649495b535db6a87327b014fef76294fe170a5d253b",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt01:R12_linear_pattern:0x06005276",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/validation.json",
+            "sha256": "9a758a3e7e22427d8573fc79fd5541ba021a0f73e907ed406e426e7200f4763d"
+          },
+          "member": "IFeatureManager.FeatureLinearPattern5",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        }
+      ],
+      "platform_scope": "本平台80x50x20块、直径4mm贯穿孔总数3、间距15mm；选择前置检查与生产解析体积通过，独立读回实体数/体积/块尺寸。",
+      "local_validation_ref": "local_validation"
+    },
+    {
+      "case_id": "R12_circular_pattern",
+      "source": {
+        "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/ExpandedProbe.cs",
+        "sha256": "1fab820b973ebbc8282c106b2b0d8e83971c57405063211743eb8d4801abc63a"
+      },
+      "source_line_start": 158,
+      "source_line_end": 162,
+      "fragment": {
+        "executable": false,
+        "path": "recipes/circular_pattern.cs.txt",
+        "sha256": "7edf78542bceb97b5f427541750252116290cb573e6cd5bd7e7babb6afe40318",
+        "encoding": "UTF-8 without BOM; LF line endings"
+      },
+      "historical_case_status": "PASS",
+      "historical_scope": "半径30、高20mm圆柱, 绕圆柱面轴线阵列半径2mm贯穿切除; 总数4、角度2π",
+      "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+      "known_limits": [
+        "历史调用是FeatureCircularPattern4, 不据此认证其它API版本",
+        "历史索引为源码存在且场景通过, 不是逐方法事件已观察"
+      ],
+      "method_observations": [
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/manifest.json",
+            "sha256": "92c2d9b535530ec471aa0a18d83c433f34b37a6b9e797c4e759708e0b1d35ba7"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/calls.jsonl",
+            "sha256": "f096f4a9039d69a2b144a649495b535db6a87327b014fef76294fe170a5d253b",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt01:R12_circular_pattern:0x06005245",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/validation.json",
+            "sha256": "9a758a3e7e22427d8573fc79fd5541ba021a0f73e907ed406e426e7200f4763d"
+          },
+          "member": "IFeatureManager.FeatureCircularPattern4",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        }
+      ],
+      "platform_scope": "本平台直径60深20mm盘、孔直径4mm、孔环半径20mm、总数4；独立读回实体数和解析体积，未独立核对孔环位置。",
+      "local_validation_ref": "local_validation"
+    },
+    {
+      "case_id": "R12_mirror",
+      "source": {
+        "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/ExpandedProbe.cs",
+        "sha256": "1fab820b973ebbc8282c106b2b0d8e83971c57405063211743eb8d4801abc63a"
+      },
+      "source_line_start": 163,
+      "source_line_end": 164,
+      "fragment": {
+        "executable": false,
+        "path": "recipes/mirror.cs.txt",
+        "sha256": "fa03cb48c77d61ddfab831be1e85a20ac8f101800179321630e32f4e2965598b",
+        "encoding": "UTF-8 without BOM; LF line endings"
+      },
+      "historical_case_status": "PASS",
+      "historical_scope": "80×50×20mm块, 以基准面镜像一个偏置圆形贯穿切除",
+      "platform_status": "PASS_SCOPED_LOCAL_PLATFORM_20261026",
+      "known_limits": [
+        "仅特征镜像, 不覆盖实体/装配镜像",
+        "历史索引为源码存在且场景通过, 不是逐方法事件已观察"
+      ],
+      "method_observations": [
+        {
+          "snapshot_manifest": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/manifest.json",
+            "sha256": "92c2d9b535530ec471aa0a18d83c433f34b37a6b9e797c4e759708e0b1d35ba7"
+          },
+          "runtime_log": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/calls.jsonl",
+            "sha256": "f096f4a9039d69a2b144a649495b535db6a87327b014fef76294fe170a5d253b",
+            "matching_events": []
+          },
+          "evidence_id": "SWRT-20261019_expanded_attempt01:R12_mirror:0x060051FE",
+          "run_report": {
+            "path": "06_runtime_experiments/20261019_expanded_attempt01/validation.json",
+            "sha256": "9a758a3e7e22427d8573fc79fd5541ba021a0f73e907ed406e426e7200f4763d"
+          },
+          "member": "IFeatureManager.InsertMirrorFeature2",
+          "method_observation": "FROZEN_SOURCE_PRESENT_CASE_PASSED"
+        }
+      ],
+      "platform_scope": "本平台80x50x20块围绕X=0基准面镜像直径4mm贯穿切除，共2孔；独立读回实体数/体积/块尺寸。",
+      "local_validation_ref": "local_validation"
+    }
+  ],
+  "sources_checked_unchanged": [
+    {
+      "path": "03_analysis/contracts/core_api_primary.jsonl",
+      "sha256": "c1f95fc351715deab152134b553b430a930d68def72f80ffecee7e3244662f58"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IConfigurationManager~AddConfiguration2.html",
+      "sha256": "6929e0128cbdd3b289553c258a33b8c5b66d58b596b2bfe4fa83caf61aea3048"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IDimension~SetSystemValue3.html",
+      "sha256": "eb699750e05fc4184e270ca3c0d191dff53460ec28a11de31cd1a106a1d653ee"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IEquationMgr~Add2.html",
+      "sha256": "0205f57bb2f6900420b985957538d445231246b5730f8f4899d999c39e94bad6"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IEquationMgr~Equation.html",
+      "sha256": "371286950779f47b16587aabbbdf24a364543381f093ac734003ff10b9337cf4"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IEquationMgr~EvaluateAll.html",
+      "sha256": "35ab584af478a6a4d0a3e8a60d487b3d9f772aae7bd2e4faaa071a4cedf04b93"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureCircularPattern4.html",
+      "sha256": "b1c6b5e6e96c8fd62b30ae51f1f539cfdac0cbdefae2d2fa6c9190032353e46a"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~FeatureLinearPattern5.html",
+      "sha256": "a0442b9d06f64a21810ea6b0630fcd2d02c3764f503b00589090a4b5caaa5b23"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IFeatureManager~InsertMirrorFeature2.html",
+      "sha256": "6264abcf4557c9a9f7ae706d0116f19f5e9d444d57451b13f5da2a45f5e1bfa7"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IModelDoc2~AddDiameterDimension2.html",
+      "sha256": "ed8025bac898d6d34ac4bdb052606f3bbd725fa7f4399c7b4016c12a7d945c24"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IModelDoc2~ShowConfiguration2.html",
+      "sha256": "de01500929ea4408b93988048dec63a0f49548dd7199c987d3c964145532f8e7"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.IModelDoc2~SketchAddConstraints.html",
+      "sha256": "d16deeeaa7e2fd8e5585284ec07c69a0c93ebd2081ab21292c51dba6fea28fe0"
+    },
+    {
+      "path": "03_analysis/help/sldworksapi/SolidWorks.Interop.sldworks~SolidWorks.Interop.sldworks.ISketchManager~CreateCircleByRadius.html",
+      "sha256": "5b1430f3f39562f887105c9281df781a0d8587af3f4cd3e20d9904262ba363d0"
+    },
+    {
+      "path": "04_learning/runtime_lessons_20261019.md",
+      "sha256": "002382ce9a1b735a362536a1874c78f2722451db65ea64ff0873767efa82777e"
+    },
+    {
+      "path": "06_runtime_experiments/20261019_campaign/final_outcomes.json",
+      "sha256": "1fe491cf8d558866c420caff16f0d5461f1c288ffd47981d258a2edd4c57f436"
+    },
+    {
+      "path": "06_runtime_experiments/20261019_campaign/interface_evidence_index.json",
+      "sha256": "64f0dbc286a255a00295e026a53c1be3c9a37bc58ac15604dff0acaef40b7c0b"
+    },
+    {
+      "path": "06_runtime_experiments/20261019_expanded_attempt01/runner_snapshot/ExpandedProbe.cs",
+      "sha256": "1fab820b973ebbc8282c106b2b0d8e83971c57405063211743eb8d4801abc63a"
+    },
+    {
+      "path": "06_runtime_experiments/20261019_expanded_attempt02/runner_snapshot/ExpandedProbe.cs",
+      "sha256": "322d2158ac87f211df2a9e218adb653b64685a8a6dff174d1777c5dba648c397"
+    },
+    {
+      "path": "06_runtime_experiments/20261019_expanded_attempt04/runner_snapshot/ExpandedProbe.cs",
+      "sha256": "e2c516846f415544c793da235fea3cc4c9586e1bcf900372b803a16e0aeaf2b1"
+    }
+  ],
+  "local_validation": {
+    "date": "2026-10-26",
+    "production_run": "qa/20261026_171635_reg_reasw_parametric_patterns",
+    "verification_run": "qa/20261026_211807_verify_reasw_parametric_patterns",
+    "verification_report_sha256": "6a5832bd8a3e5aa037e8bf4652e24f15f44017085fe3739675d03e163b68d4f3",
+    "status": "PASSED",
+    "native_parts": 6,
+    "native_configurations": 7,
+    "step_files": 1,
+    "observations": 8,
+    "normal_exit": true,
+    "forced_cleanup_count": 0,
+    "scope": "仅本机SP05六案例; 独立读回保存配置/具名尺寸/实体数/解析体积及STEP, 未独立验证孔位或任意参数范围。",
+    "existing_regressions": [
+      {
+        "task": "planetary_gear",
+        "run_dir": "qa/20261026_172953_reg_planetary_gear",
+        "status": "passed",
+        "baseline_passed": true
+      },
+      {
+        "task": "planetary_gear_m15",
+        "run_dir": "qa/20261026_173820_reg_planetary_gear_m15",
+        "status": "passed",
+        "baseline_passed": true
+      },
+      {
+        "task": "cfc650_m03",
+        "run_dir": "qa/20261026_174421_reg_cfc650_m03",
+        "status": "passed",
+        "baseline_passed": true
+      },
+      {
+        "task": "microwave_furnace",
+        "run_dir": "qa/20261026_182247_reg_microwave_furnace",
+        "status": "passed",
+        "baseline_passed": true
+      }
+    ],
+    "history": "保留本轮失败目录与历史失败, 不修改REASW或原回归基准; 独立复验器配置条件修正后单独构建测试与复验。"
+  }
+}

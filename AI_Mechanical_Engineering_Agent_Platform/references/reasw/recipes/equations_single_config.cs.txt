@@ -1,0 +1,8 @@
+        static void TestEquations()
+        {
+            // Single-configuration Add2 route; earlier Add3 global-variable update
+            // failures remain archived and are not claimed fixed by this test.
+            IModelDoc2 m=CopyBlock("equation_single");IEquationMgr q=(IEquationMgr)m.GetEquationMgr();Require(m.GetConfigurationCount()==1,"Add2 single-configuration prerequisite");q.AutomaticRebuild=true;q.AutomaticSolveOrder=true;
+            int variable=Call("EquationMgr.Add2.variable",delegate{return q.Add2(-1,"\"DrivenWidth\" = 90mm",false);});Require(variable>=0,"Add2 variable");int driving=Call("EquationMgr.Add2.dimension",delegate{return q.Add2(-1,"\"Width@Sketch_Block_Profile\" = \"DrivenWidth\"",false);});Require(driving>=0,"Add2 dimension");q.EvaluateAll();m.ForceRebuild3(false);Check("equation_single_90mm",Math.Abs(Value((IDimension)m.Parameter("Width@Sketch_Block_Profile"))-.09)<1e-9,D("volume",V(m),"variable_value",q.get_Value(variable)));
+            Do("EquationMgr.set_Equation",delegate{q.set_Equation(variable,"\"DrivenWidth\" = 120mm");});q.EvaluateAll();m.ForceRebuild3(false);SaveAs(m,Path.Combine(CaseDir,"single_config_equations_before_assertion.sldprt"));Check("equation_single_120mm",Math.Abs(Value((IDimension)m.Parameter("Width@Sketch_Block_Profile"))-.12)<1e-9,D("volume",V(m),"equation",q.get_Equation(variable),"variable_value",q.get_Value(variable)));Finish(m,"equation_single_config_driven",.00012);
+        }

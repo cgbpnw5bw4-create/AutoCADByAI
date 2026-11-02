@@ -119,6 +119,9 @@ namespace CadKernel
         /// <summary>纯参数校验 (不连接 SolidWorks), 返回问题列表; 读取参数也在这里完成</summary>
         public virtual List<string> Validate() { return new List<string>(); }
 
+        /// <summary>导出后写入独立复验的解析期望；默认不生成，不把测量结果当作期望。</summary>
+        public virtual void WriteVerificationExpectations() { }
+
         /// <summary>
         /// 本次运行将在 models/ 下生成的零件与装配体 (相对 models/ 的路径), 供运行前估算路径长度 (PathLimit); 不连接 SolidWorks,
         /// Bind 之后即可调用 (不依赖 Validate)。null = 文件名在建模代码中才确定 (此时按该任务上次运行的 models/ 估算)。

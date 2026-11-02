@@ -65,6 +65,7 @@ namespace CadTests
             {
                 { "planetary_gear", () => new PlanetaryGearbox() },
                 { "cfc650_module", () => new CadProjects.Cfc650.Cfc650Module() },
+                { "reasw_parametric_patterns", () => new CadProjects.Reasw.ParametricPatternsProject() },
             };
             int n = 0;
             foreach (string d in Directory.GetDirectories(Path.Combine(root, "input")))
