@@ -34,6 +34,18 @@ namespace CadKernel
         public double? VolumeToleranceM3 { get; set; }
         public string Oracle { get; set; }
         public List<VerifyDimension> Dimensions { get; set; } = new List<VerifyDimension>();
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<VerifyHole> Holes { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public double? HoleToleranceM { get; set; }
+    }
+
+    /// <summary>模型坐标系中圆柱孔两端圆边的中心与半径 (m), 端点顺序不影响匹配。</summary>
+    public sealed class VerifyHole
+    {
+        public double[] StartM { get; set; }
+        public double[] EndM { get; set; }
+        public double RadiusM { get; set; }
     }
 
     public sealed class VerifyDimension
@@ -67,7 +79,7 @@ namespace CadKernel
         public int ForcedCleanupCount { get; set; }
         public bool SessionConnected { get; set; }
         public bool SessionExitedNormally { get; set; }
-        public string Scope { get; set; } = "仅复验清单明确列出的原生零件、保存配置及 STEP; 不代表全项目或全部参数通过";
+        public string Scope { get; set; } = "仅复验清单明确列出的原生零件、保存配置及 STEP; 孔位仅覆盖显式 holes 的配置与未分裂 Z 向直圆柱孔; 不代表全项目或全部参数通过";
         public List<VerifyFileResult> Files { get; set; } = new List<VerifyFileResult>();
         public List<string> Errors { get; set; } = new List<string>();
     }
@@ -93,6 +105,8 @@ namespace CadKernel
         public int BodyCount { get; set; }
         public double VolumeM3 { get; set; }
         public Dictionary<string, double> DimensionsM { get; set; } = new Dictionary<string, double>();
+        public bool HoleReadbackCompleted { get; set; }
+        public List<VerifyHole> Holes { get; set; }
     }
 
     /// <summary>
@@ -193,6 +207,26 @@ namespace CadKernel
                         if (!Positive(d.ValueM) || !Positive(d.ToleranceM) || d.ToleranceM >= d.ValueM)
                             errors.Add(label + ": 尺寸及绝对允差须为有限正数, 且允差小于期望值");
                     }
+                    if (c.Holes == null)
+                    {
+                        if (c.HoleToleranceM.HasValue) errors.Add(label + ": holes 未声明, 不应给孔位允差");
+                    }
+                    else
+                    {
+                        if (!Positive(c.HoleToleranceM)) errors.Add(label + ": 孔位允差须为有限正数");
+                        for (int i = 0; i < c.Holes.Count; i++)
+                        {
+                            var h = c.Holes[i];
+                            if (h == null || !Point(h.StartM) || !Point(h.EndM) || !double.IsFinite(h.RadiusM) || h.RadiusM <= 0)
+                            { errors.Add(label + ": 孔几何须有三维有限端点和正半径"); continue; }
+                            if (c.HoleToleranceM.HasValue && (h.RadiusM <= c.HoleToleranceM || Distance(h.StartM, h.EndM) <= c.HoleToleranceM))
+                                errors.Add(label + ": 孔半径/轴长须大于孔位允差");
+                            if (Math.Abs(h.StartM[0] - h.EndM[0]) > 1e-9 || Math.Abs(h.StartM[1] - h.EndM[1]) > 1e-9)
+                                errors.Add(label + ": 目前仅覆盖 Z 向直圆柱孔");
+                            if (Positive(c.HoleToleranceM) && c.Holes.Take(i).Any(p => p != null && Point(p.StartM) && Point(p.EndM) && SameHole(p, h, c.HoleToleranceM.Value)))
+                                errors.Add(label + ": 孔期望重复");
+                        }
+                    }
                 }
             }
             foreach (var s in e.Steps ?? new List<VerifyStep>())
@@ -218,6 +252,36 @@ namespace CadKernel
         {
             return double.IsFinite(actual) && double.IsFinite(expected) && double.IsFinite(tolerance)
                 && tolerance > 0 && Math.Abs(actual - expected) <= tolerance;
+        }
+
+        static bool Point(double[] p) { return p != null && p.Length == 3 && p.All(double.IsFinite); }
+        static double Distance(double[] a, double[] b) { return Math.Sqrt(Enumerable.Range(0, 3).Sum(i => (a[i] - b[i]) * (a[i] - b[i]))); }
+        static bool SameHole(VerifyHole a, VerifyHole b, double tolerance)
+        {
+            return Math.Abs(a.RadiusM - b.RadiusM) <= tolerance &&
+                ((Distance(a.StartM, b.StartM) <= tolerance && Distance(a.EndM, b.EndM) <= tolerance) ||
+                 (Distance(a.StartM, b.EndM) <= tolerance && Distance(a.EndM, b.StartM) <= tolerance));
+        }
+
+        /// <summary>无序一一匹配孔轴端点与半径; 不能用同一实测孔满足多个期望。</summary>
+        internal static List<string> CompareHoles(IReadOnlyList<VerifyHole> expected, IReadOnlyList<VerifyHole> actual, double tolerance)
+        {
+            var errors = new List<string>();
+            if (expected.Count != actual.Count) errors.Add("孔数量 " + actual.Count + ", 期望 " + expected.Count);
+            var remaining = actual.ToList();
+            for (int i = 0; i < expected.Count; i++)
+            {
+                int at = remaining.FindIndex(h => SameHole(expected[i], h, tolerance));
+                if (at < 0) errors.Add("孔[" + (i + 1) + "]未匹配: " + HoleText(expected[i]));
+                else remaining.RemoveAt(at);
+            }
+            foreach (var h in remaining) errors.Add("未匹配实测孔: " + HoleText(h));
+            return errors;
+        }
+
+        static string HoleText(VerifyHole h)
+        {
+            return FormattableString.Invariant($"({h.StartM[0]:G8},{h.StartM[1]:G8},{h.StartM[2]:G8})→({h.EndM[0]:G8},{h.EndM[1]:G8},{h.EndM[2]:G8}), R={h.RadiusM:G8} m");
         }
 
         /// <summary>只允许源运行内部的普通相对文件路径; 拒绝穿越、驱动器相对路径、ADS 和符号链接。</summary>
@@ -392,6 +456,12 @@ namespace CadKernel
                     var observation = Measure(model, e.Name);
                     result.Observations.Add(observation);
                     CompareGeometry(result, observation, e.BodyCount.Value, e.VolumeM3.Value, e.VolumeToleranceM3.Value);
+                    if (e.Holes != null)
+                    {
+                        observation.Holes = ReadHoles((PartDoc)model);
+                        observation.HoleReadbackCompleted = true;
+                        result.Errors.AddRange(CompareHoles(e.Holes, observation.Holes, e.HoleToleranceM.Value).Select(x => e.Name + ": " + x));
+                    }
                     int wrong = model.Extension.GetWhatsWrongCount();
                     if (wrong != 0) result.Errors.Add(e.Name + ": 保存特征存在错误/警告 " + wrong);
                     foreach (var d in e.Dimensions)
@@ -463,6 +533,55 @@ namespace CadKernel
             return observation;
         }
 
+        /// <summary>保存实体的凹圆柱面与两条整圆端边; 当前只覆盖未分裂的 Z 向直圆柱孔。</summary>
+        static List<VerifyHole> ReadHoles(PartDoc part)
+        {
+            const double geometryTolerance = 1e-9;
+            var holes = new List<VerifyHole>();
+            foreach (Body2 body in (object[])part.GetBodies2((int)swBodyType_e.swSolidBody, false) ?? throw new IOException("孔位读回无法读取实体"))
+                foreach (Face2 face in (object[])body.GetFaces() ?? throw new IOException("无法读取实体面"))
+                {
+                    var surface = (Surface)face.GetSurface();
+                    if (!surface.IsCylinder()) continue;
+                    var cylinder = (double[])surface.CylinderParams;
+                    var uv = (double[])face.GetUVBounds();
+                    if (cylinder.Length != 7 || cylinder.Any(x => !double.IsFinite(x)) || cylinder[6] <= 0 || uv.Length != 4 || uv.Any(x => !double.IsFinite(x)))
+                        throw new IOException("圆柱面参数无效");
+                    var sample = (double[])surface.Evaluate((uv[0] + uv[1]) / 2, (uv[2] + uv[3]) / 2, 1, 1);
+                    if (sample == null || sample.Length != 15 || sample.Any(x => !double.IsFinite(x))) throw new IOException("无法读取圆柱面点/法向");
+                    double axisLength = Math.Sqrt(cylinder[3] * cylinder[3] + cylinder[4] * cylinder[4] + cylinder[5] * cylinder[5]);
+                    if (axisLength == 0) throw new IOException("圆柱轴向为零");
+                    var axis = new[] { cylinder[3] / axisLength, cylinder[4] / axisLength, cylinder[5] / axisLength };
+                    var radial = new[] { sample[0] - cylinder[0], sample[1] - cylinder[1], sample[2] - cylinder[2] };
+                    double projection = Enumerable.Range(0, 3).Sum(i => radial[i] * axis[i]);
+                    double orientation = Enumerable.Range(0, 3).Sum(i => (radial[i] - projection * axis[i]) * sample[12 + i]) * (face.FaceInSurfaceSense() ? -1 : 1);
+                    if (Math.Abs(orientation) < 1e-12) throw new IOException("圆柱面朝向不明确");
+                    if (orientation > 0) continue; // 外圆柱, 不计为孔。
+                    if (Math.Abs(axis[0]) > 1e-8 || Math.Abs(axis[1]) > 1e-8) throw new IOException("孔位读回尚未覆盖非 Z 向圆柱孔");
+                    var ends = new List<double[]>();
+                    foreach (Edge edge in (object[])face.GetEdges() ?? throw new IOException("孔壁缺少边界"))
+                    {
+                        var curve = (Curve)edge.GetCurve();
+                        if (curve.IsLine()) continue; // 圆柱缝边。
+                        if (!curve.IsCircle()) throw new IOException("孔壁含未覆盖的非圆边界");
+                        var range = edge.GetCurveParams3();
+                        if (Math.Abs(Math.Abs(range.UMaxValue - range.UMinValue) - 2 * Math.PI) > 1e-6)
+                            throw new IOException("孔壁端边不是整圆, 未覆盖分裂圆柱面");
+                        var circle = (double[])curve.CircleParams;
+                        if (circle.Length != 7 || circle.Any(x => !double.IsFinite(x)) || Math.Abs(circle[6] - cylinder[6]) > geometryTolerance ||
+                            Math.Abs(circle[0] - cylinder[0]) > geometryTolerance || Math.Abs(circle[1] - cylinder[1]) > geometryTolerance ||
+                            Math.Abs(circle[3]) > 1e-8 || Math.Abs(circle[4]) > 1e-8)
+                            throw new IOException("孔口圆与孔壁轴线/半径不一致");
+                        ends.Add(new[] { circle[0], circle[1], circle[2] });
+                    }
+                    if (ends.Count != 2 || Math.Abs(ends[0][2] - ends[1][2]) <= geometryTolerance)
+                        throw new IOException("孔壁须有两条不同平面的整圆端边");
+                    ends.Sort((a, b) => a[2].CompareTo(b[2]));
+                    holes.Add(new VerifyHole { StartM = ends[0], EndM = ends[1], RadiusM = cylinder[6] });
+                }
+            return holes.OrderBy(h => h.StartM[0]).ThenBy(h => h.StartM[1]).ThenBy(h => h.StartM[2]).ToList();
+        }
+
         static void CompareGeometry(VerifyFileResult result, VerifyObservation actual, int count, double volume, double tolerance)
         {
             if (actual.BodyCount != count) result.Errors.Add(actual.Configuration + ": 实体数 " + actual.BodyCount + ", 期望 " + count);
@@ -480,6 +599,12 @@ namespace CadKernel
             foreach (var file in report.Files)
             {
                 text.AppendLine("- " + file.File + ": " + (file.Passed ? "PASSED" : "FAILED"));
+                foreach (var observation in file.Observations)
+                {
+                    text.AppendLine("  - " + observation.Configuration + ": 孔位独立读回 " + (observation.HoleReadbackCompleted ? observation.Holes.Count + " 孔" : "未覆盖/未完成"));
+                    if (observation.HoleReadbackCompleted)
+                        foreach (var hole in observation.Holes) text.AppendLine("    - " + HoleText(hole));
+                }
                 foreach (string error in file.Errors) text.AppendLine("  - " + error);
             }
             foreach (string error in report.Errors) text.AppendLine("- " + error);

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using CadKernel;
+using CadProjects.Reasw;
 using Xunit;
 
 namespace CadTests
@@ -214,6 +215,145 @@ namespace CadTests
             Assert.False(Verification.WithinTolerance(1, double.PositiveInfinity, .25));
             Assert.False(Verification.WithinTolerance(1, 1, double.PositiveInfinity));
             Assert.False(Verification.WithinTolerance(1, 1, 0));
+        }
+
+        static VerifyHole Hole(double x, double y, double radius = .002, double depth = .02)
+        {
+            return new VerifyHole { StartM = new[] { x, y, 0.0 }, EndM = new[] { x, y, depth }, RadiusM = radius };
+        }
+
+        [Fact]
+        public void HoleComparisonIsUnorderedAndAcceptsReversedAxisEndpoints()
+        {
+            var expected = new[] { Hole(-.025, 0), Hole(-.01, 0), Hole(.005, 0) };
+            var actual = new[] { Hole(.005, 0), Hole(-.025, 0), Hole(-.01, 0) };
+            foreach (var hole in actual) (hole.StartM, hole.EndM) = (hole.EndM, hole.StartM);
+            Assert.Empty(Verification.CompareHoles(expected, actual, 1e-7));
+        }
+
+        [Theory]
+        [InlineData(.015, 0, 0)] // 同样孔数和切除体积, 但孔环半径错误
+        [InlineData(.02, .001, 0)] // 整体平移
+        [InlineData(.02, 0, .7853981633974483)] // 半径正确, 但整体旋转45°
+        public void CircularHoleComparisonRejectsWrongRingTranslationAndRotation(double radius, double shiftX, double angle)
+        {
+            var expected = new[] { Hole(.02, 0), Hole(0, .02), Hole(-.02, 0), Hole(0, -.02) };
+            var actual = Enumerable.Range(0, 4).Select(i => Hole(
+                shiftX + radius * Math.Cos(angle + i * Math.PI / 2), radius * Math.Sin(angle + i * Math.PI / 2))).ToArray();
+            Assert.NotEmpty(Verification.CompareHoles(expected, actual, 1e-7));
+        }
+
+        [Fact]
+        public void LinearHoleComparisonRejectsWrongPitchAndMirrorRejectsWrongPlane()
+        {
+            Assert.NotEmpty(Verification.CompareHoles(
+                new[] { Hole(-.025, 0), Hole(-.01, 0), Hole(.005, 0) },
+                new[] { Hole(-.025, 0), Hole(-.009, 0), Hole(.007, 0) }, 1e-7));
+            Assert.NotEmpty(Verification.CompareHoles(
+                new[] { Hole(.015, .005), Hole(-.015, .005) },
+                new[] { Hole(.015, .005), Hole(.015, -.005) }, 1e-7));
+        }
+
+        [Fact]
+        public void HoleComparisonRejectsMissingExtraAndDuplicateObservations()
+        {
+            var expected = new[] { Hole(.015, .005), Hole(-.015, .005) };
+            Assert.NotEmpty(Verification.CompareHoles(expected, new[] { Hole(.015, .005) }, 1e-7));
+            Assert.NotEmpty(Verification.CompareHoles(expected, new[] { Hole(.015, .005), Hole(-.015, .005), Hole(0, 0) }, 1e-7));
+            Assert.NotEmpty(Verification.CompareHoles(expected, new[] { Hole(.015, .005), Hole(.015, .005) }, 1e-7));
+            Assert.Empty(Verification.CompareHoles(Array.Empty<VerifyHole>(), Array.Empty<VerifyHole>(), 1e-7));
+            Assert.NotEmpty(Verification.CompareHoles(Array.Empty<VerifyHole>(), new[] { Hole(0, 0) }, 1e-7));
+        }
+
+        [Fact]
+        public void HoleComparisonRejectsWrongRadiusDepthAndAxis()
+        {
+            var expected = new[] { Hole(0, 0) };
+            Assert.NotEmpty(Verification.CompareHoles(expected, new[] { Hole(0, 0, .0021) }, 1e-7));
+            Assert.NotEmpty(Verification.CompareHoles(expected, new[] { Hole(0, 0, depth: .019) }, 1e-7));
+            var tilted = Hole(0, 0); tilted.EndM[0] = .001;
+            Assert.NotEmpty(Verification.CompareHoles(expected, new[] { tilted }, 1e-7));
+        }
+
+        [Fact]
+        public void OptionalHoleFieldsPreserveLegacySerializationAndCoverage()
+        {
+            var expected = Valid();
+            Verification.SaveExpectations(root, expected);
+            using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, Verification.ExpectationsFileName)));
+            var configuration = json.RootElement.GetProperty("parts")[0].GetProperty("configurations")[0];
+            Assert.False(configuration.TryGetProperty("holes", out _));
+            Assert.False(configuration.TryGetProperty("hole_tolerance_m", out _));
+            var loaded = Verification.Parse(json.RootElement.GetRawText());
+            Assert.Null(loaded.Parts[0].Configurations[0].Holes);
+            Assert.Null(loaded.Parts[0].Configurations[0].HoleToleranceM);
+            Assert.False(new VerifyObservation().HoleReadbackCompleted);
+        }
+
+        [Fact]
+        public void ExplicitZeroHoleExpectationRoundTripsAsCheckedEmptySet()
+        {
+            var expected = Valid();
+            expected.Parts[0].Configurations[0].Holes = new();
+            expected.Parts[0].Configurations[0].HoleToleranceM = 1e-7;
+            Verification.SaveExpectations(root, expected);
+            var loaded = Verification.Parse(File.ReadAllText(Path.Combine(root, Verification.ExpectationsFileName)));
+            Assert.Empty(loaded.Parts[0].Configurations[0].Holes);
+            Assert.Equal(1e-7, loaded.Parts[0].Configurations[0].HoleToleranceM);
+            Assert.Empty(Verification.Validate(loaded, root));
+        }
+
+        [Theory]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        [InlineData(0)]
+        [InlineData(-1e-7)]
+        public void HoleExpectationRequiresFinitePositiveTolerance(double tolerance)
+        {
+            var expected = Valid();
+            expected.Parts[0].Configurations[0].Holes = new() { Hole(0, 0) };
+            expected.Parts[0].Configurations[0].HoleToleranceM = tolerance;
+            Assert.NotEmpty(Verification.Validate(expected, root));
+        }
+
+        [Fact]
+        public void HoleExpectationRejectsMissingToleranceInvalidGeometryAndDuplicateLoci()
+        {
+            var expected = Valid();
+            var configuration = expected.Parts[0].Configurations[0];
+            configuration.Holes = new() { Hole(0, 0) };
+            Assert.NotEmpty(Verification.Validate(expected, root));
+            configuration.HoleToleranceM = 1e-7;
+            Assert.Empty(Verification.Validate(expected, root));
+            configuration.Holes[0].StartM = new[] { 0.0, 0.0 };
+            Assert.NotEmpty(Verification.Validate(expected, root));
+            configuration.Holes[0] = Hole(double.NaN, 0);
+            Assert.NotEmpty(Verification.Validate(expected, root));
+            configuration.Holes[0] = Hole(0, 0, 0);
+            Assert.NotEmpty(Verification.Validate(expected, root));
+            configuration.Holes[0] = Hole(0, 0, depth: 0);
+            Assert.NotEmpty(Verification.Validate(expected, root));
+            configuration.Holes = new() { Hole(0, 0), Hole(0, 0) };
+            (configuration.Holes[1].StartM, configuration.Holes[1].EndM) = (configuration.Holes[1].EndM, configuration.Holes[1].StartM);
+            Assert.NotEmpty(Verification.Validate(expected, root));
+        }
+
+        [Fact]
+        public void SixCaseHoleOraclesUseAbsoluteAnalyticPositionsAndExplicitZeroCoverage()
+        {
+            string platform = Env.FindPlatformRoot(AppContext.BaseDirectory);
+            var project = new ParametricPatternsProject();
+            project.Bind(DesignInput.Load(Path.Combine(platform, "input", "reasw_parametric_patterns")));
+            Assert.Empty(project.Validate());
+            var expected = project.MakeExpectations();
+            var configurations = expected.Parts.SelectMany(p => p.Configurations).ToArray();
+            Assert.Equal(new[] { 0, 0, 0, 0, 3, 4, 2 }, configurations.Select(c => c.Holes.Count));
+            Assert.All(configurations, c => Assert.Equal(1e-7, c.HoleToleranceM));
+            Assert.All(configurations, c => Assert.Contains("孔", c.Oracle));
+            Assert.Empty(Verification.CompareHoles(new[] { Hole(-.025, 0), Hole(-.01, 0), Hole(.005, 0) }, configurations[4].Holes, 1e-7));
+            Assert.Empty(Verification.CompareHoles(new[] { Hole(.02, 0), Hole(0, .02), Hole(-.02, 0), Hole(0, -.02) }, configurations[5].Holes, 1e-7));
+            Assert.Empty(Verification.CompareHoles(new[] { Hole(.015, .005), Hole(-.015, .005) }, configurations[6].Holes, 1e-7));
+            Assert.Empty(Verification.Validate(expected, platform));
         }
 
         [Theory]

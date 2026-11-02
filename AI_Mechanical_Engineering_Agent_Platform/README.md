@@ -62,9 +62,11 @@ docs/                      architecture / api_calibration / library / migration
 
 这些校核只能说明"没有报错"。回归样例另有**回归基准** (`input/<任务>/expected.json`)：零件数、装配外形、总质量、STEP 实体数、图纸清单与每张图的图幅 / 比例 / 尺寸数 / 外形尺寸读数等逐项与人工确认过的结果比对，偏离即不通过 (见 [docs/architecture.md](docs/architecture.md) 第 2 节)。
 
-`reasw_parametric_patterns` 包含具名尺寸与完全约束圆、Base/Wide 配置隔离、单配置 Add2 全局变量、切除的线性阵列/圆周阵列/镜像，共 6 个零件、7 个保存配置。2026-10-26 本机完整流水线与独立只读复验通过；独立复验覆盖 6 个原生零件的 7 个配置及 1 份 STEP，源件、副本和期望清单哈希不变，专用实例正常退出。两组行星齿轮、CFC M03、微波实验炉均通过原回归基准。2026-11-01 用户确认恢复补图版本，已从 `qa/20261028_020818_reg_reasw_parametric_patterns` 建立 `input/reasw_parametric_patterns/expected.json`；首次六案例基准回归 `qa/20261101_173600_reg_reasw_parametric_patterns` 经标准视图名修正后从 drawings 续跑通过，11 项校核、8 项指标、7 张图与 19 个外形读数一致，初次失败与原样重试记录保留。本次未重跑其他项目。独立读回仍不覆盖孔环位置或任意参数范围。REASW 的 20/21 历史场景和 20 工件/789 检查仅用于学习。精选材料、本轮运行链接及已知失败见 [references/reasw/index.json](references/reasw/index.json)。
+`reasw_parametric_patterns` 包含具名尺寸与完全约束圆、Base/Wide 配置隔离、单配置 Add2 全局变量、切除的线性阵列/圆周阵列/镜像，共 6 个零件、7 个保存配置。2026-10-26 本机完整流水线与独立只读复验通过；独立复验覆盖 6 个原生零件的 7 个配置及 1 份 STEP，源件、副本和期望清单哈希不变，专用实例正常退出。两组行星齿轮、CFC M03、微波实验炉均通过原回归基准。2026-11-01 用户确认恢复补图版本，已从 `qa/20261028_020818_reg_reasw_parametric_patterns` 建立 `input/reasw_parametric_patterns/expected.json`；首次六案例基准回归 `qa/20261101_173600_reg_reasw_parametric_patterns` 经标准视图名修正后从 drawings 续跑通过，11 项校核、8 项指标、7 张图与 19 个外形读数一致，初次失败与原样重试记录保留。本次未重跑其他项目。上述历史复验未覆盖孔环位置；CAD-07 当前覆盖见下段，任意参数范围仍不作保证。REASW 的 20/21 历史场景和 20 工件/789 检查仅用于学习。精选材料、本轮运行链接及已知失败见 [references/reasw/index.json](references/reasw/index.json)。
 
-`verify` 要求源运行有完整的解析期望清单，缺项返回 INCOMPLETE 并在连接 CAD 前停止。有效清单才会复制原生零件与 STEP；原生副本只读打开，配置在副本内存中切换，不显式重建或保存。报告单独记录源件与副本前后 SHA-256、逐配置读数和实例退出情况。它不代替未列工件、完整制造图和全参数范围的验收。`GetPolylines7` 挂起仍是已知问题；装配图绕行、超时看守与重画不表示根因已解决。
+2026-11-01 CAD-07 为六案例的 7 个保存配置显式声明孔集合：4 个无孔配置、线阵 3 孔、圆阵 4 孔、镜像 2 孔。`qa/20261101_180220_reg_reasw_parametric_patterns` 通过既有基准；新实例 `qa/20261101_180520_verify_reasw_parametric_patterns` 只读副本，从实体凹圆柱面与整圆端边独立读回孔轴端点/半径，7/7 工件 PASSED，9 孔位置与输入解析期望一致，正常退出、强制清理 0。体积/具名尺寸不变、仅改错线距/孔环半径/镜像平面的 QA 期望负例在 `qa/20261101_180736_verify_reasw_parametric_patterns` 均被孔位判据拒绝，预期 FAILED 记录保留。当前仅覆盖这些输入的未分裂 Z 向直圆柱孔，不扩展到任意孔型、盲孔拓扑、参数范围或 STEP 孔位；其他项目未重跑。
+
+`verify` 要求源运行有完整的解析期望清单，缺项返回 INCOMPLETE 并在连接 CAD 前停止。有效清单才会复制原生零件与 STEP；原生副本只读打开，配置在副本内存中切换，不显式重建或保存。可选 `holes` 省略表示未请求孔位覆盖，显式 `[]` 才要求零孔；新清单须新建运行，不能覆盖旧运行的期望文件。报告单独记录源件与副本前后 SHA-256、逐配置孔位覆盖状态/读数和实例退出情况。它不代替未列工件、完整制造图和全参数范围的验收。`GetPolylines7` 挂起仍是已知问题；装配图绕行、超时看守与重画不表示根因已解决。
 
 ## 文档
 

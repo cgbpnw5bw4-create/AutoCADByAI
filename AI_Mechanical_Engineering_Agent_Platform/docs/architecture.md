@@ -62,6 +62,8 @@ output/<时间>_<任务>/            ← 每次运行一个目录, run.json 记�
 
 2026-11-01 用户确认恢复补图版本 (建模源码提交 `3b0414c`)，由 `qa/20261028_020818_reg_reasw_parametric_patterns` 建立 `input/reasw_parametric_patterns/expected.json`。基准保留原允差，覆盖 11 项校核、8 项指标、7 张图及 19 个外形读数；首次六案例基准回归 `qa/20261101_173600_reg_reasw_parametric_patterns` 经标准视图名修正后从 drawings 续跑通过，初次失败与原样重试记录保留，本次未重跑其他项目。该确认不恢复已撤回的 GB 增量，不代表孔位独立读回或完整制造图验收。
 
+2026-11-01 CAD-07 在新运行的 `VerifyConfiguration` 增加可选 `Holes` 与绝对 `HoleToleranceM`：孔轴两端圆心/半径由输入和固定种子解析生成，`null` 表示旧清单未请求覆盖，显式空集合表示要求无孔。新实例只读保存副本，按实体凹圆柱面及完整圆端边抽取实际轴端点/半径，无序一一匹配，端点反向等价；不从特征名称、阵列参数或本次测量回填期望。观察单列 `HoleReadbackCompleted`，读取失败不能当作零孔。省略的新字段不参与旧期望序列化，旧清单仍可复验但不升级为孔位通过。六案例新运行 `qa/20261101_180220_reg_reasw_parametric_patterns` 通过原基准，独立复验 `qa/20261101_180520_verify_reasw_parametric_patterns` 对 7 个原生配置/9 孔通过；同体积的错误孔位 QA 期望在 `qa/20261101_180736_verify_reasw_parametric_patterns` 被拒绝。范围限于当前输入、未分裂 Z 向直圆柱孔；STEP 仍只检查原有实体数与体积，其他项目本次未回归。
+
 ### 回归基准
 
 校核只能说明"没有报错"，说明不了"和以前一样对"：图纸比例变了、尺寸少了、剖视图多出伪直径，版面审核都不会报。所以每个回归样例在 `input/<任务>/expected.json` 保存一份**人工确认过的结果**，运行结束时由 `Baseline` 逐项比对：

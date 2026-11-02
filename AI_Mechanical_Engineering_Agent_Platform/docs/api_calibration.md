@@ -21,6 +21,10 @@
 
 本轮样例运行 `qa/20261026_171635_reg_reasw_parametric_patterns` 通过完整六阶段流水线和 7 张图纸审核; 独立复验 `qa/20261026_211807_verify_reasw_parametric_patterns/checks/verification.json` 为 PASSED: 6 个原生零件/7 个配置 + 1 份 STEP, 共 8 次观察, 哈希前后一致、正常退出、强制清理 0。本平台圆阵孔环半径为20 mm, 历史参考是15 mm; 独立复验只覆盖配置、具名尺寸、实体数和体积, 不把体积一致当作孔位也已独立验证。保留首轮种子识别拒绝、STEP 配置名误判及复验配置切换错误的失败目录。样例生成时一次 GetPolylines7 超时、M03 三次超时均由原有有限重画恢复; 根因未解决。
 
+2026-11-01 CAD-07 原生孔位标定：新实例只读保存配置副本，枚举 `Body2.GetFaces()` 的圆柱面；`Surface.Evaluate(u,v,1,1)` 在本轮圆柱上实际返回 15 数，首三为模型坐标点、末三为曲面法向。`FaceInSurfaceSense()==true` 时反向后，与去除轴向分量的径向点积判断凹孔壁，不以该布尔量单独判孔，也不采用绘图中读不到仍当孔的宽松分支。孔口圆心/半径取 `Curve.CircleParams`，以 `GetCurveParams3` 的角跨度 2π 限定整圆，两个不同 Z 的圆边形成轴端点；不使用轴线上任意 origin.z 或近似包围盒。未覆盖的分裂圆柱面、非 Z 圆柱孔、缺失数据明确失败，不拼接同轴段或认证盲孔开口拓扑。
+
+实测 `qa/20261101_180520_verify_reasw_parametric_patterns`：RS-001～003及Wide共4配置零孔，RS-004孔心(-25,0)/(-10,0)/(5,0) mm，RS-005孔心(±20,0)/(0,±20) mm，RS-006孔心(±15,5) mm；9孔半径2 mm、Z端点0/20 mm，匹配绝对允差1e-7 m。无序一一匹配可检出孔数、绝对孔心、间距、孔环/相位、镜像、孔径及端点差异。`qa/20261101_180736_verify_reasw_parametric_patterns` 保留只改错QA期望而未改体积/具名尺寸的三类负例，均仅在孔位匹配失败；两个独立实例均正常退出、强制清理0，源件/副本/期望哈希不变。当前不把STEP原有实体/体积复验或旧清单PASSED说成已覆盖孔位。
+
 本轮兼容修正: Instant3D 的 GetTypeName2 返回 ICE 时, 按 [2023 官方文档](https://help.solidworks.com/2023/english/api/sldworksapi/solidworks.interop.sldworks~solidworks.interop.sldworks.ifeature~gettypename.html) 用 GetTypeName 取底层类型, 仍严格只接受 Cut; STEP 产品名可附精确的被引用配置名, 多配置须逐个出现, 不做前缀模糊匹配; 只读复验已激活配置时跳过 ShowConfiguration2, 其它切换仍检查返回值与活动身份。
 
 本轮微波实验炉回归中, 99个重建实体最大差集0、229个实例位置一致、674个已登记干涉且新增0、STEP 202实体及原基准通过。日志中回折边7654 s是墙钟耗时, 系统事件确认期间有合盖待机/休眠（约18:34至20:41）, 不能作为同等时长活动CAD计算的证据。
